@@ -28,7 +28,7 @@ $compactSceneFlow = !empty($_GET['compact']);
 $compactSceneLimit = max(1, min(4, (int)($_GET['scene_limit'] ?? 4)));
 if ($id <= 0) {
     http_response_code(404);
-    die('Artwork ID is missing.');
+    die(t('Artwork ID is missing.', 'Falta el ID de la obra.'));
 }
 
 $stmt = $pdo->prepare('SELECT * FROM artworks WHERE id = :id LIMIT 1');
@@ -36,11 +36,11 @@ $stmt->execute(['id' => $id]);
 $artwork = $stmt->fetch();
 if (!$artwork) {
     http_response_code(404);
-    die('Artwork not found.');
+    die(t('Artwork not found.', 'Obra no encontrada.'));
 }
 if ((int)$artwork['user_id'] !== (int)$user['id'] && !Auth::isAdmin($user)) {
     http_response_code(403);
-    die('Access denied.');
+    die(t('Access denied.', 'Acceso denegado.'));
 }
 
 $requestedGenerationRunId = strtolower(trim((string)($_GET['generation_run'] ?? '')));
@@ -50,7 +50,7 @@ if ($requestedGenerationRunId !== '' && !preg_match('/^[a-z0-9-]{8,64}$/', $requ
 $highlightGenerationRunId = '';
 $highlightJobId = max(0, (int)($_GET['highlight_job'] ?? 0));
 $highlightMockupId = 0;
-$highlightLabel = 'New result';
+$highlightLabel = t('New result', 'Nuevo resultado');
 if ($highlightJobId > 0) {
     $highlightStmt = $pdo->prepare('
         SELECT mockup_id, selector_state_json
@@ -76,7 +76,7 @@ if ($highlightJobId > 0) {
         $highlightCombination = is_array($highlightState) ? (array)($highlightState['combination'] ?? []) : [];
         $highlightControls = (array)($highlightCombination['improvement_controls'] ?? []);
         if ((int)($highlightControls['existing_mockup_id'] ?? 0) > 0) {
-            $highlightLabel = 'Recently regenerated';
+            $highlightLabel = t('Recently regenerated', 'Regenerado recientemente');
         }
     }
 }
@@ -101,15 +101,15 @@ function world_mother_image_url(string $file): string
 function results_friendly_camera_name(string $slug): string
 {
     $mapping = [
-        'corte-agresivo-de-esquina-de-obra-loft' => 'Loft - Close-up Corner',
-        'corte-agresivo-de-esquina-de-obra-loft-1' => 'Loft - Close-up Corner A',
-        'corte-agresivo-de-esquina-de-obra-loft-2' => 'Loft - Close-up Corner B',
-        'frontal-close-up-loft' => 'Loft - Frontal Close-up',
-        'frontal-close-up-loft-1' => 'Loft - Frontal Close-up A',
-        'frontal-close-up-loft-2' => 'Loft - Frontal Close-up B',
-        'borde-de-canvas-close-up-loft' => 'Loft - Canvas Edge Detail',
-        'contrapicado-78-loft' => 'Loft - Low Angle 7/8',
-        'frontal-lejos-loft' => 'Loft - Frontal Wide View',
+        'corte-agresivo-de-esquina-de-obra-loft' => t('Loft - Close-up Corner', 'Loft - Esquina en Primer Plano'),
+        'corte-agresivo-de-esquina-de-obra-loft-1' => t('Loft - Close-up Corner A', 'Loft - Esquina en Primer Plano A'),
+        'corte-agresivo-de-esquina-de-obra-loft-2' => t('Loft - Close-up Corner B', 'Loft - Esquina en Primer Plano B'),
+        'frontal-close-up-loft' => t('Loft - Frontal Close-up', 'Loft - Frontal en Primer Plano'),
+        'frontal-close-up-loft-1' => t('Loft - Frontal Close-up A', 'Loft - Frontal en Primer Plano A'),
+        'frontal-close-up-loft-2' => t('Loft - Frontal Close-up B', 'Loft - Frontal en Primer Plano B'),
+        'borde-de-canvas-close-up-loft' => t('Loft - Canvas Edge Detail', 'Loft - Detalle de Borde de Lienzo'),
+        'contrapicado-78-loft' => t('Loft - Low Angle 7/8', 'Loft - Contrapicado 7/8'),
+        'frontal-lejos-loft' => t('Loft - Frontal Wide View', 'Loft - Frontal de Plano General'),
     ];
 
     if (isset($mapping[$slug])) {
@@ -143,7 +143,7 @@ function current_camera_slot_name(string $slotId, string $fallback, array $camer
         return $fallback;
     }
 
-    return $slotId !== '' ? results_friendly_camera_name($slotId) : 'Camera';
+    return $slotId !== '' ? results_friendly_camera_name($slotId) : t('Camera', 'Cámara');
 }
 
 $stmt = $pdo->prepare('
@@ -375,23 +375,23 @@ foreach ($expectedCombinations as $combo) {
     $generated = $generatedByIndex[$comboIndex] ?? null;
     $audit = $auditByIndex[$comboIndex] ?? null;
     $status = 'pending';
-    $detail = 'Not generated yet.';
+    $detail = t('Not generated yet.', 'Todavía no generado.');
     if (is_array($generated)) {
         $status = 'generated';
-        $detail = 'Mockup #' . (int)$generated['mockup_id'];
+        $detail = t('Mockup #', 'Mockup #') . (int)$generated['mockup_id'];
     } elseif (is_array($audit) && (string)($audit['status'] ?? '') === 'generated') {
         $status = 'generated';
-        $detail = 'Generated in audit' . (!empty($audit['mockup_id']) ? ' - Mockup #' . (int)$audit['mockup_id'] : '');
+        $detail = t('Generated in audit', 'Generado en auditoría') . (!empty($audit['mockup_id']) ? ' - ' . t('Mockup #', 'Mockup #') . (int)$audit['mockup_id'] : '');
     } elseif (is_array($audit) && (string)($audit['status'] ?? '') === 'failed') {
         $status = 'failed';
-        $detail = trim((string)($audit['error'] ?? 'Generation failed.'));
+        $detail = trim((string)($audit['error'] ?? t('Generation failed.', 'La generación falló.')));
     } elseif (is_array($audit) && in_array((string)($audit['status'] ?? ''), ['prepared', 'processing'], true)) {
         $startedAt = strtotime((string)($audit['started_at'] ?? '')) ?: 0;
         $isStale = $startedAt > 0 && (time() - $startedAt) > 900;
         $status = $isStale ? 'failed' : 'generating';
-        $detail = $isStale ? 'Generation started but did not finish. Try this set again.' : 'Generation is running.';
+        $detail = $isStale ? t('Generation started but did not finish. Try this set again.', 'La generación empezó pero no terminó. Probá este conjunto de nuevo.') : t('Generation is running.', 'La generación está en curso.');
     } else {
-        $detail = 'Not attempted yet.';
+        $detail = t('Not attempted yet.', 'Todavía no intentado.');
     }
     $cameraReport[] = [
         'index' => $comboIndex,
@@ -415,7 +415,7 @@ $visibleCameraReport = array_values(array_filter($cameraReport, static fn (array
 
 $resultGroups = [[
     'group_id' => 'scene_board',
-    'group_name' => 'Scene Boards Results' . ($generationProviderFilter !== '' ? ' · ' . ($generationProviderFilter === 'openai' ? 'OpenAI' : 'Vertex') : ''),
+    'group_name' => t('Scene Boards Results', 'Resultados de Tableros de Escena') . ($generationProviderFilter !== '' ? ' · ' . ($generationProviderFilter === 'openai' ? 'OpenAI' : 'Vertex') : ''),
     'group_order' => 1,
     'items' => [],
 ]];
@@ -431,7 +431,7 @@ foreach ($rows as $row) {
     }
     $resultGroups[0]['items'][] = [
         'row' => $row,
-        'variant_label' => 'Set ' . $rowSceneBoardIndex . ($boardOrder > 0 ? ' · View ' . $boardOrder : ''),
+        'variant_label' => t('Set', 'Conjunto') . ' ' . $rowSceneBoardIndex . ($boardOrder > 0 ? ' · ' . t('View', 'Vista') . ' ' . $boardOrder : ''),
         'scene_board_index' => $rowSceneBoardIndex,
         'board_order' => $boardOrder > 0 ? $boardOrder : 999,
         'generation_run_id' => strtolower(trim((string)(($row['selector_state'] ?? [])['generation_run_id'] ?? ''))),
@@ -475,10 +475,10 @@ if (is_file($evalPath)) {
 }
 ?>
 <!doctype html>
-<html lang="en">
+<html lang="<?= h(Translator::locale($user)) ?>">
 <head>
     <meta charset="utf-8">
-    <title>Mockup Combination Results - Artwork Mockups</title>
+    <title><?= h(t('Mockup Combination Results - Artwork Mockups', 'Resultados de Combinación de Mockups - Artwork Mockups')) ?></title>
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <link rel="stylesheet" href="style.css">
     <?= AdminSceneEditor::styles() ?>
@@ -1252,14 +1252,14 @@ if (is_file($evalPath)) {
         <header class="app-header">
             <a class="user-chip" href="account.php"><?= h($user['email']) ?></a>
         </header>
-        <div class="alert-strip">Evaluate generated mockup combinations and keep the best candidates.</div>
+        <div class="alert-strip"><?= h(t('Evaluate generated mockup combinations and keep the best candidates.', 'Evaluá las combinaciones de mockups generadas y quedate con los mejores candidatos.')) ?></div>
         <div class="workspace">
             <div class="results-header-v3">
                 <div class="header-main-info">
-                    <h1>Scene Mockups</h1>
+                    <h1><?= h(t('Scene Mockups', 'Mockups de Escena')) ?></h1>
                     <p class="results-page-desc">
-                        <span class="desc-kicker">Evaluate generated mockup combinations and keep the best candidates.</span>
-                        <span class="desc-instructions">Regenerate individual mockups, delete weak results, or mark your best options as favorites. Use the controls on each image card to refine the board.</span>
+                        <span class="desc-kicker"><?= h(t('Evaluate generated mockup combinations and keep the best candidates.', 'Evaluá las combinaciones de mockups generadas y quedate con los mejores candidatos.')) ?></span>
+                        <span class="desc-instructions"><?= h(t('Regenerate individual mockups, delete weak results, or mark your best options as favorites. Use the controls on each image card to refine the board.', 'Regenerá mockups individuales, eliminá resultados débiles o marcá tus mejores opciones como favoritas. Usá los controles de cada tarjeta de imagen para refinar el tablero.')) ?></span>
                     </p>
                 </div>
                 <?php if ($rows): ?>
@@ -1269,30 +1269,30 @@ if (is_file($evalPath)) {
                                 <?php if ($selectedWorldMotherCategory !== ''): ?>
                                     <span class="next-batch-scene-name" title="<?= h($selectedWorldMotherCategory) ?>"><?= h($selectedWorldMotherCategory) ?></span>
                                 <?php endif; ?>
-                                <a class="next-batch-primary" data-compact-scene-launch href="mockup_combinations_review.php?id=<?= (int)$id ?>&board=<?= (int)$nextSceneBoardIndex ?><?= $generationProviderQuery ?><?= $selectedWorldMotherCategory !== '' ? '&world_mother_category=' . rawurlencode($selectedWorldMotherCategory) : '' ?>&auto_generate=1&compact=1&scene_limit=<?= (int)$compactSceneLimit ?>">Create 4 more views</a>
+                                <a class="next-batch-primary" data-compact-scene-launch href="mockup_combinations_review.php?id=<?= (int)$id ?>&board=<?= (int)$nextSceneBoardIndex ?><?= $generationProviderQuery ?><?= $selectedWorldMotherCategory !== '' ? '&world_mother_category=' . rawurlencode($selectedWorldMotherCategory) : '' ?>&auto_generate=1&compact=1&scene_limit=<?= (int)$compactSceneLimit ?>"><?= h(t('Create 4 more views', 'Crear 4 vistas más')) ?></a>
                             </div>
-                            <a class="next-batch-secondary" href="mockup_combinations_review.php?id=<?= (int)$id ?>&board=<?= (int)$reviewSceneBoardIndex ?><?= $generationProviderQuery ?><?= $selectedWorldMotherCategory !== '' ? '&world_mother_category=' . rawurlencode($selectedWorldMotherCategory) : '' ?>">Explore new scenes</a>
+                            <a class="next-batch-secondary" href="mockup_combinations_review.php?id=<?= (int)$id ?>&board=<?= (int)$reviewSceneBoardIndex ?><?= $generationProviderQuery ?><?= $selectedWorldMotherCategory !== '' ? '&world_mother_category=' . rawurlencode($selectedWorldMotherCategory) : '' ?>"><?= h(t('Explore new scenes', 'Explorar nuevas escenas')) ?></a>
                         <?php else: ?>
-                            <a class="next-batch-primary" href="mockup_combinations_review.php?id=<?= (int)$id ?>&board=<?= (int)$reviewSceneBoardIndex ?><?= $generationProviderQuery ?><?= $selectedWorldMotherCategory !== '' ? '&world_mother_category=' . rawurlencode($selectedWorldMotherCategory) : '' ?>">Explore new scenes</a>
+                            <a class="next-batch-primary" href="mockup_combinations_review.php?id=<?= (int)$id ?>&board=<?= (int)$reviewSceneBoardIndex ?><?= $generationProviderQuery ?><?= $selectedWorldMotherCategory !== '' ? '&world_mother_category=' . rawurlencode($selectedWorldMotherCategory) : '' ?>"><?= h(t('Explore new scenes', 'Explorar nuevas escenas')) ?></a>
                         <?php endif; ?>
                     </div>
                 <?php endif; ?>
             </div>
 
             <?php if (!$rows): ?>
-                <div class="notice">No generated combination images yet. Generate one from the combinations review screen.</div>
+                <div class="notice"><?= h(t('No generated combination images yet. Generate one from the combinations review screen.', 'Todavía no hay imágenes de combinación generadas. Generá una desde la pantalla de revisión de combinaciones.')) ?></div>
             <?php endif; ?>
 
             <?php foreach ($resultGroups as $resultGroup): ?>
                 <section class="results-group">
                     <div class="results-group-head">
                         <span><?= h((string)$resultGroup['group_name']) ?></span>
-                        <span class="results-group-count"><?= count((array)$resultGroup['items']) ?> results</span>
+                        <span class="results-group-count"><?= count((array)$resultGroup['items']) ?> <?= h(t('results', 'resultados')) ?></span>
                     </div>
                     <?php if ($activeGenerationCount > 0): ?>
-                        <div class="batch-filter" aria-label="Filter result sets">
-                            <button type="button" class="active" data-result-filter="run:<?= h($activeGenerationRunId) ?>">Latest generation (<?= (int)$activeGenerationCount ?>)</button>
-                            <button type="button" data-result-filter="all">All (<?= count((array)$resultGroup['items']) ?>)</button>
+                        <div class="batch-filter" aria-label="<?= h(t('Filter result sets', 'Filtrar conjuntos de resultados')) ?>">
+                            <button type="button" class="active" data-result-filter="run:<?= h($activeGenerationRunId) ?>"><?= h(t('Latest generation', 'Última generación')) ?> (<?= (int)$activeGenerationCount ?>)</button>
+                            <button type="button" data-result-filter="all"><?= h(t('All', 'Todas')) ?> (<?= count((array)$resultGroup['items']) ?>)</button>
                         </div>
                     <?php endif; ?>
                     <div class="results-grid">
@@ -1314,18 +1314,18 @@ if (is_file($evalPath)) {
                     );
                     $sceneTitle = trim((string)($combo['world_mother_category'] ?? $state['world_mother_category'] ?? $selectedWorldMotherCategory));
                     if ($sceneTitle === '') {
-                        $sceneTitle = 'Scene not recorded';
+                        $sceneTitle = t('Scene not recorded', 'Escena no registrada');
                     }
                     $resultGenerationProvider = strtolower(trim((string)($state['generation_provider'] ?? 'gemini'))) === 'openai' ? 'openai' : 'gemini';
                     ?>
                     <section class="result-card batch-<?= (int)$resultSceneBoardIndex ?><?= $mockupId === $highlightMockupId ? ' is-new-generation' : '' ?>" id="result-card-<?= $mockupId ?>" data-result-batch="<?= (int)$resultSceneBoardIndex ?>" data-result-run="<?= h($resultGenerationRunId) ?>"<?= $activeGenerationCount > 0 && $resultGenerationRunId !== $activeGenerationRunId ? ' hidden' : '' ?>>
                         <div class="result-image-wrap">
-                            <div class="result-image-toolbar media-thumb-toolbar" aria-label="Mockup actions">
+                            <div class="result-image-toolbar media-thumb-toolbar" aria-label="<?= h(t('Mockup actions', 'Acciones de mockup')) ?>">
                                 <button
                                     class="favorite-overlay-btn media-icon-button <?= isset($favoriteMockupLookup[$mockupId]) ? 'active' : '' ?>"
                                     type="button"
-                                    title="<?= isset($favoriteMockupLookup[$mockupId]) ? 'Remove favorite' : 'Add favorite' ?>"
-                                    aria-label="<?= isset($favoriteMockupLookup[$mockupId]) ? 'Remove favorite' : 'Add favorite' ?>"
+                                    title="<?= isset($favoriteMockupLookup[$mockupId]) ? h(t('Remove favorite', 'Quitar favorito')) : h(t('Add favorite', 'Agregar favorito')) ?>"
+                                    aria-label="<?= isset($favoriteMockupLookup[$mockupId]) ? h(t('Remove favorite', 'Quitar favorito')) : h(t('Add favorite', 'Agregar favorito')) ?>"
                                     data-favorite-mockup
                                     data-mockup-id="<?= $mockupId ?>"
                                 >
@@ -1337,8 +1337,8 @@ if (is_file($evalPath)) {
                                     <button
                                         class="result-icon-action media-icon-button"
                                         type="button"
-                                        title="Redo mockup"
-                                        aria-label="Redo mockup"
+                                        title="<?= h(t('Redo mockup', 'Rehacer mockup')) ?>"
+                                        aria-label="<?= h(t('Redo mockup', 'Rehacer mockup')) ?>"
                                         data-redo-result
                                         data-artwork-id="<?= (int)$id ?>"
                                         data-combination-index="<?= (int)($combo['combination_index'] ?? 0) ?>"
@@ -1357,8 +1357,8 @@ if (is_file($evalPath)) {
                                     <button
                                         class="result-icon-action danger media-icon-button is-danger"
                                         type="button"
-                                        title="Delete mockup"
-                                        aria-label="Delete mockup"
+                                        title="<?= h(t('Delete mockup', 'Eliminar mockup')) ?>"
+                                        aria-label="<?= h(t('Delete mockup', 'Eliminar mockup')) ?>"
                                         data-delete-result
                                         data-mockup-id="<?= $mockupId ?>"
                                     >
@@ -1369,20 +1369,20 @@ if (is_file($evalPath)) {
                                     </button>
                                 </div>
                             </div>
-                            <a class="result-image-link" href="viewer.php?id=<?= $mockupId ?>&back=<?= rawurlencode('mockup_combination_results.php?id=' . (int)$id . $generationProviderQuery . ($selectedWorldMotherCategory !== '' ? '&world_mother_category=' . rawurlencode($selectedWorldMotherCategory) : '')) ?>" aria-label="Open in Mockup Album">
+                            <a class="result-image-link" href="viewer.php?id=<?= $mockupId ?>&back=<?= rawurlencode('mockup_combination_results.php?id=' . (int)$id . $generationProviderQuery . ($selectedWorldMotherCategory !== '' ? '&world_mother_category=' . rawurlencode($selectedWorldMotherCategory) : '')) ?>" aria-label="<?= h(t('Open in Mockup Album', 'Abrir en Álbum de Mockups')) ?>">
                                 <img src="media.php?file=<?= rawurlencode(basename((string)$row['mockup_file'])) ?>&thumb=1&w=640&v=<?= $mockupId ?>" alt="" loading="lazy" decoding="async">
                             </a>
                         </div>
                         <?php if ($mockupId === $highlightMockupId): ?>
                             <span class="new-generation-badge"><?= h($highlightLabel) ?></span>
                         <?php endif; ?>
-                        <span class="result-scene-badge" title="Scene used for this result">Scene · <?= h($sceneTitle) ?></span>
+                        <span class="result-scene-badge" title="<?= h(t('Scene used for this result', 'Escena usada para este resultado')) ?>"><?= h(t('Scene', 'Escena')) ?> · <?= h($sceneTitle) ?></span>
                         <?php if ($variantLabel !== ''): ?>
                             <span class="result-variant-badge batch-<?= (int)$resultSceneBoardIndex ?>"><?= h($variantLabel) ?></span>
                         <?php endif; ?>
                         <div class="result-title-row" style="display: flex; justify-content: space-between; align-items: center; margin: 12px 0 6px;">
                             <h3 style="margin: 0;"><?= h($cameraTitle) ?></h3>
-                            <button type="button" class="tweak-toggle-btn" onclick="toggleTweakPanel(this)" title="Toggle settings" aria-label="Toggle settings">
+                            <button type="button" class="tweak-toggle-btn" onclick="toggleTweakPanel(this)" title="<?= h(t('Toggle settings', 'Alternar configuración')) ?>" aria-label="<?= h(t('Toggle settings', 'Alternar configuración')) ?>">
                                 <svg class="toggle-caret" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round" style="transition: transform 0.2s ease;"><polyline points="6 9 12 15 18 9"></polyline></svg>
                             </button>
                         </div>
@@ -1395,8 +1395,8 @@ if (is_file($evalPath)) {
                             <!-- Artwork Scale -->
                             <div class="improve-label">
                                 <div class="improve-scale-header">
-                                    <span>Artwork scale</span>
-                                    <span class="improve-scale-val-label" id="scale-val-label-<?= $mockupId ?>">Normal</span>
+                                    <span><?= h(t('Artwork scale', 'Escala de la obra')) ?></span>
+                                    <span class="improve-scale-val-label" id="scale-val-label-<?= $mockupId ?>"><?= h(t('Normal', 'Normal')) ?></span>
                                 </div>
                                 <div class="improve-scale-row">
                                     <input name="artwork_scale" type="range" min="-60" max="60" step="5" value="0" oninput="updateScaleLabel(this, '<?= $mockupId ?>')">
@@ -1405,36 +1405,36 @@ if (is_file($evalPath)) {
 
                             <!-- Human Presence -->
                             <div class="improve-label">
-                                Human presence
+                                <?= h(t('Human presence', 'Presencia humana')) ?>
                                 <div class="human-toggle">
-                                    <label><input type="radio" name="human_presence_<?= $mockupId ?>" value="none" checked><span>None</span></label>
-                                    <label><input type="radio" name="human_presence_<?= $mockupId ?>" value="female_160"><span>Female</span></label>
-                                    <label><input type="radio" name="human_presence_<?= $mockupId ?>" value="male_180"><span>Male</span></label>
+                                    <label><input type="radio" name="human_presence_<?= $mockupId ?>" value="none" checked><span><?= h(t('None', 'Ninguna')) ?></span></label>
+                                    <label><input type="radio" name="human_presence_<?= $mockupId ?>" value="female_160"><span><?= h(t('Female', 'Femenina')) ?></span></label>
+                                    <label><input type="radio" name="human_presence_<?= $mockupId ?>" value="male_180"><span><?= h(t('Male', 'Masculina')) ?></span></label>
                                 </div>
                             </div>
 
                             <!-- Lighting & Camera -->
                             <div class="improve-row">
                                 <label>
-                                    Lighting
+                                    <?= h(t('Lighting', 'Iluminación')) ?>
                                     <select name="lighting">
-                                        <option value="">No change</option>
-                                        <option value="gallery_spotlight">Gallery spotlight</option>
-                                        <option value="soft_daylight">Soft daylight</option>
-                                        <option value="golden_hour">Golden hour</option>
-                                        <option value="moody_evening">Evening collector light</option>
-                                        <option value="brighter_artwork">Brighter artwork</option>
+                                        <option value=""><?= h(t('No change', 'Sin cambios')) ?></option>
+                                        <option value="gallery_spotlight"><?= h(t('Gallery spotlight', 'Foco de galería')) ?></option>
+                                        <option value="soft_daylight"><?= h(t('Soft daylight', 'Luz de día suave')) ?></option>
+                                        <option value="golden_hour"><?= h(t('Golden hour', 'Hora dorada')) ?></option>
+                                        <option value="moody_evening"><?= h(t('Evening collector light', 'Luz de coleccionista al atardecer')) ?></option>
+                                        <option value="brighter_artwork"><?= h(t('Brighter artwork', 'Obra más iluminada')) ?></option>
                                     </select>
                                 </label>
                                 <label>
-                                    Camera
+                                    <?= h(t('Camera', 'Cámara')) ?>
                                     <select name="experimental_camera">
-                                        <option value="">No change</option>
-                                        <option value="closer_crop">Closer crop</option>
-                                        <option value="wider_context">Wider context</option>
-                                        <option value="lower_angle">Lower angle</option>
-                                        <option value="higher_angle">Higher angle</option>
-                                        <option value="stronger_oblique">Stronger oblique</option>
+                                        <option value=""><?= h(t('No change', 'Sin cambios')) ?></option>
+                                        <option value="closer_crop"><?= h(t('Closer crop', 'Encuadre más cerrado')) ?></option>
+                                        <option value="wider_context"><?= h(t('Wider context', 'Contexto más amplio')) ?></option>
+                                        <option value="lower_angle"><?= h(t('Lower angle', 'Ángulo más bajo')) ?></option>
+                                        <option value="higher_angle"><?= h(t('Higher angle', 'Ángulo más alto')) ?></option>
+                                        <option value="stronger_oblique"><?= h(t('Stronger oblique', 'Oblicuo más pronunciado')) ?></option>
                                     </select>
                                 </label>
                             </div>
@@ -1448,13 +1448,13 @@ if (is_file($evalPath)) {
                                 data-world-mother-variant="<?= (int)($combo['world_mother_variant_offset'] ?? 0) ?>"
                                 data-generation-provider="<?= h($resultGenerationProvider) ?>"
                                 style="margin-top: 15px;"
-                            >Create Variation</button>
+                            ><?= h(t('Create Variation', 'Crear Variación')) ?></button>
                         </div>
                         <form class="eval-form" hidden onsubmit="saveEvaluation(event, this)">
                             <input type="hidden" name="artwork_id" value="<?= (int)$id ?>">
                             <input type="hidden" name="mockup_id" value="<?= $mockupId ?>">
                             <label>
-                                Score
+                                <?= h(t('Score', 'Puntaje')) ?>
                                 <select name="score">
                                     <?php for ($score = 5; $score >= 1; $score--): ?>
                                         <option value="<?= $score ?>" <?= (int)($existing['score'] ?? 0) === $score ? 'selected' : '' ?>><?= $score ?></option>
@@ -1462,15 +1462,15 @@ if (is_file($evalPath)) {
                                 </select>
                             </label>
                             <label>
-                                Evaluation notes
+                                <?= h(t('Evaluation notes', 'Notas de evaluación')) ?>
                                 <textarea name="notes" rows="4" placeholder="Fidelity, scale, camera, world fit, commercial usefulness..."><?= h($existing['notes'] ?? '') ?></textarea>
                             </label>
                             <label style="display:inline-flex; gap:8px; align-items:center;">
                                 <input type="checkbox" name="keeper" value="1" <?= !empty($existing['keeper']) ? 'checked' : '' ?>>
-                                Keep as candidate
+                                <?= h(t('Keep as candidate', 'Mantener como candidato')) ?>
                             </label>
                             <div class="eval-status"></div>
-                            <button class="button-link" type="submit">Save Evaluation</button>
+                            <button class="button-link" type="submit"><?= h(t('Save Evaluation', 'Guardar Evaluación')) ?></button>
                         </form>
                     </section>
                 <?php endforeach; ?>
@@ -1481,28 +1481,28 @@ if (is_file($evalPath)) {
             <?php if ($isAdmin && !$compactSceneFlow): ?>
             <section class="camera-report">
                 <div class="camera-report-head">
-                    <h2>Camera Generation Report</h2>
-                    <div class="camera-report-summary" aria-label="Generation summary">
-                        <span class="generated"><?= $generatedCount ?> generated</span>
-                        <span class="failed"><?= $failedCount ?> failed</span>
-                        <span class="pending"><?= $pendingCount ?> pending</span>
+                    <h2><?= h(t('Camera Generation Report', 'Reporte de Generación de Cámaras')) ?></h2>
+                    <div class="camera-report-summary" aria-label="<?= h(t('Generation summary', 'Resumen de generación')) ?>">
+                        <span class="generated"><?= $generatedCount ?> <?= h(t('generated', 'generadas')) ?></span>
+                        <span class="failed"><?= $failedCount ?> <?= h(t('failed', 'fallidas')) ?></span>
+                        <span class="pending"><?= $pendingCount ?> <?= h(t('pending', 'pendientes')) ?></span>
                     </div>
                 </div>
                 <?php if ($visibleCameraReport): ?>
                     <table class="camera-report-table">
                         <thead>
                             <tr>
-                                <th>Set</th>
-                                <th>Camera</th>
-                                <th>Scene</th>
-                                <th>Status</th>
-                                <th>Detail</th>
+                                <th><?= h(t('Set', 'Conjunto')) ?></th>
+                                <th><?= h(t('Camera', 'Cámara')) ?></th>
+                                <th><?= h(t('Scene', 'Escena')) ?></th>
+                                <th><?= h(t('Status', 'Estado')) ?></th>
+                                <th><?= h(t('Detail', 'Detalle')) ?></th>
                             </tr>
                         </thead>
                         <tbody>
                             <?php foreach ($visibleCameraReport as $report): ?>
                                 <tr>
-                                    <td>Set <?= (int)$report['index'] ?></td>
+                                    <td><?= h(t('Set', 'Conjunto')) ?> <?= (int)$report['index'] ?></td>
                                     <td>
                                         <strong><?= h((string)$report['camera_name']) ?></strong><br>
                                         <code><?= h((string)$report['camera_slot_id']) ?></code>
@@ -1521,7 +1521,7 @@ if (is_file($evalPath)) {
                         </tbody>
                     </table>
                 <?php else: ?>
-                    <div class="notice" style="margin: 18px 20px;">No generated or failed cameras yet.</div>
+                    <div class="notice" style="margin: 18px 20px;"><?= h(t('No generated or failed cameras yet.', 'Todavía no hay cámaras generadas o fallidas.')) ?></div>
                 <?php endif; ?>
             </section>
             <?php endif; ?>
@@ -1530,6 +1530,22 @@ if (is_file($evalPath)) {
 </div>
 <?php include __DIR__ . '/compact_scene_progress_layer.php'; ?>
 <script>
+const mcrI18n = {
+    redoMockup: <?= json_encode(t('Redo mockup', 'Rehacer mockup')) ?>,
+    saving: <?= json_encode(t('Saving...', 'Guardando...')) ?>,
+    saved: <?= json_encode(t('Saved.', 'Guardado.')) ?>,
+    saveFailed: <?= json_encode(t('Save failed.', 'Error al guardar.')) ?>,
+    saveFailedPrefix: <?= json_encode(t('Save failed:', 'Error al guardar:')) ?>,
+    deleteMockupConfirm: <?= json_encode(t('Delete this mockup?', '¿Eliminar este mockup?')) ?>,
+    deleteFailed: <?= json_encode(t('Delete failed.', 'Error al eliminar.')) ?>,
+    regenerateConfirm: <?= json_encode(t('Regenerate this mockup with these controls?', '¿Regenerar este mockup con estos controles?')) ?>,
+    regenerationFailed: <?= json_encode(t('Regeneration failed.', 'La regeneración falló.')) ?>,
+    regeneratingInBackground: <?= json_encode(t('Regenerating in background', 'Regenerando en segundo plano')) ?>,
+    couldNotUpdateFavorite: <?= json_encode(t('Could not update favorite.', 'No se pudo actualizar el favorito.')) ?>,
+    removeFavorite: <?= json_encode(t('Remove favorite', 'Quitar favorito')) ?>,
+    addFavorite: <?= json_encode(t('Add favorite', 'Agregar favorito')) ?>,
+    normal: <?= json_encode(t('Normal', 'Normal')) ?>,
+};
 const ACTIVE_ARTWORK_ID = <?= (int)$id ?>;
 const ACTIVE_ARTWORK_ROOT_FILE = <?= json_encode(basename((string)$artwork['root_file'])) ?>;
 const REGENERATION_STORAGE_KEY = 'artworkMockupsPendingRegenerations:' + ACTIVE_ARTWORK_ID;
@@ -1573,8 +1589,8 @@ function resetRegenerationButton(jobId) {
     button.disabled = false;
     button.classList.remove('is-regenerating');
     button.removeAttribute('data-regeneration-job-id');
-    button.title = 'Redo mockup';
-    button.setAttribute('aria-label', 'Redo mockup');
+    button.title = mcrI18n.redoMockup;
+    button.setAttribute('aria-label', mcrI18n.redoMockup);
 }
 
 window.addEventListener('artworkmockups:generation-completed', event => {
@@ -1653,7 +1669,7 @@ function saveEvaluation(event, form) {
     const status = form.querySelector('.eval-status');
     const button = form.querySelector('button');
     button.disabled = true;
-    status.textContent = 'Saving...';
+    status.textContent = mcrI18n.saving;
     fetch('save_mockup_combination_evaluation.php', { method: 'POST', body: new FormData(form) })
         .then(response => response.text().then(text => {
             let parsed;
@@ -1661,11 +1677,11 @@ function saveEvaluation(event, form) {
             return { status: response.status, body: parsed };
         }))
         .then(result => {
-            status.textContent = result.body.ok ? 'Saved.' : (result.body.error || 'Save failed.');
+            status.textContent = result.body.ok ? mcrI18n.saved : (result.body.error || mcrI18n.saveFailed);
             button.disabled = false;
         })
         .catch(err => {
-            status.textContent = 'Save failed: ' + err.message;
+            status.textContent = mcrI18n.saveFailedPrefix + ' ' + err.message;
             button.disabled = false;
         });
 }
@@ -1685,7 +1701,7 @@ function actionTarget(event) {
 }
 
 function deleteResult(button) {
-    if (!confirm('Delete this mockup?')) {
+    if (!confirm(mcrI18n.deleteMockupConfirm)) {
         return;
     }
     const card = button.closest('.result-card');
@@ -1697,7 +1713,7 @@ function deleteResult(button) {
         .then(parseJsonResponse)
         .then(result => {
             if (!result.body.ok) {
-                throw new Error(result.body.error || 'Delete failed.');
+                throw new Error(result.body.error || mcrI18n.deleteFailed);
             }
             const deletedId = parseInt(result.body.deleted_mockup_id || button.getAttribute('data-mockup-id') || '0', 10);
             const deletedCard = deletedId > 0 ? document.getElementById('result-card-' + deletedId) : null;
@@ -1714,7 +1730,7 @@ function deleteResult(button) {
 }
 
 function redoResult(button) {
-    if (!confirm('Regenerate this mockup with these controls?')) {
+    if (!confirm(mcrI18n.regenerateConfirm)) {
         return;
     }
     const panel = button.closest('[data-improve-panel]');
@@ -1754,15 +1770,15 @@ function redoResult(button) {
         .then(parseJsonResponse)
         .then(result => {
             if (!result.body.ok) {
-                throw new Error(result.body.error || 'Regeneration failed.');
+                throw new Error(result.body.error || mcrI18n.regenerationFailed);
             }
             if (result.body.enqueued) {
                 const jobId = Number(result.body.job_id || 0);
                 rememberRegenerationJob(jobId);
                 button.dataset.regenerationJobId = String(jobId);
                 button.classList.add('is-regenerating');
-                button.title = 'Regenerating in background';
-                button.setAttribute('aria-label', 'Regenerating in background');
+                button.title = mcrI18n.regeneratingInBackground;
+                button.setAttribute('aria-label', mcrI18n.regeneratingInBackground);
                 window.artworkGenerationTracker?.trackJobs([jobId]);
                 return result.body;
             } else {
@@ -1774,8 +1790,8 @@ function redoResult(button) {
             button.disabled = false;
             button.classList.remove('is-regenerating');
             button.removeAttribute('data-regeneration-job-id');
-            button.title = 'Redo mockup';
-            button.setAttribute('aria-label', 'Redo mockup');
+            button.title = mcrI18n.redoMockup;
+            button.setAttribute('aria-label', mcrI18n.redoMockup);
         });
 }
 
@@ -1921,10 +1937,10 @@ document.addEventListener('click', event => {
             .then(parseJsonResponse)
             .then(result => {
                 if (!result.body.ok) {
-                    throw new Error(result.body.error || 'Could not update favorite.');
+                    throw new Error(result.body.error || mcrI18n.couldNotUpdateFavorite);
                 }
                 favoriteButton.classList.toggle('active', !!result.body.favorite);
-                favoriteButton.title = result.body.favorite ? 'Remove favorite' : 'Add favorite';
+                favoriteButton.title = result.body.favorite ? mcrI18n.removeFavorite : mcrI18n.addFavorite;
                 favoriteButton.setAttribute('aria-label', favoriteButton.title);
             })
             .catch(err => {
@@ -1966,7 +1982,7 @@ function updateScaleLabel(range, id) {
     if (!label) return;
     const val = parseInt(range.value, 10);
     if (val === 0) {
-        label.textContent = 'Normal';
+        label.textContent = mcrI18n.normal;
     } else {
         label.textContent = (val > 0 ? '+' : '') + val + '%';
     }

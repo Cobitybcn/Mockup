@@ -148,7 +148,10 @@ function run_bilingual_editorial_service_tests(): void
     $pdo->setAttribute(PDO::ATTR_ERRMODE, PDO::ERRMODE_EXCEPTION);
     $pdo->setAttribute(PDO::ATTR_DEFAULT_FETCH_MODE, PDO::FETCH_ASSOC);
     $pdo->exec('PRAGMA foreign_keys=ON');
-    $pdo->exec("CREATE TABLE users (id INTEGER PRIMARY KEY, email TEXT NOT NULL)");
+    // El contenido editorial es una capacidad de Artist Pro: la cuenta de prueba
+    // debe modelar ese plan para que el worker pueda producirlo.
+    $pdo->exec("CREATE TABLE users (id INTEGER PRIMARY KEY, email TEXT NOT NULL, status TEXT NOT NULL DEFAULT 'active', is_admin INTEGER NOT NULL DEFAULT 0, plan_code TEXT NOT NULL DEFAULT 'artist_pro')");
+    $pdo->exec("CREATE TABLE user_feature_overrides (user_id INTEGER NOT NULL, feature_key TEXT NOT NULL, allowed INTEGER NOT NULL DEFAULT 0, expires_at TEXT, note TEXT, created_at TEXT, updated_at TEXT)");
     $pdo->exec("CREATE TABLE artist_profiles (id INTEGER PRIMARY KEY, user_id INTEGER NOT NULL)");
     $pdo->exec("CREATE TABLE artwork_series (
         id INTEGER PRIMARY KEY, user_id INTEGER NOT NULL, title TEXT NOT NULL, subtitle TEXT NOT NULL DEFAULT '',
@@ -164,7 +167,11 @@ function run_bilingual_editorial_service_tests(): void
     $pdo->exec("CREATE TABLE artwork_sheets (id INTEGER PRIMARY KEY, user_id INTEGER NOT NULL, canonical_artwork_id INTEGER NOT NULL, title TEXT NOT NULL DEFAULT '', subtitle TEXT NOT NULL DEFAULT '', description TEXT NOT NULL DEFAULT '', short_description TEXT NOT NULL DEFAULT '', keywords TEXT NOT NULL DEFAULT '', tags TEXT NOT NULL DEFAULT '', alt_text TEXT NOT NULL DEFAULT '', caption TEXT NOT NULL DEFAULT '', status TEXT NOT NULL DEFAULT '', generated_json TEXT NOT NULL DEFAULT '{}', updated_at TEXT NOT NULL DEFAULT '')");
     $pdo->exec("CREATE TABLE mockups (id INTEGER PRIMARY KEY, user_id INTEGER NOT NULL, source_artwork_id INTEGER, mockup_file TEXT NOT NULL)");
     $pdo->exec("CREATE TABLE mockup_sheets (id INTEGER PRIMARY KEY AUTOINCREMENT, user_id INTEGER NOT NULL, artwork_sheet_id INTEGER, artwork_id INTEGER NOT NULL, mockup_id INTEGER, mockup_file TEXT NOT NULL, user_notes TEXT NOT NULL DEFAULT '', title TEXT NOT NULL DEFAULT '', description TEXT NOT NULL DEFAULT '', keywords TEXT NOT NULL DEFAULT '', tags TEXT NOT NULL DEFAULT '', alt_text TEXT NOT NULL DEFAULT '', caption TEXT NOT NULL DEFAULT '', status TEXT NOT NULL DEFAULT '', generated_json TEXT NOT NULL DEFAULT '{}', created_at TEXT NOT NULL DEFAULT '', updated_at TEXT NOT NULL DEFAULT '')");
+    $pdo->exec("CREATE TABLE user_language_policy (user_id INTEGER NOT NULL PRIMARY KEY, working_locale TEXT NOT NULL, publication_locales_json TEXT NOT NULL, interface_locale TEXT NOT NULL DEFAULT '', created_at TEXT NOT NULL DEFAULT '', updated_at TEXT NOT NULL DEFAULT '')");
     $pdo->exec("INSERT INTO users (id,email) VALUES (7,'artist@example.com')");
+    // Este artista de prueba trabaja en espanol y publica en espanol+ingles
+    // (como Maurizio); sin una politica explicita el default ahora es ingles.
+    $pdo->exec("INSERT INTO user_language_policy (user_id,working_locale,publication_locales_json) VALUES (7,'es','[\"es\",\"en\"]')");
     $pdo->exec("INSERT INTO artwork_series (id,user_id,title,subtitle,description,long_description,tags,keywords,seo_description) VALUES (3,7,'STRATA','Existing subtitle','Existing summary','Existing curatorial text','abstract','layered painting','Existing SEO')");
     $pdo->exec("INSERT INTO artworks (id,user_id,artwork_group_id,series_id,series,final_title) VALUES (11,7,31,3,'STRATA','Old artwork title')");
     $pdo->exec("INSERT INTO artwork_groups (id,user_id,canonical_artwork_id,title,status) VALUES (31,7,11,'Stale group title','active')");
@@ -416,7 +423,7 @@ function run_bilingual_editorial_service_tests(): void
     $service->setSpanishPublished(7, 'series', 3, false);
     $service->save(7, 'series', 3, 'es', ['description' => 'Nuevo texto curatorial en español']);
     TestHarness::assertSame(false, $service->get(7, 'series', 3, 'es')['is_published'], 'el español nuevo permanece como borrador privado');
-    TestHarness::assertSame('es-en', $service->adaptationDirection(['description' => 'Texto'], [])['direction'] ?? '', 'el master español abre la adaptación al inglés internacional');
+    TestHarness::assertSame('es-en', $service->adaptationDirection(['description' => 'Texto'], [], 7)['direction'] ?? '', 'el master español abre la adaptación al inglés internacional');
     $service->save(7, 'series', 3, 'en', ['description' => 'Old complete English content']);
     $service->save(7, 'series', 3, 'es', ['description' => 'Nuevo texto maestro en español']);
     $rebuiltEnglish = (new BilingualEditorialAdapterService($pdo, new BilingualEditorialFakeClient()))
@@ -505,7 +512,7 @@ function run_bilingual_editorial_service_tests(): void
     TestHarness::assertContains('grid-template-rows:subgrid', $seriesScreen, 'los tableros editoriales comparten filas reales para comparar ES y EN');
     TestHarness::assertContains('grid-row:1 / span 9', $seriesScreen, 'todos los campos SEO permanecen en la misma línea visual');
     TestHarness::assertContains('data-current-series-delete', $seriesScreen, 'la ficha bilingüe conserva una acción visible para eliminar la serie actual');
-    TestHarness::assertContains('Sus obras y mockups pasarán a NO SERIE', $seriesScreen, 'eliminar una serie explica el destino de sus obras y mockups');
+    TestHarness::assertContains('Sus obras y mockups pasarán a SIN SERIE', $seriesScreen, 'eliminar una serie explica el destino de sus obras y mockups');
     TestHarness::assertContains('series-website-decision', $seriesScreen, 'la mesa bilingüe conserva el bloque de decisión cuadrado para publicar la serie');
     TestHarness::assertContains('series-website-decision--create', $seriesScreen, 'la mesa bilingüe permite crear una obra ligada directamente a la serie');
     TestHarness::assertContains('width:112px', $seriesScreen, 'las acciones del header reutilizan el tamaño compacto aprobado');
@@ -591,7 +598,8 @@ function run_bilingual_editorial_service_tests(): void
         'el master español llega al website antes de comenzar la adaptación inglesa'
     );
     $sheetServiceSource = (string)file_get_contents($platformRoot . '/app/Services/ArtworkSheetService.php');
-    TestHarness::assertContains('Think, analyze and write directly in natural Spanish', $sheetServiceSource, 'mockup_analysis_v2 puede pensar directamente en español');
+    TestHarness::assertContains('Think, analyze and write directly in {$analysisStyle}', $sheetServiceSource, 'mockup_analysis_v2 piensa directamente en el idioma de trabajo del artista');
+    TestHarness::assertContains("sourceLocale(\$userId)", $sheetServiceSource, 'el idioma del análisis de mockups sale de la política del artista');
     TestHarness::assertContains("\$decoded['analysis_language'] = \$analysisLocale", $sheetServiceSource, 'el análisis automático registra explícitamente su idioma');
     TestHarness::assertContains("fillSourceFromAnalysis(\$userId, 'mockup'", $sheetServiceSource, 'el análisis automático español alimenta la edición fuente del mockup');
     TestHarness::assertContains('updateMockupAnalysisDraft', $sheetServiceSource, 'el análisis español se persiste sin copiarse a columnas inglesas');

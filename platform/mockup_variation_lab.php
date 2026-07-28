@@ -66,13 +66,13 @@ function mockup_variation_lab_register_run(PDO $pdo, array $run, array $selected
 
     if (StorageService::isGcsActive()) {
         if (!StorageService::uploadFile('results/' . $registeredMockupFile, RESULTS_DIR . DIRECTORY_SEPARATOR . $registeredMockupFile)) {
-            throw new RuntimeException('The variation could not be saved to persistent storage.');
+            throw new RuntimeException(t('The variation could not be saved to persistent storage.', 'No se pudo guardar la variación en el almacenamiento persistente.'));
         }
         if ($promptText !== '' && !StorageService::uploadFile(
             'mockup-prompts/' . $registeredPromptFile,
             PROMPTS_DIR . DIRECTORY_SEPARATOR . $registeredPromptFile
         )) {
-            throw new RuntimeException('The variation prompt could not be saved to persistent storage.');
+            throw new RuntimeException(t('The variation prompt could not be saved to persistent storage.', 'No se pudo guardar el prompt de la variación en el almacenamiento persistente.'));
         }
     }
 
@@ -283,14 +283,14 @@ if ($selectedMockup) {
 $favoriteLookup = MockupFavorites::lookupForUser((int)$user['id']);
 
 $referenceModes = [
-    'mockup_only' => 'A - Existing mockup only',
-    'mockup_root' => 'B - Mockup + root artwork',
-    'mockup_root_strict' => 'C - Strict mockup + root artwork',
+    'mockup_only' => t('A - Existing mockup only', 'A - Solo mockup existente'),
+    'mockup_root' => t('B - Mockup + root artwork', 'B - Mockup + obra raíz'),
+    'mockup_root_strict' => t('C - Strict mockup + root artwork', 'C - Mockup estricto + obra raíz'),
 ];
 $humanOptions = [
-    'none' => ['title' => 'None', 'detail' => ''],
-    'female_160' => ['title' => 'Female', 'detail' => '1.80 m'],
-    'male_180' => ['title' => 'Male', 'detail' => '2.00 m'],
+    'none' => ['title' => t('None', 'Ninguna'), 'detail' => ''],
+    'female_160' => ['title' => t('Female', 'Femenina'), 'detail' => '1.80 m'],
+    'male_180' => ['title' => t('Male', 'Masculina'), 'detail' => '2.00 m'],
 ];
 $scaleOptions = [
     'scale_minus_60' => '-60%',
@@ -302,18 +302,18 @@ $scaleOptions = [
     'scale_plus_60' => '+60%',
 ];
 $lightingOptions = [
-    'none' => 'No lighting change',
-    'light_day' => 'Daylight',
-    'light_overcast' => 'Overcast',
-    'light_night' => 'Night light',
-    'light_golden' => 'Golden hour',
+    'none' => t('No lighting change', 'Sin cambio de iluminación'),
+    'light_day' => t('Daylight', 'Luz de día'),
+    'light_overcast' => t('Overcast', 'Nublado'),
+    'light_night' => t('Night light', 'Luz nocturna'),
+    'light_golden' => t('Golden hour', 'Hora dorada'),
 ];
 ?>
 <!doctype html>
-<html lang="en">
+<html lang="<?= h(Translator::locale($user)) ?>">
 <head>
     <meta charset="utf-8">
-    <title>Mockup Lab - Artwork Mockups</title>
+    <title><?= h(t('Mockup Lab - Artwork Mockups', 'Laboratorio de Mockups - Artwork Mockups')) ?></title>
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <link rel="stylesheet" href="style.css">
     <style>
@@ -1666,21 +1666,21 @@ $lightingOptions = [
         <header class="app-header">
             <a class="user-chip" href="account.php"><?= h($user['email']) ?></a>
         </header>
-        <div class="alert-strip">Mockup Lab: create controlled variations from existing mockups.</div>
+        <div class="alert-strip"><?= h(t('Mockup Lab: create controlled variations from existing mockups.', 'Laboratorio de Mockups: creá variaciones controladas a partir de mockups existentes.')) ?></div>
         <div class="workspace">
             <?php if (!$mockups): ?>
-                <div class="notice">No mockups are available for variation.</div>
+                <div class="notice"><?= h(t('No mockups are available for variation.', 'No hay mockups disponibles para variación.')) ?></div>
             <?php else: ?>
                 <div class="lab-header-v3">
                     <div class="header-main-info">
-                        <h1><span class="desktop-lab-title">Mockup Lab</span><span class="mobile-lab-title">Mockup Lab</span></h1>
+                        <h1><span class="desktop-lab-title"><?= h(t('Mockup Lab', 'Laboratorio de Mockups')) ?></span><span class="mobile-lab-title"><?= h(t('Mockup Lab', 'Laboratorio de Mockups')) ?></span></h1>
                         <p class="lab-page-desc">
-                            <span class="desc-kicker">Create controlled variations from an existing generated mockup.</span>
-                            <span class="desc-instructions">Use this module to adjust human presence, artwork scale, lighting or camera direction without changing the main scene workflow. The selected mockup is IMAGE 1; the root artwork can optionally guide the variation as IMAGE 2.</span>
+                            <span class="desc-kicker"><?= h(t('Create controlled variations from an existing generated mockup.', 'Creá variaciones controladas a partir de un mockup ya generado.')) ?></span>
+                            <span class="desc-instructions"><?= h(t('Use this module to adjust human presence, artwork scale, lighting or camera direction without changing the main scene workflow. The selected mockup is IMAGE 1; the root artwork can optionally guide the variation as IMAGE 2.', 'Usá este módulo para ajustar la presencia humana, la escala de la obra, la iluminación o la dirección de cámara sin cambiar el flujo principal de escenas. El mockup seleccionado es la IMAGEN 1; la obra raíz puede guiar opcionalmente la variación como IMAGEN 2.')) ?></span>
                         </p>
                     </div>
                     <div class="lab-primary-action">
-                        <button class="button-link lab-run-primary" type="submit" form="lab-form" data-lab-submit <?= !$selectedMockup ? 'disabled' : '' ?>>Apply Changes</button>
+                        <button class="button-link lab-run-primary" type="submit" form="lab-form" data-lab-submit <?= !$selectedMockup ? 'disabled' : '' ?>><?= h(t('Apply Changes', 'Aplicar Cambios')) ?></button>
                     </div>
                 </div>
 
@@ -1688,7 +1688,7 @@ $lightingOptions = [
                     <section class="lab-panel lab-control-panel">
                         <form class="lab-form" id="lab-form">
                             <label class="lab-select-hidden">
-                                Existing mockup fallback
+                                <?= h(t('Existing mockup fallback', 'Mockup existente alternativo')) ?>
                                 <select name="mockup_id" onchange="window.location.href='mockup_variation_lab.php?<?= h($labContextQuery) ?>mockup_id=' + encodeURIComponent(this.value)">
                                     <?php foreach ($mockups as $mockup): ?>
                                         <?php
@@ -1701,7 +1701,7 @@ $lightingOptions = [
                             </label>
                             <?php if ($isAdmin): ?>
                                 <label class="reference-mode-control">
-                                    Reference mode
+                                    <?= h(t('Reference mode', 'Modo de referencia')) ?>
                                     <select name="reference_mode">
                                         <?php foreach ($referenceModes as $value => $label): ?>
                                             <option value="<?= h($value) ?>" <?= $value === 'mockup_root_strict' ? 'selected' : '' ?>><?= h($label) ?></option>
@@ -1725,11 +1725,11 @@ $lightingOptions = [
                                 </div>
                             </div>
                             <div data-compound-control class="artwork-scale-control">
-                                <span class="control-label">Artwork scale</span>
+                                <span class="control-label"><?= h(t('Artwork scale', 'Escala de la obra')) ?></span>
                                 <div class="scale-slider-wrap">
                                     <input type="hidden" name="artwork_scale" id="artwork-scale-value" value="none">
                                     <div class="scale-value" id="scale-display">0</div>
-                                    <input class="scale-slider" id="scale-slider" type="range" min="-60" max="60" step="20" value="0" list="scale-marks" aria-label="Artwork scale">
+                                    <input class="scale-slider" id="scale-slider" type="range" min="-60" max="60" step="20" value="0" list="scale-marks" aria-label="<?= h(t('Artwork scale', 'Escala de la obra')) ?>">
                                     <datalist id="scale-marks">
                                         <option value="-60"></option>
                                         <option value="-40"></option>
@@ -1751,7 +1751,7 @@ $lightingOptions = [
                                 </div>
                             </div>
                             <label class="lighting-select-control">
-                                Time of day
+                                <?= h(t('Time of day', 'Hora del día')) ?>
                                 <select name="lighting_modifier">
                                     <?php foreach ($lightingOptions as $value => $label): ?>
                                         <option value="<?= h($value) ?>"><?= h($label) ?></option>
@@ -1761,9 +1761,9 @@ $lightingOptions = [
                             <input type="hidden" name="camera_modifier" id="camera-modifier" value="none">
                             <input type="hidden" name="camera_strength" id="camera-strength" value="normal">
                             <details class="lab-advanced">
-                                <summary>Prompt instruction</summary>
+                                <summary><?= h(t('Prompt instruction', 'Instrucción de prompt')) ?></summary>
                                 <label style="margin-top:10px;">
-                                    Prompt instruction in Spanish
+                                    <?= h(t('Prompt instruction in Spanish', 'Instrucción de prompt en español')) ?>
                                     <textarea name="custom_instruction" placeholder="Optional. Example: the woman has East Asian features, a restrained black dress, and luxury shoes; she looks at the artwork without posing for the camera."></textarea>
                                 </label>
                             </details>
@@ -1772,14 +1772,14 @@ $lightingOptions = [
                             </div>
                         </form>
                         <div class="lab-bottom-action">
-                            <button class="button-link lab-run-primary" type="submit" form="lab-form" data-lab-submit <?= !$selectedMockup ? 'disabled' : '' ?>>Apply Changes</button>
+                            <button class="button-link lab-run-primary" type="submit" form="lab-form" data-lab-submit <?= !$selectedMockup ? 'disabled' : '' ?>><?= h(t('Apply Changes', 'Aplicar Cambios')) ?></button>
                         </div>
                     </section>
 
                     <div class="lab-main-column">
-                        <section class="lab-panel lab-selector-panel" aria-label="Existing mockups">
+                        <section class="lab-panel lab-selector-panel" aria-label="<?= h(t('Existing mockups', 'Mockups existentes')) ?>">
                             <div class="lab-mockup-browser">
-                                <span>Choose existing mockup</span>
+                                <span><?= h(t('Choose existing mockup', 'Elegir mockup existente')) ?></span>
                                 <div class="lab-mockup-strip">
                                     <?php foreach ($mockups as $mockup): ?>
                                         <?php
@@ -1796,7 +1796,7 @@ $lightingOptions = [
                                             data-mockup-id="<?= $mockupId ?>"
                                             data-viewer-url="viewer.php?id=<?= $mockupId ?>&back=<?= rawurlencode('mockup_variation_lab.php?' . $labContextQuery . 'mockup_id=' . $mockupId) ?>"
                                             title="<?= h($label . ' - ' . $meta) ?>"
-                                            aria-label="Select <?= h($label) ?>"
+                                            aria-label="<?= h(t('Select', 'Seleccionar') . ' ' . $label) ?>"
                                         >
                                             <?php if ($mockupFile !== ''): ?>
                                                 <img src="<?= h(lab_thumb_url($mockupFile, 640)) ?>" alt="" loading="lazy" decoding="async">
@@ -1808,49 +1808,49 @@ $lightingOptions = [
                                 </div>
                             </div>
                             <?php if ($selectedMockup): ?>
-                                <div class="mobile-mockup-overlays" aria-label="Mockup controls">
-                                    <div class="mobile-human-dial" aria-label="Human presence">
-                                        <button class="mobile-human-option" type="button" data-human-value="none" aria-label="No person" title="None" aria-pressed="true">
+                                <div class="mobile-mockup-overlays" aria-label="<?= h(t('Mockup controls', 'Controles de mockup')) ?>">
+                                    <div class="mobile-human-dial" aria-label="<?= h(t('Human presence', 'Presencia humana')) ?>">
+                                        <button class="mobile-human-option" type="button" data-human-value="none" aria-label="<?= h(t('No person', 'Sin persona')) ?>" title="<?= h(t('None', 'Ninguna')) ?>" aria-pressed="true">
                                             <svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="7"></circle><path d="M7 7l10 10"></path></svg>
                                         </button>
-                                        <button class="mobile-human-option" type="button" data-human-value="female_160" aria-label="Female figure" title="Female" aria-pressed="false">
+                                        <button class="mobile-human-option" type="button" data-human-value="female_160" aria-label="<?= h(t('Female figure', 'Figura femenina')) ?>" title="<?= h(t('Female', 'Femenina')) ?>" aria-pressed="false">
                                             <svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="5.5" r="2.5"></circle><path d="M12 8v5M8.5 18h7L12 10.5 8.5 18ZM12 18v4"></path></svg>
                                         </button>
-                                        <button class="mobile-human-option" type="button" data-human-value="male_180" aria-label="Male figure" title="Male" aria-pressed="false">
+                                        <button class="mobile-human-option" type="button" data-human-value="male_180" aria-label="<?= h(t('Male figure', 'Figura masculina')) ?>" title="<?= h(t('Male', 'Masculina')) ?>" aria-pressed="false">
                                             <svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="5.5" r="2.5"></circle><path d="M12 8v7M8.5 11.5 12 9l3.5 2.5M12 15l-3 7M12 15l3 7"></path></svg>
                                         </button>
                                     </div>
-                                    <button class="mobile-scale-dial" id="mobile-scale-dial" type="button" role="slider" aria-label="Artwork scale. Swipe up to increase and down to decrease." aria-valuemin="-60" aria-valuemax="60" aria-valuenow="0">
+                                    <button class="mobile-scale-dial" id="mobile-scale-dial" type="button" role="slider" aria-label="<?= h(t('Artwork scale. Swipe up to increase and down to decrease.', 'Escala de la obra. Deslizá hacia arriba para aumentar y hacia abajo para disminuir.')) ?>" aria-valuemin="-60" aria-valuemax="60" aria-valuenow="0">
                                         <span class="dial-kicker">SCALE</span>
                                         <strong id="mobile-scale-display">0</strong>
                                         <span class="dial-unit">%</span>
                                     </button>
-                                    <div class="mobile-lighting-dial" aria-label="Lighting">
-                                        <button class="mobile-light-option" type="button" data-lighting-value="light_overcast" aria-label="Overcast" title="Overcast" aria-pressed="false">
+                                    <div class="mobile-lighting-dial" aria-label="<?= h(t('Lighting', 'Iluminación')) ?>">
+                                        <button class="mobile-light-option" type="button" data-lighting-value="light_overcast" aria-label="<?= h(t('Overcast', 'Nublado')) ?>" title="<?= h(t('Overcast', 'Nublado')) ?>" aria-pressed="false">
                                             <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M6.8 18.5h10.3a3.7 3.7 0 0 0 .5-7.4A5.7 5.7 0 0 0 6.7 9.8a4.4 4.4 0 0 0 .1 8.7Z"></path></svg>
                                         </button>
-                                        <button class="mobile-light-option" type="button" data-lighting-value="light_day" aria-label="Daylight" title="Daylight" aria-pressed="false">
+                                        <button class="mobile-light-option" type="button" data-lighting-value="light_day" aria-label="<?= h(t('Daylight', 'Luz de día')) ?>" title="<?= h(t('Daylight', 'Luz de día')) ?>" aria-pressed="false">
                                             <svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="3.5"></circle><path d="M12 2v2.2M12 19.8V22M2 12h2.2M19.8 12H22M4.9 4.9l1.6 1.6M17.5 17.5l1.6 1.6M19.1 4.9l-1.6 1.6M6.5 17.5l-1.6 1.6"></path></svg>
                                         </button>
-                                        <button class="mobile-light-option" type="button" data-lighting-value="light_golden" aria-label="Golden Hour" title="Golden Hour" aria-pressed="false">
+                                        <button class="mobile-light-option" type="button" data-lighting-value="light_golden" aria-label="<?= h(t('Golden Hour', 'Hora Dorada')) ?>" title="<?= h(t('Golden Hour', 'Hora Dorada')) ?>" aria-pressed="false">
                                             <svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="3.8"></circle><path d="M12 2v2.2M12 19.8V22M2 12h2.2M19.8 12H22M4.9 4.9l1.6 1.6M17.5 17.5l1.6 1.6M19.1 4.9l-1.6 1.6M6.5 17.5l-1.6 1.6"></path></svg>
                                         </button>
-                                        <button class="mobile-light-option" type="button" data-lighting-value="light_night" aria-label="Night Light" title="Night Light" aria-pressed="false">
+                                        <button class="mobile-light-option" type="button" data-lighting-value="light_night" aria-label="<?= h(t('Night Light', 'Luz Nocturna')) ?>" title="<?= h(t('Night Light', 'Luz Nocturna')) ?>" aria-pressed="false">
                                             <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M19.5 15.2A8 8 0 0 1 8.8 4.5 8 8 0 1 0 19.5 15.2Z"></path></svg>
                                         </button>
                                     </div>
                                 </div>
                                 <details class="mobile-prompt-details">
-                                    <summary>Additional prompt</summary>
+                                    <summary><?= h(t('Additional prompt', 'Prompt adicional')) ?></summary>
                                     <textarea id="mobile-custom-instruction" placeholder="Optional instruction for this modification"></textarea>
                                 </details>
-                                <button class="mobile-active-apply" type="submit" form="lab-form" data-lab-submit>Apply Changes</button>
+                                <button class="mobile-active-apply" type="submit" form="lab-form" data-lab-submit><?= h(t('Apply Changes', 'Aplicar Cambios')) ?></button>
                             <?php endif; ?>
                         </section>
 
-                        <section class="mobile-cascade-history" aria-label="Modification history">
+                        <section class="mobile-cascade-history" aria-label="<?= h(t('Modification history', 'Historial de modificaciones')) ?>">
                             <?php if ($modificationHistory): ?>
-                                <h2 class="mobile-cascade-title">Modification history</h2>
+                                <h2 class="mobile-cascade-title"><?= h(t('Modification history', 'Historial de modificaciones')) ?></h2>
                                 <?php foreach ($modificationHistory as $historyMockup): ?>
                                     <?php
                                     $historyMockupId = (int)$historyMockup['id'];
@@ -1860,23 +1860,23 @@ $lightingOptions = [
                                         <img src="<?= h(lab_thumb_url($historyMockupFile, 640)) ?>" alt="" loading="lazy" decoding="async">
                                         <div class="mobile-history-controls-host"></div>
                                         <details class="mobile-prompt-details">
-                                            <summary>Additional prompt</summary>
+                                            <summary><?= h(t('Additional prompt', 'Prompt adicional')) ?></summary>
                                             <textarea class="mobile-history-instruction" placeholder="Optional instruction for this modification"></textarea>
                                         </details>
-                                        <button class="mobile-history-apply" type="button">Apply Changes</button>
+                                        <button class="mobile-history-apply" type="button"><?= h(t('Apply Changes', 'Aplicar Cambios')) ?></button>
                                     </article>
                                 <?php endforeach; ?>
                             <?php endif; ?>
 
                             <?php if ($otherVariations): ?>
-                                <h2 class="mobile-cascade-title">Other previous variations</h2>
+                                <h2 class="mobile-cascade-title"><?= h(t('Other previous variations', 'Otras variaciones anteriores')) ?></h2>
                                 <div class="mobile-other-variations">
                                     <?php foreach ($otherVariations as $otherMockup): ?>
                                         <?php
                                         $otherMockupId = (int)$otherMockup['id'];
                                         $otherMockupFile = basename((string)($otherMockup['mockup_file'] ?? ''));
                                         ?>
-                                        <a class="mobile-other-variation" href="mockup_variation_lab.php?<?= h($labContextQuery) ?>mockup_id=<?= $otherMockupId ?>" aria-label="Edit previous variation <?= $otherMockupId ?>">
+                                        <a class="mobile-other-variation" href="mockup_variation_lab.php?<?= h($labContextQuery) ?>mockup_id=<?= $otherMockupId ?>" aria-label="<?= h(t('Edit previous variation', 'Editar variación anterior') . ' ' . $otherMockupId) ?>">
                                             <img src="<?= h(lab_thumb_url($otherMockupFile, 420)) ?>" alt="" loading="lazy" decoding="async">
                                         </a>
                                     <?php endforeach; ?>
@@ -1887,12 +1887,12 @@ $lightingOptions = [
                         <section class="lab-panel lab-stage">
                             <?php if ($selectedMockup): ?>
                                 <?php if (!empty($selectedMockup['artwork']['id'])): ?>
-                                    <div class="lab-stage-link"><a href="mockup_combination_results.php?id=<?= (int)$selectedMockup['artwork']['id'] ?>">Results</a></div>
+                                    <div class="lab-stage-link"><a href="mockup_combination_results.php?id=<?= (int)$selectedMockup['artwork']['id'] ?>"><?= h(t('Results', 'Resultados')) ?></a></div>
                                 <?php endif; ?>
                             <?php endif; ?>
                             <div class="lab-equation">
                             <div class="lab-equation-col">
-                                <h2 class="lab-equation-title">References</h2>
+                                <h2 class="lab-equation-title"><?= h(t('References', 'Referencias')) ?></h2>
                                 <?php if ($selectedMockup): ?>
                                     <?php
                                     $mockupFile = basename((string)$selectedMockup['mockup_file']);
@@ -1900,27 +1900,27 @@ $lightingOptions = [
                                     ?>
                                     <div class="preview-grid" id="reference-preview-grid">
                                         <div class="preview-box">
-                                            <strong>IMAGE 1 - Existing mockup</strong>
+                                            <strong><?= h(t('IMAGE 1 - Existing mockup', 'IMAGEN 1 - Mockup existente')) ?></strong>
                                             <div class="image-frame">
                                                 <img src="<?= h(lab_thumb_url($mockupFile, 640)) ?>" alt="" loading="lazy" decoding="async">
                                             </div>
                                         </div>
                                         <div class="preview-box root-reference-box">
-                                            <strong>IMAGE 2 - Root artwork</strong>
+                                            <strong><?= h(t('IMAGE 2 - Root artwork', 'IMAGEN 2 - Obra raíz')) ?></strong>
                                             <div class="image-frame">
                                                 <img src="<?= h(lab_thumb_url($rootFile, 640)) ?>" alt="" loading="lazy" decoding="async">
                                             </div>
                                         </div>
                                     </div>
                                 <?php else: ?>
-                                    <div class="notice">Select a mockup to begin.</div>
+                                    <div class="notice"><?= h(t('Select a mockup to begin.', 'Seleccioná un mockup para empezar.')) ?></div>
                                 <?php endif; ?>
                             </div>
 
                             <div class="lab-equation-mark" aria-hidden="true">=</div>
 
                             <div class="lab-equation-col result-col">
-                                <h2 class="lab-equation-title">Result</h2>
+                                <h2 class="lab-equation-title"><?= h(t('Result', 'Resultado')) ?></h2>
                                 <div id="new-result">
                                     <?php if ($labRuns && ($labRuns[0]['status'] ?? '') === 'generated' && !empty($labRuns[0]['output_file'])): ?>
                                         <?php
@@ -1941,23 +1941,23 @@ $lightingOptions = [
                                                     <img src="<?= h($latestImageUrl) ?>" alt="">
                                                 </a>
                                                 <?php if ($latestRegisteredId > 0): ?>
-                                                    <div class="lab-result-actions media-thumb-action-cluster" aria-label="Mockup actions">
-                                                        <button class="lab-result-action media-icon-button js-lab-favorite <?= $latestIsFavorite ? 'is-favorite' : '' ?>" type="button" title="Favorite" aria-label="Favorite"><svg class="media-action-icon" viewBox="0 0 24 24" aria-hidden="true"><path d="m12 3.7 2.55 5.17 5.71.83-4.13 4.03.97 5.69L12 16.73l-5.1 2.69.97-5.69L3.74 9.7l5.71-.83L12 3.7Z"/></svg></button>
-                                                        <button class="lab-result-action media-icon-button is-danger js-lab-delete" type="button" title="Delete" aria-label="Delete"><svg class="media-action-icon" viewBox="0 0 24 24" aria-hidden="true"><path d="M7.5 8.5h9l-.65 10h-7.7l-.65-10Z"/><path d="M6 5.8h12M9.5 5.8V4h5v1.8M10.2 11.2v4.6M13.8 11.2v4.6"/></svg></button>
+                                                    <div class="lab-result-actions media-thumb-action-cluster" aria-label="<?= h(t('Mockup actions', 'Acciones de mockup')) ?>">
+                                                        <button class="lab-result-action media-icon-button js-lab-favorite <?= $latestIsFavorite ? 'is-favorite' : '' ?>" type="button" title="<?= h(t('Favorite', 'Favorito')) ?>" aria-label="<?= h(t('Favorite', 'Favorito')) ?>"><svg class="media-action-icon" viewBox="0 0 24 24" aria-hidden="true"><path d="m12 3.7 2.55 5.17 5.71.83-4.13 4.03.97 5.69L12 16.73l-5.1 2.69.97-5.69L3.74 9.7l5.71-.83L12 3.7Z"/></svg></button>
+                                                        <button class="lab-result-action media-icon-button is-danger js-lab-delete" type="button" title="<?= h(t('Delete', 'Eliminar')) ?>" aria-label="<?= h(t('Delete', 'Eliminar')) ?>"><svg class="media-action-icon" viewBox="0 0 24 24" aria-hidden="true"><path d="M7.5 8.5h9l-.65 10h-7.7l-.65-10Z"/><path d="M6 5.8h12M9.5 5.8V4h5v1.8M10.2 11.2v4.6M13.8 11.2v4.6"/></svg></button>
                                                     </div>
                                                 <?php endif; ?>
                                             </div>
-                                            <div class="meta">Latest variation</div>
+                                            <div class="meta"><?= h(t('Latest variation', 'Última variación')) ?></div>
                                         </div>
                                     <?php else: ?>
-                                        <div class="result-placeholder">Generate a variation to see the edited mockup here.</div>
+                                        <div class="result-placeholder"><?= h(t('Generate a variation to see the edited mockup here.', 'Generá una variación para ver acá el mockup editado.')) ?></div>
                                     <?php endif; ?>
                                 </div>
                             </div>
                         </div>
 
                             <section id="history-section">
-                            <h2 style="margin-top:18px;">Latest variations for this mockup</h2>
+                            <h2 style="margin-top:18px;"><?= h(t('Latest variations for this mockup', 'Últimas variaciones de este mockup')) ?></h2>
                             <div class="runs-grid" id="lab-runs-grid">
                                 <?php foreach ($labRuns as $run): ?>
                                     <?php
@@ -1979,27 +1979,27 @@ $lightingOptions = [
                                                     <img src="<?= h($runImageUrl) ?>" alt="">
                                                 </a>
                                                 <?php if ($registeredId > 0): ?>
-                                                    <div class="lab-result-actions media-thumb-action-cluster" aria-label="Mockup actions">
-                                                        <button class="lab-result-action media-icon-button js-lab-favorite <?= $isFavorite ? 'is-favorite' : '' ?>" type="button" title="Favorite" aria-label="Favorite"><svg class="media-action-icon" viewBox="0 0 24 24" aria-hidden="true"><path d="m12 3.7 2.55 5.17 5.71.83-4.13 4.03.97 5.69L12 16.73l-5.1 2.69.97-5.69L3.74 9.7l5.71-.83L12 3.7Z"/></svg></button>
-                                                        <button class="lab-result-action media-icon-button is-danger js-lab-delete" type="button" title="Delete" aria-label="Delete"><svg class="media-action-icon" viewBox="0 0 24 24" aria-hidden="true"><path d="M7.5 8.5h9l-.65 10h-7.7l-.65-10Z"/><path d="M6 5.8h12M9.5 5.8V4h5v1.8M10.2 11.2v4.6M13.8 11.2v4.6"/></svg></button>
+                                                    <div class="lab-result-actions media-thumb-action-cluster" aria-label="<?= h(t('Mockup actions', 'Acciones de mockup')) ?>">
+                                                        <button class="lab-result-action media-icon-button js-lab-favorite <?= $isFavorite ? 'is-favorite' : '' ?>" type="button" title="<?= h(t('Favorite', 'Favorito')) ?>" aria-label="<?= h(t('Favorite', 'Favorito')) ?>"><svg class="media-action-icon" viewBox="0 0 24 24" aria-hidden="true"><path d="m12 3.7 2.55 5.17 5.71.83-4.13 4.03.97 5.69L12 16.73l-5.1 2.69.97-5.69L3.74 9.7l5.71-.83L12 3.7Z"/></svg></button>
+                                                        <button class="lab-result-action media-icon-button is-danger js-lab-delete" type="button" title="<?= h(t('Delete', 'Eliminar')) ?>" aria-label="<?= h(t('Delete', 'Eliminar')) ?>"><svg class="media-action-icon" viewBox="0 0 24 24" aria-hidden="true"><path d="M7.5 8.5h9l-.65 10h-7.7l-.65-10Z"/><path d="M6 5.8h12M9.5 5.8V4h5v1.8M10.2 11.2v4.6M13.8 11.2v4.6"/></svg></button>
                                                     </div>
                                                 <?php endif; ?>
                                             </div>
                                         <?php else: ?>
-                                            <div class="notice">No generated image.</div>
+                                            <div class="notice"><?= h(t('No generated image.', 'No hay imagen generada.')) ?></div>
                                         <?php endif; ?>
                                         <div class="meta">
                                             <div><strong><?= h((string)($run['variation_type'] ?? '')) ?></strong><?php if ($isAdmin): ?> / <?= h((string)($run['reference_mode'] ?? '')) ?><?php endif; ?></div>
                                             <div><?= h((string)($run['started_at'] ?? '')) ?></div>
-                                            <?php if (!empty($run['error'])): ?><div>Error: <?= h((string)$run['error']) ?></div><?php endif; ?>
+                                            <?php if (!empty($run['error'])): ?><div><?= h(t('Error:', 'Error:')) ?> <?= h((string)$run['error']) ?></div><?php endif; ?>
                                             <?php if ($isAdmin && !empty($run['prompt_file'])): ?>
-                                                <div><a href="mockup_variation_lab_file.php?file=<?= rawurlencode(basename((string)$run['prompt_file'])) ?>" target="_blank" rel="noopener">View prompt</a></div>
+                                                <div><a href="mockup_variation_lab_file.php?file=<?= rawurlencode(basename((string)$run['prompt_file'])) ?>" target="_blank" rel="noopener"><?= h(t('View prompt', 'Ver prompt')) ?></a></div>
                                             <?php endif; ?>
                                         </div>
                                     </div>
                                 <?php endforeach; ?>
                                 <?php if (!$labRuns): ?>
-                                    <div class="notice" id="empty-history">There are no generated variations for this mockup yet.</div>
+                                    <div class="notice" id="empty-history"><?= h(t('There are no generated variations for this mockup yet.', 'Todavía no hay variaciones generadas para este mockup.')) ?></div>
                                 <?php endif; ?>
                             </div>
                             </section>
@@ -2015,6 +2015,32 @@ $lightingOptions = [
     <span>Generating variation...</span>
 </div>
 <script>
+const mvlI18n = {
+    lessProfiled: <?= json_encode(t('Less profiled', 'Menos perfilado')) ?>,
+    moreProfiled: <?= json_encode(t('More profiled', 'Más perfilado')) ?>,
+    leftThreeQuarter: <?= json_encode(t('Left 3/4 · 45°', 'Izquierda 3/4 · 45°')) ?>,
+    rightThreeQuarter: <?= json_encode(t('Right 3/4 · 45°', 'Derecha 3/4 · 45°')) ?>,
+    scalePrefix: <?= json_encode(t('Scale', 'Escala')) ?>,
+    noModifiers: <?= json_encode(t('No modifiers', 'Sin modificadores')) ?>,
+    mockupActions: <?= json_encode(t('Mockup actions', 'Acciones de mockup')) ?>,
+    favorite: <?= json_encode(t('Favorite', 'Favorito')) ?>,
+    delete: <?= json_encode(t('Delete', 'Eliminar')) ?>,
+    selectionChanged: <?= json_encode(t('Selection changed. Generate a new variation to see the updated result.', 'La selección cambió. Generá una nueva variación para ver el resultado actualizado.')) ?>,
+    generatingVariation: <?= json_encode(t('Generating variation...', 'Generando variación...')) ?>,
+    cameraActiveNote: <?= json_encode(t('Experimental camera active: human presence and scale are disabled. Lighting can still be combined.', 'Cámara experimental activa: la presencia humana y la escala están deshabilitadas. La iluminación todavía se puede combinar.')) ?>,
+    cameraInactiveNote: <?= json_encode(t('Human presence, scale, and lighting can be combined. If you choose an experimental camera, the LAB runs it without human presence or scale changes.', 'La presencia humana, la escala y la iluminación se pueden combinar. Si elegís una cámara experimental, el LAB la ejecuta sin cambios de presencia humana ni de escala.')) ?>,
+    generateConfirm: <?= json_encode(t('Generate this variation? It will consume 1 credit if the generation completes.', '¿Generar esta variación? Consumirá 1 crédito si la generación se completa.')) ?>,
+    generatingEditedMockup: <?= json_encode(t('Generating edited mockup...', 'Generando mockup editado...')) ?>,
+    variationFailed: <?= json_encode(t('The variation failed.', 'La variación falló.')) ?>,
+    testGenerated: <?= json_encode(t('Test generated.', 'Prueba generada.')) ?>,
+    viewPrompt: <?= json_encode(t('View prompt', 'Ver prompt')) ?>,
+    viewAudit: <?= json_encode(t('View audit', 'Ver auditoría')) ?>,
+    now: <?= json_encode(t('Now', 'Ahora')) ?>,
+    errorPrefix: <?= json_encode(t('Error:', 'Error:')) ?>,
+    favoriteFailed: <?= json_encode(t('Favorite failed.', 'Error al marcar como favorito.')) ?>,
+    deleteFromAlbumConfirm: <?= json_encode(t('Delete this mockup from the album?', '¿Eliminar este mockup del álbum?')) ?>,
+    deleteFailed: <?= json_encode(t('Delete failed.', 'Error al eliminar.')) ?>,
+};
 const form = document.getElementById('lab-form');
 const cameraModifier = document.getElementById('camera-modifier');
 const cameraStrength = document.getElementById('camera-strength');
@@ -2302,7 +2328,7 @@ function syncMobileHumanPresence() {
 function currentScaleLabel() {
     if (!scaleSlider) return '';
     const numeric = parseInt(scaleSlider.value || '0', 10);
-    return numeric === 0 ? '' : 'Scale ' + formatScaleValue(numeric);
+    return numeric === 0 ? '' : mvlI18n.scalePrefix + ' ' + formatScaleValue(numeric);
 }
 function currentVariationSummary() {
     const parts = [
@@ -2311,10 +2337,10 @@ function currentVariationSummary() {
         selectedSelectLabel('lighting_modifier')
     ].filter(Boolean);
     const cameraLabels = {
-        camera_less_profile: 'Less profiled',
-        camera_more_profile: 'More profiled',
-        camera_left_3_4: 'Left 3/4 · 45°',
-        camera_right_3_4: 'Right 3/4 · 45°'
+        camera_less_profile: mvlI18n.lessProfiled,
+        camera_more_profile: mvlI18n.moreProfiled,
+        camera_left_3_4: mvlI18n.leftThreeQuarter,
+        camera_right_3_4: mvlI18n.rightThreeQuarter
     };
     const camera = cameraModifier ? (cameraLabels[cameraModifier.value] || '') : '';
     const strength = '';
@@ -2323,22 +2349,22 @@ function currentVariationSummary() {
         const lighting = selectedSelectLabel('lighting_modifier');
         return lighting ? cameraLabel + ' / ' + lighting : cameraLabel;
     }
-    return parts.length ? parts.join(' / ') : 'No modifiers';
+    return parts.length ? parts.join(' / ') : mvlI18n.noModifiers;
 }
 function labActionMarkup(mockupId) {
     if (!mockupId) return '';
-    return '<div class="lab-result-actions media-thumb-action-cluster" aria-label="Mockup actions">' +
-        '<button class="lab-result-action media-icon-button js-lab-favorite" type="button" title="Favorite" aria-label="Favorite"><svg class="media-action-icon" viewBox="0 0 24 24" aria-hidden="true"><path d="m12 3.7 2.55 5.17 5.71.83-4.13 4.03.97 5.69L12 16.73l-5.1 2.69.97-5.69L3.74 9.7l5.71-.83L12 3.7Z"/></svg></button>' +
-        '<button class="lab-result-action media-icon-button is-danger js-lab-delete" type="button" title="Delete" aria-label="Delete"><svg class="media-action-icon" viewBox="0 0 24 24" aria-hidden="true"><path d="M7.5 8.5h9l-.65 10h-7.7l-.65-10Z"/><path d="M6 5.8h12M9.5 5.8V4h5v1.8M10.2 11.2v4.6M13.8 11.2v4.6"/></svg></button>' +
+    return '<div class="lab-result-actions media-thumb-action-cluster" aria-label="' + mvlI18n.mockupActions + '">' +
+        '<button class="lab-result-action media-icon-button js-lab-favorite" type="button" title="' + mvlI18n.favorite + '" aria-label="' + mvlI18n.favorite + '"><svg class="media-action-icon" viewBox="0 0 24 24" aria-hidden="true"><path d="m12 3.7 2.55 5.17 5.71.83-4.13 4.03.97 5.69L12 16.73l-5.1 2.69.97-5.69L3.74 9.7l5.71-.83L12 3.7Z"/></svg></button>' +
+        '<button class="lab-result-action media-icon-button is-danger js-lab-delete" type="button" title="' + mvlI18n.delete + '" aria-label="' + mvlI18n.delete + '"><svg class="media-action-icon" viewBox="0 0 24 24" aria-hidden="true"><path d="M7.5 8.5h9l-.65 10h-7.7l-.65-10Z"/><path d="M6 5.8h12M9.5 5.8V4h5v1.8M10.2 11.2v4.6M13.8 11.2v4.6"/></svg></button>' +
         '</div>';
 }
 function clearTransientResult() {
     const resultBox = document.getElementById('new-result');
     const status = document.getElementById('lab-status');
     if (resultBox && resultBox.innerHTML.trim() !== '') {
-        resultBox.innerHTML = '<div class="lab-note">Selection changed. Generate a new variation to see the updated result.</div>';
+        resultBox.innerHTML = '<div class="lab-note">' + mvlI18n.selectionChanged + '</div>';
     }
-    if (status && status.textContent !== 'Generating variation...') {
+    if (status && status.textContent !== mvlI18n.generatingVariation) {
         status.textContent = '';
     }
 }
@@ -2359,8 +2385,8 @@ function updateCameraIsolationState() {
     const note = document.getElementById('camera-note');
     if (note) {
         note.textContent = cameraActive
-            ? 'Experimental camera active: human presence and scale are disabled. Lighting can still be combined.'
-            : 'Human presence, scale, and lighting can be combined. If you choose an experimental camera, the LAB runs it without human presence or scale changes.';
+            ? mvlI18n.cameraActiveNote
+            : mvlI18n.cameraInactiveNote;
     }
 }
 if (cameraModifier) {
@@ -2575,14 +2601,14 @@ if (form) {
         const status = document.getElementById('lab-status');
         const resultBox = document.getElementById('new-result');
         const buttons = Array.from(document.querySelectorAll('[data-lab-submit]'));
-        if (!confirm('Generate this variation? It will consume 1 credit if the generation completes.')) {
+        if (!confirm(mvlI18n.generateConfirm)) {
             return;
         }
         buttons.forEach(button => { button.disabled = true; });
         document.body.classList.add('lab-is-generating');
         status.classList.add('is-loading');
-        status.textContent = 'Generating variation...';
-        resultBox.innerHTML = '<div class="result-placeholder"><span class="lab-spinner" aria-hidden="true"></span><span>Generating edited mockup...</span></div>';
+        status.textContent = mvlI18n.generatingVariation;
+        resultBox.innerHTML = '<div class="result-placeholder"><span class="lab-spinner" aria-hidden="true"></span><span>' + mvlI18n.generatingEditedMockup + '</span></div>';
         syncScaleSlider();
         fetch('generate_mockup_variation_lab.php', { method: 'POST', body: new FormData(form) })
             .then(response => response.text().then(text => {
@@ -2592,10 +2618,10 @@ if (form) {
             }))
             .then(result => {
                 if (!result.body.ok) {
-                    throw new Error(result.body.error || 'The variation failed.');
+                    throw new Error(result.body.error || mvlI18n.variationFailed);
                 }
                 document.body.classList.remove('lab-is-generating');
-                status.textContent = result.body.message || 'Test generated.';
+                status.textContent = result.body.message || mvlI18n.testGenerated;
                 status.classList.remove('is-loading');
                 const summary = currentVariationSummary();
                 const registeredMockupId = parseInt(result.body.registered_mockup_id || '0', 10);
@@ -2613,8 +2639,8 @@ if (form) {
                     '</a>' +
                     labActionMarkup(registeredMockupId) +
                     '</div>' +
-                    '<div class="meta"><strong>' + summary + '</strong><br><a href="' + result.body.prompt_url + '" target="_blank" rel="noopener">View prompt</a> · ' +
-                    '<a href="' + result.body.audit_url + '" target="_blank" rel="noopener">View audit</a></div>' +
+                    '<div class="meta"><strong>' + summary + '</strong><br><a href="' + result.body.prompt_url + '" target="_blank" rel="noopener">' + mvlI18n.viewPrompt + '</a> · ' +
+                    '<a href="' + result.body.audit_url + '" target="_blank" rel="noopener">' + mvlI18n.viewAudit + '</a></div>' +
                     '</div>';
                 const historyGrid = document.getElementById('lab-runs-grid');
                 if (historyGrid) {
@@ -2630,8 +2656,8 @@ if (form) {
                         labActionMarkup(registeredMockupId) +
                         '</div>' +
                         '<div class="meta"><div><strong>' + summary + '</strong></div>' +
-                        '<div>Now</div>' +
-                        '<div><a href="' + result.body.prompt_url + '" target="_blank" rel="noopener">View prompt</a></div>' +
+                        '<div>' + mvlI18n.now + '</div>' +
+                        '<div><a href="' + result.body.prompt_url + '" target="_blank" rel="noopener">' + mvlI18n.viewPrompt + '</a></div>' +
                         '</div>';
                     historyGrid.prepend(card);
                     showLatestLabRun({ smooth: true });
@@ -2640,7 +2666,7 @@ if (form) {
             .catch(err => {
                 document.body.classList.remove('lab-is-generating');
                 status.classList.remove('is-loading');
-                status.textContent = 'Error: ' + err.message;
+                status.textContent = mvlI18n.errorPrefix + ' ' + err.message;
             })
             .finally(() => {
                 document.body.classList.remove('lab-is-generating');
@@ -2667,18 +2693,18 @@ document.addEventListener('click', event => {
         fetch('toggle_mockup_favorite.php', { method: 'POST', body })
             .then(response => response.json())
             .then(result => {
-                if (!result.ok) throw new Error(result.error || 'Favorite failed.');
+                if (!result.ok) throw new Error(result.error || mvlI18n.favoriteFailed);
                 favoriteButton.classList.toggle('is-favorite', !!result.favorite);
             })
             .catch(err => alert(err.message));
         return;
     }
 
-    if (!confirm('Delete this mockup from the album?')) return;
+    if (!confirm(mvlI18n.deleteFromAlbumConfirm)) return;
     fetch('delete_mockup_result.php', { method: 'POST', body })
         .then(response => response.json())
         .then(result => {
-            if (!result.ok) throw new Error(result.error || 'Delete failed.');
+            if (!result.ok) throw new Error(result.error || mvlI18n.deleteFailed);
             const card = media.closest('.result-card');
             if (card) card.remove();
         })

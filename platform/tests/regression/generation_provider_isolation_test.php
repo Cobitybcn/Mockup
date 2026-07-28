@@ -162,6 +162,6 @@ function run_generation_provider_isolation_tests(): void
     TestHarness::assertContains("formData.append('generation_run_id', generationRunId)", $reviewSource, 'Las cuatro escenas comparten la identidad de la ultima generacion');
     TestHarness::assertContains("\$selectorState['generation_run_id'] = \$generationRunId", $endpointSource, 'La identidad de la generacion queda guardada con cada resultado');
     TestHarness::assertContains("'&generation_run='", $activitySource, 'El aviso de finalizacion conserva la tanda recien creada');
-    TestHarness::assertContains('Latest generation (', $resultsSource, 'Resultados abre un filtro explicito para la ultima generacion');
+    TestHarness::assertContains("t('Latest generation', 'Última generación')) ?> (", $resultsSource, 'Resultados abre un filtro explicito para la ultima generacion');
     TestHarness::assertContains('data-result-filter="all"', $resultsSource, 'El usuario puede volver a todos los resultados sin salir de la pantalla');
 }

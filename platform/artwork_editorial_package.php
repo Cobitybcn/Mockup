@@ -14,6 +14,7 @@ try {
     $user = Auth::requireUser();
     Auth::requireValidCsrf((string)($_POST['csrf'] ?? ''), 'artwork_editorial_package');
     $userId = (int)$user['id'];
+    FeatureAccess::requireJson($user, FeatureAccess::EDITORIAL_MANAGE, 'Editorial preparation');
     $artworkId = max(0, (int)($_POST['artwork_id'] ?? 0));
     if ($artworkId < 1) {
         throw new RuntimeException('Artwork not found.');

@@ -4,7 +4,6 @@ declare(strict_types=1);
 final class BilingualEditorialService
 {
     private const ENTITY_TYPES = ['series', 'artwork', 'mockup', 'studio_note'];
-    private const LOCALES = ['es', 'en'];
 
     public function __construct(private PDO $pdo)
     {
@@ -21,23 +20,46 @@ final class BilingualEditorialService
     public function setEnabled(int $userId, bool $enabled): void
     {
         $now = date(DATE_ATOM);
+        $working = $this->sourceLocale($userId);
+        $publication = $this->primaryAdaptationTarget($userId) ?: $working;
         if ($this->isMysql()) {
             $stmt = $this->pdo->prepare("INSERT INTO bilingual_editorial_settings
                 (user_id,enabled,source_locale,publication_locale,created_at,updated_at)
-                VALUES (?,?, 'es','en',?,?)
-                ON DUPLICATE KEY UPDATE enabled=VALUES(enabled),source_locale='es',publication_locale='en',updated_at=VALUES(updated_at)");
+                VALUES (?,?,?,?,?,?)
+                ON DUPLICATE KEY UPDATE enabled=VALUES(enabled),source_locale=VALUES(source_locale),publication_locale=VALUES(publication_locale),updated_at=VALUES(updated_at)");
         } else {
             $stmt = $this->pdo->prepare("INSERT INTO bilingual_editorial_settings
                 (user_id,enabled,source_locale,publication_locale,created_at,updated_at)
-                VALUES (?,?, 'es','en',?,?)
-                ON CONFLICT(user_id) DO UPDATE SET enabled=excluded.enabled,source_locale='es',publication_locale='en',updated_at=excluded.updated_at");
+                VALUES (?,?,?,?,?,?)
+                ON CONFLICT(user_id) DO UPDATE SET enabled=excluded.enabled,source_locale=excluded.source_locale,publication_locale=excluded.publication_locale,updated_at=excluded.updated_at");
         }
-        $stmt->execute([$userId, $enabled ? 1 : 0, $now, $now]);
+        $stmt->execute([$userId, $enabled ? 1 : 0, $working, $publication, $now, $now]);
     }
 
+    /**
+     * Idioma de trabajo del artista: el idioma en el que analiza, genera y
+     * revisa. Es la fuente de toda adaptacion.
+     */
     public function sourceLocale(int $userId): string
     {
-        return 'es';
+        return $this->policy($userId)['working_locale'];
+    }
+
+    /**
+     * Idiomas de publicacion que requieren adaptacion desde el idioma de
+     * trabajo. Vacio cuando el artista publica solo en su idioma.
+     *
+     * @return list<string>
+     */
+    public function adaptationTargets(int $userId): array
+    {
+        return LanguagePolicy::adaptationTargets($this->policy($userId));
+    }
+
+    public function primaryAdaptationTarget(int $userId): string
+    {
+        $targets = $this->adaptationTargets($userId);
+        return $targets[0] ?? '';
     }
 
     /**
@@ -46,23 +68,59 @@ final class BilingualEditorialService
      *
      * @return array{source:string,target:string,direction:string,label:string}
      */
-    public function adaptationDirection(array $spanish, array $english): array
+    public function adaptationDirection(array $sourceContent, array $adaptedContent, int $userId = 0): array
     {
-        if ($this->hasMeaningfulContent($spanish) && $this->hasMissingContent($spanish, $english)) {
-            return ['source' => 'es', 'target' => 'en', 'direction' => 'es-en', 'label' => 'Completar inglés internacional'];
+        $policy = LanguagePolicy::forUser($userId, $this->pdo);
+        $working = $policy['working_locale'];
+        $targets = LanguagePolicy::adaptationTargets($policy);
+        $target = $targets[0] ?? '';
+        if ($target !== ''
+            && $this->hasMeaningfulContent($sourceContent)
+            && $this->hasMissingContent($sourceContent, $adaptedContent)) {
+            return [
+                'source' => $working,
+                'target' => $target,
+                'direction' => $working . '-' . $target,
+                'label' => 'Completar ' . LanguagePolicy::localeLabel($target),
+            ];
         }
-        return ['source' => '', 'target' => '', 'direction' => '', 'label' => 'Inglés internacional completo'];
+        return ['source' => '', 'target' => '', 'direction' => '', 'label' => 'Adaptación completa'];
+    }
+
+    /** @return array{working_locale:string,interface_locale:string,publication_locales:list<string>,is_explicit:bool} */
+    private function policy(int $userId): array
+    {
+        return LanguagePolicy::forUser($userId, $this->pdo);
+    }
+
+    /** @return list<string> */
+    private function storageLocales(): array
+    {
+        return array_keys(LanguagePolicy::supportedLocales());
+    }
+
+    /**
+     * Idioma cuya copia alimenta las fichas heredadas que consumen el sitio
+     * publico y los canales. El ingles internacional conserva ese papel cuando
+     * esta entre los idiomas de publicacion; si no, la copia publica es la del
+     * idioma de trabajo.
+     */
+    private function legacySyncLocale(int $userId): string
+    {
+        $policy = $this->policy($userId);
+        return in_array('en', $policy['publication_locales'], true) ? 'en' : $policy['working_locale'];
     }
 
     /** @return array{content:array,private_memo:string,status:string,source_hash:string,is_published:bool,published_content:array,published_at:string,has_unpublished_changes:bool} */
     public function get(int $userId, string $entityType, int $entityId, string $locale, array $fallback = []): array
     {
         $this->assertIdentity($entityType, $entityId, $locale);
+        $working = $this->sourceLocale($userId);
         $stmt = $this->pdo->prepare('SELECT content_json,private_memo,status,source_hash,is_published,published_content_json,published_at FROM bilingual_editorial_content WHERE user_id=? AND entity_type=? AND entity_id=? AND locale=? LIMIT 1');
         $stmt->execute([$userId, $entityType, $entityId, $locale]);
         $row = $stmt->fetch(PDO::FETCH_ASSOC);
         if (!is_array($row)) {
-            return ['content' => $this->normalizeContent($fallback), 'private_memo' => '', 'status' => $locale === 'en' && $fallback !== [] ? 'current' : 'unprepared', 'source_hash' => '', 'is_published' => false, 'published_content' => [], 'published_at' => '', 'has_unpublished_changes' => false];
+            return ['content' => $this->normalizeContent($fallback), 'private_memo' => '', 'status' => $locale !== $working && $fallback !== [] ? 'current' : 'unprepared', 'source_hash' => '', 'is_published' => false, 'published_content' => [], 'published_at' => '', 'has_unpublished_changes' => false];
         }
         $content = json_decode((string)$row['content_json'], true);
         $publishedContent = json_decode((string)($row['published_content_json'] ?? ''), true);
@@ -70,15 +128,15 @@ final class BilingualEditorialService
         $normalizedPublishedContent = is_array($publishedContent) ? $this->normalizeContent($publishedContent) : [];
         $isPublished = (int)($row['is_published'] ?? 0) === 1;
         $status = trim((string)$row['status']);
-        if ($locale === 'en' && $status === 'current') {
-            $sourceStmt = $this->pdo->prepare("SELECT content_json FROM bilingual_editorial_content WHERE user_id=? AND entity_type=? AND entity_id=? AND locale='es' LIMIT 1");
-            $sourceStmt->execute([$userId, $entityType, $entityId]);
+        if ($locale !== $working && $status === 'current') {
+            $sourceStmt = $this->pdo->prepare('SELECT content_json FROM bilingual_editorial_content WHERE user_id=? AND entity_type=? AND entity_id=? AND locale=? LIMIT 1');
+            $sourceStmt->execute([$userId, $entityType, $entityId, $working]);
             $sourceContent = json_decode((string)$sourceStmt->fetchColumn(), true);
             $normalizedSource = is_array($sourceContent) ? $this->normalizeContent($sourceContent) : [];
             if ($this->hasMissingContent($normalizedSource, $normalizedContent)) {
                 $status = 'stale';
-                $this->pdo->prepare("UPDATE bilingual_editorial_content SET status='stale',updated_at=? WHERE user_id=? AND entity_type=? AND entity_id=? AND locale='en'")
-                    ->execute([date(DATE_ATOM), $userId, $entityType, $entityId]);
+                $this->pdo->prepare("UPDATE bilingual_editorial_content SET status='stale',updated_at=? WHERE user_id=? AND entity_type=? AND entity_id=? AND locale=?")
+                    ->execute([date(DATE_ATOM), $userId, $entityType, $entityId, $locale]);
             }
         }
         return [
@@ -93,9 +151,13 @@ final class BilingualEditorialService
         ];
     }
 
+    /**
+     * Publica u oculta el contenido maestro (el del idioma de trabajo). El
+     * nombre conserva la epoca en la que el master era siempre espanol.
+     */
     public function setSpanishPublished(int $userId, string $entityType, int $entityId, bool $published): array
     {
-        return $this->setPublished($userId, $entityType, $entityId, 'es', $published);
+        return $this->setPublished($userId, $entityType, $entityId, $this->sourceLocale($userId), $published);
     }
 
     public function setPublished(
@@ -145,17 +207,20 @@ final class BilingualEditorialService
     ): array {
         $this->assertIdentity($entityType, $entityId, $sourceLocale);
         $this->assertIdentity($entityType, $entityId, $targetLocale);
-        if ($sourceLocale !== 'es' || $targetLocale !== 'en') {
-            throw new InvalidArgumentException('La adaptación editorial permitida es español a inglés internacional.');
+        if ($sourceLocale !== $this->sourceLocale($userId)
+            || !in_array($targetLocale, $this->adaptationTargets($userId), true)) {
+            throw new InvalidArgumentException('La adaptación editorial va del idioma de trabajo del artista a uno de sus idiomas de publicación.');
         }
         $this->assertOwned($userId, $entityType, $entityId);
-        $source = $this->get($userId, $entityType, $entityId, 'es');
-        $target = $this->get($userId, $entityType, $entityId, 'en');
+        $source = $this->get($userId, $entityType, $entityId, $sourceLocale);
+        $target = $this->get($userId, $entityType, $entityId, $targetLocale);
         $merged = $this->mergeMissingContent((array)$target['content'], $this->normalizeContent($generatedContent));
         $sourceHash = hash('sha256', json_encode($source['content'], JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES));
         $status = $this->hasMissingContent((array)$source['content'], $merged) ? 'stale' : 'current';
-        $this->upsertRow($userId, $entityType, $entityId, 'en', $merged, (string)$target['private_memo'], $status, $sourceHash);
-        $this->syncEnglishToLegacy($userId, $entityType, $entityId, $merged);
+        $this->upsertRow($userId, $entityType, $entityId, $targetLocale, $merged, (string)$target['private_memo'], $status, $sourceHash);
+        if ($targetLocale === $this->legacySyncLocale($userId)) {
+            $this->syncPublicCopyToLegacy($userId, $entityType, $entityId, $merged);
+        }
         return ['content' => $merged, 'status' => $status, 'english_status' => $status];
     }
 
@@ -166,7 +231,6 @@ final class BilingualEditorialService
     public function fillSourceFromAnalysis(int $userId, string $entityType, int $entityId, array $analysisContent): array
     {
         $locale = $this->sourceLocale($userId);
-        if ($locale !== 'es') return [];
         $this->assertIdentity($entityType, $entityId, $locale);
         $this->assertOwned($userId, $entityType, $entityId);
         $current = $this->get($userId, $entityType, $entityId, $locale);
@@ -174,7 +238,7 @@ final class BilingualEditorialService
         if ($merged === $current['content']) return $merged;
         $hash = hash('sha256', json_encode($merged, JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES));
         $this->upsertRow($userId, $entityType, $entityId, $locale, $merged, (string)$current['private_memo'], 'source', $hash);
-        $this->markEnglishStale($userId, $entityType, $entityId);
+        $this->markAdaptationsStale($userId, $entityType, $entityId);
         return $merged;
     }
 
@@ -191,10 +255,11 @@ final class BilingualEditorialService
         $privateMemo = trim($privateMemo);
 
         $newHash = hash('sha256', json_encode($content, JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES));
-        if ($locale === 'es') {
+        $working = $this->sourceLocale($userId);
+        if ($locale === $working) {
             $semanticChanged = true;
             if ($entityType === 'studio_note') {
-                $previous = $this->get($userId, $entityType, $entityId, 'es');
+                $previous = $this->get($userId, $entityType, $entityId, $working);
                 $previousContent = (array)($previous['content'] ?? []);
                 $semanticChanged = $previousContent === []
                     || !hash_equals(
@@ -202,24 +267,36 @@ final class BilingualEditorialService
                         StudioNoteMediaService::semanticHash($content)
                     );
             }
-            $this->upsertRow($userId, $entityType, $entityId, 'es', $content, $privateMemo, 'source', $newHash);
+            $this->upsertRow($userId, $entityType, $entityId, $working, $content, $privateMemo, 'source', $newHash);
             if ($semanticChanged) {
-                $this->markEnglishStale($userId, $entityType, $entityId);
+                $this->markAdaptationsStale($userId, $entityType, $entityId);
             }
-            $english = $this->get($userId, $entityType, $entityId, 'en');
-            return ['status' => 'source', 'english_status' => (string)$english['status']];
+            if ($working === $this->legacySyncLocale($userId)) {
+                // Sin adaptaciones, la copia publica de las fichas heredadas es
+                // el propio master del idioma de trabajo.
+                $this->syncPublicCopyToLegacy($userId, $entityType, $entityId, $content);
+            }
+            $adaptationLocale = $this->primaryAdaptationTarget($userId);
+            $adaptationStatus = $adaptationLocale !== ''
+                ? (string)$this->get($userId, $entityType, $entityId, $adaptationLocale)['status']
+                : 'not_required';
+            return ['status' => 'source', 'english_status' => $adaptationStatus];
         }
-        $spanish = $this->get($userId, $entityType, $entityId, 'es');
-        $sourceHash = hash('sha256', json_encode($spanish['content'], JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES));
-        $status = $this->hasMissingContent((array)$spanish['content'], $content) ? 'stale' : 'current';
-        $this->upsertRow($userId, $entityType, $entityId, 'en', $content, $privateMemo, $status, $sourceHash);
-        $this->syncEnglishToLegacy($userId, $entityType, $entityId, $content);
+        $sourceRow = $this->get($userId, $entityType, $entityId, $working);
+        $sourceHash = hash('sha256', json_encode($sourceRow['content'], JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES));
+        $status = $this->hasMissingContent((array)$sourceRow['content'], $content) ? 'stale' : 'current';
+        $this->upsertRow($userId, $entityType, $entityId, $locale, $content, $privateMemo, $status, $sourceHash);
+        if ($locale === $this->legacySyncLocale($userId)) {
+            $this->syncPublicCopyToLegacy($userId, $entityType, $entityId, $content);
+        }
         return ['status' => $status, 'english_status' => $status];
     }
 
     public function saveUniversalTitle(int $userId, string $entityType, int $entityId, string $title): string
     {
-        $this->assertIdentity($entityType, $entityId, 'es');
+        // El titulo universal no pertenece a un idioma; se valida la identidad
+        // de la entidad con el idioma de trabajo del artista.
+        $this->assertIdentity($entityType, $entityId, $this->sourceLocale($userId));
         $this->assertOwned($userId, $entityType, $entityId);
         $title = trim(preg_replace('/\s+/u', ' ', $title) ?? '');
         if ($title === '') throw new RuntimeException('The universal title cannot be empty.');
@@ -311,7 +388,7 @@ final class BilingualEditorialService
 
     private function assertIdentity(string $entityType, int $entityId, string $locale): void
     {
-        if (!in_array($entityType, self::ENTITY_TYPES, true) || $entityId <= 0 || !in_array($locale, self::LOCALES, true)) {
+        if (!in_array($entityType, self::ENTITY_TYPES, true) || $entityId <= 0 || !in_array($locale, $this->storageLocales(), true)) {
             throw new InvalidArgumentException('Invalid bilingual editorial identity.');
         }
     }
@@ -380,13 +457,17 @@ final class BilingualEditorialService
         return false;
     }
 
-    private function markEnglishStale(int $userId, string $entityType, int $entityId): void
+    /**
+     * Un cambio en el master deja obsoletas todas las adaptaciones, sea cual
+     * sea el par de idiomas del artista.
+     */
+    private function markAdaptationsStale(int $userId, string $entityType, int $entityId): void
     {
-        $this->pdo->prepare("UPDATE bilingual_editorial_content SET status='stale',updated_at=? WHERE user_id=? AND entity_type=? AND entity_id=? AND locale='en'")
-            ->execute([date(DATE_ATOM), $userId, $entityType, $entityId]);
+        $this->pdo->prepare("UPDATE bilingual_editorial_content SET status='stale',updated_at=? WHERE user_id=? AND entity_type=? AND entity_id=? AND locale<>?")
+            ->execute([date(DATE_ATOM), $userId, $entityType, $entityId, $this->sourceLocale($userId)]);
     }
 
-    private function syncEnglishToLegacy(int $userId, string $entityType, int $entityId, array $content): void
+    private function syncPublicCopyToLegacy(int $userId, string $entityType, int $entityId, array $content): void
     {
         $now = date(DATE_ATOM);
         if ($entityType === 'series') {

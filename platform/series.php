@@ -75,17 +75,17 @@ function series_editorial_has_text(mixed $value): bool
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     try {
         if (!hash_equals((string)$_SESSION['series_csrf'], (string)($_POST['csrf'] ?? ''))) {
-            throw new RuntimeException('Invalid request.');
+            throw new RuntimeException(t('Invalid request.', 'Solicitud inválida.'));
         }
 
         $action = (string)($_POST['action'] ?? '');
         if ($action === 'create_series') {
             $title = ArtworkSeries::normalizeTitle((string)($_POST['title'] ?? ''));
             if ($title === '') {
-                throw new RuntimeException('Series title is required.');
+                throw new RuntimeException(t('Series title is required.', 'El título de la serie es obligatorio.'));
             }
             ArtworkSeries::getOrCreate($pdo, $userId, $title, trim((string)($_POST['description'] ?? '')));
-            $notice = 'Series created.';
+            $notice = t('Series created.', 'Serie creada.');
         } elseif ($action === 'update_series') {
             ArtworkSeries::updateContent($pdo, $userId, (int)($_POST['series_id'] ?? 0), [
                 'title' => (string)($_POST['title'] ?? ''),
@@ -100,7 +100,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                 'year_start' => (string)($_POST['year_start'] ?? ''),
                 'year_end' => (string)($_POST['year_end'] ?? ''),
             ]);
-            $notice = 'Series updated.';
+            $notice = t('Series updated.', 'Serie actualizada.');
         } elseif ($action === 'update_series_direction') {
             ArtworkSeries::updateDirection(
                 $pdo,
@@ -109,7 +109,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                 (string)($_POST['conceptual_core'] ?? ''),
                 (string)($_POST['interpretive_limits'] ?? '')
             );
-            $notice = 'Dirección conceptual de la serie actualizada.';
+            $notice = t('Series conceptual direction updated.', 'Dirección conceptual de la serie actualizada.');
         } elseif ($action === 'update_series_period') {
             ArtworkSeries::updatePeriod(
                 $pdo,
@@ -118,42 +118,42 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                 (string)($_POST['year_start'] ?? ''),
                 (string)($_POST['year_end'] ?? '')
             );
-            $notice = 'Período de la serie actualizado.';
+            $notice = t('Series period updated.', 'Período de la serie actualizado.');
         } elseif ($action === 'set_series_header') {
             ArtworkSeries::setHeader($pdo, $userId, (int)($_POST['series_id'] ?? 0), (string)($_POST['file'] ?? ''));
-            $notice = 'Series header image updated.';
+            $notice = t('Series header image updated.', 'Imagen de portada de la serie actualizada.');
         } elseif ($action === 'upload_series_header') {
             ArtworkSeries::uploadHeader($pdo, $userId, (int)($_POST['series_id'] ?? 0), $_FILES['header_upload'] ?? []);
-            $notice = 'Series header image uploaded.';
+            $notice = t('Series header image uploaded.', 'Imagen de portada de la serie subida.');
         } elseif ($action === 'set_series_header_framing') {
             ArtworkSeries::setHeaderFraming(
                 $pdo, $userId, (int)($_POST['series_id'] ?? 0),
                 (float)($_POST['focal_x'] ?? 50), (float)($_POST['focal_y'] ?? 50), (float)($_POST['zoom'] ?? 115)
             );
-            $notice = 'Header framing updated.';
+            $notice = t('Header framing updated.', 'Encuadre del encabezado actualizado.');
         } elseif ($action === 'publish_series') {
             $publishSeriesId = (int)($_POST['series_id'] ?? 0);
             ArtworkSeries::setPublished($pdo, $userId, $publishSeriesId, true);
-            $notice = 'Serie publicada en el sitio del artista.';
+            $notice = t('Series published on the artist website.', 'Serie publicada en el sitio del artista.');
             if ($seriesBilingualExperiment) {
                 // El español maestro se aprueba con la misma decisión: la mesa bilingüe
                 // no expone una publicación de idioma separada.
                 $publishSpanish = $bilingualEditorialService->get($userId, 'series', $publishSeriesId, 'es');
                 if (series_editorial_has_text((array)($publishSpanish['content'] ?? []))) {
                     $bilingualEditorialService->setSpanishPublished($userId, 'series', $publishSeriesId, true);
-                    $notice = 'Serie publicada con el español aprobado.';
+                    $notice = t('Series published with the approved Spanish text.', 'Serie publicada con el español aprobado.');
                 }
             }
         } elseif ($action === 'unpublish_series') {
             ArtworkSeries::setPublished($pdo, $userId, (int)($_POST['series_id'] ?? 0), false);
-            $notice = 'Series removed from the website.';
+            $notice = t('Series removed from the website.', 'Serie eliminada del sitio web.');
         } elseif ($action === 'delete_series') {
             ArtworkSeries::deleteSeries($pdo, $userId, (int)($_POST['series_id'] ?? 0));
-            $notice = 'Series removed. Artworks moved to NO SERIE.';
+            $notice = t('Series removed. Artworks moved to NO SERIE.', 'Serie eliminada. Las obras pasaron a SIN SERIE.');
         } elseif ($action === 'assign_artwork') {
             $rawSeriesId = trim((string)($_POST['series_id'] ?? ''));
             ArtworkSeries::assignArtwork($pdo, $userId, (int)($_POST['artwork_id'] ?? 0), $rawSeriesId === '' ? null : (int)$rawSeriesId);
-            $notice = 'Artwork series updated.';
+            $notice = t('Artwork series updated.', 'Serie de la obra actualizada.');
         } elseif ($action === 'set_creation_number') {
             ArtworkSeries::setCreationNumber(
                 $pdo,
@@ -161,7 +161,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                 (int)($_POST['artwork_id'] ?? 0),
                 (int)($_POST['creation_number'] ?? 0)
             );
-            $notice = 'Artwork Creation ID updated.';
+            $notice = t('Artwork Creation ID updated.', 'ID de creación de la obra actualizado.');
         }
 
         ArtworkSeries::syncUser($pdo, $userId);
@@ -212,7 +212,7 @@ $artworks = $artworkStmt->fetchAll(PDO::FETCH_ASSOC);
 
 function series_artwork_title(array $artwork): string
 {
-    return trim((string)($artwork['sheet_title'] ?: '')) ?: (trim((string)($artwork['final_title'] ?: '')) ?: 'Untitled');
+    return trim((string)($artwork['sheet_title'] ?: '')) ?: (trim((string)($artwork['final_title'] ?: '')) ?: t('Untitled', 'Sin título'));
 }
 
 function series_tone(int $index): string
@@ -270,11 +270,11 @@ $seriesSearchFields = $selectedSeries ? [
 ] : [];
 ?>
 <!doctype html>
-<html lang="es">
+<html lang="<?= series_h(Translator::locale($user)) ?>">
 <head>
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width,initial-scale=1">
-    <title>Series - Artwork Mockups</title>
+    <title><?= series_h(t('Series - Artwork Mockups', 'Series - Artwork Mockups')) ?></title>
     <link rel="stylesheet" href="style.css">
     <link rel="stylesheet" href="ui-catalog.css?v=19">
     <?php if ($selectedSeries && $seriesBilingualExperiment): ?><link rel="stylesheet" href="bilingual-editorial.css?v=20260723-8"><?php endif; ?>
@@ -592,16 +592,16 @@ $seriesSearchFields = $selectedSeries ? [
         <header class="app-header"><a class="user-chip" href="account.php"><?= series_h($user['email']) ?></a></header>
         <div class="series-catalog"<?= $selectedSeries && $seriesBilingualExperiment ? ' data-bilingual-editor data-entity-type="series" data-entity-id="' . (int)$selectedSeries['id'] . '" data-csrf="' . series_h(Auth::csrfToken('bilingual_editorial')) . '" data-endpoint="bilingual_editorial.php"' : '' ?>>
             <?php if ($seriesPreviewActive): ?>
-                <aside class="ui-preview-notice" aria-label="Visual consistency preview">
-                    <span><strong>Preview</strong> Series workspace</span>
-                    <a href="series.php<?= $selectedSeries ? '?series=' . (int)$selectedSeries['id'] : '' ?>">Exit preview</a>
+                <aside class="ui-preview-notice" aria-label="<?= series_h(t('Visual consistency preview', 'Vista previa de consistencia visual')) ?>">
+                    <span><strong><?= series_h(t('Preview', 'Vista previa')) ?></strong> <?= series_h(t('Series workspace', 'Mesa de trabajo de series')) ?></span>
+                    <a href="series.php<?= $selectedSeries ? '?series=' . (int)$selectedSeries['id'] : '' ?>"><?= series_h(t('Exit preview', 'Salir de la vista previa')) ?></a>
                 </aside>
             <?php endif; ?>
             <?php if (!$selectedSeries): ?>
             <div class="catalog-heading">
                 <div>
-                    <h1>Series</h1>
-                    <p>Group artworks and mockups by series. NO SERIE stays silent in public titles.</p>
+                    <h1><?= series_h(t('Series', 'Series')) ?></h1>
+                    <p><?= series_h(t('Group artworks and mockups by series. NO SERIE stays silent in public titles.', 'Agrupá obras y mockups por serie. SIN SERIE se mantiene silencioso en los títulos públicos.')) ?></p>
                 </div>
             </div>
             <?php elseif ($seriesBilingualExperiment): ?>
@@ -616,16 +616,16 @@ $seriesSearchFields = $selectedSeries ? [
                         data-series-header-dropzone
                         tabindex="0"
                         role="button"
-                        aria-label="<?= empty($selectedSeries['header_file']) ? 'Subir portada de la serie' : 'Cambiar portada de la serie' ?>"
+                        aria-label="<?= empty($selectedSeries['header_file']) ? series_h(t('Upload series cover', 'Subir portada de la serie')) : series_h(t('Change series cover', 'Cambiar portada de la serie')) ?>"
                     >
                         <?php if (!empty($selectedSeries['header_file'])): ?>
                         <img
                             src="<?= series_h(series_media_url($selectedSeries['header_file'], 520)) ?>"
-                            alt="Portada de <?= series_h($selectedSeries['title']) ?>"
+                            alt="<?= series_h(t('Cover of', 'Portada de')) ?> <?= series_h($selectedSeries['title']) ?>"
                             style="object-position:<?= (int)($selectedSeries['header_focal_x'] ?? 50) ?>% <?= (int)($selectedSeries['header_focal_y'] ?? 50) ?>%;transform:scale(<?= ((int)($selectedSeries['header_zoom'] ?? 115)) / 100 ?>);"
                         >
                         <?php endif; ?>
-                        <span class="series-header-framing__replace" data-series-header-label><?= empty($selectedSeries['header_file']) ? 'Subir portada' : 'Cambiar imagen' ?></span>
+                        <span class="series-header-framing__replace" data-series-header-label><?= empty($selectedSeries['header_file']) ? series_h(t('Upload cover', 'Subir portada')) : series_h(t('Change image', 'Cambiar imagen')) ?></span>
                     </label>
                     <input id="series-bilingual-header-upload-input" class="series-header-upload__input" type="file" name="header_upload" accept="image/png,image/jpeg,image/webp" required data-series-header-file>
                     <span class="series-header-upload__status" data-series-header-status aria-live="polite"></span>
@@ -638,36 +638,36 @@ $seriesSearchFields = $selectedSeries ? [
                         <input type="hidden" name="csrf" value="<?= series_h($_SESSION['series_csrf']) ?>">
                         <input type="hidden" name="action" value="update_series_period">
                         <input type="hidden" name="series_id" value="<?= (int)$selectedSeries['id'] ?>">
-                        <?= series_year_select('year_start', $selectedSeries['year_start'] ?? null, true, 'Año de inicio de la serie') ?>
+                        <?= series_year_select('year_start', $selectedSeries['year_start'] ?? null, true, series_h(t('Series start year', 'Año de inicio de la serie'))) ?>
                         <span aria-hidden="true">—</span>
-                        <?= series_year_select('year_end', $selectedSeries['year_end'] ?? null, true, 'Año de cierre de la serie') ?>
-                        <span class="series-bilingual-period__note"><?= empty($selectedSeries['year_end']) ? 'serie abierta' : 'serie cerrada' ?></span>
+                        <?= series_year_select('year_end', $selectedSeries['year_end'] ?? null, true, series_h(t('Series end year', 'Año de cierre de la serie'))) ?>
+                        <span class="series-bilingual-period__note"><?= empty($selectedSeries['year_end']) ? series_h(t('open series', 'serie abierta')) : series_h(t('closed series', 'serie cerrada')) ?></span>
                     </form>
                 </div>
                 <div class="series-bilingual-actions">
-                    <span class="status-pill <?= $seriesIsPublished ? 'status-published' : 'status-pending' ?>"><?= $seriesIsPublished ? 'Publicada' : 'Borrador' ?></span>
-                    <a class="series-website-decision series-website-decision--create" href="create_scenes.php?series=<?= (int)$selectedSeries['id'] ?>"><span>Crear<br>obra</span></a>
+                    <span class="status-pill <?= $seriesIsPublished ? 'status-published' : 'status-pending' ?>"><?= $seriesIsPublished ? series_h(t('Published', 'Publicada')) : series_h(t('Draft', 'Borrador')) ?></span>
+                    <a class="series-website-decision series-website-decision--create" href="create_scenes.php?series=<?= (int)$selectedSeries['id'] ?>"><span><?= t('Create<br>artwork', 'Crear<br>obra') ?></span></a>
                     <form method="post" action="<?= series_h($seriesPublicationAnchor) ?>">
                         <input type="hidden" name="csrf" value="<?= series_h($_SESSION['series_csrf']) ?>">
                         <input type="hidden" name="series_id" value="<?= (int)$selectedSeries['id'] ?>">
                         <?php if (!$seriesIsPublished): ?>
-                            <button class="series-website-decision series-website-decision--publish" type="submit" name="action" value="publish_series" <?= $seriesMissing ? 'disabled' : '' ?>><span>Publicar<br>serie</span></button>
+                            <button class="series-website-decision series-website-decision--publish" type="submit" name="action" value="publish_series" <?= $seriesMissing ? 'disabled' : '' ?>><span><?= t('Publish<br>series', 'Publicar<br>serie') ?></span></button>
                         <?php elseif ($seriesSpanishPending): ?>
-                            <button class="series-website-decision series-website-decision--publish" type="submit" name="action" value="publish_series"><span>Publicar<br>cambios</span></button>
+                            <button class="series-website-decision series-website-decision--publish" type="submit" name="action" value="publish_series"><span><?= t('Publish<br>changes', 'Publicar<br>cambios') ?></span></button>
                         <?php else: ?>
-                            <button class="series-website-decision series-website-decision--retire" type="submit" name="action" value="unpublish_series"><span>Retirar<br>serie</span></button>
+                            <button class="series-website-decision series-website-decision--retire" type="submit" name="action" value="unpublish_series"><span><?= t('Retire<br>series', 'Retirar<br>serie') ?></span></button>
                         <?php endif; ?>
                     </form>
                     <?php if ($seriesMissingEs): ?>
                         <p class="series-bilingual-actions__missing">
-                            Falta <?= series_h(implode(' · ', $seriesMissingEs)) ?>
-                            <?php if (in_array('texto de la serie', $seriesMissingEs, true)): ?><a href="#series-language-editorial">completar</a><?php endif; ?>
+                            <?= series_h(t('Missing', 'Falta')) ?> <?= series_h(implode(' · ', $seriesMissingEs)) ?>
+                            <?php if (in_array('texto de la serie', $seriesMissingEs, true)): ?><a href="#series-language-editorial"><?= series_h(t('complete', 'completar')) ?></a><?php endif; ?>
                         </p>
                     <?php elseif ($seriesIsPublished && $seriesSpanishPending): ?>
                         <form method="post" action="<?= series_h($seriesPublicationAnchor) ?>" class="series-bilingual-actions__retire">
                             <input type="hidden" name="csrf" value="<?= series_h($_SESSION['series_csrf']) ?>">
                             <input type="hidden" name="series_id" value="<?= (int)$selectedSeries['id'] ?>">
-                            <button class="button-link secondary" type="submit" name="action" value="unpublish_series">Retirar del sitio</button>
+                            <button class="button-link secondary" type="submit" name="action" value="unpublish_series"><?= series_h(t('Remove from site', 'Retirar del sitio')) ?></button>
                         </form>
                     <?php endif; ?>
                 </div>
@@ -675,8 +675,8 @@ $seriesSearchFields = $selectedSeries ? [
             <details class="series-direction-editor"<?= trim((string)($selectedSeries['conceptual_core'] ?? '')) === '' && trim((string)($selectedSeries['interpretive_limits'] ?? '')) === '' ? ' open' : '' ?>>
                 <summary>
                     <span>
-                        <strong>Dirección de la serie</strong>
-                        <small>Explicación del artista para definir la identidad y los textos de la serie.</small>
+                        <strong><?= series_h(t('Series direction', 'Dirección de la serie')) ?></strong>
+                        <small><?= series_h(t("Artist's explanation to define the series identity and copy.", 'Explicación del artista para definir la identidad y los textos de la serie.')) ?></small>
                     </span>
                 </summary>
                 <form method="post" data-series-direction-form>
@@ -702,16 +702,16 @@ $seriesSearchFields = $selectedSeries ? [
                         </article>
                     </div>
                     <footer>
-                        <p>Estas notas no se publican: son la fuente del contenido español de la serie.</p>
-                        <button type="submit">Guardar dirección</button>
+                        <p><?= series_h(t('These notes are not published: they are the source of the series Spanish content.', 'Estas notas no se publican: son la fuente del contenido español de la serie.')) ?></p>
+                        <button type="submit"><?= series_h(t('Save direction', 'Guardar dirección')) ?></button>
                     </footer>
                 </form>
             </details>
             <details class="series-bilingual-editorial" id="series-language-editorial">
                 <summary>
                     <span class="series-bilingual-summary">
-                        <strong>Espacio editorial</strong>
-                        <span>Español maestro e inglés internacional para publicación.</span>
+                        <strong><?= series_h(t('Editorial space', 'Espacio editorial')) ?></strong>
+                        <span><?= series_h(t('Master Spanish and international English for publication.', 'Español maestro e inglés internacional para publicación.')) ?></span>
                     </span>
                     <span class="series-bilingual-state" data-bilingual-save-state><?= series_h($seriesEditorialStateLabel) ?></span>
                 </summary>
@@ -755,14 +755,14 @@ $seriesSearchFields = $selectedSeries ? [
                 </div>
                 <div class="bilingual-preparation-bar">
                     <div>
-                        <strong>Generar contenido ES + EN</strong>
-                        <span>Crea las descripciones y el SEO útil de catálogo en ambos idiomas.</span>
+                        <strong><?= series_h(t('Generate ES + EN content', 'Generar contenido ES + EN')) ?></strong>
+                        <span><?= series_h(t('Creates the descriptions and useful catalogue SEO in both languages.', 'Crea las descripciones y el SEO útil de catálogo en ambos idiomas.')) ?></span>
                     </div>
-                    <button type="button" data-editorial-generate><?= $seriesHasSpanishContent ? 'Actualizar contenido ES + EN' : 'Generar contenido ES + EN' ?></button>
+                    <button type="button" data-editorial-generate><?= $seriesHasSpanishContent ? series_h(t('Update ES + EN content', 'Actualizar contenido ES + EN')) : series_h(t('Generate ES + EN content', 'Generar contenido ES + EN')) ?></button>
                 </div>
                 <details class="series-bilingual-memo">
-                    <summary>Memo privado de la serie</summary>
-                    <div class="series-bilingual-copy" contenteditable="true" role="textbox" aria-multiline="true" data-private-memo data-editorial-locale="es" data-placeholder="Ideas, decisiones y evolución conceptual de la serie…"><?= series_h($seriesSpanishEditorial['private_memo'] ?? '') ?></div>
+                    <summary><?= series_h(t('Private series memo', 'Memo privado de la serie')) ?></summary>
+                    <div class="series-bilingual-copy" contenteditable="true" role="textbox" aria-multiline="true" data-private-memo data-editorial-locale="es" data-placeholder="<?= series_h(t('Ideas, decisions and conceptual evolution of the series…', 'Ideas, decisiones y evolución conceptual de la serie…')) ?>"><?= series_h($seriesSpanishEditorial['private_memo'] ?? '') ?></div>
                 </details>
             </details>
             <?php else:
@@ -771,19 +771,19 @@ $seriesSearchFields = $selectedSeries ? [
             <div class="catalog-heading series-detail-heading">
                 <div class="series-detail-heading__copy">
                     <div class="series-detail-title-row">
-                        <h1><span class="series-title-label">Series</span><span class="series-title-name"><?= series_h($selectedSeries['title']) ?></span></h1>
+                        <h1><span class="series-title-label"><?= series_h(t('Series', 'Series')) ?></span><span class="series-title-name"><?= series_h($selectedSeries['title']) ?></span></h1>
                         <span class="status-pill <?= !empty($selectedSeries['published']) ? 'status-published' : 'status-pending' ?>">
-                            <?= !empty($selectedSeries['published']) ? 'Published' : 'Draft' ?>
+                            <?= !empty($selectedSeries['published']) ? series_h(t('Published', 'Publicada')) : series_h(t('Draft', 'Borrador')) ?>
                         </span>
                     </div>
                     <p class="series-detail-summary">
                         <?php if (trim((string)($selectedSeries['subtitle'] ?? '')) !== ''): ?><strong><?= series_h($selectedSeries['subtitle']) ?></strong><span aria-hidden="true">·</span><?php endif; ?>
                         <?php if ($seriesYearInline !== ''): ?><span><?= series_h($seriesYearInline) ?></span><span aria-hidden="true">·</span><?php endif; ?>
-                        <span><?= (int)$selectedSeries['artwork_count'] ?> artworks</span><span aria-hidden="true">·</span><span><?= (int)$selectedSeries['mockup_count'] ?> mockups</span>
+                        <span><?= (int)$selectedSeries['artwork_count'] ?> <?= series_h(t('artworks', 'obras')) ?></span><span aria-hidden="true">·</span><span><?= (int)$selectedSeries['mockup_count'] ?> mockups</span>
                     </p>
                 </div>
                 <div class="catalog-heading__actions series-detail-actions">
-                    <a class="series-create-art-decision" href="create_scenes.php?series=<?= (int)$selectedSeries['id'] ?>"><span>Create Art</span></a>
+                    <a class="series-create-art-decision" href="create_scenes.php?series=<?= (int)$selectedSeries['id'] ?>"><span><?= series_h(t('Create Art', 'Crear Obra')) ?></span></a>
                 </div>
             </div>
             <?php endif; ?>
@@ -794,7 +794,7 @@ $seriesSearchFields = $selectedSeries ? [
             <?php if (!$seriesBilingualExperiment || !$selectedSeries): ?>
             <section class="catalog-panel catalog-panel--compact catalog-panel--series-picker">
                 <?php if ($selectedSeries && $seriesMissing): ?>
-                    <div class="warning-list" style="margin-bottom: 20px;">Complete before publishing: <?= series_h(implode(' · ', $seriesMissing)) ?></div>
+                    <div class="warning-list" style="margin-bottom: 20px;"><?= series_h(t('Complete before publishing:', 'Completá antes de publicar:')) ?> <?= series_h(implode(' · ', $seriesMissing)) ?></div>
                 <?php endif; ?>
                 <?php if (!$selectedSeries): ?>
                     <div
@@ -807,26 +807,26 @@ $seriesSearchFields = $selectedSeries ? [
                         <?php foreach ($seriesRows as $index => $series): ?>
                             <?php $seriesArtworkCount = (int)($series['artwork_count'] ?? 0); ?>
                             <div class="series-series-option" data-series-order-id="<?= (int)$series['id'] ?>">
-                                <a class="social-square-button series-series-tile social-square-button--<?= series_tone($index) ?>" href="series.php?series=<?= (int)$series['id'] ?>" data-series-order-handle data-series-filter-id="<?= (int)$series['id'] ?>"<?= !empty($series['header_file']) ? ' style="--series-tile-image: url(\'' . series_h(series_media_url($series['header_file'], 420)) . '\'); --series-tile-position: ' . (int)($series['header_focal_x'] ?? 50) . '% ' . (int)($series['header_focal_y'] ?? 50) . '%;"' : '' ?> aria-label="Abrir mesa de trabajo de <?= series_h($series['title']) ?>, <?= $seriesArtworkCount ?> <?= $seriesArtworkCount === 1 ? 'artwork' : 'artworks' ?>, <?= !empty($series['published']) ? 'published' : 'draft' ?>">
+                                <a class="social-square-button series-series-tile social-square-button--<?= series_tone($index) ?>" href="series.php?series=<?= (int)$series['id'] ?>" data-series-order-handle data-series-filter-id="<?= (int)$series['id'] ?>"<?= !empty($series['header_file']) ? ' style="--series-tile-image: url(\'' . series_h(series_media_url($series['header_file'], 420)) . '\'); --series-tile-position: ' . (int)($series['header_focal_x'] ?? 50) . '% ' . (int)($series['header_focal_y'] ?? 50) . '%;"' : '' ?> aria-label="<?= series_h(t('Open workspace for', 'Abrir mesa de trabajo de')) ?> <?= series_h($series['title']) ?>, <?= $seriesArtworkCount ?> <?= $seriesArtworkCount === 1 ? series_h(t('artwork', 'obra')) : series_h(t('artworks', 'obras')) ?>, <?= !empty($series['published']) ? series_h(t('published', 'publicada')) : series_h(t('draft', 'borrador')) ?>">
                                     <span class="series-series-tile__title"><?= series_h($series['title']) ?></span>
                                     <small class="series-series-tile__meta">
-                                        <?= $seriesArtworkCount > 0 ? $seriesArtworkCount . ' ' . ($seriesArtworkCount === 1 ? 'artwork' : 'artworks') : 'No artworks' ?>
-                                        · <?= !empty($series['published']) ? 'Published' : 'Draft' ?>
+                                        <?= $seriesArtworkCount > 0 ? $seriesArtworkCount . ' ' . ($seriesArtworkCount === 1 ? series_h(t('artwork', 'obra')) : series_h(t('artworks', 'obras'))) : series_h(t('No artworks', 'Sin obras')) ?>
+                                        · <?= !empty($series['published']) ? series_h(t('Published', 'Publicada')) : series_h(t('Draft', 'Borrador')) ?>
                                     </small>
                                 </a>
-                                <a class="series-series-option__edit" data-no-series-order href="series.php?series=<?= (int)$series['id'] ?>#series-language-editorial" aria-label="Editar texto de <?= series_h($series['title']) ?>" title="Editar texto editorial">
+                                <a class="series-series-option__edit" data-no-series-order href="series.php?series=<?= (int)$series['id'] ?>#series-language-editorial" aria-label="<?= series_h(t('Edit text for', 'Editar texto de')) ?> <?= series_h($series['title']) ?>" title="<?= series_h(t('Edit editorial text', 'Editar texto editorial')) ?>">
                                     <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 20h4l11-11-4-4L4 16v4Zm9.7-13.7 4 4" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"/></svg>
                                 </a>
                             </div>
                         <?php endforeach; ?>
                         <details class="series-create-toggle">
-                            <summary class="social-square-button social-square-button--new" aria-label="New series"><span>+</span></summary>
+                            <summary class="social-square-button social-square-button--new" aria-label="<?= series_h(t('New series', 'Nueva serie')) ?>"><span>+</span></summary>
                             <form class="series-create-form" method="post">
                                 <input type="hidden" name="csrf" value="<?= series_h($_SESSION['series_csrf']) ?>">
                                 <input type="hidden" name="action" value="create_series">
-                                <input type="text" name="title" placeholder="Series title" required>
-                                <input type="text" name="description" placeholder="Short internal description">
-                                <button type="submit">Create</button>
+                                <input type="text" name="title" placeholder="<?= series_h(t('Series title', 'Título de la serie')) ?>" required>
+                                <input type="text" name="description" placeholder="<?= series_h(t('Short internal description', 'Descripción interna breve')) ?>">
+                                <button type="submit"><?= series_h(t('Create', 'Crear')) ?></button>
                             </form>
                         </details>
                     </div>
@@ -841,15 +841,15 @@ $seriesSearchFields = $selectedSeries ? [
                                          data-series-header-dropzone
                                          tabindex="0"
                                          role="button"
-                                         aria-label="Cambiar imagen de la serie"
+                                         aria-label="<?= series_h(t('Change series image', 'Cambiar imagen de la serie')) ?>"
                                          data-focal-x="<?= (int)($series['header_focal_x'] ?? 50) ?>"
                                          data-focal-y="<?= (int)($series['header_focal_y'] ?? 50) ?>"
                                          data-zoom="<?= (int)($series['header_zoom'] ?? 115) ?>">
-                                        <img src="<?= series_h(series_media_url($series['header_file'], 900)) ?>" alt="Header preview" id="series-framing-img"
+                                        <img src="<?= series_h(series_media_url($series['header_file'], 900)) ?>" alt="<?= series_h(t('Header preview', 'Vista previa del encabezado')) ?>" id="series-framing-img"
                                              style="object-position: <?= (int)($series['header_focal_x'] ?? 50) ?>% <?= (int)($series['header_focal_y'] ?? 50) ?>%; transform: scale(<?= ((int)($series['header_zoom'] ?? 115)) / 100 ?>);">
-                                        <span class="series-header-framing__replace" data-series-header-label>Cambiar imagen</span>
+                                        <span class="series-header-framing__replace" data-series-header-label><?= series_h(t('Change image', 'Cambiar imagen')) ?></span>
                                     </label>
-                                    <p class="series-header-framing__hint">Haz clic para cambiar la imagen. Arrastra para reencuadrarla y usa el control para ampliar. <span>El recorte solo afecta al website.</span></p>
+                                    <p class="series-header-framing__hint"><?= series_h(t('Click to change the image. Drag to reframe and use the control to zoom.', 'Haz clic para cambiar la imagen. Arrastra para reencuadrarla y usa el control para ampliar.')) ?> <span><?= series_h(t('The crop only affects the website.', 'El recorte solo afecta al website.')) ?></span></p>
                                     <label class="series-header-framing__zoom">Zoom<input type="range" id="series-framing-zoom" min="115" max="400" value="<?= (int)($series['header_zoom'] ?? 115) ?>"></label>
                                     <form method="post" id="series-framing-form">
                                         <input type="hidden" name="csrf" value="<?= series_h($_SESSION['series_csrf']) ?>">
@@ -858,7 +858,7 @@ $seriesSearchFields = $selectedSeries ? [
                                         <input type="hidden" name="focal_x" id="series-framing-focal-x" value="<?= (int)($series['header_focal_x'] ?? 50) ?>">
                                         <input type="hidden" name="focal_y" id="series-framing-focal-y" value="<?= (int)($series['header_focal_y'] ?? 50) ?>">
                                         <input type="hidden" name="zoom" id="series-framing-zoom-value" value="<?= (int)($series['header_zoom'] ?? 115) ?>">
-                                        <button class="button-link secondary" type="submit">Save framing</button>
+                                        <button class="button-link secondary" type="submit"><?= series_h(t('Save framing', 'Guardar encuadre')) ?></button>
                                     </form>
                                 </div>
                                 <script>
@@ -925,8 +925,8 @@ $seriesSearchFields = $selectedSeries ? [
                                 <input type="hidden" name="series_id" value="<?= (int)$series['id'] ?>">
                                 <?php if (empty($series['header_file'])): ?>
                                 <label class="series-header-empty" for="series-header-upload-input" data-series-header-dropzone tabindex="0" role="button">
-                                    <span data-series-header-label><?= empty($series['header_file']) ? 'Upload header image' : 'Replace header image' ?></span>
-                                    <small>Click or drop a JPG, PNG or WebP · 15 MB maximum</small>
+                                    <span data-series-header-label><?= empty($series['header_file']) ? series_h(t('Upload header image', 'Subir imagen de encabezado')) : series_h(t('Replace header image', 'Reemplazar imagen de encabezado')) ?></span>
+                                    <small><?= series_h(t('Click or drop a JPG, PNG or WebP · 15 MB maximum', 'Hacé clic o soltá un JPG, PNG o WebP · máximo 15 MB')) ?></small>
                                 </label>
                                 <?php endif; ?>
                                 <input id="series-header-upload-input" class="series-header-upload__input" type="file" name="header_upload" accept="image/png,image/jpeg,image/webp" required data-series-header-file>
@@ -934,20 +934,20 @@ $seriesSearchFields = $selectedSeries ? [
                             </form>
 
                             <details class="series-header-mockups">
-                                <summary>Browse generated mockups</summary>
+                                <summary><?= series_h(t('Browse generated mockups', 'Explorar mockups generados')) ?></summary>
                                 <?php if (!$seriesMockupCandidates): ?>
-                                    <p class="favorite-empty">No mockups have been generated yet.</p>
+                                    <p class="favorite-empty"><?= series_h(t('No mockups have been generated yet.', 'Todavía no se generaron mockups.')) ?></p>
                                 <?php else: ?>
                                     <div class="series-header-grid">
                                         <?php foreach ($seriesMockupCandidates as $mockupCandidate): ?>
                                             <div class="pin-image">
-                                                <img src="<?= series_h(series_media_url($mockupCandidate['file'], 420)) ?>" alt="<?= series_h($mockupCandidate['title'] ?: 'Mockup') ?>">
+                                                <img src="<?= series_h(series_media_url($mockupCandidate['file'], 420)) ?>" alt="<?= series_h($mockupCandidate['title'] ?: t('Mockup', 'Mockup')) ?>">
                                                 <form class="header-pin-form" method="post">
                                                     <input type="hidden" name="csrf" value="<?= series_h($_SESSION['series_csrf']) ?>">
                                                     <input type="hidden" name="action" value="set_series_header">
                                                     <input type="hidden" name="series_id" value="<?= (int)$series['id'] ?>">
                                                     <input type="hidden" name="file" value="<?= series_h($mockupCandidate['file']) ?>">
-                                                    <button class="header-pin <?= ($series['header_file'] ?? '') === $mockupCandidate['file'] ? 'is-active' : '' ?>" name="submit_header" title="Set as series header" aria-label="Set as series header">
+                                                    <button class="header-pin <?= ($series['header_file'] ?? '') === $mockupCandidate['file'] ? 'is-active' : '' ?>" name="submit_header" title="<?= series_h(t('Set as series header', 'Usar como encabezado de la serie')) ?>" aria-label="<?= series_h(t('Set as series header', 'Usar como encabezado de la serie')) ?>">
                                                         <svg viewBox="0 0 64 64" aria-hidden="true"><path d="M32 4 37.2 27.6 60 32 37.2 36.4 32 60 26.8 36.4 4 32 26.8 27.6 32 4Z" opacity=".72"/><path d="M32 14 35 28.9 50 32 35 35.1 32 50 29 35.1 14 32 29 28.9 32 14Z" opacity=".46"/><path d="M43.8 20.2 37.5 30.1 54.2 13.8 37.9 30.5 47.8 24.2Z" opacity=".5"/><path d="M20.2 43.8 26.5 33.9 9.8 50.2 26.1 33.5 16.2 39.8Z" opacity=".5"/></svg>
                                                     </button>
                                                 </form>
@@ -959,7 +959,7 @@ $seriesSearchFields = $selectedSeries ? [
 
                         </div>
                         <article class="series-card series-card--detailed">
-                            <form class="series-delete-form" method="post" id="delete-series-form" onsubmit="return confirm('Remove this series? Artworks will move to NO SERIE.');" style="display:none;">
+                            <form class="series-delete-form" method="post" id="delete-series-form" onsubmit="return confirm(<?= json_encode(t('Remove this series? Artworks will move to NO SERIE.', '¿Eliminar esta serie? Las obras pasarán a SIN SERIE.')) ?>);" style="display:none;">
                                 <input type="hidden" name="csrf" value="<?= series_h($_SESSION['series_csrf']) ?>">
                                 <input type="hidden" name="action" value="delete_series">
                                 <input type="hidden" name="series_id" value="<?= (int)$series['id'] ?>">
@@ -969,37 +969,37 @@ $seriesSearchFields = $selectedSeries ? [
                                 <input type="hidden" name="csrf" value="<?= series_h($_SESSION['series_csrf']) ?>">
                                 <input type="hidden" name="action" value="update_series">
                                 <input type="hidden" name="series_id" value="<?= (int)$series['id'] ?>">
-                                
+
                                 <div class="catalog-edit-form__row">
-                                    <label>Title<input type="text" name="title" value="<?= series_h($series['title']) ?>" required></label>
-                                    <label>Subtitle<input type="text" name="subtitle" value="<?= series_h($series['subtitle'] ?? '') ?>" placeholder="Short tagline shown with the title"></label>
+                                    <label><?= series_h(t('Title', 'Título')) ?><input type="text" name="title" value="<?= series_h($series['title']) ?>" required></label>
+                                    <label><?= series_h(t('Subtitle', 'Subtítulo')) ?><input type="text" name="subtitle" value="<?= series_h($series['subtitle'] ?? '') ?>" placeholder="<?= series_h(t('Short tagline shown with the title', 'Frase breve mostrada junto al título')) ?>"></label>
                                 </div>
 
                                 <div class="catalog-edit-form__row">
-                                    <label>Years from<?= series_year_select('year_start', $series['year_start'] ?? null) ?></label>
-                                    <label>Years to<?= series_year_select('year_end', $series['year_end'] ?? null) ?></label>
+                                    <label><?= series_h(t('Years from', 'Años desde')) ?><?= series_year_select('year_start', $series['year_start'] ?? null) ?></label>
+                                    <label><?= series_h(t('Years to', 'Años hasta')) ?><?= series_year_select('year_end', $series['year_end'] ?? null) ?></label>
                                 </div>
 
                                 <div class="catalog-edit-form__row">
-                                    <label>Universal slug<input type="text" value="<?= series_h($series['slug']) ?>" readonly aria-describedby="series-slug-help"><small id="series-slug-help">Generated automatically from the universal title.</small></label>
-                                    <label>Tags<input type="text" name="tags" value="<?= series_h($series['tags'] ?? '') ?>" placeholder="Comma separated, e.g. abstract, painting"></label>
+                                    <label><?= series_h(t('Universal slug', 'Slug universal')) ?><input type="text" value="<?= series_h($series['slug']) ?>" readonly aria-describedby="series-slug-help"><small id="series-slug-help"><?= series_h(t('Generated automatically from the universal title.', 'Generado automáticamente a partir del título universal.')) ?></small></label>
+                                    <label><?= series_h(t('Tags', 'Etiquetas')) ?><input type="text" name="tags" value="<?= series_h($series['tags'] ?? '') ?>" placeholder="<?= series_h(t('Comma separated, e.g. abstract, painting', 'Separadas por comas, ej. abstracto, pintura')) ?>"></label>
                                 </div>
 
                                 <div class="catalog-edit-form__row">
-                                    <label>Short Description<textarea name="description" rows="3" placeholder="One or two sentences used in previews and cards"><?= series_h($series['description'] ?? '') ?></textarea></label>
-                                    <label>SEO Meta Description<textarea name="seo_description" rows="3" placeholder="Meta description shown in search results"><?= series_h($series['seo_description'] ?? '') ?></textarea></label>
+                                    <label><?= series_h(t('Short Description', 'Descripción breve')) ?><textarea name="description" rows="3" placeholder="<?= series_h(t('One or two sentences used in previews and cards', 'Una o dos frases usadas en vistas previas y tarjetas')) ?>"><?= series_h($series['description'] ?? '') ?></textarea></label>
+                                    <label><?= series_h(t('SEO Meta Description', 'Meta descripción SEO')) ?><textarea name="seo_description" rows="3" placeholder="<?= series_h(t('Meta description shown in search results', 'Meta descripción mostrada en resultados de búsqueda')) ?>"><?= series_h($series['seo_description'] ?? '') ?></textarea></label>
                                 </div>
 
-                                <label>Long Description<textarea name="long_description" rows="8" placeholder="Full curatorial text for the series page"><?= series_h($series['long_description'] ?? '') ?></textarea></label>
-                                <label>Long-Tail Keywords<textarea name="keywords" rows="2" placeholder="Comma separated, e.g. structural abstract painting large scale"><?= series_h($series['keywords'] ?? '') ?></textarea></label>
-                                <label>Conceptual Core<textarea name="conceptual_core" rows="6" placeholder="Artist-authored conceptual direction for this series"><?= series_h($series['conceptual_core'] ?? '') ?></textarea></label>
-                                <label>Interpretive Limits<textarea name="interpretive_limits" rows="5" placeholder="What analysis and editorial text must not reduce, claim or infer"><?= series_h($series['interpretive_limits'] ?? '') ?></textarea></label>
+                                <label><?= series_h(t('Long Description', 'Descripción extensa')) ?><textarea name="long_description" rows="8" placeholder="<?= series_h(t('Full curatorial text for the series page', 'Texto curatorial completo para la página de la serie')) ?>"><?= series_h($series['long_description'] ?? '') ?></textarea></label>
+                                <label><?= series_h(t('Long-Tail Keywords', 'Palabras clave long-tail')) ?><textarea name="keywords" rows="2" placeholder="<?= series_h(t('Comma separated, e.g. structural abstract painting large scale', 'Separadas por comas, ej. pintura abstracta estructural gran escala')) ?>"><?= series_h($series['keywords'] ?? '') ?></textarea></label>
+                                <label><?= series_h(t('Conceptual Core', 'Núcleo conceptual')) ?><textarea name="conceptual_core" rows="6" placeholder="<?= series_h(t('Artist-authored conceptual direction for this series', 'Dirección conceptual escrita por el artista para esta serie')) ?>"><?= series_h($series['conceptual_core'] ?? '') ?></textarea></label>
+                                <label><?= series_h(t('Interpretive Limits', 'Límites interpretativos')) ?><textarea name="interpretive_limits" rows="5" placeholder="<?= series_h(t('What analysis and editorial text must not reduce, claim or infer', 'Qué no debe reducir, afirmar ni inferir el análisis y el texto editorial')) ?>"><?= series_h($series['interpretive_limits'] ?? '') ?></textarea></label>
 
-                                <p><?= series_h(series_year_range_label($series['year_start'] ?? null, $series['year_end'] ?? null)) ?><?= (int)$series['artwork_count'] ?> artworks · <?= (int)$series['mockup_count'] ?> mockups</p>
-                                
+                                <p><?= series_h(series_year_range_label($series['year_start'] ?? null, $series['year_end'] ?? null)) ?><?= (int)$series['artwork_count'] ?> <?= series_h(t('artworks', 'obras')) ?> · <?= (int)$series['mockup_count'] ?> mockups</p>
+
                                 <div class="catalog-edit-form__actions">
-                                    <button class="button-link" type="submit">Save changes</button>
-                                    <button class="button-link secondary danger" type="submit" form="delete-series-form">Delete series</button>
+                                    <button class="button-link" type="submit"><?= series_h(t('Save changes', 'Guardar cambios')) ?></button>
+                                    <button class="button-link secondary danger" type="submit" form="delete-series-form"><?= series_h(t('Delete series', 'Eliminar serie')) ?></button>
                                 </div>
                             </form>
                         </article>
@@ -1011,34 +1011,34 @@ $seriesSearchFields = $selectedSeries ? [
             <section class="catalog-panel catalog-panel--compact catalog-panel--series-artworks" id="artwork-assignment">
                 <div class="detail-heading">
                     <div class="series-artwork-heading-copy">
-                        <h2><?= $selectedSeries ? 'Works in this series' : 'Artwork assignment' ?></h2>
+                        <h2><?= $selectedSeries ? series_h(t('Works in this series', 'Obras en esta serie')) : series_h(t('Artwork assignment', 'Asignación de obras')) ?></h2>
                         <?php if ($selectedSeries): ?>
-                            <p><?= count($displayedArtworks) ?> <?= count($displayedArtworks) === 1 ? 'artwork belongs' : 'artworks belong' ?> to <?= series_h($selectedSeries['title']) ?>. Drag the images to change their order; changing a series saves immediately.</p>
+                            <p><?= count($displayedArtworks) ?> <?= count($displayedArtworks) === 1 ? series_h(t('artwork belongs', 'obra pertenece')) : series_h(t('artworks belong', 'obras pertenecen')) ?> <?= series_h(t('to', 'a')) ?> <?= series_h($selectedSeries['title']) ?>. <?= series_h(t('Drag the images to change their order; changing a series saves immediately.', 'Arrastrá las imágenes para cambiar su orden; cambiar de serie guarda de inmediato.')) ?></p>
                         <?php else: ?>
-                            <p>Assign each canonical artwork to its series. All root views and mockups inherit the same relationship.</p>
+                            <p><?= series_h(t('Assign each canonical artwork to its series. All root views and mockups inherit the same relationship.', 'Asigná cada obra canónica a su serie. Todas las vistas raíz y mockups heredan la misma relación.')) ?></p>
                         <?php endif; ?>
                     </div>
                     <div class="series-artwork-heading-tools">
                         <?php if (!$selectedSeries && $displayedArtworks): ?>
                             <label class="series-artwork-filter">
-                                <span>View by series</span>
-                                <select data-series-artwork-filter aria-label="Filter artwork assignment by series">
-                                    <option value="all">All series</option>
+                                <span><?= series_h(t('View by series', 'Ver por serie')) ?></span>
+                                <select data-series-artwork-filter aria-label="<?= series_h(t('Filter artwork assignment by series', 'Filtrar asignación de obras por serie')) ?>">
+                                    <option value="all"><?= series_h(t('All series', 'Todas las series')) ?></option>
                                     <?php foreach ($seriesRows as $series): ?>
                                         <option value="<?= (int)$series['id'] ?>"><?= series_h($series['title']) ?></option>
                                     <?php endforeach; ?>
-                                    <option value="none">No series</option>
+                                    <option value="none"><?= series_h(t('No series', 'Sin serie')) ?></option>
                                 </select>
                             </label>
                         <?php endif; ?>
-                        <span class="series-dependent-count" data-series-visible-count><?= count($displayedArtworks) ?> <?= count($displayedArtworks) === 1 ? 'artwork' : 'artworks' ?></span>
+                        <span class="series-dependent-count" data-series-visible-count><?= count($displayedArtworks) ?> <?= count($displayedArtworks) === 1 ? series_h(t('artwork', 'obra')) : series_h(t('artworks', 'obras')) ?></span>
                     </div>
                 </div>
-                <p class="series-mobile-order-hint" data-series-order-hint<?= $selectedSeries ? '' : ' hidden' ?>>Hold an artwork image to change its order.</p>
+                <p class="series-mobile-order-hint" data-series-order-hint<?= $selectedSeries ? '' : ' hidden' ?>><?= series_h(t('Hold an artwork image to change its order.', 'Mantené presionada una imagen de obra para cambiar su orden.')) ?></p>
                 <?php if (!$displayedArtworks): ?>
                     <div class="empty-state series-dependent-empty">
-                        <strong>No artworks are associated with <?= $selectedSeries ? series_h($selectedSeries['title']) : 'a series' ?> yet.</strong>
-                        <?php if ($selectedSeries): ?><a href="series.php">Assign artworks from the Series overview</a><?php endif; ?>
+                        <strong><?= series_h(t('No artworks are associated with', 'No hay obras asociadas a')) ?> <?= $selectedSeries ? series_h($selectedSeries['title']) : series_h(t('a series', 'una serie')) ?> <?= series_h(t('yet.', 'todavía.')) ?></strong>
+                        <?php if ($selectedSeries): ?><a href="series.php"><?= series_h(t('Assign artworks from the Series overview', 'Asigná obras desde el resumen de Series')) ?></a><?php endif; ?>
                     </div>
                 <?php else: ?>
                     <div class="series-artwork-list" data-series-order-list<?= !$selectedSeries ? ' data-series-filter-controlled="true"' : '' ?> data-series-order-endpoint="reorder_series_artworks.php" data-series-order-csrf="<?= series_h($_SESSION['series_csrf']) ?>">
@@ -1076,8 +1076,8 @@ $seriesSearchFields = $selectedSeries ? [
                                         <input type="hidden" name="csrf" value="<?= series_h($_SESSION['series_csrf']) ?>">
                                         <input type="hidden" name="action" value="assign_artwork">
                                         <input type="hidden" name="artwork_id" value="<?= (int)$artwork['id'] ?>">
-                                        <select name="series_id" aria-label="Artwork series" onchange="this.form.requestSubmit()">
-                                            <option value="">NO SERIE</option>
+                                        <select name="series_id" aria-label="<?= series_h(t('Artwork series', 'Serie de la obra')) ?>" onchange="this.form.requestSubmit()">
+                                            <option value=""><?= series_h(t('NO SERIES', 'SIN SERIE')) ?></option>
                                             <?php foreach ($seriesRows as $series): ?>
                                                 <option value="<?= (int)$series['id'] ?>" <?= (int)($artwork['series_id'] ?? 0) === (int)$series['id'] ? 'selected' : '' ?>><?= series_h($series['title']) ?></option>
                                             <?php endforeach; ?>
@@ -1089,7 +1089,7 @@ $seriesSearchFields = $selectedSeries ? [
                     </div>
                     <?php if (!$selectedSeries): ?>
                         <div class="empty-state series-dependent-empty series-filter-empty" data-series-filter-empty hidden>
-                            <strong>No artworks match this series.</strong>
+                            <strong><?= series_h(t('No artworks match this series.', 'Ninguna obra coincide con esta serie.')) ?></strong>
                         </div>
                     <?php endif; ?>
                 <?php endif; ?>
@@ -1099,12 +1099,12 @@ $seriesSearchFields = $selectedSeries ? [
                     class="series-delete-action"
                     method="post"
                     data-current-series-delete
-                    onsubmit="return confirm('¿Eliminar esta serie? Sus obras y mockups pasarán a NO SERIE.');"
+                    onsubmit="return confirm(<?= json_encode(t('Delete this series? Its artworks and mockups will move to NO SERIES.', '¿Eliminar esta serie? Sus obras y mockups pasarán a SIN SERIE.')) ?>);"
                 >
                     <input type="hidden" name="csrf" value="<?= series_h($_SESSION['series_csrf']) ?>">
                     <input type="hidden" name="action" value="delete_series">
                     <input type="hidden" name="series_id" value="<?= (int)$selectedSeries['id'] ?>">
-                    <button class="button-link secondary danger" type="submit">Eliminar serie</button>
+                    <button class="button-link secondary danger" type="submit"><?= series_h(t('Delete series', 'Eliminar serie')) ?></button>
                 </form>
             <?php endif; ?>
         </div>

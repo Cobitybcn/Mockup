@@ -354,9 +354,10 @@ function build_artwork_package_v2(array $artwork, array $analysis, array $artist
     }
 
     if (empty($titles)) {
-        $titles = ['Untitled'];
-        $titleSubtitles = ['Untitled' => ''];
-        $titleDescriptions = ['Untitled' => ''];
+        $untitledFallback = t('Untitled', 'Sin título');
+        $titles = [$untitledFallback];
+        $titleSubtitles = [$untitledFallback => ''];
+        $titleDescriptions = [$untitledFallback => ''];
     }
 
     error_log(sprintf(
@@ -514,7 +515,13 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && ($_POST['action'] ?? '') === 'selec
                     'user_id' => $artworkOwnerId,
                 ]);
         }, 12);
-        if (ProviderSettings::isRealMode() && ProviderSettings::allowRealApi() && ProviderSettings::imageProvider() === 'gemini') {
+        // Seleccionar la raiz es una decision grafica. El paquete editorial es de
+        // Artist Pro y se prepara a pedido, no como efecto de esta eleccion.
+        if (ProviderSettings::isRealMode()
+            && ProviderSettings::allowRealApi()
+            && ProviderSettings::imageProvider() === 'gemini'
+            && FeatureAccess::allowsUserId($artworkOwnerId, FeatureAccess::EDITORIAL_MANAGE)
+        ) {
             try {
                 $artworkForV2=$artwork;$artworkForV2['root_file']=$candidateFile;
                 $generated=(new ArtworkAnalysisV2Service(new GeminiImageClient(), $pdo))->generateDraft($artworkForV2,ArtistProfile::findForUser($artworkOwnerId),RESULTS_DIR.DIRECTORY_SEPARATOR.$candidateFile,'Automatic v2 analysis after root selection.',$artworkAnalysisLocale);
@@ -787,14 +794,14 @@ if (!function_exists('artwork_latest_root_view_job_candidates')) {
 if ($_SERVER['REQUEST_METHOD'] === 'POST' && ($_POST['action'] ?? '') === 'generate_spanish_reanalysis_comparison') {
     try {
         Auth::requireValidCsrf((string)($_POST['csrf'] ?? ''), 'bilingual_editorial');
-        if (!$bilingualExperiment) throw new RuntimeException('The bilingual editorial pilot is not enabled for this artwork.');
+        if (!$bilingualExperiment) throw new RuntimeException(t('The bilingual editorial pilot is not enabled for this artwork.', 'El piloto editorial bilingüe no está habilitado para esta obra.'));
         if (!ProviderSettings::isRealMode() || !ProviderSettings::allowRealApi() || ProviderSettings::imageProvider() !== 'gemini') {
-            throw new RuntimeException('Gemini real analysis is not enabled in this environment.');
+            throw new RuntimeException(t('Gemini real analysis is not enabled in this environment.', 'El análisis real de Gemini no está habilitado en este entorno.'));
         }
         $imageFile = basename((string)($artwork['root_file'] ?? ''));
         $imagePath = $imageFile !== '' ? RESULTS_DIR . DIRECTORY_SEPARATOR . $imageFile : '';
         if ($imageFile === '' || !artwork_result_file_available($imageFile) || !is_file($imagePath)) {
-            throw new RuntimeException('Selected root artwork image was not found.');
+            throw new RuntimeException(t('Selected root artwork image was not found.', 'No se encontró la imagen de la obra raíz seleccionada.'));
         }
         $profileForComparison = ArtistProfile::findForUser($artworkOwnerId);
         $sheetForComparison = (new ArtworkSheetService($pdo))->sheetForArtwork($id, $artworkOwnerId);
@@ -813,7 +820,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && ($_POST['action'] ?? '') === 'gener
             (string)$generated['file'],
             json_encode($comparisonDraft, JSON_PRETTY_PRINT | JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES) . PHP_EOL
         ) === false) {
-            throw new RuntimeException('The independent Spanish analysis could not be saved.');
+            throw new RuntimeException(t('The independent Spanish analysis could not be saved.', 'No se pudo guardar el análisis independiente en español.'));
         }
         header('Location: artwork.php?id=' . rawurlencode((string)$id) . '&spanish_reanalysis_ready=1#artwork-metadata');
         exit;
@@ -826,11 +833,11 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && ($_POST['action'] ?? '') === 'gener
 if ($_SERVER['REQUEST_METHOD'] === 'POST' && ($_POST['action'] ?? '') === 'use_spanish_reanalysis_comparison') {
     try {
         Auth::requireValidCsrf((string)($_POST['csrf'] ?? ''), 'bilingual_editorial');
-        if (!$bilingualExperiment) throw new RuntimeException('The bilingual editorial pilot is not enabled for this artwork.');
+        if (!$bilingualExperiment) throw new RuntimeException(t('The bilingual editorial pilot is not enabled for this artwork.', 'El piloto editorial bilingüe no está habilitado para esta obra.'));
         $comparison = artwork_v2_draft_for_image((string)($artwork['root_file'] ?? ''));
         $comparisonDraft = is_array($comparison['data'] ?? null) ? (array)$comparison['data'] : [];
         if (($comparisonDraft['analysis_language'] ?? '') !== 'es' || empty($comparisonDraft['review']['comparison_only'])) {
-            throw new RuntimeException('No independent Spanish reanalysis is available.');
+            throw new RuntimeException(t('No independent Spanish reanalysis is available.', 'No hay un reanálisis independiente en español disponible.'));
         }
         $spanishState = $bilingualEditorialService->get($artworkOwnerId, 'artwork', $id, 'es');
         $bilingualEditorialService->save(
@@ -852,7 +859,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && ($_POST['action'] ?? '') === 'use_s
 if ($_SERVER['REQUEST_METHOD'] === 'POST' && ($_POST['action'] ?? '') === 'apply_v2_artwork_draft') {
     try {
         $draftMatch = artwork_v2_draft_for_image((string)($artwork['root_file'] ?? ''));
-        if (!$draftMatch) throw new RuntimeException('No valid v2 draft exists for the selected root artwork.');
+        if (!$draftMatch) throw new RuntimeException(t('No valid v2 draft exists for the selected root artwork.', 'No existe un borrador v2 válido para la obra raíz seleccionada.'));
         artwork_apply_v2_metadata($pdo, $id, $artworkOwnerId, (array)$draftMatch['data']);
         header('Location: artwork.php?id=' . rawurlencode((string)$id) . '&v2_applied=1#artwork-metadata');
         exit;
@@ -864,10 +871,10 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && ($_POST['action'] ?? '') === 'apply
 
 if ($_SERVER['REQUEST_METHOD'] === 'POST' && ($_POST['action'] ?? '') === 'generate_v2_artwork_draft') {
     try {
-        if (!ProviderSettings::isRealMode() || !ProviderSettings::allowRealApi() || ProviderSettings::imageProvider() !== 'gemini') throw new RuntimeException('Gemini real analysis is not enabled in this environment.');
+        if (!ProviderSettings::isRealMode() || !ProviderSettings::allowRealApi() || ProviderSettings::imageProvider() !== 'gemini') throw new RuntimeException(t('Gemini real analysis is not enabled in this environment.', 'El análisis real de Gemini no está habilitado en este entorno.'));
         $imageFile = basename((string)($artwork['root_file'] ?? ''));
         $imagePath = $imageFile !== '' ? RESULTS_DIR . DIRECTORY_SEPARATOR . $imageFile : '';
-        if ($imagePath === '' || !is_file($imagePath)) throw new RuntimeException('Selected root artwork image was not found.');
+        if ($imagePath === '' || !is_file($imagePath)) throw new RuntimeException(t('Selected root artwork image was not found.', 'No se encontró la imagen de la obra raíz seleccionada.'));
         $profileForV2 = ArtistProfile::findForUser($artworkOwnerId);
         $sheetForNotes = (new ArtworkSheetService($pdo))->sheetForArtwork($id, $artworkOwnerId);
         $v2Service = new ArtworkAnalysisV2Service(new GeminiImageClient(), $pdo);
@@ -885,7 +892,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && ($_POST['action'] ?? '') === 'sync_
     try {
         $sheet = (new ArtworkSheetService($pdo))->sheetForArtwork($id, $artworkOwnerId);
         if (!in_array((string)($sheet['status'] ?? ''), ['validated', 'approved'], true)) {
-            throw new RuntimeException('Validate the artwork analysis before sending it to the website.');
+            throw new RuntimeException(t('Validate the artwork analysis before sending it to the website.', 'Validá el análisis de la obra antes de enviarlo al sitio web.'));
         }
         $publicationId = (new PublicationService($pdo))->createForSheet((int)$sheet['id'], $artworkOwnerId);
         $website = new ArtworkWebsiteV2Service($pdo);
@@ -919,7 +926,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && ($_POST['action'] ?? '') === 'save_
         $headerMockups = $pdo->prepare('SELECT mockup_file FROM mockup_sheets WHERE user_id=? AND (artwork_id=? OR artwork_sheet_id=? OR (? > 0 AND artwork_group_id=?))');
         $headerMockups->execute([$artworkOwnerId, $id, (int)$sheet['id'], $groupId, $groupId]);
         $allowedHeaders = array_merge($allowedHeaders, array_map('basename', $headerMockups->fetchAll(PDO::FETCH_COLUMN)));
-        if ($headerFile !== '' && !in_array($headerFile, $allowedHeaders, true)) throw new RuntimeException('The selected website cover does not belong to this artwork.');
+        if ($headerFile !== '' && !in_array($headerFile, $allowedHeaders, true)) throw new RuntimeException(t('The selected website cover does not belong to this artwork.', 'La portada seleccionada para el sitio web no pertenece a esta obra.'));
         $pdo->prepare('UPDATE publications SET header_file=?,updated_at=? WHERE id=? AND user_id=?')
             ->execute([$headerFile, date('c'), (int)$savedWebsitePublication['id'], $artworkOwnerId]);
         $constellationCountry = trim((string)($_POST['constellation_country'] ?? ''));
@@ -940,14 +947,14 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && ($_POST['action'] ?? '') === 'save_
         $priceInput = trim((string)($_POST['sale_price'] ?? ''));
         if ($sale || $priceInput !== '') {
             $price = str_replace(',', '.', $priceInput === '' ? '0' : $priceInput);
-            if (!is_numeric($price) || (float)$price < 0) throw new RuntimeException('Enter a valid artwork price.');
+            if (!is_numeric($price) || (float)$price < 0) throw new RuntimeException(t('Enter a valid artwork price.', 'Ingresá un precio válido para la obra.'));
             $currency = strtoupper(trim((string)($_POST['sale_currency'] ?? 'EUR')));
-            if (!preg_match('/^[A-Z]{3}$/', $currency)) throw new RuntimeException('Currency must use a three-letter ISO code.');
+            if (!preg_match('/^[A-Z]{3}$/', $currency)) throw new RuntimeException(t('Currency must use a three-letter ISO code.', 'La moneda debe usar un código ISO de tres letras.'));
             $saleStatus = (string)($_POST['sale_status'] ?? 'draft');
             if (!in_array($saleStatus, ['draft', 'active', 'paused', 'sold_out'], true)) $saleStatus = 'draft';
             $stock = max(0, (int)($_POST['sale_stock'] ?? 0));
             if ($saleStatus === 'active' && ((float)$price <= 0 || $stock <= 0)) {
-                throw new RuntimeException('Available artworks need a price and at least one available unit.');
+                throw new RuntimeException(t('Available artworks need a price and at least one available unit.', 'Las obras disponibles necesitan un precio y al menos una unidad disponible.'));
             }
             $now = date('c');
             if ($sale) {
@@ -960,7 +967,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && ($_POST['action'] ?? '') === 'save_
             }
         }
         if ($websiteTransactionStarted) $pdo->commit();
-        $message = $intent === 'publish' ? 'published' : ($intent === 'unpublish' ? 'unpublished' : 'saved');
+        $message = $intent === 'publish' ? t('published', 'publicada') : ($intent === 'unpublish' ? t('unpublished', 'despublicada') : t('saved', 'guardada'));
         header('Location: artwork.php?id=' . rawurlencode((string)$id) . '&website_saved=' . rawurlencode($message) . '#website-publication');
         exit;
     } catch (Throwable $e) {
@@ -1128,9 +1135,9 @@ usort($rootCandidatesList, static function (array $a, array $b) use ($rootCandid
     return $aOrder <=> $bOrder;
 });
 $requiredRootViews = [
-    'frontal' => 'Frontal',
-    'three-quarter-left' => '3/4 Left',
-    'three-quarter-right' => '3/4 Right',
+    'frontal' => t('Frontal', 'Frontal'),
+    'three-quarter-left' => t('3/4 Left', '3/4 Izquierda'),
+    'three-quarter-right' => t('3/4 Right', '3/4 Derecha'),
 ];
 $availableRootViews = [];
 foreach ($rootCandidatesList as $candidate) {
@@ -1198,7 +1205,7 @@ $height = $measurement['height'] ?? $artwork['height'] ?? '';
 $depth = $measurement['depth'] ?? $artwork['depth'] ?? '';
 $sizeText = trim((string)$width) !== '' && trim((string)$height) !== ''
     ? trim((string)$width . ' x ' . (string)$height . ($depth !== '' && $depth !== null ? ' x ' . (string)$depth : '') . ' ' . $unit)
-    : 'No dimensions specified';
+    : t('No dimensions specified', 'Sin dimensiones especificadas');
 
 $artistProfile = is_array($profile['_artist_profile'] ?? null) ? $profile['_artist_profile'] : ArtistProfile::findForUser($artworkOwnerId);
 $artistName = trim((string)($artistProfile['artist_name'] ?? ''));
@@ -1212,7 +1219,7 @@ $orientation = $analysis['image']['orientation'] ?? '';
 if ($orientation === '' && (float)$width > 0 && (float)$height > 0) {
     $orientation = (float)$width > (float)$height ? 'horizontal' : ((float)$height > (float)$width ? 'vertical' : 'square');
 }
-$orientation = $orientation ?: 'Not specified';
+$orientation = $orientation ?: t('Not specified', 'No especificado');
 $sheetService = new ArtworkSheetService($pdo);
 $artworkSheet = $sheetService->sheetForArtwork($id, $artworkOwnerId);
 $publicationService = new PublicationService($pdo);
@@ -1241,14 +1248,14 @@ $addWebsiteCover = static function (array &$options, array &$items, string $file
         'type' => $type,
     ];
 };
-$addWebsiteCover($websiteCoverOptions, $websiteCoverItems, $rootFile, 'Main artwork image', 'Artwork');
+$addWebsiteCover($websiteCoverOptions, $websiteCoverItems, $rootFile, t('Main artwork image', 'Imagen principal de la obra'), t('Artwork', 'Obra'));
 foreach ($rootCandidatesList as $candidate) {
     $addWebsiteCover(
         $websiteCoverOptions,
         $websiteCoverItems,
         (string)($candidate['file_name'] ?? ''),
         ucwords(str_replace('-', ' ', (string)($candidate['view_type'] ?? 'Artwork view'))),
-        'Artwork view'
+        t('Artwork view', 'Vista de obra')
     );
 }
 foreach ($relatedMockups as $mockup) {
@@ -1257,15 +1264,15 @@ foreach ($relatedMockups as $mockup) {
     $mockupLabel = trim((string)($mockupCombination['camera_slot_name'] ?? ''));
     if ($mockupLabel === '') $mockupLabel = trim((string)($mockup['title'] ?? ''));
     if ($mockupLabel === '') $mockupLabel = trim((string)($mockup['context_id'] ?? ''));
-    if ($mockupLabel === '') $mockupLabel = 'Mockup ' . (int)($mockup['id'] ?? 0);
-    $addWebsiteCover($websiteCoverOptions, $websiteCoverItems, (string)($mockup['mockup_file'] ?? ''), $mockupLabel, 'Mockup');
+    if ($mockupLabel === '') $mockupLabel = t('Mockup', 'Mockup') . ' ' . (int)($mockup['id'] ?? 0);
+    $addWebsiteCover($websiteCoverOptions, $websiteCoverItems, (string)($mockup['mockup_file'] ?? ''), $mockupLabel, t('Mockup', 'Mockup'));
 }
 $websiteSelectedCover = basename((string)($websitePublication['header_file'] ?? ''));
 $websiteSelectedCover = isset($websiteCoverItems[$websiteSelectedCover]) ? $websiteSelectedCover : $rootFile;
 $websiteSelectedCoverItem = $websiteCoverItems[$websiteSelectedCover] ?? reset($websiteCoverItems) ?: [
     'file' => $rootFile,
-    'label' => 'Main artwork image',
-    'type' => 'Artwork',
+    'label' => t('Main artwork image', 'Imagen principal de la obra'),
+    'type' => t('Artwork', 'Obra'),
 ];
 $artworkSheetGenerated = json_decode((string)($artworkSheet['generated_json'] ?? ''), true);
 $artworkSheetGenerated = is_array($artworkSheetGenerated) ? $artworkSheetGenerated : [];
@@ -1339,7 +1346,7 @@ $storedSubtitle = trim((string)($artwork['subtitle'] ?? ''));
 $suggestedInitialTitle = trim((string)($package['titles'][0] ?? ''));
 $selectedTitle = $storedTitle !== ''
     ? $storedTitle
-    : ($suggestedInitialTitle !== '' && strcasecmp($suggestedInitialTitle, 'Untitled') !== 0 ? $suggestedInitialTitle : 'Untitled');
+    : ($suggestedInitialTitle !== '' && strcasecmp($suggestedInitialTitle, t('Untitled', 'Sin título')) !== 0 ? $suggestedInitialTitle : t('Untitled', 'Sin título'));
 $selectedSubtitle = $storedSubtitle;
 $selectedPublicationDescription = '';
 $displayTitle = trim((string)($artworkSheet['title'] ?? '')) !== '' ? trim((string)$artworkSheet['title']) : $selectedTitle;
@@ -1358,8 +1365,8 @@ $artworkSpanishHasContent = (bool)array_filter(
     static fn($value): bool => !is_array($value) && trim((string)$value) !== ''
 );
 $artworkEditorialStateLabel = ($artworkEnglishEditorial['status'] ?? '') === 'stale'
-    ? 'English · actualizar'
-    : (($artworkEnglishEditorial['status'] ?? '') === 'unprepared' ? 'English · pendiente' : 'ES + EN');
+    ? t('English · update', 'English · actualizar')
+    : (($artworkEnglishEditorial['status'] ?? '') === 'unprepared' ? t('English · pending', 'English · pendiente') : 'ES + EN');
 $publicationCopy = trim($selectedTitle . ($selectedSubtitle !== '' ? "\n" . $selectedSubtitle : '') . "\n\n" . $selectedPublicationDescription);
 
 $copyIconSvg = '<svg viewBox="0 0 24 24" width="14" height="14" stroke="currentColor" stroke-width="2" fill="none" stroke-linecap="round" stroke-linejoin="round" style="display: inline-block; vertical-align: middle;"><rect x="9" y="9" width="13" height="13" rx="2" ry="2"></rect><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"></path></svg>';
@@ -1367,10 +1374,10 @@ $downloadIconSvg = '<svg viewBox="0 0 24 24" width="14" height="14" stroke="curr
 $editIconSvg = '<svg viewBox="0 0 24 24" width="18" height="18" stroke="currentColor" stroke-width="1.7" fill="none" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 20h9"></path><path d="M16.5 3.5a2.12 2.12 0 0 1 3 3L8 18l-4 1 1-4Z"></path></svg>';
 ?>
 <!doctype html>
-<html lang="es">
+<html lang="<?= h(Translator::locale($user)) ?>">
 <head>
     <meta charset="utf-8">
-    <title>Permanent Artwork Sheet - Artwork Mockups</title>
+    <title><?= h(t('Permanent Artwork Sheet - Artwork Mockups', 'Ficha Permanente de la Obra - Artwork Mockups')) ?></title>
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <link rel="stylesheet" href="style.css">
     <style>
@@ -3296,10 +3303,10 @@ $editIconSvg = '<svg viewBox="0 0 24 24" width="18" height="18" stroke="currentC
         <div class="workspace"<?= $bilingualExperiment ? ' data-bilingual-editor data-entity-type="artwork" data-entity-id="' . (int)$id . '" data-english-status="' . h((string)($artworkEnglishEditorial['status'] ?? 'unprepared')) . '" data-csrf="' . h(Auth::csrfToken('bilingual_editorial')) . '" data-endpoint="bilingual_editorial.php"' : '' ?>>
             <div class="workspace-header artwork-page-header <?= $bilingualExperiment ? 'artwork-page-header--bilingual' : '' ?>">
                 <div class="artwork-title-block">
-                    <?php if ($bilingualExperiment): ?><span class="artwork-title-universal-label">Título universal</span><?php endif; ?>
+                    <?php if ($bilingualExperiment): ?><span class="artwork-title-universal-label"><?= h(t('Universal title', 'Título universal')) ?></span><?php endif; ?>
                     <div class="artwork-title-heading">
                         <?php if ($bilingualExperiment): ?>
-                            <h1><span contenteditable="true" role="textbox" data-universal-title><?= h($displayTitle) ?></span><?php if ($artworkSeriesName !== ''): ?> <span contenteditable="false">- <?= h($artworkSeriesName) ?> Series</span><?php endif; ?></h1>
+                            <h1><span contenteditable="true" role="textbox" data-universal-title><?= h($displayTitle) ?></span><?php if ($artworkSeriesName !== ''): ?> <span contenteditable="false">- <?= h($artworkSeriesName) ?> <?= h(t('Series', 'Series')) ?></span><?php endif; ?></h1>
                         <?php else: ?>
                             <h1><?= h($displayTitle) ?></h1>
                         <?php endif; ?>
@@ -3307,52 +3314,52 @@ $editIconSvg = '<svg viewBox="0 0 24 24" width="18" height="18" stroke="currentC
                             class="artwork-title-edit-button"
                             type="button"
                             data-artwork-title-edit
-                            aria-label="Edit artwork title"
-                            title="Edit artwork title"
+                            aria-label="<?= h(t('Edit artwork title', 'Editar título de la obra')) ?>"
+                            title="<?= h(t('Edit artwork title', 'Editar título de la obra')) ?>"
                             aria-expanded="false"
                             aria-controls="artwork-title-quick-edit"
                         ><?= $editIconSvg ?></button>
                     </div>
                     <form method="post" class="artwork-title-quick-edit" id="artwork-title-quick-edit" hidden>
                         <input type="hidden" name="action" value="save_artwork_title">
-                        <label class="sr-only" for="artwork-title-input">Artwork title</label>
+                        <label class="sr-only" for="artwork-title-input"><?= h(t('Artwork title', 'Título de la obra')) ?></label>
                         <input id="artwork-title-input" type="text" name="title" value="<?= h($displayTitle) ?>" maxlength="255" required autocomplete="off">
-                        <button type="submit">Save title</button>
-                        <button type="button" class="artwork-title-cancel" data-artwork-title-cancel>Cancel</button>
+                        <button type="submit"><?= h(t('Save title', 'Guardar título')) ?></button>
+                        <button type="button" class="artwork-title-cancel" data-artwork-title-cancel><?= h(t('Cancel', 'Cancelar')) ?></button>
                     </form>
                     <?php if ($bilingualExperiment): ?><p class="artwork-title-universal-memo">STRATA X — LIMEN · STRATA XI — NUHRĀ (ܢܘܗܪܐ) · no traducir</p><?php endif; ?>
                 </div>
             </div>
 
             <?php if (isset($_GET['series_updated'])): ?>
-                <div class="notice">Artwork series updated.</div>
+                <div class="notice"><?= h(t('Artwork series updated.', 'Serie de la obra actualizada.')) ?></div>
             <?php endif; ?>
             <?php if (isset($_GET['saved'])): ?>
-                <div class="notice">Artwork sheet saved.</div>
+                <div class="notice"><?= h(t('Artwork sheet saved.', 'Ficha de la obra guardada.')) ?></div>
             <?php endif; ?>
             <?php if (isset($_GET['title_saved'])): ?>
-                <div class="notice">Artwork title saved.</div>
+                <div class="notice"><?= h(t('Artwork title saved.', 'Título de la obra guardado.')) ?></div>
             <?php endif; ?>
             <?php if (isset($_GET['title_error'])): ?>
                 <div class="notice error"><?= h((string)$_GET['title_error']) ?></div>
             <?php endif; ?>
             <?php if (isset($_GET['metadata_generated'])): ?>
-                <div class="notice">Artwork metadata generated with the admin analysis prompt.</div>
+                <div class="notice"><?= h(t('Artwork metadata generated with the admin analysis prompt.', 'Metadatos de la obra generados con el prompt de análisis de administrador.')) ?></div>
             <?php endif; ?>
             <?php if (isset($_GET['metadata_saved'])): ?>
-                <div class="notice">Artwork metadata saved.</div>
+                <div class="notice"><?= h(t('Artwork metadata saved.', 'Metadatos de la obra guardados.')) ?></div>
             <?php endif; ?>
             <?php if (isset($_GET['v2_applied'])): ?>
-                <div class="notice">Analysis v2 validated as the artwork metadata. Nothing was published.</div>
+                <div class="notice"><?= h(t('Analysis v2 validated as the artwork metadata. Nothing was published.', 'Análisis v2 validado como metadatos de la obra. No se publicó nada.')) ?></div>
             <?php endif; ?>
             <?php if (isset($_GET['v2_generated'])): ?>
-                <div class="notice">Analysis v2 draft generated. Review it below; nothing was published or applied.</div>
+                <div class="notice"><?= h(t('Analysis v2 draft generated. Review it below; nothing was published or applied.', 'Borrador de análisis v2 generado. Revisalo abajo; no se publicó ni aplicó nada.')) ?></div>
             <?php endif; ?>
             <?php if (isset($_GET['website_v2_synced'])): ?>
-                <div class="notice">Artwork sent to the Maurizio Valch catalogue. It remains hidden until you enable it in the website admin.</div>
+                <div class="notice"><?= h(t('Artwork sent to the Maurizio Valch catalogue. It remains hidden until you enable it in the website admin.', 'Obra enviada al catálogo de Maurizio Valch. Permanece oculta hasta que la habilités en la administración del sitio web.')) ?></div>
             <?php endif; ?>
             <?php if (isset($_GET['website_saved'])): ?>
-                <div class="notice">Website entry <?= h((string)$_GET['website_saved']) ?>.</div>
+                <div class="notice"><?= h(t('Website entry', 'Entrada del sitio web')) ?> <?= h((string)$_GET['website_saved']) ?>.</div>
             <?php endif; ?>
             <?php if (isset($_GET['website_error'])): ?>
                 <div class="notice error"><?= h((string)$_GET['website_error']) ?></div>
@@ -3361,15 +3368,15 @@ $editIconSvg = '<svg viewBox="0 0 24 24" width="18" height="18" stroke="currentC
                 <div class="notice error"><?= h((string)$_GET['metadata_error']) ?></div>
             <?php endif; ?>
             <?php if (isset($_GET['root_selected'])): ?>
-                <div class="notice">Root artwork selected.</div>
+                <div class="notice"><?= h(t('Root artwork selected.', 'Obra raíz seleccionada.')) ?></div>
             <?php endif; ?>
             <?php if (isset($_GET['root_views_completed'])): ?>
-                <div class="notice">The two missing root views were added to this artwork.</div>
+                <div class="notice"><?= h(t('The two missing root views were added to this artwork.', 'Las dos vistas raíz faltantes fueron agregadas a esta obra.')) ?></div>
             <?php endif; ?>
 
             <?php if ($analysisNeedsRefresh): ?>
                 <div class="notice error">
-                    This analysis does not match the current minimal schema. Recalculate the analysis before generating new mockups.
+                    <?= h(t('This analysis does not match the current minimal schema. Recalculate the analysis before generating new mockups.', 'Este análisis no coincide con el esquema mínimo actual. Recalculá el análisis antes de generar nuevos mockups.')) ?>
                 </div>
             <?php endif; ?>
 
@@ -3391,8 +3398,8 @@ $editIconSvg = '<svg viewBox="0 0 24 24" width="18" height="18" stroke="currentC
                 <details class="bilingual-editorial-panel" id="artwork-metadata"<?= isset($_GET['spanish_reanalysis_ready']) || isset($_GET['spanish_reanalysis_used']) || $metadataErrorMessage !== '' ? ' open' : '' ?>>
                     <summary>
                         <span class="bilingual-editorial-summary">
-                            <strong>Espacio editorial</strong>
-                            <span>Español maestro e inglés internacional para publicación.</span>
+                            <strong><?= h(t('Editorial workspace', 'Espacio editorial')) ?></strong>
+                            <span><?= h(t('Master Spanish and international English for publication.', 'Español maestro e inglés internacional para publicación.')) ?></span>
                         </span>
                         <span class="bilingual-editorial-state" data-bilingual-save-state><?= h($artworkEditorialStateLabel) ?></span>
                     </summary>
@@ -3410,7 +3417,7 @@ $editIconSvg = '<svg viewBox="0 0 24 24" width="18" height="18" stroke="currentC
                             <span data-adaptation-source-short>ES</span>
                             <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M5 12h14M14 7l5 5-5 5"/></svg>
                             <span data-adaptation-target-short>EN</span>
-                            <span class="bilingual-adaptation-label" data-adaptation-label>Adaptar al inglés internacional sin traducción literal</span>
+                            <span class="bilingual-adaptation-label" data-adaptation-label><?= h(t('Adapt to international English without literal translation', 'Adaptar al inglés internacional sin traducción literal')) ?></span>
                         </button>
                         <article class="bilingual-editorial-page bilingual-editorial-page--english">
                             <span class="bilingual-editorial-language">English · publicación internacional</span>
@@ -3423,23 +3430,23 @@ $editIconSvg = '<svg viewBox="0 0 24 24" width="18" height="18" stroke="currentC
                         </article>
                     </div>
                     <div class="bilingual-reanalysis-actions" style="margin:0 20px 14px;">
-                        <button type="button" data-editorial-generate><?= $artworkSpanishHasContent ? 'Actualizar contenido ES + EN' : 'Generar contenido ES + EN' ?></button>
+                        <button type="button" data-editorial-generate><?= $artworkSpanishHasContent ? h(t('Update ES + EN content', 'Actualizar contenido ES + EN')) : h(t('Generate ES + EN content', 'Generar contenido ES + EN')) ?></button>
                     </div>
                     <?php $spanishComparisonContent = $spanishComparisonDraft ? ArtworkAnalysisV2::editorialContent($spanishComparisonDraft) : []; ?>
                     <details class="bilingual-reanalysis"<?= isset($_GET['spanish_reanalysis_ready']) || $metadataErrorMessage !== '' ? ' open' : '' ?>>
                         <summary>
                             <span class="bilingual-reanalysis-title">
-                                <strong>Reanalizar obra en español</strong>
-                                <span>Una segunda lectura creada directamente desde la imagen.</span>
+                                <strong><?= h(t('Reanalyze artwork in Spanish', 'Reanalizar obra en español')) ?></strong>
+                                <span><?= h(t('A second reading created directly from the image.', 'Una segunda lectura creada directamente desde la imagen.')) ?></span>
                             </span>
-                            <span class="bilingual-reanalysis-state"><?= $spanishComparisonDraft ? 'Propuesta disponible' : 'Comparar' ?></span>
+                            <span class="bilingual-reanalysis-state"><?= $spanishComparisonDraft ? h(t('Proposal available', 'Propuesta disponible')) : h(t('Compare', 'Comparar')) ?></span>
                         </summary>
                         <div class="bilingual-reanalysis-body">
                             <?php if ($metadataErrorMessage !== ''): ?><div class="notice error"><?= h($metadataErrorMessage) ?></div><?php endif; ?>
-                            <p class="bilingual-reanalysis-intro">Esta opción vuelve a observar la imagen con tu perfil y la dirección actual de su serie. Genera una propuesta española independiente sin modificar los campos de arriba.</p>
+                            <p class="bilingual-reanalysis-intro"><?= h(t('This option looks at the image again with your profile and the current direction of its series. It generates an independent Spanish proposal without modifying the fields above.', 'Esta opción vuelve a observar la imagen con tu perfil y la dirección actual de su serie. Genera una propuesta española independiente sin modificar los campos de arriba.')) ?></p>
                             <?php if ($spanishComparisonDraft): ?>
                                 <article class="bilingual-reanalysis-proposal">
-                                    <span>Análisis nuevo desde la imagen · español</span>
+                                    <span><?= h(t('New analysis from the image · Spanish', 'Análisis nuevo desde la imagen · español')) ?></span>
                                     <?php foreach ($bilingualEditorialFields as $field): ?>
                                         <?php $comparisonValue = trim((string)($spanishComparisonContent[$field['key']] ?? '')); ?>
                                         <?php if ($comparisonValue !== ''): ?>
@@ -3450,33 +3457,33 @@ $editIconSvg = '<svg viewBox="0 0 24 24" width="18" height="18" stroke="currentC
                                         <?php endif; ?>
                                     <?php endforeach; ?>
                                 </article>
-                                <p class="bilingual-reanalysis-intro" style="margin-top:12px;">“Usar esta propuesta” reemplaza el español maestro editable. Después, “Preparar website” reconstruye el inglés internacional.</p>
+                                <p class="bilingual-reanalysis-intro" style="margin-top:12px;"><?= h(t('"Use this proposal" replaces the editable master Spanish. Afterward, "Prepare website" rebuilds the international English.', '“Usar esta propuesta” reemplaza el español maestro editable. Después, “Preparar website” reconstruye el inglés internacional.')) ?></p>
                                 <div class="bilingual-reanalysis-actions">
                                     <form method="post">
                                         <input type="hidden" name="action" value="use_spanish_reanalysis_comparison">
                                         <input type="hidden" name="csrf" value="<?= h(Auth::csrfToken('bilingual_editorial')) ?>">
-                                        <button type="submit">Usar esta propuesta</button>
+                                        <button type="submit"><?= h(t('Use this proposal', 'Usar esta propuesta')) ?></button>
                                     </form>
-                                    <form method="post" onsubmit="this.querySelector('button').disabled=true;this.querySelector('button').textContent='Analizando…';">
+                                    <form method="post" onsubmit="this.querySelector('button').disabled=true;this.querySelector('button').textContent=<?= h(json_encode(t('Analyzing…', 'Analizando…'))) ?>;">
                                         <input type="hidden" name="action" value="generate_spanish_reanalysis_comparison">
                                         <input type="hidden" name="csrf" value="<?= h(Auth::csrfToken('bilingual_editorial')) ?>">
-                                        <button type="submit" class="secondary">Generar otra</button>
+                                        <button type="submit" class="secondary"><?= h(t('Generate another', 'Generar otra')) ?></button>
                                     </form>
                                 </div>
                             <?php else: ?>
                                 <div class="bilingual-reanalysis-actions">
-                                    <form method="post" onsubmit="this.querySelector('button').disabled=true;this.querySelector('button').textContent='Analizando…';">
+                                    <form method="post" onsubmit="this.querySelector('button').disabled=true;this.querySelector('button').textContent=<?= h(json_encode(t('Analyzing…', 'Analizando…'))) ?>;">
                                         <input type="hidden" name="action" value="generate_spanish_reanalysis_comparison">
                                         <input type="hidden" name="csrf" value="<?= h(Auth::csrfToken('bilingual_editorial')) ?>">
-                                        <button type="submit">Generar análisis español</button>
+                                        <button type="submit"><?= h(t('Generate Spanish analysis', 'Generar análisis español')) ?></button>
                                     </form>
                                 </div>
                             <?php endif; ?>
                         </div>
                     </details>
                     <details class="bilingual-editorial-memo">
-                        <summary>Memo privado de la obra</summary>
-                        <div class="bilingual-editorial-copy" contenteditable="true" role="textbox" aria-multiline="true" data-private-memo data-editorial-locale="es" data-placeholder="Ideas, decisiones y recordatorios que no se publican…"><?= h($artworkSpanishEditorial['private_memo'] ?? '') ?></div>
+                        <summary><?= h(t('Private memo for this artwork', 'Memo privado de la obra')) ?></summary>
+                        <div class="bilingual-editorial-copy" contenteditable="true" role="textbox" aria-multiline="true" data-private-memo data-editorial-locale="es" data-placeholder="<?= h(t('Ideas, decisions, and reminders that are not published…', 'Ideas, decisiones y recordatorios que no se publican…')) ?>"><?= h($artworkSpanishEditorial['private_memo'] ?? '') ?></div>
                     </details>
                 </details>
             <?php elseif (true): ?>
@@ -3490,13 +3497,13 @@ $editIconSvg = '<svg viewBox="0 0 24 24" width="18" height="18" stroke="currentC
                     $v2Evidence = (array)($v2Draft['evidence_sources'] ?? []);
                     ?>
                     <section class="panel v2-admin-panel" id="artwork-metadata">
-                        <button class="v2-mobile-toggle" type="button" aria-expanded="false">Artwork Metadata</button>
+                        <button class="v2-mobile-toggle" type="button" aria-expanded="false"><?= h(t('Artwork Metadata', 'Metadatos de la Obra')) ?></button>
                         <div class="v2-admin-head">
                             <div class="section-heading" style="margin:0;">
-                                <h2>Artwork Metadata</h2>
-                                <p>Generated from the artwork analysis. Edit only what you need.</p>
+                                <h2><?= h(t('Artwork Metadata', 'Metadatos de la Obra')) ?></h2>
+                                <p><?= h(t('Generated from the artwork analysis. Edit only what you need.', 'Generado a partir del análisis de la obra. Editá solo lo que necesites.')) ?></p>
                             </div>
-                            <?php if ($isAdmin): ?><span class="v2-admin-badge"><?= ($v2Originality['passed'] ?? false) ? 'Analysis ready' : 'Review recommended' ?></span><?php endif; ?>
+                            <?php if ($isAdmin): ?><span class="v2-admin-badge"><?= ($v2Originality['passed'] ?? false) ? h(t('Analysis ready', 'Análisis listo')) : h(t('Review recommended', 'Se recomienda revisar')) ?></span><?php endif; ?>
                         </div>
 
                         <article class="artwork-metadata-finished">
@@ -3506,21 +3513,21 @@ $editIconSvg = '<svg viewBox="0 0 24 24" width="18" height="18" stroke="currentC
                         </article>
 
                         <details class="artwork-metadata-edit">
-                            <summary>Edit metadata</summary>
+                            <summary><?= h(t('Edit metadata', 'Editar metadatos')) ?></summary>
                         <form method="post" class="v2-admin-card artwork-metadata-v2-form">
                             <input type="hidden" name="action" value="save_artwork_metadata">
                             <div class="artwork-metadata-form-grid">
-                                <div class="artwork-metadata-field"><label>Title</label><input type="text" name="title" value="<?= h($displayTitle) ?>"></div>
-                                <div class="artwork-metadata-field"><label>Subtitle</label><input type="text" name="subtitle" value="<?= h($displaySubtitle) ?>"></div>
-                                <div class="artwork-metadata-field full"><label>Description</label><textarea name="description" rows="5"><?= h($displayDescription) ?></textarea></div>
+                                <div class="artwork-metadata-field"><label><?= h(t('Title', 'Título')) ?></label><input type="text" name="title" value="<?= h($displayTitle) ?>"></div>
+                                <div class="artwork-metadata-field"><label><?= h(t('Subtitle', 'Subtítulo')) ?></label><input type="text" name="subtitle" value="<?= h($displaySubtitle) ?>"></div>
+                                <div class="artwork-metadata-field full"><label><?= h(t('Description', 'Descripción')) ?></label><textarea name="description" rows="5"><?= h($displayDescription) ?></textarea></div>
                                 <details class="artwork-metadata-more">
-                                    <summary>More metadata</summary>
+                                    <summary><?= h(t('More metadata', 'Más metadatos')) ?></summary>
                                     <div class="artwork-metadata-more-grid">
-                                        <div class="artwork-metadata-field full"><label>Short description</label><textarea name="short_description" rows="3"><?= h((string)($artworkSheet['short_description'] ?? '')) ?></textarea></div>
-                                        <div class="artwork-metadata-field"><label>Keywords</label><textarea name="keywords" rows="4"><?= h((string)($artworkSheet['keywords'] ?? '')) ?></textarea></div>
-                                        <div class="artwork-metadata-field"><label>Tags</label><textarea name="tags" rows="4"><?= h((string)($artworkSheet['tags'] ?? '')) ?></textarea></div>
-                                        <div class="artwork-metadata-field"><label>Alt text</label><textarea name="alt_text" rows="4"><?= h((string)($artworkSheet['alt_text'] ?? '')) ?></textarea></div>
-                                        <div class="artwork-metadata-field"><label>Caption</label><textarea name="caption" rows="4"><?= h((string)($artworkSheet['caption'] ?? '')) ?></textarea></div>
+                                        <div class="artwork-metadata-field full"><label><?= h(t('Short description', 'Resumen breve')) ?></label><textarea name="short_description" rows="3"><?= h((string)($artworkSheet['short_description'] ?? '')) ?></textarea></div>
+                                        <div class="artwork-metadata-field"><label><?= h(t('Keywords', 'Palabras clave')) ?></label><textarea name="keywords" rows="4"><?= h((string)($artworkSheet['keywords'] ?? '')) ?></textarea></div>
+                                        <div class="artwork-metadata-field"><label><?= h(t('Tags', 'Etiquetas')) ?></label><textarea name="tags" rows="4"><?= h((string)($artworkSheet['tags'] ?? '')) ?></textarea></div>
+                                        <div class="artwork-metadata-field"><label><?= h(t('Alt text', 'Texto alternativo')) ?></label><textarea name="alt_text" rows="4"><?= h((string)($artworkSheet['alt_text'] ?? '')) ?></textarea></div>
+                                        <div class="artwork-metadata-field"><label><?= h(t('Caption', 'Pie de imagen')) ?></label><textarea name="caption" rows="4"><?= h((string)($artworkSheet['caption'] ?? '')) ?></textarea></div>
                                     </div>
                                 </details>
                                 <input type="hidden" name="long_tail_terms" value="<?= h(implode(', ', array_map('strval', $artworkSheetLongTail))) ?>">
@@ -3528,61 +3535,61 @@ $editIconSvg = '<svg viewBox="0 0 24 24" width="18" height="18" stroke="currentC
                                 <input type="hidden" name="artwork_year" value="<?= h((string)($artwork['artwork_year'] ?? '')) ?>">
                                 <input type="hidden" name="series" value="<?= h((string)($artwork['series'] ?? '')) ?>">
                             </div>
-                            <div class="artwork-metadata-save"><button type="submit">Save</button></div>
+                            <div class="artwork-metadata-save"><button type="submit"><?= h(t('Save', 'Guardar')) ?></button></div>
                         </form>
                         </details>
 
-                        <?php if($isAdmin): ?><details class="details-panel admin-analysis-details"><summary>Analysis details</summary><div class="v2-admin-grid">
+                        <?php if($isAdmin): ?><details class="details-panel admin-analysis-details"><summary><?= h(t('Analysis details', 'Detalles del análisis')) ?></summary><div class="v2-admin-grid">
                             <div class="v2-admin-card">
-                                <h3>Editorial strategy</h3>
-                                <p>Opening: <strong><?= h($v2Strategy['description_opening_type'] ?? '') ?></strong></p>
-                                <p>Rhythm: <?= h($v2Strategy['description_opening_rhythm'] ?? '') ?></p>
-                                <p>Structure: <?= h($v2Strategy['description_structure_type'] ?? '') ?></p>
+                                <h3><?= h(t('Editorial strategy', 'Estrategia editorial')) ?></h3>
+                                <p><?= h(t('Opening:', 'Apertura:')) ?> <strong><?= h($v2Strategy['description_opening_type'] ?? '') ?></strong></p>
+                                <p><?= h(t('Rhythm:', 'Ritmo:')) ?> <?= h($v2Strategy['description_opening_rhythm'] ?? '') ?></p>
+                                <p><?= h(t('Structure:', 'Estructura:')) ?> <?= h($v2Strategy['description_structure_type'] ?? '') ?></p>
                             </div>
                             <div class="v2-admin-card">
-                                <h3>Originality</h3>
-                                <p>Title similarity: <?= h(number_format(((float)($v2Originality['title_similarity']??0))*100, 1)) ?>%</p>
-                                <p>Description similarity: <?= h(number_format(((float)($v2Originality['description_similarity']??0))*100, 1)) ?>%</p>
-                                <p><?= ($v2Originality['passed'] ?? false) ? 'No blockers.' : h(implode(' ', (array)($v2Originality['warnings']??[]))) ?></p>
+                                <h3><?= h(t('Originality', 'Originalidad')) ?></h3>
+                                <p><?= h(t('Title similarity:', 'Similitud de título:')) ?> <?= h(number_format(((float)($v2Originality['title_similarity']??0))*100, 1)) ?>%</p>
+                                <p><?= h(t('Description similarity:', 'Similitud de descripción:')) ?> <?= h(number_format(((float)($v2Originality['description_similarity']??0))*100, 1)) ?>%</p>
+                                <p><?= ($v2Originality['passed'] ?? false) ? h(t('No blockers.', 'Sin bloqueos.')) : h(implode(' ', (array)($v2Originality['warnings']??[]))) ?></p>
                             </div>
                             <div class="v2-admin-card">
-                                <h3>Evidence provenance</h3>
-                                <p><?= count((array)($v2Evidence['artist_or_record_facts']??[])) ?> artist/record facts</p>
-                                <p><?= count((array)($v2Evidence['visual_observations']??[])) ?> visual observations</p>
-                                <p><?= count((array)($v2Evidence['interpretive_claims']??[])) ?> interpretive claims</p>
+                                <h3><?= h(t('Evidence provenance', 'Procedencia de la evidencia')) ?></h3>
+                                <p><?= count((array)($v2Evidence['artist_or_record_facts']??[])) ?> <?= h(t('artist/record facts', 'datos del artista/registro')) ?></p>
+                                <p><?= count((array)($v2Evidence['visual_observations']??[])) ?> <?= h(t('visual observations', 'observaciones visuales')) ?></p>
+                                <p><?= count((array)($v2Evidence['interpretive_claims']??[])) ?> <?= h(t('interpretive claims', 'afirmaciones interpretativas')) ?></p>
                             </div>
                         </div></details>
 
                         <details class="details-panel v2-admin-details">
-                            <summary>Visual analysis, interpretation, and paragraph plan</summary>
+                            <summary><?= h(t('Visual analysis, interpretation, and paragraph plan', 'Análisis visual, interpretación y plan de párrafos')) ?></summary>
                             <div class="v2-admin-grid">
-                                <div class="v2-admin-card"><h3>Surface and movement</h3><p><?= h($v2Visual['surface_and_texture']??'') ?></p><p><?= h($v2Visual['rhythm_and_movement']??'') ?></p></div>
-                                <div class="v2-admin-card"><h3>Central reading</h3><p><?= h($v2Interpretation['central_reading']??'') ?></p></div>
-                                <div class="v2-admin-card"><h3>Paragraph functions</h3><ol style="margin:0;padding-left:18px;font-size:12px;line-height:1.55;"><?php foreach ((array)($v2Strategy['paragraph_functions']??[]) as $item): ?><li><?= h($item) ?></li><?php endforeach; ?></ol></div>
+                                <div class="v2-admin-card"><h3><?= h(t('Surface and movement', 'Superficie y movimiento')) ?></h3><p><?= h($v2Visual['surface_and_texture']??'') ?></p><p><?= h($v2Visual['rhythm_and_movement']??'') ?></p></div>
+                                <div class="v2-admin-card"><h3><?= h(t('Central reading', 'Lectura central')) ?></h3><p><?= h($v2Interpretation['central_reading']??'') ?></p></div>
+                                <div class="v2-admin-card"><h3><?= h(t('Paragraph functions', 'Funciones de párrafo')) ?></h3><ol style="margin:0;padding-left:18px;font-size:12px;line-height:1.55;"><?php foreach ((array)($v2Strategy['paragraph_functions']??[]) as $item): ?><li><?= h($item) ?></li><?php endforeach; ?></ol></div>
                             </div>
                         </details>
 
                         <details class="details-panel v2-admin-details">
-                            <summary>Prompt used</summary>
+                            <summary><?= h(t('Prompt used', 'Prompt usado')) ?></summary>
                             <?php $v2PromptFile = (string)($v2DraftMatch['file'] ?? '') . '.prompt.txt'; ?>
-                            <pre style="white-space:pre-wrap;max-height:360px;overflow:auto;font-size:10px;"><?= h(is_file($v2PromptFile) ? file_get_contents($v2PromptFile) : 'Prompt file is not available for this draft.') ?></pre>
+                            <pre style="white-space:pre-wrap;max-height:360px;overflow:auto;font-size:10px;"><?= h(is_file($v2PromptFile) ? file_get_contents($v2PromptFile) : t('Prompt file is not available for this draft.', 'El archivo de prompt no está disponible para este borrador.')) ?></pre>
                         </details>
                         <?php endif; ?>
 
                         <div class="v2-admin-actions">
                             <?php if ($isAdmin): ?>
-                                <details class="details-panel"><summary>Admin tools</summary><form method="post" onsubmit="this.querySelector('button').disabled=true; this.querySelector('button').textContent='Generating…';"><input type="hidden" name="action" value="generate_v2_artwork_draft"><button type="submit" class="secondary">Regenerate analysis</button></form></details>
+                                <details class="details-panel"><summary><?= h(t('Admin tools', 'Herramientas de administrador')) ?></summary><form method="post" onsubmit="this.querySelector('button').disabled=true; this.querySelector('button').textContent=<?= h(json_encode(t('Generating…', 'Generando…'))) ?>;"><input type="hidden" name="action" value="generate_v2_artwork_draft"><button type="submit" class="secondary"><?= h(t('Regenerate analysis', 'Regenerar análisis')) ?></button></form></details>
                             <?php endif; ?>
                         </div>
                     </section>
                 <?php else: ?>
                     <section class="panel v2-admin-panel" id="artwork-metadata">
-                        <button class="v2-mobile-toggle" type="button" aria-expanded="false">Artwork Metadata</button>
+                        <button class="v2-mobile-toggle" type="button" aria-expanded="false"><?= h(t('Artwork Metadata', 'Metadatos de la Obra')) ?></button>
                         <div class="v2-admin-head">
-                            <div class="section-heading" style="margin:0;"><h2>Artwork Metadata</h2><p><?= $metadataErrorMessage !== '' ? 'The analysis finished but did not pass validation.' : 'No metadata exists for this artwork yet.' ?></p></div>
-                            <form method="post" onsubmit="this.querySelector('button').disabled=true; this.querySelector('button').textContent='Generating v2…';">
+                            <div class="section-heading" style="margin:0;"><h2><?= h(t('Artwork Metadata', 'Metadatos de la Obra')) ?></h2><p><?= $metadataErrorMessage !== '' ? h(t('The analysis finished but did not pass validation.', 'El análisis terminó pero no pasó la validación.')) : h(t('No metadata exists for this artwork yet.', 'Todavía no existen metadatos para esta obra.')) ?></p></div>
+                            <form method="post" onsubmit="this.querySelector('button').disabled=true; this.querySelector('button').textContent=<?= h(json_encode(t('Generating v2…', 'Generando v2…'))) ?>;">
                                 <input type="hidden" name="action" value="generate_v2_artwork_draft">
-                                <button type="submit">Generate Metadata</button>
+                                <button type="submit"><?= h(t('Generate Metadata', 'Generar Metadatos')) ?></button>
                             </form>
                         </div>
                         <?php if ($metadataErrorMessage !== ''): ?><div class="notice error" style="margin:14px 0 0;"><?= h($metadataErrorMessage) ?></div><?php endif; ?>
@@ -3595,16 +3602,16 @@ $editIconSvg = '<svg viewBox="0 0 24 24" width="18" height="18" stroke="currentC
                 <?php if (!$bilingualExperiment): ?>
                 <div class="section-heading">
                     <div>
-                        <h2><?= $artworkSeriesName !== '' ? h($artworkSeriesName) . ' Series' : 'NO SERIE' ?></h2>
-                        <p>Root views, basic information, and direct access to the mockup workflow.</p>
+                        <h2><?= $artworkSeriesName !== '' ? h($artworkSeriesName) . ' ' . h(t('Series', 'Series')) : h(t('NO SERIES', 'SIN SERIE')) ?></h2>
+                        <p><?= h(t('Root views, basic information, and direct access to the mockup workflow.', 'Vistas raíz, información básica y acceso directo al flujo de mockups.')) ?></p>
                     </div>
                     <div class="artwork-series-controls">
                         <form method="post" class="artwork-series-form">
                             <input type="hidden" name="action" value="assign_series">
                             <label>
-                                <span>Series</span>
-                                <select name="series_id" aria-label="Artwork series" onchange="this.form.classList.add('is-saving'); this.form.requestSubmit()">
-                                    <option value="">NO SERIE</option>
+                                <span><?= h(t('Series', 'Series')) ?></span>
+                                <select name="series_id" aria-label="<?= h(t('Artwork series', 'Serie de la obra')) ?>" onchange="this.form.classList.add('is-saving'); this.form.requestSubmit()">
+                                    <option value=""><?= h(t('NO SERIES', 'SIN SERIE')) ?></option>
                                     <?php foreach ($artworkSeriesRows as $seriesRow): ?>
                                         <option value="<?= (int)$seriesRow['id'] ?>" <?= (int)($artwork['series_id'] ?? 0) === (int)$seriesRow['id'] ? 'selected' : '' ?>><?= h($seriesRow['title']) ?></option>
                                     <?php endforeach; ?>
@@ -3623,14 +3630,14 @@ $editIconSvg = '<svg viewBox="0 0 24 24" width="18" height="18" stroke="currentC
                             <section class="artwork-root-views-card">
                             <?php if ($bilingualExperiment): ?>
                                 <div class="artwork-root-views-heading">
-                                    <h3>Root Views</h3>
+                                    <h3><?= h(t('Root Views', 'Vistas Raíz')) ?></h3>
                                     <form method="post" class="artwork-series-form">
                                         <input type="hidden" name="action" value="assign_series">
                                         <input type="hidden" name="bilingual_experiment" value="1">
                                         <label>
-                                            <span>Series</span>
-                                            <select name="series_id" aria-label="Artwork series" onchange="this.form.classList.add('is-saving'); this.form.requestSubmit()">
-                                                <option value="">NO SERIE</option>
+                                            <span><?= h(t('Series', 'Series')) ?></span>
+                                            <select name="series_id" aria-label="<?= h(t('Artwork series', 'Serie de la obra')) ?>" onchange="this.form.classList.add('is-saving'); this.form.requestSubmit()">
+                                                <option value=""><?= h(t('NO SERIES', 'SIN SERIE')) ?></option>
                                                 <?php foreach ($artworkSeriesRows as $seriesRow): ?>
                                                     <option value="<?= (int)$seriesRow['id'] ?>" <?= (int)($artwork['series_id'] ?? 0) === (int)$seriesRow['id'] ? 'selected' : '' ?>><?= h($seriesRow['title']) ?></option>
                                                 <?php endforeach; ?>
@@ -3639,21 +3646,21 @@ $editIconSvg = '<svg viewBox="0 0 24 24" width="18" height="18" stroke="currentC
                                     </form>
                                 </div>
                             <?php else: ?>
-                                <h3>Root Views</h3>
+                                <h3><?= h(t('Root Views', 'Vistas Raíz')) ?></h3>
                             <?php endif; ?>
                             <div class="root-overview-media-grid">
                                 <div class="mobile-root-artwork">
                                     <a href="<?= h('viewer.php?file=' . rawurlencode($rootFile) . '&back=' . rawurlencode('artwork.php?id=' . (int)$id)) ?>">
-                                        <img src="<?= h(media_url($rootFile)) ?>" alt="Selected root artwork">
+                                        <img src="<?= h(media_url($rootFile)) ?>" alt="<?= h(t('Selected root artwork', 'Obra raíz seleccionada')) ?>">
                                     </a>
-                                    <span class="mobile-root-artwork-label">Selected root artwork</span>
+                                    <span class="mobile-root-artwork-label"><?= h(t('Selected root artwork', 'Obra raíz seleccionada')) ?></span>
                                 </div>
                                 <?php if (!empty($rootCandidatesList) || !empty($missingRootViews) || !empty($artworkFinalVideos)): ?>
                                     <?php
                                     $viewLabels = [
-                                        'frontal'             => 'Frontal',
-                                        'three-quarter-left'  => '3/4 Left',
-                                        'three-quarter-right' => '3/4 Right',
+                                        'frontal'             => t('Frontal', 'Frontal'),
+                                        'three-quarter-left'  => t('3/4 Left', '3/4 Izquierda'),
+                                        'three-quarter-right' => t('3/4 Right', '3/4 Derecha'),
                                     ];
                                     $latestArtworkFinalVideo = is_array($artworkFinalVideos[0] ?? null) ? $artworkFinalVideos[0] : null;
                                     $rootVisualItems = [];
@@ -3681,7 +3688,7 @@ $editIconSvg = '<svg viewBox="0 0 24 24" width="18" height="18" stroke="currentC
                                                     <div class="root-version-video-link">
                                                         <video src="<?= h($finalVideoUrl) ?>"<?= $finalVideoPoster !== '' ? ' poster="' . h($finalVideoPoster) . '"' : '' ?> controls controlslist="noremoteplayback nodownload" disablepictureinpicture disableremoteplayback playsinline preload="metadata"></video>
                                                     </div>
-                                                    <a class="root-version-video-download" href="<?= h($finalVideoUrl) ?>&amp;download=1" aria-label="Download final video" title="Download MP4">
+                                                    <a class="root-version-video-download" href="<?= h($finalVideoUrl) ?>&amp;download=1" aria-label="<?= h(t('Download final video', 'Descargar video final')) ?>" title="<?= h(t('Download MP4', 'Descargar MP4')) ?>">
                                                         <svg viewBox="0 0 20 20" aria-hidden="true">
                                                             <path d="M10 3v9m-3-3 3 3 3-3M4 15.5h12"></path>
                                                         </svg>
@@ -3700,13 +3707,13 @@ $editIconSvg = '<svg viewBox="0 0 24 24" width="18" height="18" stroke="currentC
                                                     </a>
                                                     <div class="root-version-overlay">
                                                         <?php if ($rcaIsSelected): ?>
-                                                            <span class="root-version-selected-pill">Selected</span>
+                                                            <span class="root-version-selected-pill"><?= h(t('Selected', 'Seleccionada')) ?></span>
                                                         <?php else: ?>
                                                             <form method="post">
                                                                 <input type="hidden" name="action" value="select_root_candidate">
                                                                 <input type="hidden" name="candidate_id" value="<?= (int)$rca['id'] ?>">
                                                                 <input type="hidden" name="candidate_file" value="<?= h($rcaFile) ?>">
-                                                                <button class="root-version-select" type="submit" title="Select root view" aria-label="Select root view">✓</button>
+                                                                <button class="root-version-select" type="submit" title="<?= h(t('Select root view', 'Seleccionar vista raíz')) ?>" aria-label="<?= h(t('Select root view', 'Seleccionar vista raíz')) ?>">✓</button>
                                                             </form>
                                                         <?php endif; ?>
                                                     </div>
@@ -3718,22 +3725,22 @@ $editIconSvg = '<svg viewBox="0 0 24 24" width="18" height="18" stroke="currentC
                                         <?php endforeach; ?>
                                         <?php foreach ($missingRootViews as $missingViewType => $missingViewLabel): ?>
                                             <article class="root-version-card root-version-missing">
-                                                <form method="post" action="complete_root_views.php" onsubmit="return confirm('Generate the missing root views from the current artwork?');">
+                                                <form method="post" action="complete_root_views.php" onsubmit="return confirm(<?= h(json_encode(t('Generate the missing root views from the current artwork?', '¿Generar las vistas raíz faltantes a partir de la obra actual?'))) ?>);">
                                                     <input type="hidden" name="artwork_id" value="<?= (int)$id ?>">
-                                                    <button type="submit" title="Generate missing root views">
+                                                    <button type="submit" title="<?= h(t('Generate missing root views', 'Generar vistas raíz faltantes')) ?>">
                                                         <svg viewBox="0 0 48 48" aria-hidden="true">
                                                             <rect x="7" y="10" width="34" height="28" rx="3"></rect>
                                                             <path d="M17 10l3-4h8l3 4M24 18v12M18 24h12"></path>
                                                         </svg>
                                                         <strong><?= h($missingViewLabel) ?></strong>
-                                                        <small>Generate both missing views</small>
+                                                        <small><?= h(t('Generate both missing views', 'Generar las dos vistas faltantes')) ?></small>
                                                     </button>
                                                 </form>
                                             </article>
                                         <?php endforeach; ?>
                                     </div>
                                 <?php else: ?>
-                                    <div class="notice">Only the selected root image is available.</div>
+                                    <div class="notice"><?= h(t('Only the selected root image is available.', 'Solo está disponible la imagen raíz seleccionada.')) ?></div>
                                 <?php endif; ?>
                             </div>
                             </section>
@@ -3743,46 +3750,46 @@ $editIconSvg = '<svg viewBox="0 0 24 24" width="18" height="18" stroke="currentC
                             <details class="artwork-website-panel" id="website-publication">
                                 <summary>
                                     <span class="artwork-website-summary">
-                                        <strong>Website</strong>
-                                        <span>Publication, sale and delivery settings</span>
+                                        <strong><?= h(t('Website', 'Sitio web')) ?></strong>
+                                        <span><?= h(t('Publication, sale and delivery settings', 'Configuración de publicación, venta y entrega')) ?></span>
                                     </span>
                                     <span class="artwork-website-state"><?= h(str_replace('_', ' ', $websiteStatus)) ?></span>
                                 </summary>
                                 <form method="post" class="artwork-website-form">
                                     <input type="hidden" name="action" value="save_artwork_website">
-                                    <p class="artwork-website-note">Title, descriptions, SEO keywords, tags, alt text and captions come directly from Artwork Metadata. <strong><?= $websiteMetadataComplete ? 'Content complete.' : 'Some metadata is still incomplete.' ?></strong></p>
+                                    <p class="artwork-website-note"><?= h(t('Title, descriptions, SEO keywords, tags, alt text and captions come directly from Artwork Metadata.', 'El título, las descripciones, las palabras clave SEO, las etiquetas, el texto alternativo y los pies de imagen provienen directamente de los Metadatos de la Obra.')) ?> <strong><?= $websiteMetadataComplete ? h(t('Content complete.', 'Contenido completo.')) : h(t('Some metadata is still incomplete.', 'Algunos metadatos todavía están incompletos.')) ?></strong></p>
 
                                     <section class="artwork-website-sale" aria-labelledby="website-sale-title">
-                                        <h4 id="website-sale-title">Price and availability</h4>
+                                        <h4 id="website-sale-title"><?= h(t('Price and availability', 'Precio y disponibilidad')) ?></h4>
                                         <div class="artwork-website-sale-grid">
-                                            <label>Availability
+                                            <label><?= h(t('Availability', 'Disponibilidad')) ?>
                                                 <select name="sale_status">
-                                                    <?php foreach (['draft' => 'Not for sale', 'active' => 'Available', 'paused' => 'Temporarily unavailable', 'sold_out' => 'Sold'] as $value => $label): ?>
+                                                    <?php foreach (['draft' => t('Not for sale', 'No a la venta'), 'active' => t('Available', 'Disponible'), 'paused' => t('Temporarily unavailable', 'Temporalmente no disponible'), 'sold_out' => t('Sold', 'Vendido')] as $value => $label): ?>
                                                         <option value="<?= h($value) ?>" <?= (string)($websiteSale['status'] ?? 'draft') === $value ? 'selected' : '' ?>><?= h($label) ?></option>
                                                     <?php endforeach; ?>
                                                 </select>
                                             </label>
-                                            <label>Available units<input type="number" min="0" step="1" name="sale_stock" value="<?= $websiteSaleAvailable ?>"></label>
-                                            <label>Price<input inputmode="decimal" name="sale_price" value="<?= $websiteSale ? h(number_format((int)$websiteSale['price_minor'] / 100, 2, '.', '')) : '' ?>" placeholder="2500.00"></label>
-                                            <label>Currency<input name="sale_currency" maxlength="3" value="<?= h((string)($websiteSale['currency'] ?? $websiteDefaultCurrency)) ?>"></label>
+                                            <label><?= h(t('Available units', 'Unidades disponibles')) ?><input type="number" min="0" step="1" name="sale_stock" value="<?= $websiteSaleAvailable ?>"></label>
+                                            <label><?= h(t('Price', 'Precio')) ?><input inputmode="decimal" name="sale_price" value="<?= $websiteSale ? h(number_format((int)$websiteSale['price_minor'] / 100, 2, '.', '')) : '' ?>" placeholder="2500.00"></label>
+                                            <label><?= h(t('Currency', 'Moneda')) ?><input name="sale_currency" maxlength="3" value="<?= h((string)($websiteSale['currency'] ?? $websiteDefaultCurrency)) ?>"></label>
                                         </div>
                                         <div class="artwork-website-shipping">
-                                            <span>Shipping uses the editable rates by continent for the whole store.</span>
-                                            <a href="../site-admin/?area=store&amp;section=shipping">Edit shipping rates</a>
+                                            <span><?= h(t('Shipping uses the editable rates by continent for the whole store.', 'El envío usa las tarifas editables por continente para toda la tienda.')) ?></span>
+                                            <a href="../site-admin/?area=store&amp;section=shipping"><?= h(t('Edit shipping rates', 'Editar tarifas de envío')) ?></a>
                                         </div>
                                     </section>
 
                                     <div class="artwork-website-settings">
-                                        <label>Visibility
+                                        <label><?= h(t('Visibility', 'Visibilidad')) ?>
                                             <select name="visibility">
-                                                <?php foreach (['public' => 'Public', 'unlisted' => 'Unlisted', 'private' => 'Private'] as $value => $label): ?>
+                                                <?php foreach (['public' => t('Public', 'Público'), 'unlisted' => t('Unlisted', 'No listado'), 'private' => t('Private', 'Privado')] as $value => $label): ?>
                                                     <option value="<?= h($value) ?>" <?= $websiteVisibility === $value ? 'selected' : '' ?>><?= h($label) ?></option>
                                                 <?php endforeach; ?>
                                             </select>
                                         </label>
-                                        <label>Constellation country<input name="constellation_country" value="<?= h($websiteConstellationCountry) ?>" placeholder="Optional"></label>
+                                        <label><?= h(t('Constellation country', 'País de constelación')) ?><input name="constellation_country" value="<?= h($websiteConstellationCountry) ?>" placeholder="<?= h(t('Optional', 'Opcional')) ?>"></label>
                                         <div class="artwork-website-cover">
-                                            <span class="artwork-website-cover-label">Website cover</span>
+                                            <span class="artwork-website-cover-label"><?= h(t('Website cover', 'Portada del sitio web')) ?></span>
                                             <details class="artwork-cover-picker" data-website-cover-picker>
                                                 <summary>
                                                     <img
@@ -3793,11 +3800,11 @@ $editIconSvg = '<svg viewBox="0 0 24 24" width="18" height="18" stroke="currentC
                                                     >
                                                     <span class="artwork-cover-current-copy">
                                                         <strong data-cover-current-label><?= h((string)$websiteSelectedCoverItem['label']) ?></strong>
-                                                        <span data-cover-current-type><?= h((string)$websiteSelectedCoverItem['type']) ?> selected for the website</span>
+                                                        <span data-cover-current-type><?= h((string)$websiteSelectedCoverItem['type']) ?> <?= h(t('selected for the website', 'seleccionada para el sitio web')) ?></span>
                                                     </span>
-                                                    <span class="artwork-cover-change">Change cover</span>
+                                                    <span class="artwork-cover-change"><?= h(t('Change cover', 'Cambiar portada')) ?></span>
                                                 </summary>
-                                                <div class="artwork-cover-options" role="radiogroup" aria-label="Choose website cover">
+                                                <div class="artwork-cover-options" role="radiogroup" aria-label="<?= h(t('Choose website cover', 'Elegir portada del sitio web')) ?>">
                                                     <?php foreach ($websiteCoverItems as $file => $item): ?>
                                                         <?php $coverSelected = $websiteSelectedCover === $file; ?>
                                                         <label class="artwork-cover-option <?= $coverSelected ? 'is-selected' : '' ?>" data-cover-option>
@@ -3813,7 +3820,7 @@ $editIconSvg = '<svg viewBox="0 0 24 24" width="18" height="18" stroke="currentC
                                                             <img src="<?= h(media_url($file)) ?>" alt="<?= h((string)$item['label']) ?>" loading="lazy">
                                                             <span class="artwork-cover-option-copy">
                                                                 <strong><?= h((string)$item['label']) ?></strong>
-                                                                <small><?= $coverSelected ? 'Selected · ' : '' ?><?= h((string)$item['type']) ?></small>
+                                                                <small><?= $coverSelected ? h(t('Selected', 'Seleccionada')) . ' · ' : '' ?><?= h((string)$item['type']) ?></small>
                                                             </span>
                                                         </label>
                                                     <?php endforeach; ?>
@@ -3821,11 +3828,11 @@ $editIconSvg = '<svg viewBox="0 0 24 24" width="18" height="18" stroke="currentC
                                             </details>
                                         </div>
                                         <div class="artwork-website-actions">
-                                            <button class="website-decision website-save" type="submit" name="website_intent" value="save"><span>Save Website<br>Settings</span></button>
+                                            <button class="website-decision website-save" type="submit" name="website_intent" value="save"><span><?= h(t('Save Website', 'Guardar Sitio Web')) ?><br><?= h(t('Settings', 'Configuración')) ?></span></button>
                                             <?php if ($websiteStatus === 'published'): ?>
-                                                <button class="website-decision website-unpublish" type="submit" name="website_intent" value="unpublish"><span>Unpublish<br>Artwork</span></button>
+                                                <button class="website-decision website-unpublish" type="submit" name="website_intent" value="unpublish"><span><?= h(t('Unpublish', 'Despublicar')) ?><br><?= h(t('Artwork', 'Obra')) ?></span></button>
                                             <?php else: ?>
-                                                <button class="website-decision website-publish" type="submit" name="website_intent" value="publish"><span>Publish<br>Artwork</span></button>
+                                                <button class="website-decision website-publish" type="submit" name="website_intent" value="publish"><span><?= h(t('Publish', 'Publicar')) ?><br><?= h(t('Artwork', 'Obra')) ?></span></button>
                                             <?php endif; ?>
                                         </div>
                                     </div>
@@ -3837,100 +3844,100 @@ $editIconSvg = '<svg viewBox="0 0 24 24" width="18" height="18" stroke="currentC
                                 <section class="artwork-sheet-card artwork-primary-metadata-card <?= $artworkMetadataValidated ? 'metadata-validated' : 'metadata-unvalidated' ?>">
                                 <div class="artwork-sheet-card-head">
                                     <div>
-                                        <h3>Artwork Metadata</h3>
-                                        <p>Title, subtitle, and description.</p>
+                                        <h3><?= h(t('Artwork Metadata', 'Metadatos de la Obra')) ?></h3>
+                                        <p><?= h(t('Title, subtitle, and description.', 'Título, subtítulo y descripción.')) ?></p>
                                     </div>
                                     <div class="topbar-actions">
-                                        <button type="submit" form="artwork-generate-metadata-form" class="<?= $artworkSheetHasMetadata ? 'secondary' : '' ?>"><?= $v2Draft ? 'Regenerate v2 draft' : 'Generate v2 draft' ?></button>
+                                        <button type="submit" form="artwork-generate-metadata-form" class="<?= $artworkSheetHasMetadata ? 'secondary' : '' ?>"><?= $v2Draft ? h(t('Regenerate v2 draft', 'Regenerar borrador v2')) : h(t('Generate v2 draft', 'Generar borrador v2')) ?></button>
                                     </div>
                                 </div>
 
                                 <div class="artwork-metadata-form">
                                     <div class="artwork-metadata-form-grid">
                                         <div class="artwork-metadata-field">
-                                            <label>Title</label>
+                                            <label><?= h(t('Title', 'Título')) ?></label>
                                             <input type="text" name="title" value="<?= h($displayTitle) ?>">
                                         </div>
 
                                         <div class="artwork-metadata-field">
-                                            <label>Subtitle</label>
+                                            <label><?= h(t('Subtitle', 'Subtítulo')) ?></label>
                                             <input type="text" name="subtitle" value="<?= h($displaySubtitle) ?>">
                                         </div>
 
                                         <div class="artwork-metadata-field full">
-                                            <label>Description</label>
+                                            <label><?= h(t('Description', 'Descripción')) ?></label>
                                             <textarea name="description" rows="4"><?= h($displayDescription) ?></textarea>
                                         </div>
                                     </div>
 
                                     <div class="artwork-metadata-save">
-                                        <button type="submit">Save Metadata</button>
+                                        <button type="submit"><?= h(t('Save Metadata', 'Guardar Metadatos')) ?></button>
                                     </div>
                                 </div>
                                 </section>
 
                                 <details class="artwork-metadata-editor artwork-metadata-secondary-row <?= $artworkMetadataValidated ? 'metadata-validated' : 'metadata-unvalidated' ?>">
-                                <summary>More metadata</summary>
+                                <summary><?= h(t('More metadata', 'Más metadatos')) ?></summary>
                                 <div class="artwork-metadata-form">
                                     <div class="artwork-metadata-sections">
                                         <details class="details-panel">
-                                            <summary style="font-size: 12px;">SEO Metadata</summary>
+                                            <summary style="font-size: 12px;"><?= h(t('SEO Metadata', 'Metadatos SEO')) ?></summary>
                                             <div class="artwork-metadata-field">
-                                                <label>Short Description</label>
+                                                <label><?= h(t('Short Description', 'Descripción Breve')) ?></label>
                                                 <textarea name="short_description" rows="2"><?= h((string)($artworkSheet['short_description'] ?? '')) ?></textarea>
                                             </div>
 
                                             <div class="artwork-metadata-field">
-                                                <label>Tags</label>
+                                                <label><?= h(t('Tags', 'Etiquetas')) ?></label>
                                                 <textarea name="tags" rows="2"><?= h((string)($artworkSheet['tags'] ?? '')) ?></textarea>
                                             </div>
 
                                             <div class="artwork-metadata-field">
-                                                <label>Long Tail Terms</label>
+                                                <label><?= h(t('Long Tail Terms', 'Términos de Cola Larga')) ?></label>
                                                 <textarea name="long_tail_terms" rows="2"><?= h(implode("\n", array_map('strval', $artworkSheetLongTail))) ?></textarea>
                                             </div>
 
                                             <div class="artwork-metadata-field">
-                                                <label>Keywords</label>
+                                                <label><?= h(t('Keywords', 'Palabras Clave')) ?></label>
                                                 <textarea name="keywords" rows="2"><?= h((string)($artworkSheet['keywords'] ?? '')) ?></textarea>
                                             </div>
 
                                             <div class="artwork-metadata-field">
-                                                <label>Alt Text</label>
+                                                <label><?= h(t('Alt Text', 'Texto Alternativo')) ?></label>
                                                 <textarea name="alt_text" rows="2"><?= h((string)($artworkSheet['alt_text'] ?? '')) ?></textarea>
                                             </div>
 
                                             <div class="artwork-metadata-field">
-                                                <label>Caption</label>
+                                                <label><?= h(t('Caption', 'Pie de Imagen')) ?></label>
                                                 <textarea name="caption" rows="2"><?= h((string)($artworkSheet['caption'] ?? '')) ?></textarea>
                                             </div>
                                         </details>
 
                                         <details class="details-panel">
-                                            <summary style="font-size: 12px;">Basic Information</summary>
+                                            <summary style="font-size: 12px;"><?= h(t('Basic Information', 'Información Básica')) ?></summary>
                                             <div class="artwork-sheet-meta">
                                                 <div class="artwork-sheet-meta-row">
-                                                    <strong>Measurements</strong>
+                                                    <strong><?= h(t('Measurements', 'Medidas')) ?></strong>
                                                     <span><?= h($sizeText) ?></span>
                                                 </div>
                                             </div>
                                             <div class="artwork-metadata-field">
-                                                <label>Technique / Support</label>
+                                                <label><?= h(t('Technique / Support', 'Técnica / Soporte')) ?></label>
                                                 <input type="text" name="medium" value="<?= h((string)($artwork['medium'] ?? '')) ?>">
                                             </div>
                                             <div class="artwork-metadata-field">
-                                                <label>Year</label>
+                                                <label><?= h(t('Year', 'Año')) ?></label>
                                                 <input type="text" name="artwork_year" value="<?= h((string)($artwork['artwork_year'] ?? '')) ?>">
                                             </div>
                                             <div class="artwork-metadata-field">
-                                                <label>Series</label>
+                                                <label><?= h(t('Series', 'Series')) ?></label>
                                                 <input type="text" name="series" value="<?= h((string)($artwork['series'] ?? '')) ?>">
                                             </div>
                                         </details>
                                     </div>
 
                                     <div class="artwork-metadata-save">
-                                        <button type="submit">Save Metadata</button>
+                                        <button type="submit"><?= h(t('Save Metadata', 'Guardar Metadatos')) ?></button>
                                     </div>
                                 </div>
                                 </details>
@@ -3939,8 +3946,8 @@ $editIconSvg = '<svg viewBox="0 0 24 24" width="18" height="18" stroke="currentC
 
                         <aside class="favorite-mockups-panel <?= $artworkMetadataValidated ? '' : 'mobile-defer-until-metadata' ?>">
                                 <div class="related-mockups-title-row">
-                                    <h3>Related Mockups <span class="related-mockups-count">· <?= count($relatedMockups) ?></span></h3>
-                                    <a class="related-mockups-upload-link" href="mockup_upload.php?id=<?= (int)$id ?>">+ Import</a>
+                                    <h3><?= h(t('Related Mockups', 'Mockups Relacionados')) ?> <span class="related-mockups-count">· <?= count($relatedMockups) ?></span></h3>
+                                    <a class="related-mockups-upload-link" href="mockup_upload.php?id=<?= (int)$id ?>">+ <?= h(t('Import', 'Importar')) ?></a>
                                 </div>
                                 <?php if ($relatedMockups): ?>
                                     <div class="related-mockups-sidebar-grid">
@@ -3949,7 +3956,7 @@ $editIconSvg = '<svg viewBox="0 0 24 24" width="18" height="18" stroke="currentC
                                             $sidebarFile = (string)$sidebarMockup['mockup_file_basename'];
                                             $sidebarState = (array)($sidebarMockup['selector_state'] ?? []);
                                             $sidebarCombo = (array)($sidebarState['combination'] ?? []);
-                                            $sidebarLabel = trim((string)($sidebarCombo['camera_slot_name'] ?? $sidebarMockup['context_id'] ?? 'Mockup'));
+                                            $sidebarLabel = trim((string)($sidebarCombo['camera_slot_name'] ?? $sidebarMockup['context_id'] ?? t('Mockup', 'Mockup')));
                                             ?>
                                             <article class="related-mockup-card" data-mockup-card data-mockup-id="<?= (int)$sidebarMockup['id'] ?>">
                                                 <div class="related-mockup-image">
@@ -3959,22 +3966,22 @@ $editIconSvg = '<svg viewBox="0 0 24 24" width="18" height="18" stroke="currentC
                                                     <button
                                                         class="favorite-overlay-btn media-icon-button media-icon-button--compact media-thumb-action media-thumb-action--left <?= !empty($sidebarMockup['is_favorite']) ? 'active' : '' ?>"
                                                         type="button"
-                                                        title="<?= !empty($sidebarMockup['is_favorite']) ? 'Remove favorite' : 'Add favorite' ?>"
-                                                        aria-label="<?= !empty($sidebarMockup['is_favorite']) ? 'Remove favorite' : 'Add favorite' ?>"
+                                                        title="<?= !empty($sidebarMockup['is_favorite']) ? h(t('Remove favorite', 'Quitar favorito')) : h(t('Add favorite', 'Agregar favorito')) ?>"
+                                                        aria-label="<?= !empty($sidebarMockup['is_favorite']) ? h(t('Remove favorite', 'Quitar favorito')) : h(t('Add favorite', 'Agregar favorito')) ?>"
                                                         data-favorite-mockup
                                                         data-mockup-id="<?= (int)$sidebarMockup['id'] ?>"
                                                     ><svg class="media-action-icon" viewBox="0 0 24 24" aria-hidden="true"><path d="m12 3.7 2.55 5.17 5.71.83-4.13 4.03.97 5.69L12 16.73l-5.1 2.69.97-5.69L3.74 9.7l5.71-.83L12 3.7Z"/></svg></button>
                                                     <button
                                                         class="mockup-delete-overlay-btn media-icon-button media-icon-button--compact media-thumb-action media-thumb-action--right is-danger"
                                                         type="button"
-                                                        title="Delete mockup"
-                                                        aria-label="Delete mockup"
+                                                        title="<?= h(t('Delete mockup', 'Eliminar mockup')) ?>"
+                                                        aria-label="<?= h(t('Delete mockup', 'Eliminar mockup')) ?>"
                                                         data-delete-mockup
                                                         data-mockup-id="<?= (int)$sidebarMockup['id'] ?>"
                                                     ><svg class="media-action-icon" viewBox="0 0 24 24" aria-hidden="true"><path d="M7.5 8.5h9l-.65 10h-7.7l-.65-10Z"/><path d="M6 5.8h12M9.5 5.8V4h5v1.8M10.2 11.2v4.6M13.8 11.2v4.6"/></svg></button>
                                                     <?php if (!empty($sidebarMockup['variation_lab_available'])): ?>
                                                         <div class="related-mockup-actions">
-                                                            <a class="button-link" href="mockup_variation_lab.php?mockup_id=<?= (int)$sidebarMockup['id'] ?>">Variation</a>
+                                                            <a class="button-link" href="mockup_variation_lab.php?mockup_id=<?= (int)$sidebarMockup['id'] ?>"><?= h(t('Variation', 'Variación')) ?></a>
                                                         </div>
                                                     <?php endif; ?>
                                                 </div>
@@ -3983,14 +3990,14 @@ $editIconSvg = '<svg viewBox="0 0 24 24" width="18" height="18" stroke="currentC
                                     </div>
                                 <?php else: ?>
                                     <div class="favorite-empty related-mockups-empty">
-                                        <p>No mockups have been created for this artwork yet.</p>
-                                        <a class="related-mockups-create-decision" href="mockup_combinations_review.php?id=<?= (int)$id ?>">Create Mockups</a>
+                                        <p><?= h(t('No mockups have been created for this artwork yet.', 'Todavía no se crearon mockups para esta obra.')) ?></p>
+                                        <a class="related-mockups-create-decision" href="mockup_combinations_review.php?id=<?= (int)$id ?>"><?= h(t('Create Mockups', 'Crear Mockups')) ?></a>
                                     </div>
                                 <?php endif; ?>
                         </aside>
                     </div>
                 <?php else: ?>
-                    <div class="notice">No root artwork image is available yet.</div>
+                    <div class="notice"><?= h(t('No root artwork image is available yet.', 'Todavía no hay una imagen de obra raíz disponible.')) ?></div>
                 <?php endif; ?>
             </section>
 
@@ -4000,10 +4007,10 @@ $editIconSvg = '<svg viewBox="0 0 24 24" width="18" height="18" stroke="currentC
                 $editorialActivePackage = (array)($artworkEditorialPackageAudit['package'] ?? []);
                 $editorialPackageStatus = (string)($editorialActivePackage['status'] ?? '');
                 $editorialSummaryState = $artworkEditorialPackageError !== ''
-                    ? 'Unavailable'
+                    ? t('Unavailable', 'No disponible')
                     : (in_array($editorialPackageStatus, ['queued', 'processing'], true)
-                        ? 'In progress'
-                        : ($editorialPendingTotal > 0 ? $editorialPendingTotal . ' pending' : 'Complete'));
+                        ? t('In progress', 'En curso')
+                        : ($editorialPendingTotal > 0 ? $editorialPendingTotal . ' ' . t('pending', 'pendientes') : t('Complete', 'Completo')));
                 $editorialInitialPayload = json_encode(
                     ['ok' => $artworkEditorialPackageError === '', 'audit' => $artworkEditorialPackageAudit, 'error' => $artworkEditorialPackageError],
                     JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES | JSON_HEX_TAG | JSON_HEX_AMP | JSON_HEX_APOS | JSON_HEX_QUOT
@@ -4017,32 +4024,32 @@ $editIconSvg = '<svg viewBox="0 0 24 24" width="18" height="18" stroke="currentC
                     data-endpoint="artwork_editorial_package.php"
                 >
                     <summary>
-                        <span class="editorial-package-summary-title">Editorial preparation</span>
-                        <span class="editorial-package-badge">Advanced</span>
+                        <span class="editorial-package-summary-title"><?= h(t('Editorial preparation', 'Preparación editorial')) ?></span>
+                        <span class="editorial-package-badge"><?= h(t('Advanced', 'Avanzado')) ?></span>
                         <span class="editorial-package-summary-state" data-package-summary-state><?= h($editorialSummaryState) ?></span>
                     </summary>
                     <div class="editorial-package-workspace">
                         <header class="editorial-package-intro">
                             <div>
-                                <p class="editorial-package-kicker">Optional workflow</p>
-                                <h2>Prepare the editorial package</h2>
-                                <p>Complete the series, artwork and mockup texts together after the visual work has been approved.</p>
+                                <p class="editorial-package-kicker"><?= h(t('Optional workflow', 'Flujo opcional')) ?></p>
+                                <h2><?= h(t('Prepare the editorial package', 'Preparar el paquete editorial')) ?></h2>
+                                <p><?= h(t('Complete the series, artwork and mockup texts together after the visual work has been approved.', 'Completá los textos de la serie, la obra y los mockups juntos después de que el trabajo visual haya sido aprobado.')) ?></p>
                             </div>
-                            <p class="editorial-package-publication-note">Prepares Spanish and international English. Website visibility remains controlled separately.</p>
+                            <p class="editorial-package-publication-note"><?= h(t('Prepares Spanish and international English. Website visibility remains controlled separately.', 'Prepara el español y el inglés internacional. La visibilidad del sitio web se controla por separado.')) ?></p>
                         </header>
 
                         <div class="editorial-package-layout">
                             <section class="editorial-package-checklist-section" aria-labelledby="editorial-package-checklist-title">
-                                <h3 id="editorial-package-checklist-title">Ready to prepare</h3>
+                                <h3 id="editorial-package-checklist-title"><?= h(t('Ready to prepare', 'Listo para preparar')) ?></h3>
                                 <ul class="editorial-package-checklist" data-package-checklist>
-                                    <li>Checking editorial context…</li>
+                                    <li><?= h(t('Checking editorial context…', 'Verificando el contexto editorial…')) ?></li>
                                 </ul>
                             </section>
 
                             <section class="editorial-package-scope" aria-labelledby="editorial-package-scope-title">
-                                <h3 id="editorial-package-scope-title">This order includes</h3>
+                                <h3 id="editorial-package-scope-title"><?= h(t('This order includes', 'Este pedido incluye')) ?></h3>
                                 <div class="editorial-package-scope-counts" data-package-scope>
-                                    <span>Checking pending content…</span>
+                                    <span><?= h(t('Checking pending content…', 'Verificando contenido pendiente…')) ?></span>
                                 </div>
                             </section>
 
@@ -4050,9 +4057,9 @@ $editIconSvg = '<svg viewBox="0 0 24 24" width="18" height="18" stroke="currentC
 
                             <div class="editorial-package-decision-wrap" data-package-decision hidden>
                                 <button class="editorial-package-decision" type="button" data-package-action>
-                                    <span data-package-action-label>Prepare Editorial Package</span>
+                                    <span data-package-action-label><?= h(t('Prepare Editorial Package', 'Preparar Paquete Editorial')) ?></span>
                                 </button>
-                                <p data-package-action-help>The preparation runs in stages and covers every mockup attached to this artwork.</p>
+                                <p data-package-action-help><?= h(t('The preparation runs in stages and covers every mockup attached to this artwork.', 'La preparación se ejecuta en etapas y abarca todos los mockups adjuntos a esta obra.')) ?></p>
                             </div>
                         </div>
                     </div>
@@ -4084,9 +4091,9 @@ $editIconSvg = '<svg viewBox="0 0 24 24" width="18" height="18" stroke="currentC
                             <div style="display: grid; grid-template-columns: repeat(<?= min(count($rootCandidatesList), 3) ?>, 1fr); gap: 8px;">
                                 <?php
                                 $viewLabels = [
-                                    'frontal'             => 'Frontal',
-                                    'three-quarter-left'  => '3/4 Izq.',
-                                    'three-quarter-right' => '3/4 Der.',
+                                    'frontal'             => t('Frontal', 'Frontal'),
+                                    'three-quarter-left'  => t('3/4 Left', '3/4 Izq.'),
+                                    'three-quarter-right' => t('3/4 Right', '3/4 Der.'),
                                 ];
                                 foreach ($rootCandidatesList as $rca): ?>
                                     <?php
@@ -4431,13 +4438,43 @@ $editIconSvg = '<svg viewBox="0 0 24 24" width="18" height="18" stroke="currentC
                         }
                     ?>
                         <details class="details-panel" style="margin-top: 16px;">
-                            <summary style="font-weight: 600; cursor: pointer; color: var(--ink);">View Raw AI Analysis (JSON)</summary>
+                            <summary style="font-weight: 600; cursor: pointer; color: var(--ink);"><?= h(t('View Raw AI Analysis (JSON)', 'Ver Análisis IA Sin Procesar (JSON)')) ?></summary>
                             <div style="margin-top: 12px;">
                                 <pre style="background: var(--surface-soft); border: 1px solid var(--line); padding: 12px; border-radius: var(--radius); overflow-x: auto; font-family: monospace; font-size: 11px; margin: 0; max-height: 400px; color: var(--ink);"><code class="json"><?= h($rawAnalysisJson) ?></code></pre>
                             </div>
                         </details>
                     <?php endif; ?>
              <script>
+    const awI18n = {
+        copied: <?= json_encode(t('Copied', 'Copiado')) ?>,
+        copyFailed: <?= json_encode(t('Copy failed', 'Error al copiar')) ?>,
+        couldNotUpdateFavorite: <?= json_encode(t('Could not update favorite.', 'No se pudo actualizar el favorito.')) ?>,
+        removeFavorite: <?= json_encode(t('Remove favorite', 'Quitar favorito')) ?>,
+        addFavorite: <?= json_encode(t('Add favorite', 'Agregar favorito')) ?>,
+        deleteMockupConfirm: <?= json_encode(t('Delete this mockup?', '¿Eliminar este mockup?')) ?>,
+        couldNotDeleteMockup: <?= json_encode(t('Could not delete mockup.', 'No se pudo eliminar el mockup.')) ?>,
+        generatingEllipsis: <?= json_encode(t('Generating...', 'Generando...')) ?>,
+        invalidServerResponse: <?= json_encode(t('The server returned an invalid response.', 'El servidor devolvió una respuesta inválida.')) ?>,
+        couldNotGenerateMockup: <?= json_encode(t('Could not generate mockup.', 'No se pudo generar el mockup.')) ?>,
+        mockupFallback: <?= json_encode(t('Mockup', 'Mockup')) ?>,
+        openViewer: <?= json_encode(t('Open viewer', 'Abrir visor')) ?>,
+        errorPrefix: <?= json_encode(t('Error:', 'Error:')) ?>,
+        deleteMockupConfirmLong: <?= json_encode(t('Are you sure you want to delete this mockup?', '¿Estás seguro de que querés eliminar este mockup?')) ?>,
+        generateMockup: <?= json_encode(t('Generate Mockup', 'Generar Mockup')) ?>,
+        networkErrorDeleting: <?= json_encode(t('Network error trying to delete.', 'Error de red al intentar eliminar.')) ?>,
+        rootArtworkSection: <?= json_encode(t('[Root Artwork]', '[Obra Raíz]')) ?>,
+        fileLabel: <?= json_encode(t('File:', 'Archivo:')) ?>,
+        altLabel: <?= json_encode(t('Alt:', 'Alt:')) ?>,
+        captionLabel: <?= json_encode(t('Caption:', 'Pie de imagen:')) ?>,
+        mockupSection: <?= json_encode(t('Mockup', 'Mockup')) ?>,
+        optionLabel: <?= json_encode(t('Option', 'Opción')) ?>,
+        titleLabel: <?= json_encode(t('Title:', 'Título:')) ?>,
+        subtitleLabel: <?= json_encode(t('Subtitle:', 'Subtítulo:')) ?>,
+        selectedPrefix: <?= json_encode(t('Selected', 'Seleccionada')) ?>,
+        imageFallback: <?= json_encode(t('Image', 'Imagen')) ?>,
+        websiteCoverFallback: <?= json_encode(t('Website cover', 'Portada del sitio web')) ?>,
+        selectedForWebsite: <?= json_encode(t('selected for the website', 'seleccionada para el sitio web')) ?>,
+    };
     const isAdmin = <?= $isAdmin ? 'true' : 'false' ?>;
 
     const artworkTitleEditButton = document.querySelector('[data-artwork-title-edit]');
@@ -4511,10 +4548,10 @@ $editIconSvg = '<svg viewBox="0 0 24 24" width="18" height="18" stroke="currentC
             const original = button.innerHTML;
             try {
                 await navigator.clipboard.writeText(button.dataset.copy || '');
-                button.innerHTML = 'Copied';
+                button.innerHTML = awI18n.copied;
                 setTimeout(() => button.innerHTML = original, 1200);
             } catch (error) {
-                button.innerHTML = 'Copy failed';
+                button.innerHTML = awI18n.copyFailed;
                 setTimeout(() => button.innerHTML = original, 1200);
             }
         });
@@ -4529,10 +4566,10 @@ $editIconSvg = '<svg viewBox="0 0 24 24" width="18" height="18" stroke="currentC
                 const original = button.innerHTML;
                 try {
                     await navigator.clipboard.writeText(span.textContent.trim());
-                    button.innerHTML = 'Copied';
+                    button.innerHTML = awI18n.copied;
                     setTimeout(() => button.innerHTML = original, 1200);
                 } catch (error) {
-                    button.innerHTML = 'Copy failed';
+                    button.innerHTML = awI18n.copyFailed;
                     setTimeout(() => button.innerHTML = original, 1200);
                 }
             }
@@ -4546,10 +4583,10 @@ $editIconSvg = '<svg viewBox="0 0 24 24" width="18" height="18" stroke="currentC
             const original = this.innerHTML;
             try {
                 await navigator.clipboard.writeText(span.textContent.trim());
-                this.innerHTML = 'Copied';
+                this.innerHTML = awI18n.copied;
                 setTimeout(() => this.innerHTML = original, 1200);
             } catch (error) {
-                this.innerHTML = 'Copy failed';
+                this.innerHTML = awI18n.copyFailed;
                 setTimeout(() => this.innerHTML = original, 1200);
             }
         }
@@ -4557,17 +4594,17 @@ $editIconSvg = '<svg viewBox="0 0 24 24" width="18" height="18" stroke="currentC
 
     // Unified report sections copy functions
     function getSection0Text() {
-        let text = `[Root Artwork]\n`;
-        text += `File: ${document.querySelector('.seo-root-filename')?.textContent || ''}\n`;
-        text += `Alt: ${document.querySelector('.seo-root-alt')?.textContent || ''}\n`;
-        text += `Caption: ${document.querySelector('.seo-root-caption')?.textContent || ''}\n\n`;
+        let text = `${awI18n.rootArtworkSection}\n`;
+        text += `${awI18n.fileLabel} ${document.querySelector('.seo-root-filename')?.textContent || ''}\n`;
+        text += `${awI18n.altLabel} ${document.querySelector('.seo-root-alt')?.textContent || ''}\n`;
+        text += `${awI18n.captionLabel} ${document.querySelector('.seo-root-caption')?.textContent || ''}\n\n`;
 
         document.querySelectorAll('.mockup-card-container').forEach((card, idx) => {
-            const name = card.getAttribute('data-context-name') || `Mockup ${idx + 1}`;
-            text += `[Mockup ${idx + 1}: ${name}]\n`;
-            text += `File: ${card.querySelector('.seo-mockup-filename')?.textContent || ''}\n`;
-            text += `Alt: ${card.querySelector('.mockup-alt-text')?.textContent || ''}\n`;
-            text += `Caption: ${card.querySelector('.mockup-caption-text')?.textContent || ''}\n\n`;
+            const name = card.getAttribute('data-context-name') || `${awI18n.mockupSection} ${idx + 1}`;
+            text += `[${awI18n.mockupSection} ${idx + 1}: ${name}]\n`;
+            text += `${awI18n.fileLabel} ${card.querySelector('.seo-mockup-filename')?.textContent || ''}\n`;
+            text += `${awI18n.altLabel} ${card.querySelector('.mockup-alt-text')?.textContent || ''}\n`;
+            text += `${awI18n.captionLabel} ${card.querySelector('.mockup-caption-text')?.textContent || ''}\n\n`;
         });
         return text.trim();
     }
@@ -4576,13 +4613,13 @@ $editIconSvg = '<svg viewBox="0 0 24 24" width="18" height="18" stroke="currentC
         let text = '';
         document.querySelectorAll('.title-grid-unified article').forEach((card, idx) => {
             const labels = card.querySelectorAll('.selected-label');
-            const label = labels[0]?.textContent || `Option ${idx + 1}`;
+            const label = labels[0]?.textContent || `${awI18n.optionLabel} ${idx + 1}`;
             const title = card.querySelector('h3')?.textContent || '';
             const sub = card.querySelector('.title-option-subtitle')?.textContent || '';
             text += `${label}:\n`;
-            text += `Title: ${title}\n`;
+            text += `${awI18n.titleLabel} ${title}\n`;
             if (sub) {
-                text += `Subtitle: ${sub}\n`;
+                text += `${awI18n.subtitleLabel} ${sub}\n`;
             }
             text += `\n`;
         });
@@ -4603,10 +4640,10 @@ $editIconSvg = '<svg viewBox="0 0 24 24" width="18" height="18" stroke="currentC
         const original = button.innerHTML;
         try {
             await navigator.clipboard.writeText(getTextFn());
-            button.innerHTML = 'Copied';
+            button.innerHTML = awI18n.copied;
             setTimeout(() => button.innerHTML = original, 1200);
         } catch (error) {
-            button.innerHTML = 'Copy failed';
+            button.innerHTML = awI18n.copyFailed;
             setTimeout(() => button.innerHTML = original, 1200);
         }
     };
@@ -4632,10 +4669,10 @@ $editIconSvg = '<svg viewBox="0 0 24 24" width="18" height="18" stroke="currentC
                 const response = await fetch('toggle_mockup_favorite.php', { method: 'POST', body: formData });
                 const result = await response.json();
                 if (!result.ok) {
-                    throw new Error(result.error || 'Could not update favorite.');
+                    throw new Error(result.error || awI18n.couldNotUpdateFavorite);
                 }
                 button.classList.toggle('active', !!result.favorite);
-                button.title = result.favorite ? 'Remove favorite' : 'Add favorite';
+                button.title = result.favorite ? awI18n.removeFavorite : awI18n.addFavorite;
                 button.setAttribute('aria-label', button.title);
                 const card = button.closest('[data-mockup-card]');
                 const grid = card?.closest('.related-mockups-sidebar-grid');
@@ -4674,7 +4711,7 @@ $editIconSvg = '<svg viewBox="0 0 24 24" width="18" height="18" stroke="currentC
         button.addEventListener('click', async (event) => {
             event.preventDefault();
             event.stopPropagation();
-            if (!confirm('Delete this mockup?')) {
+            if (!confirm(awI18n.deleteMockupConfirm)) {
                 return;
             }
             const mockupId = button.getAttribute('data-mockup-id') || '';
@@ -4685,7 +4722,7 @@ $editIconSvg = '<svg viewBox="0 0 24 24" width="18" height="18" stroke="currentC
                 const response = await fetch('delete_mockup_result.php', { method: 'POST', body: formData });
                 const result = await response.json();
                 if (!result.ok) {
-                    throw new Error(result.error || 'Could not delete mockup.');
+                    throw new Error(result.error || awI18n.couldNotDeleteMockup);
                 }
                 document.querySelectorAll('[data-mockup-card]').forEach((card) => {
                     if (card.getAttribute('data-mockup-id') === mockupId) {
@@ -4719,7 +4756,7 @@ $editIconSvg = '<svg viewBox="0 0 24 24" width="18" height="18" stroke="currentC
             </div>
         `;
         button.disabled = true;
-        button.innerHTML = 'Generating...';
+        button.innerHTML = awI18n.generatingEllipsis;
 
         try {
             const response = await fetch(form.action, {
@@ -4741,20 +4778,20 @@ $editIconSvg = '<svg viewBox="0 0 24 24" width="18" height="18" stroke="currentC
                     .replace(/<[^>]+>/g, ' ')
                     .replace(/\s+/g, ' ')
                     .trim();
-                throw new Error(readable || 'The server returned an invalid response.');
+                throw new Error(readable || awI18n.invalidServerResponse);
             }
 
             if (!response.ok || !data.ok) {
-                throw new Error(data.error || 'Could not generate mockup.');
+                throw new Error(data.error || awI18n.couldNotGenerateMockup);
             }
 
             // Successfully generated!
             card.classList.add('generated');
-            
+
             // Update image preview
-            const ctxName = card.querySelector('h3')?.textContent || 'Mockup';
+            const ctxName = card.querySelector('h3')?.textContent || awI18n.mockupFallback;
             resultBox.innerHTML = `
-                <a class="inline-thumb" href="${escapeAttribute((data.mockup_id || data.id) ? 'viewer.php?id=' + (data.mockup_id || data.id) + '&back=artwork.php?id=<?= (int)$id ?>' : data.image_url)}" title="Open viewer" style="width: 100%;">
+                <a class="inline-thumb" href="${escapeAttribute((data.mockup_id || data.id) ? 'viewer.php?id=' + (data.mockup_id || data.id) + '&back=artwork.php?id=<?= (int)$id ?>' : data.image_url)}" title="${escapeAttribute(awI18n.openViewer)}" style="width: 100%;">
                     <img src="${escapeAttribute(data.image_url)}" alt="${escapeAttribute(ctxName)}" style="width: 100%; height: auto; display: block; border-radius: 2px;">
                 </a>
             `;
@@ -4780,7 +4817,7 @@ $editIconSvg = '<svg viewBox="0 0 24 24" width="18" height="18" stroke="currentC
             updateDownloadLinks();
 
         } catch (error) {
-            resultBox.innerHTML = `<div class="inline-status" style="color: var(--danger); font-size: 11px; padding: 10px; text-align: center;">Error: ${escapeHtml(error.message)}</div>`;
+            resultBox.innerHTML = `<div class="inline-status" style="color: var(--danger); font-size: 11px; padding: 10px; text-align: center;">${escapeHtml(awI18n.errorPrefix)} ${escapeHtml(error.message)}</div>`;
             button.innerHTML = originalHtml;
             button.disabled = false;
         } finally {
@@ -4793,7 +4830,7 @@ $editIconSvg = '<svg viewBox="0 0 24 24" width="18" height="18" stroke="currentC
         const deleteBtn = event.target.closest('.btn-delete-mockup');
         if (!deleteBtn) return;
 
-        if (!confirm('Are you sure you want to delete this mockup?')) {
+        if (!confirm(awI18n.deleteMockupConfirmLong)) {
             return;
         }
 
@@ -4835,15 +4872,15 @@ $editIconSvg = '<svg viewBox="0 0 24 24" width="18" height="18" stroke="currentC
                     const formSubmitBtn = card.querySelector('.inline-mockup-form button[type="submit"]');
                     if (formSubmitBtn) {
                         formSubmitBtn.disabled = false;
-                        formSubmitBtn.innerHTML = 'Generate Mockup';
+                        formSubmitBtn.innerHTML = awI18n.generateMockup;
                     }
                 }
             } else {
-                alert('Error: ' + (data.error || 'Could not delete mockup.'));
+                alert(awI18n.errorPrefix + ' ' + (data.error || awI18n.couldNotDeleteMockup));
                 deleteBtn.disabled = false;
             }
         } catch (err) {
-            alert('Network error trying to delete.');
+            alert(awI18n.networkErrorDeleting);
             deleteBtn.disabled = false;
         }
     });
@@ -4885,12 +4922,12 @@ document.querySelectorAll('[data-website-cover-picker]').forEach((picker) => {
                 option.classList.toggle('is-selected', selected);
                 const type = option.querySelector('small');
                 if (type && optionInput) {
-                    type.textContent = (selected ? 'Selected · ' : '') + (optionInput.dataset.coverType || 'Image');
+                    type.textContent = (selected ? awI18n.selectedPrefix + ' · ' : '') + (optionInput.dataset.coverType || awI18n.imageFallback);
                 }
             });
             if (currentImage) currentImage.src = input.dataset.coverImage || '';
-            if (currentLabel) currentLabel.textContent = input.dataset.coverLabel || 'Website cover';
-            if (currentType) currentType.textContent = (input.dataset.coverType || 'Image') + ' selected for the website';
+            if (currentLabel) currentLabel.textContent = input.dataset.coverLabel || awI18n.websiteCoverFallback;
+            if (currentType) currentType.textContent = (input.dataset.coverType || awI18n.imageFallback) + ' ' + awI18n.selectedForWebsite;
             window.setTimeout(() => { picker.open = false; }, 140);
         });
     });

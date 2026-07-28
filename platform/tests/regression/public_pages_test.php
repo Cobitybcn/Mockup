@@ -87,7 +87,7 @@ function run_public_pages_regression_tests(): void {
     $videosPage=(string)file_get_contents($root.'/videos.php');
     $publicVideoMedia=(string)file_get_contents($root.'/publication_video_media.php');
     TestHarness::assertContains('data-final-publish-form',$videosPage,'each final video exposes its direct site publication action');
-    TestHarness::assertContains("\$sitePublished ? 'PUBLISHED' : 'PUBLISH'",$videosPage,'the final video publication action stays deliberately short');
+    TestHarness::assertContains("\$sitePublished ? videos_h(t('PUBLISHED', 'PUBLICADO')) : videos_h(t('PUBLISH', 'PUBLICAR'))",$videosPage,'the final video publication action stays deliberately short');
     TestHarness::assertTrue(!str_contains($publicVideoMedia,'Auth::requireUser'),'published artwork videos play without a private workspace session');
     TestHarness::assertContains('artwork_video_publications',$publicVideoMedia,'public video delivery requires an explicit artwork publication');
     $videoLandingStart=strpos($artistSite,'function render_published_artwork_video');

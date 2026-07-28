@@ -64,7 +64,7 @@ $generator = new WorldMotherGenerator($library);
 $sceneSlug = wmvl_resolve_scene($library, (string)($_POST['scene'] ?? $_GET['scene'] ?? ''));
 $sourceFile = basename(trim((string)($_POST['source'] ?? $_GET['source'] ?? '')));
 $error = '';
-$notice = isset($_GET['created']) ? 'Variation created and added to this scene.' : '';
+$notice = isset($_GET['created']) ? t('Variation created and added to this scene.', 'Variación creada y agregada a esta escena.') : '';
 $generated = null;
 
 $sceneCategory = null;
@@ -96,10 +96,10 @@ if ($csrf === '') {
 if ($_SERVER['REQUEST_METHOD'] === 'POST' && (string)($_POST['action'] ?? '') === 'create_variation') {
     try {
         if (!hash_equals($csrf, (string)($_POST['csrf'] ?? ''))) {
-            throw new RuntimeException('The editing session expired. Reload the page and try again.');
+            throw new RuntimeException(t('The editing session expired. Reload the page and try again.', 'La sesión de edición expiró. Recargá la página e intentá de nuevo.'));
         }
         if ($sceneSlug === '' || !is_array($sceneCategory) || !is_array($sourceImage)) {
-            throw new RuntimeException('The selected scene source was not found.');
+            throw new RuntimeException(t('The selected scene source was not found.', 'No se encontró la fuente de escena seleccionada.'));
         }
         $customInstruction = trim((string)($_POST['instruction'] ?? ''));
         $humanPresence = trim((string)($_POST['human_presence'] ?? 'none'));
@@ -120,7 +120,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && (string)($_POST['action'] ?? '') ==
         if (!array_key_exists($humanPresence, $allowedHumanPresence)
             || !array_key_exists($lightingModifier, $allowedLighting)
             || !preg_match('/^(?:none|scale_(?:minus|plus)_(?:20|40|60))$/', $sceneScale)) {
-            throw new RuntimeException('One of the selected scene controls is not valid.');
+            throw new RuntimeException(t('One of the selected scene controls is not valid.', 'Uno de los controles de escena seleccionados no es válido.'));
         }
         $scaleInstruction = '';
         if (preg_match('/^scale_(minus|plus)_(20|40|60)$/', $sceneScale, $scaleMatch)) {
@@ -136,14 +136,14 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && (string)($_POST['action'] ?? '') ==
             $customInstruction,
         ])));
         if ($instruction === '') {
-            throw new RuntimeException('Choose a change or write an additional prompt.');
+            throw new RuntimeException(t('Choose a change or write an additional prompt.', 'Elegí un cambio o escribí un prompt adicional.'));
         }
         $sourcePath = wmvl_local_source(
             (string)($sourceImage['relative_path'] ?? ''),
             (string)($sourceImage['absolute_path'] ?? '')
         );
         if (!is_file($sourcePath)) {
-            throw new RuntimeException('The selected scene source could not be prepared for editing.');
+            throw new RuntimeException(t('The selected scene source could not be prepared for editing.', 'No se pudo preparar la fuente de escena seleccionada para editar.'));
         }
 
         $generated = $generator->editWorldMother($sourcePath, $sceneSlug, [
@@ -171,11 +171,11 @@ $sceneName = (string)($sceneCategory['category_name'] ?? $sceneSlug);
 $sourceRelativePath = is_array($sourceImage) ? (string)($sourceImage['relative_path'] ?? '') : '';
 ?>
 <!doctype html>
-<html lang="en">
+<html lang="<?= h(Translator::locale($user)) ?>">
 <head>
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
-    <title>Scene Source Lab - Artwork Mockups</title>
+    <title><?= h(t('Scene Source Lab - Artwork Mockups', 'Laboratorio de Fuentes de Escena - Artwork Mockups')) ?></title>
     <link rel="stylesheet" href="style.css">
     <link rel="stylesheet" href="ui-catalog.css">
     <style>
@@ -497,11 +497,11 @@ $sourceRelativePath = is_array($sourceImage) ? (string)($sourceImage['relative_p
     <?php include __DIR__ . '/sidebar.php'; ?>
     <main class="main-area">
         <header class="app-header"><a class="user-chip" href="account.php"><?= h($user['email']) ?></a></header>
-        <div class="alert-strip">Scene Source Lab: transform one environmental source while preserving its scene family.</div>
+        <div class="alert-strip"><?= h(t('Scene Source Lab: transform one environmental source while preserving its scene family.', 'Laboratorio de Fuentes de Escena: transformá una fuente ambiental preservando su familia de escena.')) ?></div>
         <div class="scene-lab-workspace">
             <p class="scene-lab-instruction">
-                Create controlled variations from this scene source.
-                <a href="world_mother_studio.php?scene=<?= rawurlencode($sceneSlug) ?>#scene-detail">Back to <?= h($sceneName) ?></a>
+                <?= h(t('Create controlled variations from this scene source.', 'Creá variaciones controladas a partir de esta fuente de escena.')) ?>
+                <a href="world_mother_studio.php?scene=<?= rawurlencode($sceneSlug) ?>#scene-detail"><?= h(t('Back to', 'Volver a')) ?> <?= h($sceneName) ?></a>
             </p>
 
             <?php if ($error !== ''): ?><div class="notice error"><?= h($error) ?></div><?php endif; ?>
@@ -518,56 +518,56 @@ $sourceRelativePath = is_array($sourceImage) ? (string)($sourceImage['relative_p
                         <input type="hidden" name="artwork_scale" id="artwork-scale-value" value="none">
                         <input type="hidden" name="lighting_modifier" id="scene-lighting-modifier" value="none">
                         <div class="scene-source-stage">
-                            <img class="scene-source-image" src="<?= h(wmvl_media_url($sourceRelativePath)) ?>" alt="<?= h((string)($sourceImage['title'] ?? 'Selected scene source')) ?>">
-                            <div class="mobile-mockup-overlays" aria-label="Mockup controls">
-                                <div class="mobile-human-dial" aria-label="Human presence">
-                                    <button class="mobile-human-option" type="button" data-human-value="none" aria-label="No person" title="None" aria-pressed="true">
+                            <img class="scene-source-image" src="<?= h(wmvl_media_url($sourceRelativePath)) ?>" alt="<?= h((string)($sourceImage['title'] ?? t('Selected scene source', 'Fuente de escena seleccionada'))) ?>">
+                            <div class="mobile-mockup-overlays" aria-label="<?= h(t('Mockup controls', 'Controles de mockup')) ?>">
+                                <div class="mobile-human-dial" aria-label="<?= h(t('Human presence', 'Presencia humana')) ?>">
+                                    <button class="mobile-human-option" type="button" data-human-value="none" aria-label="<?= h(t('No person', 'Sin persona')) ?>" title="<?= h(t('None', 'Ninguna')) ?>" aria-pressed="true">
                                         <svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="7"></circle><path d="M7 7l10 10"></path></svg>
                                     </button>
-                                    <button class="mobile-human-option" type="button" data-human-value="female_160" aria-label="Female figure" title="Female" aria-pressed="false">
+                                    <button class="mobile-human-option" type="button" data-human-value="female_160" aria-label="<?= h(t('Female figure', 'Figura femenina')) ?>" title="<?= h(t('Female', 'Femenina')) ?>" aria-pressed="false">
                                         <svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="5.5" r="2.5"></circle><path d="M12 8v5M8.5 18h7L12 10.5 8.5 18ZM12 18v4"></path></svg>
                                     </button>
-                                    <button class="mobile-human-option" type="button" data-human-value="male_180" aria-label="Male figure" title="Male" aria-pressed="false">
+                                    <button class="mobile-human-option" type="button" data-human-value="male_180" aria-label="<?= h(t('Male figure', 'Figura masculina')) ?>" title="<?= h(t('Male', 'Masculina')) ?>" aria-pressed="false">
                                         <svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="5.5" r="2.5"></circle><path d="M12 8v7M8.5 11.5 12 9l3.5 2.5M12 15l-3 7M12 15l3 7"></path></svg>
                                     </button>
                                 </div>
-                                <button class="mobile-scale-dial" id="mobile-scale-dial" type="button" role="slider" aria-label="Artwork scale. Swipe up to increase and down to decrease." aria-valuemin="-60" aria-valuemax="60" aria-valuenow="0">
-                                    <span class="dial-kicker">SCALE</span>
+                                <button class="mobile-scale-dial" id="mobile-scale-dial" type="button" role="slider" aria-label="<?= h(t('Artwork scale. Swipe up to increase and down to decrease.', 'Escala de la obra. Deslizá hacia arriba para aumentar y hacia abajo para disminuir.')) ?>" aria-valuemin="-60" aria-valuemax="60" aria-valuenow="0">
+                                    <span class="dial-kicker"><?= h(t('SCALE', 'ESCALA')) ?></span>
                                     <strong id="mobile-scale-display">0</strong>
                                     <span class="dial-unit">%</span>
                                 </button>
-                                <div class="mobile-lighting-dial" aria-label="Lighting">
-                                    <button class="mobile-light-option" type="button" data-lighting-value="light_overcast" aria-label="Overcast" title="Overcast" aria-pressed="false">
+                                <div class="mobile-lighting-dial" aria-label="<?= h(t('Lighting', 'Iluminación')) ?>">
+                                    <button class="mobile-light-option" type="button" data-lighting-value="light_overcast" aria-label="<?= h(t('Overcast', 'Nublado')) ?>" title="<?= h(t('Overcast', 'Nublado')) ?>" aria-pressed="false">
                                         <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M6.8 18.5h10.3a3.7 3.7 0 0 0 .5-7.4A5.7 5.7 0 0 0 6.7 9.8a4.4 4.4 0 0 0 .1 8.7Z"></path></svg>
                                     </button>
-                                    <button class="mobile-light-option" type="button" data-lighting-value="light_day" aria-label="Daylight" title="Daylight" aria-pressed="false">
+                                    <button class="mobile-light-option" type="button" data-lighting-value="light_day" aria-label="<?= h(t('Daylight', 'Luz diurna')) ?>" title="<?= h(t('Daylight', 'Luz diurna')) ?>" aria-pressed="false">
                                         <svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="3.5"></circle><path d="M12 2v2.2M12 19.8V22M2 12h2.2M19.8 12H22M4.9 4.9l1.6 1.6M17.5 17.5l1.6 1.6M19.1 4.9l-1.6 1.6M6.5 17.5l-1.6 1.6"></path></svg>
                                     </button>
-                                    <button class="mobile-light-option" type="button" data-lighting-value="light_golden" aria-label="Golden Hour" title="Golden Hour" aria-pressed="false">
+                                    <button class="mobile-light-option" type="button" data-lighting-value="light_golden" aria-label="<?= h(t('Golden Hour', 'Hora dorada')) ?>" title="<?= h(t('Golden Hour', 'Hora dorada')) ?>" aria-pressed="false">
                                         <svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="3.8"></circle><path d="M12 2v2.2M12 19.8V22M2 12h2.2M19.8 12H22M4.9 4.9l1.6 1.6M17.5 17.5l1.6 1.6M19.1 4.9l-1.6 1.6M6.5 17.5l-1.6 1.6"></path></svg>
                                     </button>
-                                    <button class="mobile-light-option" type="button" data-lighting-value="light_night" aria-label="Night Light" title="Night Light" aria-pressed="false">
+                                    <button class="mobile-light-option" type="button" data-lighting-value="light_night" aria-label="<?= h(t('Night Light', 'Luz nocturna')) ?>" title="<?= h(t('Night Light', 'Luz nocturna')) ?>" aria-pressed="false">
                                         <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M19.5 15.2A8 8 0 0 1 8.8 4.5 8 8 0 1 0 19.5 15.2Z"></path></svg>
                                     </button>
                                 </div>
                             </div>
                         </div>
                         <details class="scene-source-prompt">
-                            <summary id="scene-source-title">Additional Prompt</summary>
-                            <textarea id="scene-source-instruction" name="instruction" placeholder="Example: keep the carved stone arches and warm material identity, rebuild the room with deeper diagonal perspective, quieter furniture and a generous artwork-ready wall."></textarea>
+                            <summary id="scene-source-title"><?= h(t('Additional Prompt', 'Prompt adicional')) ?></summary>
+                            <textarea id="scene-source-instruction" name="instruction" placeholder="<?= h(t('Example: keep the carved stone arches and warm material identity, rebuild the room with deeper diagonal perspective, quieter furniture and a generous artwork-ready wall.', 'Ejemplo: conservá los arcos de piedra tallada y la identidad de materiales cálidos, reconstruí la sala con una perspectiva diagonal más profunda, muebles más discretos y una pared amplia lista para la obra.')) ?>"></textarea>
                         </details>
-                        <button class="scene-source-submit" type="submit">Apply Changes</button>
+                        <button class="scene-source-submit" type="submit"><?= h(t('Apply Changes', 'Aplicar cambios')) ?></button>
                     </form>
                 </section>
             <?php else: ?>
-                <div class="notice error">This scene has no editable visual sources.</div>
+                <div class="notice error"><?= h(t('This scene has no editable visual sources.', 'Esta escena no tiene fuentes visuales editables.')) ?></div>
             <?php endif; ?>
 
             <?php if ($sceneImages): ?>
                 <section class="scene-source-rail" aria-labelledby="scene-source-rail-title">
                     <div class="scene-source-rail-head">
-                        <h2 id="scene-source-rail-title">Other Previous Variations</h2>
-                        <p><?= count($sceneImages) ?> available</p>
+                        <h2 id="scene-source-rail-title"><?= h(t('Other Previous Variations', 'Otras variaciones anteriores')) ?></h2>
+                        <p><?= count($sceneImages) ?> <?= h(t('available', 'disponibles')) ?></p>
                     </div>
                     <div class="scene-source-list">
                         <?php foreach ($sceneImages as $image): ?>
@@ -687,7 +687,7 @@ document.querySelector('[data-scene-source-form]')?.addEventListener('submit', e
     const button = event.currentTarget.querySelector('button[type="submit"]');
     if (button) {
         button.disabled = true;
-        button.textContent = 'Creating Variation…';
+        button.textContent = <?= json_encode(t('Creating Variation…', 'Creando variación…')) ?>;
     }
 });
 </script>

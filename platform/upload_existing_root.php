@@ -166,10 +166,13 @@ file_put_contents(
     json_encode($status, JSON_PRETTY_PRINT | JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES)
 );
 
+// El titulo lo decide el artista tambien al importar una raiz final.
+$artworkTitle = mb_substr(trim(strip_tags((string)($_POST['artwork_title'] ?? ''))), 0, 160);
+
 $db = Database::connection();
 $stmt = $db->prepare("
-    INSERT INTO artworks (user_id, job_id, main_file, root_file, status, width, height, depth, unit, created_at, updated_at)
-    VALUES (:user_id, :job_id, :main_file, :root_file, :status, :width, :height, :depth, :unit, :created_at, :updated_at)
+    INSERT INTO artworks (user_id, job_id, main_file, root_file, status, final_title, width, height, depth, unit, created_at, updated_at)
+    VALUES (:user_id, :job_id, :main_file, :root_file, :status, :final_title, :width, :height, :depth, :unit, :created_at, :updated_at)
 ");
 $stmt->execute([
     'user_id' => (int)$currentUser['id'],
@@ -177,6 +180,7 @@ $stmt->execute([
     'main_file' => basename($mainInputFile),
     'root_file' => $rootFileName,
     'status' => 'done',
+    'final_title' => $artworkTitle,
     'width' => $width,
     'height' => $height,
     'depth' => $depth,

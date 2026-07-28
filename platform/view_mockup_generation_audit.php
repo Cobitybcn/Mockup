@@ -129,10 +129,10 @@ function h_audit($v): string
 }
 ?>
 <!doctype html>
-<html lang="en">
+<html lang="<?= h_audit(Translator::locale($user)) ?>">
 <head>
     <meta charset="utf-8">
-    <title>Mockup Generation Audit — Artwork <?= (int)$artworkId ?></title>
+    <title><?= h_audit(t('Mockup Generation Audit', 'Auditoría de Generación de Mockups')) ?> — <?= h_audit(t('Artwork', 'Obra')) ?> <?= (int)$artworkId ?></title>
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <link rel="stylesheet" href="style.css">
     <style>
@@ -223,95 +223,95 @@ function h_audit($v): string
         </header>
 
         <div class="alert-strip">
-            Mockup Generation Audit — Read-only inspection of the Admin V7 composed prompt generation record.
+            <?= h_audit(t('Mockup Generation Audit — Read-only inspection of the Admin V7 composed prompt generation record.', 'Auditoría de Generación de Mockups — Inspección de solo lectura del registro de generación del prompt compuesto Admin V7.')) ?>
         </div>
 
         <div class="workspace">
             <div class="workspace-header">
                 <div>
-                    <h1>Generation Audit</h1>
-                    <p>Artwork #<?= (int)$artworkId ?> &mdash; <?= h_audit($safeFilename) ?></p>
+                    <h1><?= h_audit(t('Generation Audit', 'Auditoría de Generación')) ?></h1>
+                    <p><?= h_audit(t('Artwork', 'Obra')) ?> #<?= (int)$artworkId ?> &mdash; <?= h_audit($safeFilename) ?></p>
                 </div>
                 <div class="topbar-actions">
-                    <a class="button-link secondary" href="mockup_prompt_drafts_review.php?id=<?= (int)$artworkId ?>">← Back to Prompt Review</a>
-                    <a class="button-link secondary" href="view_mockup_generation_audit.php?artwork_id=<?= (int)$artworkId ?>&file=<?= urlencode($safeFilename) ?>&raw=1" target="_blank">View Raw JSON</a>
+                    <a class="button-link secondary" href="mockup_prompt_drafts_review.php?id=<?= (int)$artworkId ?>">← <?= h_audit(t('Back to Prompt Review', 'Volver a Revisión de Prompt')) ?></a>
+                    <a class="button-link secondary" href="view_mockup_generation_audit.php?artwork_id=<?= (int)$artworkId ?>&file=<?= urlencode($safeFilename) ?>&raw=1" target="_blank"><?= h_audit(t('View Raw JSON', 'Ver JSON crudo')) ?></a>
                 </div>
             </div>
 
             <div class="audit-panel">
-                <h2 style="margin-top:0; margin-bottom:16px; font-family: var(--font-serif); font-size:22px;">Generation Record</h2>
+                <h2 style="margin-top:0; margin-bottom:16px; font-family: var(--font-serif); font-size:22px;"><?= h_audit(t('Generation Record', 'Registro de Generación')) ?></h2>
 
                 <div class="audit-grid">
                     <div class="audit-item">
-                        <span>Schema</span>
+                        <span><?= h_audit(t('Schema', 'Esquema')) ?></span>
                         <code><?= h_audit($data['schema'] ?? 'N/A') ?></code>
                     </div>
                     <div class="audit-item">
-                        <span>Generation Source</span>
+                        <span><?= h_audit(t('Generation Source', 'Origen de Generación')) ?></span>
                         <code><?= h_audit($data['generation_source'] ?? 'N/A') ?></code>
                     </div>
                     <div class="audit-item">
-                        <span>Prompt Authority</span>
+                        <span><?= h_audit(t('Prompt Authority', 'Autoridad del Prompt')) ?></span>
                         <code><?= h_audit($data['prompt_authority'] ?? 'N/A') ?></code>
                     </div>
                     <div class="audit-item">
-                        <span>Admin Prompt Source</span>
+                        <span><?= h_audit(t('Admin Prompt Source', 'Origen del Prompt Admin')) ?></span>
                         <code><?= h_audit($data['admin_prompt_source'] ?? 'N/A') ?></code>
                     </div>
                     <div class="audit-item">
-                        <span>Artwork ID</span>
+                        <span><?= h_audit(t('Artwork ID', 'ID de Obra')) ?></span>
                         <code><?= h_audit($data['artwork_id'] ?? 'N/A') ?></code>
                     </div>
                     <div class="audit-item">
-                        <span>Context ID</span>
+                        <span><?= h_audit(t('Context ID', 'ID de Contexto')) ?></span>
                         <code><?= h_audit($data['context_id'] ?? 'N/A') ?></code>
                     </div>
                     <div class="audit-item">
-                        <span>Context Name</span>
+                        <span><?= h_audit(t('Context Name', 'Nombre de Contexto')) ?></span>
                         <code><?= h_audit($data['context_name'] ?? 'N/A') ?></code>
                     </div>
                     <div class="audit-item">
-                        <span>Proposal Index</span>
+                        <span><?= h_audit(t('Proposal Index', 'Índice de Propuesta')) ?></span>
                         <code><?= h_audit($data['proposal_index'] ?? 'N/A') ?></code>
                     </div>
                     <div class="audit-item">
-                        <span>Status</span>
+                        <span><?= h_audit(t('Status', 'Estado')) ?></span>
                         <code class="<?= ($data['status'] ?? '') === 'generated' ? 'badge-ok' : '' ?>"><?= h_audit($data['status'] ?? 'N/A') ?></code>
                     </div>
                     <div class="audit-item">
-                        <span>Prompt Exact Match</span>
+                        <span><?= h_audit(t('Prompt Exact Match', 'Coincidencia Exacta del Prompt')) ?></span>
                         <?php $match = $data['prompt_exact_match'] ?? null; ?>
-                        <span class="<?= $match === true ? 'badge-ok' : 'badge-fail' ?>"><?= $match === true ? '✓ Yes' : ($match === false ? '✗ No' : 'N/A') ?></span>
+                        <span class="<?= $match === true ? 'badge-ok' : 'badge-fail' ?>"><?= $match === true ? '✓ ' . h_audit(t('Yes', 'Sí')) : ($match === false ? '✗ ' . h_audit(t('No', 'No')) : 'N/A') ?></span>
                     </div>
                     <div class="audit-item">
-                        <span>Generated Mockup ID</span>
+                        <span><?= h_audit(t('Generated Mockup ID', 'ID de Mockup Generado')) ?></span>
                         <code><?= h_audit($data['queued_or_generated_mockup_id'] ?? 'N/A') ?></code>
                     </div>
                     <div class="audit-item">
-                        <span>Generated Mockup File</span>
+                        <span><?= h_audit(t('Generated Mockup File', 'Archivo de Mockup Generado')) ?></span>
                         <code><?= h_audit($data['queued_or_generated_mockup_file'] ?? 'N/A') ?></code>
                     </div>
                     <div class="audit-item">
-                        <span>Camera View</span>
+                        <span><?= h_audit(t('Camera View', 'Vista de Cámara')) ?></span>
                         <code><?= h_audit($data['camera_view'] ?? 'N/A') ?></code>
                     </div>
                     <div class="audit-item">
-                        <span>Camera Distance</span>
+                        <span><?= h_audit(t('Camera Distance', 'Distancia de Cámara')) ?></span>
                         <code><?= h_audit($data['camera_distance'] ?? 'N/A') ?></code>
                     </div>
                     <div class="audit-item">
-                        <span>Generated At</span>
+                        <span><?= h_audit(t('Generated At', 'Generado El')) ?></span>
                         <code><?= h_audit($data['queued_or_generated_at'] ?? 'N/A') ?></code>
                     </div>
                     <div class="audit-item">
-                        <span>Placeholder</span>
+                        <span><?= h_audit(t('Placeholder', 'Placeholder')) ?></span>
                         <code><?= h_audit($data['admin_prompt_placeholder'] ?? 'N/A') ?></code>
                     </div>
                 </div>
 
                 <?php if (!empty($data['warnings'])): ?>
                     <div class="notice error" style="margin-bottom:20px;">
-                        <strong>Warnings:</strong>
+                        <strong><?= h_audit(t('Warnings:', 'Advertencias:')) ?></strong>
                         <ul style="margin:5px 0 0 20px; padding:0;">
                             <?php foreach ((array)$data['warnings'] as $w): ?>
                                 <li><?= h_audit($w) ?></li>
@@ -324,26 +324,26 @@ function h_audit($v): string
                     <div style="margin-bottom: 20px;">
                         <a class="button-link" style="background:#1a73e8;color:#fff;border-color:#1a73e8;font-weight:600;padding:8px 16px;border-radius:4px;display:inline-block;text-decoration:none;"
                            href="view_mockup_file.php?mockup_id=<?= (int)$data['queued_or_generated_mockup_id'] ?>" target="_blank">
-                            View Generated Mockup Image
+                            <?= h_audit(t('View Generated Mockup Image', 'Ver Imagen de Mockup Generado')) ?>
                         </a>
                     </div>
                 <?php elseif (!empty($data['queued_or_generated_mockup_file'])): ?>
                     <div style="margin-bottom: 20px;">
                         <a class="button-link" style="background:#1a73e8;color:#fff;border-color:#1a73e8;font-weight:600;padding:8px 16px;border-radius:4px;display:inline-block;text-decoration:none;"
                            href="view_mockup_file.php?file=<?= urlencode((string)$data['queued_or_generated_mockup_file']) ?>" target="_blank">
-                            View Generated Mockup Image
+                            <?= h_audit(t('View Generated Mockup Image', 'Ver Imagen de Mockup Generado')) ?>
                         </a>
                     </div>
                 <?php endif; ?>
             </div>
 
             <div class="audit-panel">
-                <h3 style="margin-top:0; margin-bottom:12px; font-size:14px; font-weight:700; text-transform:uppercase; letter-spacing:.05em; color:var(--muted);">Context Block Inserted into {{MOCKUP_CONTEXT_PROPOSAL}}</h3>
+                <h3 style="margin-top:0; margin-bottom:12px; font-size:14px; font-weight:700; text-transform:uppercase; letter-spacing:.05em; color:var(--muted);"><?= h_audit(t('Context Block Inserted into', 'Bloque de Contexto Insertado en')) ?> {{MOCKUP_CONTEXT_PROPOSAL}}</h3>
                 <textarea class="prompt-box" style="min-height:200px;" readonly onclick="this.select()"><?= h_audit($data['context_block_inserted'] ?? '') ?></textarea>
             </div>
 
             <div class="audit-panel" style="border-left:4px solid #1a73e8;">
-                <h3 style="margin-top:0; margin-bottom:12px; font-size:14px; font-weight:700; text-transform:uppercase; letter-spacing:.05em; color:#1a73e8;">Composed Final Admin Prompt (sent to Vertex/Gemini)</h3>
+                <h3 style="margin-top:0; margin-bottom:12px; font-size:14px; font-weight:700; text-transform:uppercase; letter-spacing:.05em; color:#1a73e8;"><?= h_audit(t('Composed Final Admin Prompt (sent to Vertex/Gemini)', 'Prompt Admin Final Compuesto (enviado a Vertex/Gemini)')) ?></h3>
                 <textarea class="prompt-box" style="min-height:400px;" readonly onclick="this.select()"><?= h_audit($data['composed_final_admin_prompt'] ?? '') ?></textarea>
             </div>
         </div>

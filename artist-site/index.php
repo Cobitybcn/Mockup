@@ -132,10 +132,13 @@ if ($path === '/sitemap.xml') {
                 '/studio-notes/' . $spanishSlug . '/'
             );
         }
+        $sitemapLocales = app_publication_locales();
         $urls = [];
         foreach ($routes as $route) {
-            $urls[] = artist_site_url_with_language($site['url'] . $route['en'], 'en');
-            $urls[] = artist_site_url_with_language($site['url'] . $route['es'], 'es');
+            foreach (['en', 'es'] as $locale) {
+                if (!in_array($locale, $sitemapLocales, true)) continue;
+                $urls[] = artist_site_url_with_language($site['url'] . $route[$locale], $locale);
+            }
         }
         $xml = "<?xml version=\"1.0\" encoding=\"UTF-8\"?>\n";
         $xml .= "<urlset xmlns=\"http://www.sitemaps.org/schemas/sitemap/0.9\">\n";
@@ -1311,6 +1314,24 @@ function resolved_artist_email(): string
     return $email;
 }
 
+/**
+ * @return list<string>
+ */
+function app_publication_locales(): array
+{
+    static $locales = null;
+    if ($locales === null) {
+        try {
+            $locales = AppPublishedLocalization::fromApp(dirname(__DIR__) . '/platform', resolved_artist_email())
+                ->publicationLocales();
+        } catch (Throwable $error) {
+            error_log('Artist publication locales unavailable: ' . $error->getMessage());
+            $locales = ['es', 'en'];
+        }
+    }
+    return $locales;
+}
+
 function app_catalog(): ?AppPublishedCatalog
 {
     static $catalog = false;
@@ -1638,15 +1659,15 @@ function render_published_constellation_map(array $soldLocations, array $items):
     <?php
 }
 
-function render_published_catalog(array $items, string $title = 'Artworks', string $intro = 'Selected works published by the artist, with their contextual studies and visual records.', string $eyebrow = 'Artwork Catalog', array $soldLocations = [], array $soldRecords = []): void
+function render_published_catalog(array $items, string $title = 'Artworks', string $intro = 'Selected works published by the artist, with their contextual studies and visual records.', string $eyebrow = 'Artwork Catalog', array $soldLocations = [], array $soldRecords = [], bool $isConstellations = false): void
 {
     ?>
-    <section class="page-hero <?= $eyebrow === 'Constellations' ? 'page-hero--compact' : '' ?>">
+    <section class="page-hero <?= $isConstellations ? 'page-hero--compact' : '' ?>">
         <p class="eyebrow"><?= e($eyebrow) ?></p>
         <h1><?= e($title) ?></h1>
         <p><?= e($intro) ?></p>
     </section>
-    <?php if ($eyebrow === 'Constellations' && !empty($soldLocations)): ?>
+    <?php if ($isConstellations && !empty($soldLocations)): ?>
         <?php render_published_constellation_map($soldLocations, $items); ?>
     <?php endif; ?>
     <section class="section catalog-grid-section">
@@ -1671,7 +1692,7 @@ function render_published_catalog(array $items, string $title = 'Artworks', stri
         </div>
         <?php if (!$items): ?><p><?= e(site_t('No artworks have been published here yet.', 'Todavía no se han publicado obras aquí.')) ?></p><?php endif; ?>
     </section>
-    <?php if ($eyebrow === 'Constellations' && !empty($soldRecords)): ?>
+    <?php if ($isConstellations && !empty($soldRecords)): ?>
         <section class="section">
             <div class="section-head">
                 <div>
@@ -4216,7 +4237,8 @@ switch ($segments[0] ?? '') {
             site_copy('constellations.intro', ['artist' => $artistName]),
             site_copy('constellations.eyebrow'),
             $mergedLocations,
-            $soldRecords
+            $soldRecords,
+            true
         );
         break;
     case 'series':

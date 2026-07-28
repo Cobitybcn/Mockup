@@ -68,7 +68,7 @@ foreach ($artworkStmt->fetchAll(PDO::FETCH_ASSOC) as $row) {
         $title = trim((string)($row['final_title'] ?? ''));
     }
     if ($title === '') {
-        $title = 'Artwork #' . $artworkId;
+        $title = t('Artwork #', 'Obra #') . $artworkId;
     }
 
     $meta = [];
@@ -86,7 +86,7 @@ foreach ($artworkStmt->fetchAll(PDO::FETCH_ASSOC) as $row) {
     $artworksByWork[$workKey] = [
         'id' => $artworkId,
         'title' => $title,
-        'meta' => $meta ? implode(' · ', $meta) : 'Artwork',
+        'meta' => $meta ? implode(' · ', $meta) : t('Artwork', 'Obra'),
         'file' => $file,
         'image' => emu_media_url($file, 720),
         'search' => mb_strtolower(trim($title . ' ' . implode(' ', $meta))),
@@ -109,11 +109,11 @@ $uploadConfig = [
 ];
 ?>
 <!doctype html>
-<html lang="en">
+<html lang="<?= emu_h(Translator::locale($user)) ?>">
 <head>
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width,initial-scale=1">
-    <title>Import Mockups - Artwork Mockups</title>
+    <title><?= emu_h(t('Import Mockups - Artwork Mockups', 'Importar mockups - Artwork Mockups')) ?></title>
     <link rel="stylesheet" href="style.css">
     <link rel="stylesheet" href="mockup_upload.css?v=1">
 </head>
@@ -127,19 +127,19 @@ $uploadConfig = [
             <section class="emu-catalog" aria-labelledby="emu-catalog-title">
                 <div class="emu-catalog-head">
                     <div>
-                        <span class="emu-kicker">Private archive</span>
-                        <h1 id="emu-catalog-title">Select the artwork</h1>
-                        <p>Choose the artwork these mockups belong to.</p>
+                        <span class="emu-kicker"><?= emu_h(t('Private archive', 'Archivo privado')) ?></span>
+                        <h1 id="emu-catalog-title"><?= emu_h(t('Select the artwork', 'Seleccioná la obra')) ?></h1>
+                        <p><?= emu_h(t('Choose the artwork these mockups belong to.', 'Elegí a qué obra pertenecen estos mockups.')) ?></p>
                     </div>
                     <label class="emu-search">
-                        <span class="sr-only">Search artwork</span>
+                        <span class="sr-only"><?= emu_h(t('Search artwork', 'Buscar obra')) ?></span>
                         <svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="11" cy="11" r="6.5"></circle><path d="m16 16 4 4"></path></svg>
-                        <input type="search" placeholder="Search by title or series" data-artwork-search>
+                        <input type="search" placeholder="<?= emu_h(t('Search by title or series', 'Buscar por título o serie')) ?>" data-artwork-search>
                     </label>
                 </div>
 
                 <div class="emu-rail-wrap">
-                    <button class="emu-rail-arrow emu-rail-arrow--left" type="button" data-scroll-artworks="-1" aria-label="View previous artworks">‹</button>
+                    <button class="emu-rail-arrow emu-rail-arrow--left" type="button" data-scroll-artworks="-1" aria-label="<?= emu_h(t('View previous artworks', 'Ver obras anteriores')) ?>">‹</button>
                     <div class="emu-artwork-rail" data-artwork-rail>
                         <?php foreach ($artworks as $artwork): ?>
                             <button
@@ -161,10 +161,10 @@ $uploadConfig = [
                             </button>
                         <?php endforeach; ?>
                         <?php if (!$artworks): ?>
-                            <div class="emu-no-artworks">No completed artworks are available.</div>
+                            <div class="emu-no-artworks"><?= emu_h(t('No completed artworks are available.', 'No hay obras terminadas disponibles.')) ?></div>
                         <?php endif; ?>
                     </div>
-                    <button class="emu-rail-arrow emu-rail-arrow--right" type="button" data-scroll-artworks="1" aria-label="View more artworks">›</button>
+                    <button class="emu-rail-arrow emu-rail-arrow--right" type="button" data-scroll-artworks="1" aria-label="<?= emu_h(t('View more artworks', 'Ver más obras')) ?>">›</button>
                 </div>
             </section>
 
@@ -175,38 +175,38 @@ $uploadConfig = [
                             <svg viewBox="0 0 24 24"><path d="M12 16V4M7.5 8.5 12 4l4.5 4.5M5 14v5h14v-5"></path></svg>
                         </span>
                         <div>
-                            <span>Mockup library</span>
-                            <h2 id="emu-board-title">Import mockups</h2>
+                            <span><?= emu_h(t('Mockup library', 'Biblioteca de mockups')) ?></span>
+                            <h2 id="emu-board-title"><?= emu_h(t('Import mockups', 'Importar mockups')) ?></h2>
                         </div>
                     </div>
-                    <span class="emu-board-count" data-board-count>0 files</span>
+                    <span class="emu-board-count" data-board-count><?= emu_h(t('0 files', '0 archivos')) ?></span>
                 </header>
-                <p class="emu-board-intro">Upload mockups for the selected artwork only. You can review and remove files before saving them.</p>
+                <p class="emu-board-intro"><?= emu_h(t('Upload mockups for the selected artwork only. You can review and remove files before saving them.', 'Subí mockups solo para la obra seleccionada. Podés revisar y quitar archivos antes de guardarlos.')) ?></p>
 
                 <div class="emu-board-empty" data-board-empty<?= $selectedArtworkId > 0 ? ' hidden' : '' ?>>
                     <span>01</span>
-                    <strong>Select an artwork from the catalog above</strong>
-                    <p>The board will open automatically and remain linked to that artwork.</p>
+                    <strong><?= emu_h(t('Select an artwork from the catalog above', 'Seleccioná una obra del catálogo de arriba')) ?></strong>
+                    <p><?= emu_h(t('The board will open automatically and remain linked to that artwork.', 'El panel se abrirá automáticamente y quedará vinculado a esa obra.')) ?></p>
                 </div>
 
                 <div class="emu-board-content" data-board-content<?= $selectedArtworkId > 0 ? '' : ' hidden' ?>>
                     <div class="emu-selected-artwork">
                         <img src="" alt="" data-selected-artwork-image>
                         <div>
-                            <span>Selected artwork</span>
+                            <span><?= emu_h(t('Selected artwork', 'Obra seleccionada')) ?></span>
                             <strong data-selected-artwork-title></strong>
                             <small data-selected-artwork-meta></small>
                         </div>
-                        <button type="button" data-change-artwork>Change artwork</button>
+                        <button type="button" data-change-artwork><?= emu_h(t('Change artwork', 'Cambiar obra')) ?></button>
                     </div>
 
-                    <div class="emu-dropzone" data-dropzone tabindex="0" role="button" aria-label="Choose mockup files">
+                    <div class="emu-dropzone" data-dropzone tabindex="0" role="button" aria-label="<?= emu_h(t('Choose mockup files', 'Elegir archivos de mockups')) ?>">
                         <svg viewBox="0 0 48 48" aria-hidden="true"><rect x="6" y="8" width="36" height="31" rx="3"></rect><circle cx="17" cy="19" r="3"></circle><path d="m9 35 10-10 7 7 5-5 8 8M24 4v17M17.5 10.5 24 4l6.5 6.5"></path></svg>
-                        <strong>Drag your mockups or an entire folder here</strong>
-                        <span>JPG, PNG, or WebP · maximum 20 MB per image</span>
+                        <strong><?= emu_h(t('Drag your mockups or an entire folder here', 'Arrastrá tus mockups o una carpeta entera acá')) ?></strong>
+                        <span><?= emu_h(t('JPG, PNG, or WebP · maximum 20 MB per image', 'JPG, PNG o WebP · máximo 20 MB por imagen')) ?></span>
                         <div class="emu-picker-actions">
-                            <button type="button" class="emu-picker-primary" data-pick-files>Choose images</button>
-                            <button type="button" class="emu-picker-secondary" data-pick-folder>Choose folder</button>
+                            <button type="button" class="emu-picker-primary" data-pick-files><?= emu_h(t('Choose images', 'Elegir imágenes')) ?></button>
+                            <button type="button" class="emu-picker-secondary" data-pick-folder><?= emu_h(t('Choose folder', 'Elegir carpeta')) ?></button>
                         </div>
                     </div>
 
@@ -216,10 +216,10 @@ $uploadConfig = [
                     <div class="emu-upload-grid" data-upload-grid aria-live="polite"></div>
                     <div class="emu-upload-notice" data-upload-notice role="status" aria-live="polite"></div>
                     <div class="emu-upload-success" data-upload-success hidden>
-                        <div><strong data-success-title>Mockups guardados</strong><span data-success-copy></span></div>
+                        <div><strong data-success-title><?= emu_h(t('Mockups saved', 'Mockups guardados')) ?></strong><span data-success-copy></span></div>
                         <div>
-                            <a class="button-link secondary" href="mockups.php">Abrir Mockup Album</a>
-                            <a class="button-link" href="#" data-view-artwork>View artwork</a>
+                            <a class="button-link secondary" href="mockups.php"><?= emu_h(t('Open Mockup Album', 'Abrir Mockup Album')) ?></a>
+                            <a class="button-link" href="#" data-view-artwork><?= emu_h(t('View artwork', 'Ver obra')) ?></a>
                         </div>
                     </div>
                 </div>
@@ -228,13 +228,13 @@ $uploadConfig = [
             <footer class="emu-actions" data-upload-actions<?= $selectedArtworkId > 0 ? '' : ' hidden' ?>>
                 <div class="emu-actions-summary">
                     <span class="emu-folder-icon" aria-hidden="true"><svg viewBox="0 0 24 24"><path d="M3 6h6l2 2h10v11H3V6Z"></path></svg></span>
-                    <div><strong data-upload-summary>Add mockups for this artwork</strong><span data-upload-detail>No files selected</span></div>
+                    <div><strong data-upload-summary><?= emu_h(t('Add mockups for this artwork', 'Agregar mockups para esta obra')) ?></strong><span data-upload-detail><?= emu_h(t('No files selected', 'No hay archivos seleccionados')) ?></span></div>
                 </div>
                 <div class="emu-actions-buttons">
-                    <button type="button" class="emu-clear" data-clear-files disabled>Remove all</button>
+                    <button type="button" class="emu-clear" data-clear-files disabled><?= emu_h(t('Remove all', 'Quitar todo')) ?></button>
                     <button type="button" class="emu-confirm" data-upload-files disabled>
                         <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 16V4M7.5 8.5 12 4l4.5 4.5M5 14v5h14v-5"></path></svg>
-                        <span data-upload-label>Save to artwork</span>
+                        <span data-upload-label><?= emu_h(t('Save to artwork', 'Guardar en la obra')) ?></span>
                     </button>
                 </div>
             </footer>

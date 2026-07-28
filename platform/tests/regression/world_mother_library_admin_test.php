@@ -107,7 +107,7 @@ function run_world_mother_library_admin_tests(): void
         TestHarness::assertContains("StorageService::uploadFile(\$storageKey, \$path)", $studioSource, 'uploaded references are persisted when cloud storage is active');
         TestHarness::assertContains('persistGeneratedImage', $generatorSource, 'generated scene variants are persisted before indexing');
         TestHarness::assertContains('font-size: 44px', $studioSource, 'Scene Studio keeps the approved editorial header hierarchy');
-        TestHarness::assertContains('<summary>Reference Diversity</summary>', $studioSource, 'Scene Studio keeps diversity corrections inside a folded administrative panel');
+        TestHarness::assertContains('<summary><?= h(t(\'Reference Diversity\', \'Diversidad de Referencias\')) ?></summary>', $studioSource, 'Scene Studio keeps diversity corrections inside a folded administrative panel');
         TestHarness::assertContains('name="similarity_group[]"', $studioSource, 'Scene Studio can curate reference similarity groups');
         TestHarness::assertContains('array_slice($images, 0, 3)', $studioSource, 'scene cards use the approved compact three-thumbnail treatment');
         TestHarness::assertContains('laboratoryAction.disabled = uploadedFiles.length === 0;', $studioSource, 'selecting scene references enables the analysis action');
@@ -137,7 +137,7 @@ function run_world_mother_library_admin_tests(): void
         TestHarness::assertContains('Everything not explicitly requested must remain visually unchanged', $generatorSource, 'the scene edit prompt locks all unrequested content');
         TestHarness::assertContains("'GEMINI_OUTPUT_ASPECT_RATIO'] = \$this->closestSupportedAspectRatio(\$referencePath)", $generatorSource, 'scene editing preserves the closest supported source aspect ratio');
         TestHarness::assertContains("'generation_kind' => \$editMode ? 'conservative_edit'", $generatorSource, 'scene edit audits identify conservative edits');
-        TestHarness::assertContains('<summary id="scene-source-title">Additional Prompt</summary>', $variationLabSource, 'Scene Source Lab follows the folded prompt treatment from Mockup Lab');
+        TestHarness::assertContains('<summary id="scene-source-title"><?= h(t(\'Additional Prompt\', \'Prompt adicional\')) ?></summary>', $variationLabSource, 'Scene Source Lab follows the folded prompt treatment from Mockup Lab');
         TestHarness::assertContains('Apply Changes', $variationLabSource, 'Scene Source Lab exposes the familiar primary editing action');
         TestHarness::assertContains('Other Previous Variations', $variationLabSource, 'Scene Source Lab keeps the scene sources available as editing history');
         TestHarness::assertContains("'world_mother_variation_lab.php'", $sidebarSource, 'Scene Studio stays active while editing an individual source');

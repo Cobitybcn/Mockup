@@ -518,10 +518,10 @@ foreach ($mockupSocialSpecs as $channelKey => $channelSpec) {
 }
 ?>
 <!doctype html>
-<html lang="es">
+<html lang="<?= h(Translator::locale($user)) ?>">
 <head>
     <meta charset="utf-8">
-    <title>Mockup Viewer - Artwork Mockups</title>
+    <title><?= h(t('Mockup Viewer - Artwork Mockups', 'Viewer de Mockups - Artwork Mockups')) ?></title>
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -1075,35 +1075,35 @@ foreach ($mockupSocialSpecs as $channelKey => $channelSpec) {
             <a class="brand" href="root_album.php">Artwork Mockups <span class="brand-mark"></span></a>
         </div>
         <nav class="viewer-actions">
-            <a class="icon-link back" href="<?= h($backUrl) ?>" aria-label="Back to details" title="Back to details"></a>
-            <a href="mockups.php">Mockups</a>
+            <a class="icon-link back" href="<?= h($backUrl) ?>" aria-label="<?= h(t('Back to details', 'Volver a los detalles')) ?>" title="<?= h(t('Back to details', 'Volver a los detalles')) ?>"></a>
+            <a href="mockups.php"><?= h(t('Mockups', 'Mockups')) ?></a>
             <?php if ($viewerMockupId > 0): ?>
-                <a href="website_studio_notes.php?source=mockup:<?= $viewerMockupId ?>#new-studio-note">Create Studio Note</a>
+                <a href="website_studio_notes.php?source=mockup:<?= $viewerMockupId ?>#new-studio-note"><?= h(t('Create Studio Note', 'Crear Nota de Estudio')) ?></a>
             <?php endif; ?>
             <?php if ($viewerMockupId > 0): ?>
                 <button
                     class="viewer-favorite-btn media-icon-button <?= $viewerIsFavorite ? 'active' : '' ?>"
                     type="button"
-                    title="<?= $viewerIsFavorite ? 'Remove favorite' : 'Add favorite' ?>"
-                    aria-label="<?= $viewerIsFavorite ? 'Remove favorite' : 'Add favorite' ?>"
+                    title="<?= $viewerIsFavorite ? h(t('Remove favorite', 'Quitar de favoritos')) : h(t('Add favorite', 'Agregar a favoritos')) ?>"
+                    aria-label="<?= $viewerIsFavorite ? h(t('Remove favorite', 'Quitar de favoritos')) : h(t('Add favorite', 'Agregar a favoritos')) ?>"
                     data-favorite-mockup
                     data-mockup-id="<?= (int)$viewerMockupId ?>"
                 ><svg class="media-action-icon" viewBox="0 0 24 24" aria-hidden="true"><path d="m12 3.7 2.55 5.17 5.71.83-4.13 4.03.97 5.69L12 16.73l-5.1 2.69.97-5.69L3.74 9.7l5.71-.83L12 3.7Z"/></svg></button>
             <?php endif; ?>
-            <a class="icon-link download media-icon-button" href="<?= h(download_url($mockup['mockup_file'])) ?>" aria-label="Download mockup" title="Download mockup"><svg class="media-action-icon" viewBox="0 0 24 24" aria-hidden="true"><path d="M12 3v12M7.5 10.5 12 15l4.5-4.5M5 19h14"/></svg></a>
+            <a class="icon-link download media-icon-button" href="<?= h(download_url($mockup['mockup_file'])) ?>" aria-label="<?= h(t('Download mockup', 'Descargar mockup')) ?>" title="<?= h(t('Download mockup', 'Descargar mockup')) ?>"><svg class="media-action-icon" viewBox="0 0 24 24" aria-hidden="true"><path d="M12 3v12M7.5 10.5 12 15l4.5-4.5M5 19h14"/></svg></a>
         </nav>
     </header>
 
     <?php if ($prevHref !== ''): ?>
-        <a class="nav-arrow prev" href="<?= h($prevHref) ?>" aria-label="Previous image">&lsaquo;</a>
+        <a class="nav-arrow prev" href="<?= h($prevHref) ?>" aria-label="<?= h(t('Previous image', 'Imagen anterior')) ?>">&lsaquo;</a>
     <?php endif; ?>
 
     <main class="stage">
-        <img src="<?= h(media_url($mockup['mockup_file'])) ?>" alt="Mockup">
+        <img src="<?= h(media_url($mockup['mockup_file'])) ?>" alt="<?= h(t('Mockup', 'Mockup')) ?>">
     </main>
 
     <?php if ($nextHref !== ''): ?>
-        <a class="nav-arrow next" href="<?= h($nextHref) ?>" aria-label="Next image">&rsaquo;</a>
+        <a class="nav-arrow next" href="<?= h($nextHref) ?>" aria-label="<?= h(t('Next image', 'Imagen siguiente')) ?>">&rsaquo;</a>
     <?php endif; ?>
 
     <footer class="viewer-caption">
@@ -1308,15 +1308,22 @@ foreach ($mockupSocialSpecs as $channelKey => $channelSpec) {
     <?php endif; ?>
 
     <script>
+        const viewerI18n = {
+            copied: <?= json_encode(t('Copied', 'Copiado')) ?>,
+            copyFailed: <?= json_encode(t('Copy failed', 'Falló la copia')) ?>,
+            couldNotUpdateFavorite: <?= json_encode(t('Could not update favorite.', 'No se pudo actualizar el favorito.')) ?>,
+            removeFavorite: <?= json_encode(t('Remove favorite', 'Quitar de favoritos')) ?>,
+            addFavorite: <?= json_encode(t('Add favorite', 'Agregar a favoritos')) ?>,
+        };
         document.querySelectorAll('[data-copy]').forEach((button) => {
             button.addEventListener('click', async () => {
                 const original = button.textContent;
                 try {
                     await navigator.clipboard.writeText(button.dataset.copy || '');
-                    button.textContent = 'Copied';
+                    button.textContent = viewerI18n.copied;
                     setTimeout(() => button.textContent = original, 1200);
                 } catch (error) {
-                    button.textContent = 'Copy failed';
+                    button.textContent = viewerI18n.copyFailed;
                     setTimeout(() => button.textContent = original, 1200);
                 }
             });
@@ -1328,10 +1335,10 @@ foreach ($mockupSocialSpecs as $channelKey => $channelSpec) {
                 const source = document.getElementById(button.dataset.copySource || '');
                 try {
                     await navigator.clipboard.writeText(source ? source.value : '');
-                    button.textContent = 'Copied';
+                    button.textContent = viewerI18n.copied;
                     setTimeout(() => button.textContent = original, 1200);
                 } catch (error) {
-                    button.textContent = 'Copy failed';
+                    button.textContent = viewerI18n.copyFailed;
                     setTimeout(() => button.textContent = original, 1200);
                 }
             });
@@ -1370,14 +1377,14 @@ foreach ($mockupSocialSpecs as $channelKey => $channelSpec) {
                 .then(response => response.json().then(payload => ({ ok: response.ok, payload })))
                 .then(result => {
                     if (!result.ok || !result.payload.ok) {
-                        throw new Error(result.payload.error || 'Could not update favorite.');
+                        throw new Error(result.payload.error || viewerI18n.couldNotUpdateFavorite);
                     }
 
                     button.classList.toggle('active', !!result.payload.favorite);
-                    button.title = result.payload.favorite ? 'Remove favorite' : 'Add favorite';
+                    button.title = result.payload.favorite ? viewerI18n.removeFavorite : viewerI18n.addFavorite;
                     button.setAttribute('aria-label', button.title);
                 })
-                .catch(error => alert(error.message || 'Could not update favorite.'))
+                .catch(error => alert(error.message || viewerI18n.couldNotUpdateFavorite))
                 .finally(() => {
                     button.disabled = false;
                 });

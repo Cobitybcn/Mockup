@@ -35,10 +35,10 @@ if (!is_array($status) || (int)($status['user_id'] ?? 0) !== (int)$user['id']) {
 }
 ?>
 <!doctype html>
-<html lang="en">
+<html lang="<?= h(Translator::locale($user)) ?>">
 <head>
     <meta charset="utf-8">
-    <title>Creating Scenes - Artwork Mockups</title>
+    <title><?= h(t('Creating Scenes - Artwork Mockups', 'Creando escenas - Artwork Mockups')) ?></title>
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <link rel="stylesheet" href="style.css">
     <style>
@@ -155,21 +155,35 @@ if (!is_array($status) || (int)($status['user_id'] ?? 0) !== (int)$user['id']) {
 <body>
 <main class="scene-wait">
     <div class="scene-spinner" aria-hidden="true"></div>
-    <h1 id="sceneWaitTitle">Preparing artwork</h1>
-    <p id="sceneWaitCopy">We are preparing your artwork before creating the first scene views.</p>
-    <div class="scene-steps" aria-label="Generation progress">
-        <div class="scene-step is-active" data-scene-step="root"><span class="scene-step-dot" aria-hidden="true"></span><span>Preparing artwork</span></div>
-        <div class="scene-step" data-scene-step="scenes"><span class="scene-step-dot" aria-hidden="true"></span><span>Creating 4 scenes</span></div>
+    <h1 id="sceneWaitTitle"><?= h(t('Preparing artwork', 'Preparando obra')) ?></h1>
+    <p id="sceneWaitCopy"><?= h(t('We are preparing your artwork before creating the first scene views.', 'Estamos preparando tu obra antes de crear las primeras vistas de escena.')) ?></p>
+    <div class="scene-steps" aria-label="<?= h(t('Generation progress', 'Progreso de generación')) ?>">
+        <div class="scene-step is-active" data-scene-step="root"><span class="scene-step-dot" aria-hidden="true"></span><span><?= h(t('Preparing artwork', 'Preparando obra')) ?></span></div>
+        <div class="scene-step" data-scene-step="scenes"><span class="scene-step-dot" aria-hidden="true"></span><span><?= h(t('Creating 4 scenes', 'Creando 4 escenas')) ?></span></div>
     </div>
-    <small id="sceneWaitStatus">This can take a moment.</small>
+    <small id="sceneWaitStatus"><?= h(t('This can take a moment.', 'Esto puede tardar un momento.')) ?></small>
     <details class="scene-error-details" id="sceneErrorDetails" hidden>
-        <summary id="sceneErrorCode">Technical details</summary>
+        <summary id="sceneErrorCode"><?= h(t('Technical details', 'Detalles técnicos')) ?></summary>
         <code id="sceneErrorMessage"></code>
     </details>
 </main>
 
 <script>
 const job = <?= json_encode($job) ?>;
+const i18n = {
+    creatingScenes: <?= json_encode(t('Creating 4 scenes', 'Creando 4 escenas')) ?>,
+    readyOpeningGenerator: <?= json_encode(t('Your artwork is ready. We are opening the scene generator.', 'Tu obra está lista. Estamos abriendo el generador de escenas.')) ?>,
+    preparingArtwork: <?= json_encode(t('Preparing artwork', 'Preparando obra')) ?>,
+    preparingCopy: <?= json_encode(t('We are preparing your artwork before creating the first scene views.', 'Estamos preparando tu obra antes de crear las primeras vistas de escena.')) ?>,
+    preparationStopped: <?= json_encode(t('Artwork preparation stopped', 'La preparación de la obra se detuvo')) ?>,
+    couldNotPrepare: <?= json_encode(t('We could not prepare this image for scene generation.', 'No pudimos preparar esta imagen para generar escenas.')) ?>,
+    tryAgain: <?= json_encode(t('Please try again with a clearer, well-lit photo.', 'Volvé a intentarlo con una foto más clara y bien iluminada.')) ?>,
+    errorCode: <?= json_encode(t('Error code:', 'Código de error:')) ?>,
+    noTechnicalDetail: <?= json_encode(t('No additional technical detail was returned.', 'No se devolvió ningún detalle técnico adicional.')) ?>,
+    preparingForGeneration: <?= json_encode(t('Preparing the artwork for scene generation.', 'Preparando la obra para generar escenas.')) ?>,
+    startingPreparation: <?= json_encode(t('Starting artwork preparation.', 'Iniciando la preparación de la obra.')) ?>,
+    stillWorking: <?= json_encode(t('Still working...', 'Seguimos trabajando...')) ?>,
+};
 const statusLabel = document.getElementById('sceneWaitStatus');
 const title = document.getElementById('sceneWaitTitle');
 const copy = document.getElementById('sceneWaitCopy');
@@ -181,15 +195,15 @@ const errorMessage = document.getElementById('sceneErrorMessage');
 
 function setStage(stage) {
     if (stage === 'scenes') {
-        title.textContent = 'Creating 4 scenes';
-        copy.textContent = 'Your artwork is ready. We are opening the scene generator.';
+        title.textContent = i18n.creatingScenes;
+        copy.textContent = i18n.readyOpeningGenerator;
         rootStep.classList.remove('is-active');
         rootStep.classList.add('is-done');
         scenesStep.classList.add('is-active');
         return;
     }
-    title.textContent = 'Preparing artwork';
-    copy.textContent = 'We are preparing your artwork before creating the first scene views.';
+    title.textContent = i18n.preparingArtwork;
+    copy.textContent = i18n.preparingCopy;
     rootStep.classList.add('is-active');
     scenesStep.classList.remove('is-active');
 }
@@ -207,11 +221,11 @@ async function pollSceneFlow() {
 
         if (data.status === 'error') {
             rootStep.classList.remove('is-active');
-            title.textContent = 'Artwork preparation stopped';
-            copy.textContent = 'We could not prepare this image for scene generation.';
-            statusLabel.textContent = data.user_message || 'Please try again with a clearer, well-lit photo.';
-            errorCode.textContent = 'Error code: ' + (data.error_code || 'ARTWORK_PREPARATION_FAILED');
-            errorMessage.textContent = data.debug_error || 'No additional technical detail was returned.';
+            title.textContent = i18n.preparationStopped;
+            copy.textContent = i18n.couldNotPrepare;
+            statusLabel.textContent = data.user_message || i18n.tryAgain;
+            errorCode.textContent = i18n.errorCode + ' ' + (data.error_code || 'ARTWORK_PREPARATION_FAILED');
+            errorMessage.textContent = data.debug_error || i18n.noTechnicalDetail;
             errorDetails.hidden = false;
             return;
         }
@@ -219,10 +233,10 @@ async function pollSceneFlow() {
         errorDetails.hidden = true;
         setStage('root');
         statusLabel.textContent = data.status === 'processing'
-            ? 'Preparing the artwork for scene generation.'
-            : 'Starting artwork preparation.';
+            ? i18n.preparingForGeneration
+            : i18n.startingPreparation;
     } catch (err) {
-        statusLabel.textContent = 'Still working...';
+        statusLabel.textContent = i18n.stillWorking;
     }
 }
 

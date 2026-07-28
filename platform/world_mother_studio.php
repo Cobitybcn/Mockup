@@ -71,26 +71,26 @@ function wms_analysis_path(string $jobId): string
 function wms_upload_file(array $file): string
 {
     if (($file['error'] ?? UPLOAD_ERR_NO_FILE) !== UPLOAD_ERR_OK || !is_uploaded_file((string)($file['tmp_name'] ?? ''))) {
-        throw new RuntimeException('The reference image could not be uploaded.');
+        throw new RuntimeException(t('The reference image could not be uploaded.', 'No se pudo subir la imagen de referencia.'));
     }
     $ext = strtolower(pathinfo((string)$file['name'], PATHINFO_EXTENSION));
     if (!in_array($ext, ['jpg', 'jpeg', 'png', 'webp'], true)) {
-        throw new RuntimeException('Formato no permitido. Usa JPG, PNG o WEBP.');
+        throw new RuntimeException(t('Format not allowed. Use JPG, PNG or WEBP.', 'Formato no permitido. Usá JPG, PNG o WEBP.'));
     }
     $dir = __DIR__ . '/storage/world_mother_uploads';
     if (!is_dir($dir) && !mkdir($dir, 0775, true) && !is_dir($dir)) {
-        throw new RuntimeException('The upload folder could not be created.');
+        throw new RuntimeException(t('The upload folder could not be created.', 'No se pudo crear la carpeta de subida.'));
     }
     $name = 'world_mother_ref_' . date('Ymd_His') . '_' . random_int(1000, 9999) . '.' . $ext;
     $path = $dir . DIRECTORY_SEPARATOR . $name;
     if (!move_uploaded_file((string)$file['tmp_name'], $path)) {
-        throw new RuntimeException('The uploaded image could not be saved.');
+        throw new RuntimeException(t('The uploaded image could not be saved.', 'No se pudo guardar la imagen subida.'));
     }
     if (StorageService::isGcsActive()) {
         $storageKey = 'storage/world_mother_uploads/' . $name;
         if (!StorageService::uploadFile($storageKey, $path)) {
             @unlink($path);
-            throw new RuntimeException('The reference could not be saved to persistent storage.');
+            throw new RuntimeException(t('The reference could not be saved to persistent storage.', 'No se pudo guardar la referencia en el almacenamiento persistente.'));
         }
     }
     return $path;
@@ -105,7 +105,7 @@ function wms_upload_files(array $files): array
         $paths = [];
         $count = count($files['tmp_name']);
         if ($count < 1 || $count > 4) {
-            throw new RuntimeException('Upload between 1 and 4 reference images.');
+            throw new RuntimeException(t('Upload between 1 and 4 reference images.', 'Subí entre 1 y 4 imágenes de referencia.'));
         }
         for ($i = 0; $i < $count; $i++) {
             $error = (int)($files['error'][$i] ?? UPLOAD_ERR_NO_FILE);
@@ -121,7 +121,7 @@ function wms_upload_files(array $files): array
             ]);
         }
         if (!$paths) {
-            throw new RuntimeException('Upload at least one reference image.');
+            throw new RuntimeException(t('Upload at least one reference image.', 'Subí al menos una imagen de referencia.'));
         }
         return $paths;
     }
@@ -170,17 +170,17 @@ try {
     $adminActions = ['create_category', 'rename_category', 'merge_category', 'delete_category', 'delete_variant', 'generate_similar', 'transform_reference', 'rebuild_index', 'upload_variant', 'update_ranking', 'update_similarity_groups'];
     if ($_SERVER['REQUEST_METHOD'] === 'POST' && in_array($action, $adminActions, true)) {
         if (!Auth::isAdmin($user)) {
-            throw new RuntimeException('Only an administrator can manage the scene library.');
+            throw new RuntimeException(t('Only an administrator can manage the scene library.', 'Solo un administrador puede gestionar la biblioteca de escenas.'));
         }
         if (!hash_equals($sceneAdminCsrf, (string)($_POST['csrf'] ?? ''))) {
-            throw new RuntimeException('The scene management session expired. Reload the page and try again.');
+            throw new RuntimeException(t('The scene management session expired. Reload the page and try again.', 'La sesión de gestión de escenas expiró. Recargá la página e intentá de nuevo.'));
         }
 
         if ($action === 'update_similarity_groups') {
             $sourceCategory = trim((string)($_POST['source_category'] ?? ''));
             $sceneImages = $library->imagesForCategory($sourceCategory);
             if (!$sceneImages) {
-                throw new RuntimeException('The selected scene has no references to organize.');
+                throw new RuntimeException(t('The selected scene has no references to organize.', 'La escena seleccionada no tiene referencias para organizar.'));
             }
             $referenceKeys = array_values(array_map('strval', (array)($_POST['reference_key'] ?? [])));
             $similarityGroups = array_values(array_map('strval', (array)($_POST['similarity_group'] ?? [])));
@@ -189,7 +189,7 @@ try {
                 $groupsByReferenceKey[$referenceKey] = (string)($similarityGroups[$position] ?? '');
             }
             $updatedCount = $sceneDiversity->updateSimilarityGroups($sceneImages, $groupsByReferenceKey);
-            $notice = sprintf('Reference diversity updated for %d images in %s.', $updatedCount, $sourceCategory);
+            $notice = sprintf(t('Reference diversity updated for %d images in %s.', 'Diversidad de referencias actualizada para %d imágenes en %s.'), $updatedCount, $sourceCategory);
         } elseif ($action === 'update_ranking') {
             $updatedRanking = $sceneRanking->updateProfile(
                 (string)($_POST['source_category'] ?? ''),
@@ -198,13 +198,13 @@ try {
                 (int)($_POST['editorial_score'] ?? 50)
             );
             $notice = sprintf(
-                'Scene ranking updated: featured %d, editorial %d.',
+                t('Scene ranking updated: featured %d, editorial %d.', 'Ranking de escena actualizado: destacado %d, editorial %d.'),
                 (int)($updatedRanking['featured_score'] ?? 0),
                 (int)($updatedRanking['editorial_score'] ?? 50)
             );
         } elseif ($action === 'create_category') {
             $createdCategory = $library->createCategory((string)($_POST['category_name'] ?? ''));
-            $notice = 'Scene created: ' . (string)($createdCategory['category_name'] ?? $createdCategory['category_slug'] ?? '');
+            $notice = t('Scene created:', 'Escena creada:') . ' ' . (string)($createdCategory['category_name'] ?? $createdCategory['category_slug'] ?? '');
         } elseif ($action === 'rename_category') {
             $sourceCategory = (string)($_POST['source_category'] ?? '');
             $renamedCategory = $library->renameCategory(
@@ -214,7 +214,7 @@ try {
             $redirectSceneSlug = (string)($renamedCategory['category_slug'] ?? '');
             $sceneRanking->renameCategory($sourceCategory, $redirectSceneSlug);
             $sceneDiversity->renameCategory($sourceCategory, $redirectSceneSlug);
-            $notice = 'Scene renamed to ' . (string)($renamedCategory['category_name'] ?? $renamedCategory['category_slug'] ?? '') . '.';
+            $notice = t('Scene renamed to', 'Escena renombrada a') . ' ' . (string)($renamedCategory['category_name'] ?? $renamedCategory['category_slug'] ?? '') . '.';
         } elseif ($action === 'merge_category') {
             $merge = $library->mergeCategory(
                 (string)($_POST['source_category'] ?? ''),
@@ -222,20 +222,20 @@ try {
             );
             $sceneRanking->mergeCategory((string)($merge['source_slug'] ?? ''), (string)($merge['target_slug'] ?? ''));
             $notice = sprintf(
-                'Scenes unified: %d images moved to %s%s.',
+                t('Scenes unified: %d images moved to %s%s.', 'Escenas unificadas: %d imágenes movidas a %s%s.'),
                 (int)($merge['moved_count'] ?? 0),
                 (string)($merge['target_slug'] ?? ''),
-                (int)($merge['duplicate_count'] ?? 0) > 0 ? ' and ' . (int)$merge['duplicate_count'] . ' identical duplicates removed' : ''
+                (int)($merge['duplicate_count'] ?? 0) > 0 ? ' ' . t('and', 'y') . ' ' . (int)$merge['duplicate_count'] . ' ' . t('identical duplicates removed', 'duplicados idénticos eliminados') : ''
             );
         } elseif ($action === 'delete_category') {
             if ((string)($_POST['confirm_delete'] ?? '') !== 'yes') {
-                throw new RuntimeException('Explicit deletion confirmation is required.');
+                throw new RuntimeException(t('Explicit deletion confirmation is required.', 'Se requiere confirmación explícita de eliminación.'));
             }
             $deleted = $library->deleteCategory((string)($_POST['source_category'] ?? ''));
             $sceneRanking->deleteCategory((string)($deleted['category_slug'] ?? ''));
             $sceneDiversity->deleteCategory((string)($deleted['category_slug'] ?? ''));
             $notice = sprintf(
-                'Scene deleted: %s (%d images removed).',
+                t('Scene deleted: %s (%d images removed).', 'Escena eliminada: %s (%d imágenes eliminadas).'),
                 (string)($deleted['category_slug'] ?? ''),
                 (int)($deleted['deleted_images'] ?? 0)
             );
@@ -245,17 +245,17 @@ try {
                 (string)($_POST['source_category'] ?? ''),
                 (string)($_POST['file_name'] ?? '')
             );
-            $notice = 'Scene reference removed: ' . (string)($deleted['file_name'] ?? '') . '.';
+            $notice = t('Scene reference removed:', 'Referencia de escena eliminada:') . ' ' . (string)($deleted['file_name'] ?? '') . '.';
         } elseif ($action === 'generate_similar') {
             $target = wms_resolve_scene_slug($library, (string)($_POST['target_category'] ?? ''));
             $prompt = trim((string)($_POST['similar_prompt'] ?? ''));
             $count = max(1, min(4, (int)($_POST['variant_count'] ?? 1)));
             $sceneImages = $library->imagesForCategory($target);
             if (!$sceneImages) {
-                throw new RuntimeException('Add at least one visual reference before creating similar styles.');
+                throw new RuntimeException(t('Add at least one visual reference before creating similar styles.', 'Agregá al menos una referencia visual antes de crear estilos similares.'));
             }
             if ($prompt === '') {
-                throw new RuntimeException('Describe the variation you want to explore.');
+                throw new RuntimeException(t('Describe the variation you want to explore.', 'Describí la variación que querés explorar.'));
             }
             $referencePaths = [];
             foreach (array_slice($sceneImages, 0, 4) as $sceneImage) {
@@ -265,7 +265,7 @@ try {
                 }
             }
             if (!$referencePaths) {
-                throw new RuntimeException('The scene references could not be prepared for generation.');
+                throw new RuntimeException(t('The scene references could not be prepared for generation.', 'No se pudieron preparar las referencias de escena para la generación.'));
             }
             $generated = $generator->generateOriginalWorldMotherSet($referencePaths, $target, [
                 'scene_type' => ucwords(str_replace('_', ' ', $target)),
@@ -277,19 +277,19 @@ try {
                 'count' => $count,
             ]);
             $notice = $count === 1
-                ? 'A new related scene style was created.'
-                : $count . ' new related scene styles were created.';
+                ? t('A new related scene style was created.', 'Se creó un nuevo estilo de escena relacionado.')
+                : $count . ' ' . t('new related scene styles were created.', 'nuevos estilos de escena relacionados fueron creados.');
         } elseif ($action === 'transform_reference') {
             $target = wms_resolve_scene_slug($library, (string)($_POST['target_category'] ?? ''));
             $prompt = trim((string)($_POST['transform_prompt'] ?? ''));
             if ($target === '') {
-                throw new RuntimeException('Select an existing scene before transforming an image.');
+                throw new RuntimeException(t('Select an existing scene before transforming an image.', 'Seleccioná una escena existente antes de transformar una imagen.'));
             }
             if ($prompt === '') {
-                throw new RuntimeException('Describe how the uploaded image should become a new scene source.');
+                throw new RuntimeException(t('Describe how the uploaded image should become a new scene source.', 'Describí cómo la imagen subida debe convertirse en una nueva fuente de escena.'));
             }
             if (!isset($_FILES['source_image'])) {
-                throw new RuntimeException('Choose the source image you want to transform.');
+                throw new RuntimeException(t('Choose the source image you want to transform.', 'Elegí la imagen de origen que querés transformar.'));
             }
             $sourcePath = wms_upload_file((array)$_FILES['source_image']);
             $sourceAnalysis = [
@@ -301,7 +301,7 @@ try {
             $generated = $generator->generateOriginalWorldMother($sourcePath, $target, $sourceAnalysis, [
                 'notes' => $prompt,
             ]);
-            $notice = 'The uploaded image was transformed into a new source for this scene.';
+            $notice = t('The uploaded image was transformed into a new source for this scene.', 'La imagen subida fue transformada en una nueva fuente para esta escena.');
         } elseif ($action === 'upload_variant') {
             $requestedTarget = trim((string)($_POST['target_category'] ?? ''));
             $target = '';
@@ -313,21 +313,21 @@ try {
                 }
             }
             if ($target === '') {
-                throw new RuntimeException('Select a valid scene category.');
+                throw new RuntimeException(t('Select a valid scene category.', 'Seleccioná una categoría de escena válida.'));
             }
             $destDirectory = $library->basePath() . DIRECTORY_SEPARATOR . $target;
             if (!is_dir($destDirectory) && !mkdir($destDirectory, 0775, true) && !is_dir($destDirectory)) {
-                throw new RuntimeException('The target scene workspace could not be created.');
+                throw new RuntimeException(t('The target scene workspace could not be created.', 'No se pudo crear el espacio de trabajo de la escena destino.'));
             }
             $variantUpload = (array)($_FILES['variant_images'] ?? $_FILES['variant_image'] ?? []);
             if (!$variantUpload) {
-                throw new RuntimeException('No image was uploaded.');
+                throw new RuntimeException(t('No image was uploaded.', 'No se subió ninguna imagen.'));
             }
             $variantFiles = [];
             if (isset($variantUpload['tmp_name']) && is_array($variantUpload['tmp_name'])) {
                 $uploadCount = count($variantUpload['tmp_name']);
                 if ($uploadCount < 1 || $uploadCount > 24) {
-                    throw new RuntimeException('Upload between 1 and 24 images at a time.');
+                    throw new RuntimeException(t('Upload between 1 and 24 images at a time.', 'Subí entre 1 y 24 imágenes a la vez.'));
                 }
                 for ($uploadIndex = 0; $uploadIndex < $uploadCount; $uploadIndex++) {
                     if ((int)($variantUpload['error'][$uploadIndex] ?? UPLOAD_ERR_NO_FILE) === UPLOAD_ERR_NO_FILE) {
@@ -345,7 +345,7 @@ try {
                 $variantFiles[] = $variantUpload;
             }
             if (!$variantFiles) {
-                throw new RuntimeException('No image was uploaded.');
+                throw new RuntimeException(t('No image was uploaded.', 'No se subió ninguna imagen.'));
             }
             $uploadedVariantCount = 0;
             foreach ($variantFiles as $variantFile) {
@@ -353,13 +353,13 @@ try {
                 $finalPath = $destDirectory . DIRECTORY_SEPARATOR . basename($tempPath);
                 if (!rename($tempPath, $finalPath)) {
                     @unlink($tempPath);
-                    throw new RuntimeException('Failed to move an uploaded image to the scene folder.');
+                    throw new RuntimeException(t('Failed to move an uploaded image to the scene folder.', 'No se pudo mover una imagen subida a la carpeta de la escena.'));
                 }
                 if (StorageService::isGcsActive()) {
                     $finalStorageKey = 'storage/world_mothers/' . $target . '/' . basename($finalPath);
                     if (!StorageService::uploadFile($finalStorageKey, $finalPath)) {
                         @unlink($finalPath);
-                        throw new RuntimeException('A new scene image could not be saved to persistent storage.');
+                        throw new RuntimeException(t('A new scene image could not be saved to persistent storage.', 'No se pudo guardar una nueva imagen de escena en el almacenamiento persistente.'));
                     }
                     StorageService::delete('storage/world_mother_uploads/' . basename($tempPath));
                 }
@@ -367,8 +367,8 @@ try {
             }
             $library->rebuildIndex();
             $notice = $uploadedVariantCount === 1
-                ? 'Image added to the scene.'
-                : $uploadedVariantCount . ' images added to the scene.';
+                ? t('Image added to the scene.', 'Imagen agregada a la escena.')
+                : $uploadedVariantCount . ' ' . t('images added to the scene.', 'imágenes agregadas a la escena.');
             if (!empty($_POST['ajax'])) {
                 header('Content-Type: application/json');
                 echo json_encode(['success' => true, 'notice' => $notice]);
@@ -377,7 +377,7 @@ try {
         } else {
             $index = $library->rebuildIndex();
             $notice = sprintf(
-                'Scene folders synchronized: %d scenes indexed.',
+                t('Scene folders synchronized: %d scenes indexed.', 'Carpetas de escena sincronizadas: %d escenas indexadas.'),
                 count((array)($index['categories'] ?? []))
             );
         }
@@ -404,18 +404,18 @@ try {
         $analysisPath = $dir . '/' . $jobId . '.analysis.json';
         file_put_contents($analysisPath, json_encode($analysis, JSON_PRETTY_PRINT | JSON_UNESCAPED_SLASHES | JSON_UNESCAPED_UNICODE));
         if (StorageService::isGcsActive() && !StorageService::uploadFile('analysis/world-mother-studio/' . $jobId . '.analysis.json', $analysisPath)) {
-            throw new RuntimeException('Scene analysis could not be saved to persistent storage.');
+            throw new RuntimeException(t('Scene analysis could not be saved to persistent storage.', 'No se pudo guardar el análisis de escena en el almacenamiento persistente.'));
         }
-        $notice = 'Scene analyzed. Confirm the category before generating.';
+        $notice = t('Scene analyzed. Confirm the category before generating.', 'Escena analizada. Confirmá la categoría antes de generar.');
     } elseif ($_SERVER['REQUEST_METHOD'] === 'POST' && $action === 'generate') {
         $jobId = trim((string)($_POST['job_id'] ?? ''));
         $analysisPath = wms_analysis_path($jobId);
         if (!is_file($analysisPath)) {
-            throw new RuntimeException('Previous scene analysis was not found.');
+            throw new RuntimeException(t('Previous scene analysis was not found.', 'No se encontró el análisis de escena anterior.'));
         }
         $analysis = json_decode((string)file_get_contents($analysisPath), true);
         if (!is_array($analysis)) {
-            throw new RuntimeException('Previous scene analysis is not valid.');
+            throw new RuntimeException(t('Previous scene analysis is not valid.', 'El análisis de escena anterior no es válido.'));
         }
         $referencePaths = array_values(array_filter(array_map('strval', (array)($analysis['reference_paths'] ?? []))));
         $referencePath = (string)($analysis['reference_path'] ?? ($referencePaths[0] ?? ''));
@@ -425,20 +425,20 @@ try {
         $referencePaths = array_values(array_filter(array_map('wms_ensure_local_storage_file', $referencePaths), 'is_file'));
         $referencePath = $referencePaths[0] ?? '';
         if (!$referencePaths) {
-            throw new RuntimeException('The uploaded scene references are no longer available.');
+            throw new RuntimeException(t('The uploaded scene references are no longer available.', 'Las referencias de escena subidas ya no están disponibles.'));
         }
         $choice = trim((string)($_POST['category_choice'] ?? ''));
         $newCategory = trim((string)($_POST['new_category'] ?? ''));
         $category = $newCategory !== '' ? $newCategory : $choice;
         $category = WorldMotherGenerator::safeSlug($category);
         if ($category === '') {
-            throw new RuntimeException('Write a folder name or select an existing scene category.');
+            throw new RuntimeException(t('Write a folder name or select an existing scene category.', 'Escribí un nombre de carpeta o seleccioná una categoría de escena existente.'));
         }
         $generated = $generator->generateOriginalWorldMotherSet($referencePaths, $category, $analysis, [
             'notes' => trim((string)($_POST['generation_notes'] ?? '')),
             'count' => 4,
         ]);
-        $notice = 'Set of 4 scene references generated and saved.';
+        $notice = t('Set of 4 scene references generated and saved.', 'Conjunto de 4 referencias de escena generado y guardado.');
     } elseif ($jobId !== '') {
         $analysisPath = wms_analysis_path($jobId);
         if (is_file($analysisPath)) {
@@ -501,10 +501,10 @@ $creatorOpen = is_array($analysis)
     || ($_SERVER['REQUEST_METHOD'] === 'POST' && in_array(trim((string)($_POST['action'] ?? '')), ['analyze', 'generate'], true));
 ?>
 <!doctype html>
-<html lang="en">
+<html lang="<?= h(Translator::locale($user)) ?>">
 <head>
     <meta charset="utf-8">
-    <title>Scene Studio - Artwork Mockups</title>
+    <title><?= h(t('Scene Studio - Artwork Mockups', 'Estudio de Escenas - Artwork Mockups')) ?></title>
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <link rel="stylesheet" href="style.css">
     <link rel="stylesheet" href="ui-catalog.css">
@@ -1130,18 +1130,18 @@ $creatorOpen = is_array($analysis)
         <header class="app-header">
             <a class="user-chip" href="account.php"><?= h($user['email']) ?></a>
         </header>
-        <div class="alert-strip">Scene Studio: create and manage reusable visual worlds for artwork mockups.</div>
+        <div class="alert-strip"><?= h(t('Scene Studio: create and manage reusable visual worlds for artwork mockups.', 'Estudio de Escenas: creá y gestioná mundos visuales reutilizables para los mockups de obras.')) ?></div>
         <div class="workspace website-catalog">
             <div class="scene-header-v3" id="scene-studio-header">
                 <div class="scene-header-main">
-                    <h1>Scene Studio</h1>
+                    <h1><?= h(t('Scene Studio', 'Estudio de Escenas')) ?></h1>
                     <p class="scene-page-desc">
-                        <span class="desc-kicker">Create and manage reusable environment families for future mockup combinations.</span>
-                        <span class="desc-instructions">Upload 1–4 references. All of them define the scene family; each mockup uses one automatically rotated variant.</span>
+                        <span class="desc-kicker"><?= h(t('Create and manage reusable environment families for future mockup combinations.', 'Creá y gestioná familias de entornos reutilizables para futuras combinaciones de mockups.')) ?></span>
+                        <span class="desc-instructions"><?= h(t('Upload 1–4 references. All of them define the scene family; each mockup uses one automatically rotated variant.', 'Subí de 1 a 4 referencias. Todas definen la familia de escena; cada mockup usa una variante rotada automáticamente.')) ?></span>
                     </p>
                 </div>
                 <div class="scene-header-actions">
-                    <button class="scene-primary-action" id="scene-new-action" type="button" aria-controls="scene-creator-panel" aria-expanded="<?= $creatorOpen ? 'true' : 'false' ?>">Create Scene</button>
+                    <button class="scene-primary-action" id="scene-new-action" type="button" aria-controls="scene-creator-panel" aria-expanded="<?= $creatorOpen ? 'true' : 'false' ?>"><?= h(t('Create Scene', 'Crear Escena')) ?></button>
                 </div>
             </div>
 
@@ -1156,112 +1156,112 @@ $creatorOpen = is_array($analysis)
                 <section class="scene-creator-drawer" role="region" aria-labelledby="scene-creator-title">
                     <header class="scene-creator-drawer-head">
                         <div>
-                            <h2 id="scene-creator-title">Create Scene</h2>
-                            <p>Upload 1–4 references, analyze their visual language and generate the reusable scene family.</p>
+                            <h2 id="scene-creator-title"><?= h(t('Create Scene', 'Crear Escena')) ?></h2>
+                            <p><?= h(t('Upload 1–4 references, analyze their visual language and generate the reusable scene family.', 'Subí de 1 a 4 referencias, analizá su lenguaje visual y generá la familia de escena reutilizable.')) ?></p>
                         </div>
-                        <button class="scene-creator-close" type="button" data-close-scene-creator aria-label="Close scene creator">&times;</button>
+                        <button class="scene-creator-close" type="button" data-close-scene-creator aria-label="<?= h(t('Close scene creator', 'Cerrar creador de escenas')) ?>">&times;</button>
                     </header>
                 <div class="studio-grid">
                     <section class="panel-box">
-                        <h2>Scene References</h2>
+                        <h2><?= h(t('Scene References', 'Referencias de Escena')) ?></h2>
                         <form method="post" enctype="multipart/form-data" id="main-upload-form">
                             <input type="hidden" name="action" value="analyze">
                             <div class="field">
-                                <label>Scene Images (1-4)</label>
+                                <label><?= h(t('Scene Images (1-4)', 'Imágenes de Escena (1-4)')) ?></label>
                                 <div class="dropzone-container" id="upload-dropzone">
                                     <span class="dropzone-icon">📷</span>
-                                    <span style="font-weight:600; font-size:13px; color:var(--ink);">Drop images here or click to choose files</span>
-                                    <span style="font-size:11px; color:var(--muted);">JPG, PNG or WEBP · Up to 4 references</span>
+                                    <span style="font-weight:600; font-size:13px; color:var(--ink);"><?= h(t('Drop images here or click to choose files', 'Soltá imágenes acá o hacé clic para elegir archivos')) ?></span>
+                                    <span style="font-size:11px; color:var(--muted);"><?= h(t('JPG, PNG or WEBP · Up to 4 references', 'JPG, PNG o WEBP · Hasta 4 referencias')) ?></span>
                                     <input type="file" id="dropzone-file-input" name="reference_images[]" accept="image/jpeg,image/png,image/webp" multiple required style="display:none;">
                                 </div>
                                 <div class="dropzone-previews" id="dropzone-previews-container"></div>
                             </div>
                             <div class="field">
-                                <label>Scene Guidelines</label>
+                                <label><?= h(t('Scene Guidelines', 'Pautas de Escena')) ?></label>
                                 <textarea name="notes" rows="4" placeholder="Example: blue-hour coastal room, low bed, soft paper screens, calm luxury, no visible artwork, no people..."></textarea>
                             </div>
-                            <button class="button-link secondary panel-submit-action" id="scene-laboratory-action" type="submit" disabled>Analyze Scene</button>
+                            <button class="button-link secondary panel-submit-action" id="scene-laboratory-action" type="submit" disabled><?= h(t('Analyze Scene', 'Analizar Escena')) ?></button>
                         </form>
 
                         <?php if (is_array($analysis)): ?>
                             <hr style="border:0; border-top:1px dashed var(--line); margin:24px 0;">
-                            <h2>Confirm Scene</h2>
+                            <h2><?= h(t('Confirm Scene', 'Confirmar Escena')) ?></h2>
                             <form method="post" id="scene-generation-form">
                                 <input type="hidden" name="action" value="generate">
                                 <input type="hidden" name="job_id" value="<?= h($jobId) ?>">
                                 <div class="field">
-                                    <label>Final Scene Folder Name</label>
+                                    <label><?= h(t('Final Scene Folder Name', 'Nombre Final de Carpeta de Escena')) ?></label>
                                     <input type="text" name="new_category" value="<?= h($analysis['new_category_suggestion'] ?? '') ?>" placeholder="Example: blue_hour_atelier">
-                                    <span style="display:block; color:var(--muted); font-size:12px; margin-top:6px;">This name is editable and takes priority over the suggested category list below.</span>
+                                    <span style="display:block; color:var(--muted); font-size:12px; margin-top:6px;"><?= h(t('This name is editable and takes priority over the suggested category list below.', 'Este nombre es editable y tiene prioridad sobre la lista de categorías sugeridas de abajo.')) ?></span>
                                 </div>
                                 <?php foreach ((array)($analysis['category_candidates'] ?? []) as $idx => $candidate): ?>
                                     <label class="candidate">
                                         <input type="radio" name="category_choice" value="<?= h($candidate['category_slug'] ?? '') ?>" <?= $idx === 0 ? 'checked' : '' ?>>
                                         <code><?= h($candidate['category_slug'] ?? '') ?></code>
-                                        <span style="color:var(--muted);">score <?= (int)($candidate['score'] ?? 0) ?> · images <?= (int)($candidate['image_count'] ?? 0) ?></span>
+                                        <span style="color:var(--muted);"><?= h(t('score', 'puntaje')) ?> <?= (int)($candidate['score'] ?? 0) ?> · <?= h(t('images', 'imágenes')) ?> <?= (int)($candidate['image_count'] ?? 0) ?></span>
                                     </label>
                                 <?php endforeach; ?>
                                 <label class="candidate">
                                     <input type="radio" name="category_choice" value="__new__">
-                                    Use the custom folder name above
+                                    <?= h(t('Use the custom folder name above', 'Usar el nombre de carpeta personalizado de arriba')) ?>
                                 </label>
                                 <div class="field">
-                                    <label>Generation Notes</label>
+                                    <label><?= h(t('Generation Notes', 'Notas de Generación')) ?></label>
                                     <textarea name="generation_notes" rows="3" placeholder="Optional refinements before generation"></textarea>
                                 </div>
-                            <button class="button-link secondary panel-submit-action" type="submit">Generate Scene References</button>
+                            <button class="button-link secondary panel-submit-action" type="submit"><?= h(t('Generate Scene References', 'Generar Referencias de Escena')) ?></button>
                             </form>
                         <?php endif; ?>
                     </section>
 
                     <aside class="panel-box">
-                        <h2>Scene Analysis</h2>
+                        <h2><?= h(t('Scene Analysis', 'Análisis de Escena')) ?></h2>
                         <div class="analysis-thumbs-grid">
                             <?php foreach (($referencePaths ?: ($referencePath !== '' ? [$referencePath] : [])) as $refPath): ?>
                                 <?php if (is_file($refPath)): ?>
                                     <?php $webPath = h(wms_media_url($refPath)); ?>
                                     <div class="analysis-thumb-item">
-                                        <img src="<?= $webPath ?>" alt="Reference preview">
+                                        <img src="<?= $webPath ?>" alt="<?= h(t('Reference preview', 'Vista previa de referencia')) ?>">
                                     </div>
                                 <?php endif; ?>
                             <?php endforeach; ?>
                         </div>
                         <?php if (is_array($analysis)): ?>
                             <div class="analysis-list">
-                                <strong>Scene Type</strong><?= h($analysis['scene_type'] ?? '') ?>
-                                <strong>Architecture</strong><?= h($analysis['architecture_language'] ?? '') ?>
-                                <strong>Walls</strong><?= h($analysis['wall_language'] ?? '') ?>
-                                <strong>Lighting</strong><?= h($analysis['lighting'] ?? '') ?>
-                                <strong>Materials</strong><?= h(implode(', ', (array)($analysis['materials'] ?? []))) ?>
-                                <strong>Palette</strong><?= h(implode(', ', (array)($analysis['palette'] ?? []))) ?>
-                                <strong>Camera Potential</strong><?= h(implode(', ', (array)($analysis['camera_potential'] ?? []))) ?>
-                                <strong>Risks To Remove</strong><?= h(implode(', ', (array)($analysis['negative_risks'] ?? []))) ?>
+                                <strong><?= h(t('Scene Type', 'Tipo de Escena')) ?></strong><?= h($analysis['scene_type'] ?? '') ?>
+                                <strong><?= h(t('Architecture', 'Arquitectura')) ?></strong><?= h($analysis['architecture_language'] ?? '') ?>
+                                <strong><?= h(t('Walls', 'Paredes')) ?></strong><?= h($analysis['wall_language'] ?? '') ?>
+                                <strong><?= h(t('Lighting', 'Iluminación')) ?></strong><?= h($analysis['lighting'] ?? '') ?>
+                                <strong><?= h(t('Materials', 'Materiales')) ?></strong><?= h(implode(', ', (array)($analysis['materials'] ?? []))) ?>
+                                <strong><?= h(t('Palette', 'Paleta')) ?></strong><?= h(implode(', ', (array)($analysis['palette'] ?? []))) ?>
+                                <strong><?= h(t('Camera Potential', 'Potencial de Cámara')) ?></strong><?= h(implode(', ', (array)($analysis['camera_potential'] ?? []))) ?>
+                                <strong><?= h(t('Risks To Remove', 'Riesgos a Eliminar')) ?></strong><?= h(implode(', ', (array)($analysis['negative_risks'] ?? []))) ?>
                             </div>
                         <?php else: ?>
                             <div class="analysis-empty-state">
-                                <p>Upload references to extract the visual language of the scene:</p>
+                                <p><?= h(t('Upload references to extract the visual language of the scene:', 'Subí referencias para extraer el lenguaje visual de la escena:')) ?></p>
                                 <ul>
-                                    <li>architecture and spatial language</li>
-                                    <li>materials, palette and lighting</li>
-                                    <li>camera potential and elements to remove</li>
+                                    <li><?= h(t('architecture and spatial language', 'arquitectura y lenguaje espacial')) ?></li>
+                                    <li><?= h(t('materials, palette and lighting', 'materiales, paleta e iluminación')) ?></li>
+                                    <li><?= h(t('camera potential and elements to remove', 'potencial de cámara y elementos a eliminar')) ?></li>
                                 </ul>
                             </div>
                         <?php endif; ?>
 
                         <?php if (is_array($generated)): ?>
                             <hr style="border:0; border-top:1px dashed var(--line); margin:24px 0;">
-                            <h2>Generated</h2>
+                            <h2><?= h(t('Generated', 'Generado')) ?></h2>
                             <div class="analysis-thumbs-grid">
                                 <?php foreach ((array)($generated['images'] ?? []) as $image): ?>
                                     <?php $genUrl = h(wms_media_url((string)($image['relative_path'] ?? ''))); ?>
                                     <div class="analysis-thumb-item">
-                                        <img src="<?= $genUrl ?>" alt="Generated variant">
+                                        <img src="<?= $genUrl ?>" alt="<?= h(t('Generated variant', 'Variante generada')) ?>">
                                     </div>
                                 <?php endforeach; ?>
                                 <?php if (empty($generated['images']) && !empty($generated['relative_path'])): ?>
                                     <?php $genUrl = h(wms_media_url((string)($generated['relative_path'] ?? ''))); ?>
                                     <div class="analysis-thumb-item">
-                                        <img src="<?= $genUrl ?>" alt="Generated variant">
+                                        <img src="<?= $genUrl ?>" alt="<?= h(t('Generated variant', 'Variante generada')) ?>">
                                     </div>
                                 <?php endif; ?>
                             </div>
@@ -1283,10 +1283,10 @@ $creatorOpen = is_array($analysis)
                 <section class="scene-detail" id="scene-detail" aria-labelledby="scene-detail-title">
                     <header class="scene-detail-header">
                         <div>
-                            <a class="scene-detail-back" href="world_mother_studio.php#scene-library">← Scene Library</a>
-                            <span class="scene-library-kicker">Scene workspace</span>
+                            <a class="scene-detail-back" href="world_mother_studio.php#scene-library">← <?= h(t('Scene Library', 'Biblioteca de Escenas')) ?></a>
+                            <span class="scene-library-kicker"><?= h(t('Scene workspace', 'Espacio de trabajo de escena')) ?></span>
                             <h2 id="scene-detail-title"><?= h($detailName) ?></h2>
-                            <p><?= count($detailImages) ?> visual sources · <code><?= h($detailSlug) ?></code></p>
+                            <p><?= count($detailImages) ?> <?= h(t('visual sources', 'fuentes visuales')) ?> · <code><?= h($detailSlug) ?></code></p>
                         </div>
                     </header>
 
@@ -1299,18 +1299,18 @@ $creatorOpen = is_array($analysis)
                                 ?>
                                 <figure class="scene-detail-image">
                                     <a class="scene-detail-edit" href="world_mother_variation_lab.php?scene=<?= rawurlencode($detailSlug) ?>&source=<?= rawurlencode($detailFileName) ?>">
-                                        <img src="<?= h(wms_media_url($detailRelativePath, 960)) ?>" alt="<?= h((string)($detailImage['title'] ?? 'Scene source')) ?>">
-                                        <span class="scene-detail-edit-label">Edit Source</span>
+                                        <img src="<?= h(wms_media_url($detailRelativePath, 960)) ?>" alt="<?= h((string)($detailImage['title'] ?? t('Scene source', 'Fuente de escena'))) ?>">
+                                        <span class="scene-detail-edit-label"><?= h(t('Edit Source', 'Editar Fuente')) ?></span>
                                         <figcaption><?= h((string)($detailImage['title'] ?? $detailFileName)) ?></figcaption>
                                     </a>
                                     <?php if ($canManageScenes): ?>
-                                        <form class="scene-detail-delete" method="post" onsubmit="return confirm('Remove this visual source from the scene?');">
+                                        <form class="scene-detail-delete" method="post" onsubmit="return confirm(<?= h(json_encode(t('Remove this visual source from the scene?', '¿Quitar esta fuente visual de la escena?'))) ?>);">
                                             <input type="hidden" name="csrf" value="<?= h($sceneAdminCsrf) ?>">
                                             <input type="hidden" name="action" value="delete_variant">
                                             <input type="hidden" name="source_category" value="<?= h($detailSlug) ?>">
                                             <input type="hidden" name="return_scene" value="<?= h($detailSlug) ?>">
                                             <input type="hidden" name="file_name" value="<?= h($detailFileName) ?>">
-                                            <button type="submit" aria-label="Remove scene source" title="Remove scene source">
+                                            <button type="submit" aria-label="<?= h(t('Remove scene source', 'Quitar fuente de escena')) ?>" title="<?= h(t('Remove scene source', 'Quitar fuente de escena')) ?>">
                                                 <svg viewBox="0 0 24 24" aria-hidden="true"><path fill="currentColor" d="M9 3h6l1 2h4v2H4V5h4l1-2Zm-2 6h10l-1 11H8L7 9Zm3 2v7h2v-7h-2Zm4 0v7h2v-7h-2Z"/></svg>
                                             </button>
                                         </form>
@@ -1319,7 +1319,7 @@ $creatorOpen = is_array($analysis)
                             <?php endforeach; ?>
                         </div>
                     <?php else: ?>
-                        <div class="scene-empty-library">This scene has no visual sources yet. Add or transform an image below.</div>
+                        <div class="scene-empty-library"><?= h(t('This scene has no visual sources yet. Add or transform an image below.', 'Esta escena todavía no tiene fuentes visuales. Agregá o transformá una imagen abajo.')) ?></div>
                     <?php endif; ?>
 
                     <?php if ($canManageScenes): ?>
@@ -1335,26 +1335,26 @@ $creatorOpen = is_array($analysis)
                                         <path d="M12 16V4m0 0L7.5 8.5M12 4l4.5 4.5"></path>
                                         <path d="M4 15.5V20h16v-4.5"></path>
                                     </svg>
-                                    <span data-scene-source-label>Drop images here or choose files</span>
+                                    <span data-scene-source-label><?= h(t('Drop images here or choose files', 'Soltá imágenes acá o elegí archivos')) ?></span>
                                     <small>JPG · PNG · WEBP</small>
                                 </span>
                             </label>
                         </form>
 
                         <details class="scene-detail-settings">
-                            <summary>Scene settings</summary>
+                            <summary><?= h(t('Scene settings', 'Configuración de escena')) ?></summary>
                             <div class="scene-detail-settings-body">
                                 <form class="scene-detail-panel" method="post">
                                     <input type="hidden" name="csrf" value="<?= h($sceneAdminCsrf) ?>">
                                     <input type="hidden" name="action" value="rename_category">
                                     <input type="hidden" name="source_category" value="<?= h($detailSlug) ?>">
                                     <input type="hidden" name="return_scene" value="<?= h($detailSlug) ?>">
-                                    <h3>Rename scene</h3>
+                                    <h3><?= h(t('Rename scene', 'Renombrar escena')) ?></h3>
                                     <label>
-                                        Scene name
+                                        <?= h(t('Scene name', 'Nombre de escena')) ?>
                                         <input type="text" name="new_category_name" value="<?= h($detailName) ?>" maxlength="80" required>
                                     </label>
-                                    <div class="scene-detail-actions"><button class="button-link secondary" type="submit">Rename</button></div>
+                                    <div class="scene-detail-actions"><button class="button-link secondary" type="submit"><?= h(t('Rename', 'Renombrar')) ?></button></div>
                                 </form>
 
                                 <form class="scene-detail-panel" method="post">
@@ -1362,22 +1362,22 @@ $creatorOpen = is_array($analysis)
                                     <input type="hidden" name="action" value="update_ranking">
                                     <input type="hidden" name="source_category" value="<?= h($detailSlug) ?>">
                                     <input type="hidden" name="return_scene" value="<?= h($detailSlug) ?>">
-                                    <h3>Editorial priority</h3>
-                                    <label>Featured score <input type="number" name="featured_score" min="0" max="100" value="<?= (int)($detailCategory['featured_score'] ?? 0) ?>"></label>
-                                    <label>Editorial score <input type="number" name="editorial_score" min="0" max="100" value="<?= (int)($detailCategory['editorial_score'] ?? 50) ?>"></label>
-                                    <label>Featured until <input type="date" name="featured_until" value="<?= h((string)($detailCategory['featured_until'] ?? '')) ?>"></label>
-                                    <div class="scene-detail-actions"><button class="button-link secondary" type="submit">Save Priority</button></div>
+                                    <h3><?= h(t('Editorial priority', 'Prioridad editorial')) ?></h3>
+                                    <label><?= h(t('Featured score', 'Puntaje destacado')) ?> <input type="number" name="featured_score" min="0" max="100" value="<?= (int)($detailCategory['featured_score'] ?? 0) ?>"></label>
+                                    <label><?= h(t('Editorial score', 'Puntaje editorial')) ?> <input type="number" name="editorial_score" min="0" max="100" value="<?= (int)($detailCategory['editorial_score'] ?? 50) ?>"></label>
+                                    <label><?= h(t('Featured until', 'Destacado hasta')) ?> <input type="date" name="featured_until" value="<?= h((string)($detailCategory['featured_until'] ?? '')) ?>"></label>
+                                    <div class="scene-detail-actions"><button class="button-link secondary" type="submit"><?= h(t('Save Priority', 'Guardar Prioridad')) ?></button></div>
                                 </form>
 
                                 <?php if ($detailImages): ?>
                                     <details class="scene-detail-panel scene-diversity-admin">
-                                        <summary>Reference Diversity</summary>
+                                        <summary><?= h(t('Reference Diversity', 'Diversidad de Referencias')) ?></summary>
                                         <form method="post">
                                             <input type="hidden" name="csrf" value="<?= h($sceneAdminCsrf) ?>">
                                             <input type="hidden" name="action" value="update_similarity_groups">
                                             <input type="hidden" name="source_category" value="<?= h($detailSlug) ?>">
                                             <input type="hidden" name="return_scene" value="<?= h($detailSlug) ?>">
-                                            <p class="scene-diversity-note">Use the same group name for visually equivalent references, or leave the field empty for automatic analysis.</p>
+                                            <p class="scene-diversity-note"><?= h(t('Use the same group name for visually equivalent references, or leave the field empty for automatic analysis.', 'Usá el mismo nombre de grupo para referencias visualmente equivalentes, o dejá el campo vacío para análisis automático.')) ?></p>
                                             <div class="scene-diversity-list">
                                                 <?php foreach ($detailImages as $detailImage): ?>
                                                     <?php
@@ -1388,63 +1388,63 @@ $creatorOpen = is_array($analysis)
                                                         <img src="<?= h(wms_media_url($detailRelativePath, 320)) ?>" alt="">
                                                         <span>
                                                             <input type="hidden" name="reference_key[]" value="<?= h($detailReferenceKey) ?>">
-                                                            <input type="text" name="similarity_group[]" value="<?= h((string)($detailSimilarityGroups[$detailReferenceKey] ?? '')) ?>" maxlength="80" placeholder="Automatic">
+                                                            <input type="text" name="similarity_group[]" value="<?= h((string)($detailSimilarityGroups[$detailReferenceKey] ?? '')) ?>" maxlength="80" placeholder="<?= h(t('Automatic', 'Automático')) ?>">
                                                         </span>
                                                     </label>
                                                 <?php endforeach; ?>
                                             </div>
-                                            <div class="scene-detail-actions"><button class="button-link secondary" type="submit">Save Groups</button></div>
+                                            <div class="scene-detail-actions"><button class="button-link secondary" type="submit"><?= h(t('Save Groups', 'Guardar Grupos')) ?></button></div>
                                         </form>
                                     </details>
                                 <?php endif; ?>
 
-                                <form class="scene-detail-danger" method="post" onsubmit="return confirm('Delete this scene and every visual source it contains? This cannot be undone.');">
+                                <form class="scene-detail-danger" method="post" onsubmit="return confirm(<?= h(json_encode(t('Delete this scene and every visual source it contains? This cannot be undone.', '¿Eliminar esta escena y todas las fuentes visuales que contiene? Esto no se puede deshacer.'))) ?>);">
                                     <input type="hidden" name="csrf" value="<?= h($sceneAdminCsrf) ?>">
                                     <input type="hidden" name="action" value="delete_category">
                                     <input type="hidden" name="source_category" value="<?= h($detailSlug) ?>">
                                     <input type="hidden" name="confirm_delete" value="yes">
-                                    <button type="submit">Delete Scene</button>
+                                    <button type="submit"><?= h(t('Delete Scene', 'Eliminar Escena')) ?></button>
                                 </form>
                             </div>
                         </details>
                     <?php endif; ?>
                 </section>
             <?php elseif ($requestedSceneSlug !== ''): ?>
-                <div class="notice error">The selected scene was not found.</div>
+                <div class="notice error"><?= h(t('The selected scene was not found.', 'La escena seleccionada no fue encontrada.')) ?></div>
             <?php endif; ?>
 
             <section class="scene-library" id="scene-library">
                     <div class="scene-library-heading">
                         <div>
-                            <span class="scene-library-kicker">Curated visual worlds</span>
-                            <h2>Scene Library</h2>
-                            <p><?= count($sceneCards) ?> scenes · <?= $totalSceneVariants ?> variants</p>
+                            <span class="scene-library-kicker"><?= h(t('Curated visual worlds', 'Mundos visuales curados')) ?></span>
+                            <h2><?= h(t('Scene Library', 'Biblioteca de Escenas')) ?></h2>
+                            <p><?= count($sceneCards) ?> <?= h(t('scenes', 'escenas')) ?> · <?= $totalSceneVariants ?> <?= h(t('variants', 'variantes')) ?></p>
                         </div>
-                        <div class="scene-library-controls" aria-label="Scene library controls">
+                        <div class="scene-library-controls" aria-label="<?= h(t('Scene library controls', 'Controles de la biblioteca de escenas')) ?>">
                             <label class="scene-library-control scene-library-search">
-                                <span>Search scenes</span>
-                                <input id="scene-library-search" type="search" placeholder="Search by name" autocomplete="off">
+                                <span><?= h(t('Search scenes', 'Buscar escenas')) ?></span>
+                                <input id="scene-library-search" type="search" placeholder="<?= h(t('Search by name', 'Buscar por nombre')) ?>" autocomplete="off">
                             </label>
                             <label class="scene-library-control">
-                                <span>Sort by</span>
+                                <span><?= h(t('Sort by', 'Ordenar por')) ?></span>
                                 <select id="scene-library-sort">
-                                    <option value="recommended">Recommended</option>
-                                    <option value="featured">Featured</option>
-                                    <option value="editorial">Editorial</option>
-                                    <option value="popular">Popular</option>
-                                    <option value="versatile">Most versatile</option>
-                                    <option value="usage">Usage</option>
-                                    <option value="newest">Newest</option>
-                                    <option value="alpha">A–Z</option>
+                                    <option value="recommended"><?= h(t('Recommended', 'Recomendado')) ?></option>
+                                    <option value="featured"><?= h(t('Featured', 'Destacado')) ?></option>
+                                    <option value="editorial"><?= h(t('Editorial', 'Editorial')) ?></option>
+                                    <option value="popular"><?= h(t('Popular', 'Popular')) ?></option>
+                                    <option value="versatile"><?= h(t('Most versatile', 'Más versátil')) ?></option>
+                                    <option value="usage"><?= h(t('Usage', 'Uso')) ?></option>
+                                    <option value="newest"><?= h(t('Newest', 'Más nuevo')) ?></option>
+                                    <option value="alpha"><?= h(t('A–Z', 'A–Z')) ?></option>
                                 </select>
                             </label>
                             <label class="scene-library-control">
-                                <span>Show</span>
+                                <span><?= h(t('Show', 'Mostrar')) ?></span>
                                 <select id="scene-library-filter">
-                                    <option value="all">All scenes</option>
-                                    <option value="featured">Active Featured</option>
-                                    <option value="low-usage">Low usage (1–2)</option>
-                                    <option value="no-data">Needs data</option>
+                                    <option value="all"><?= h(t('All scenes', 'Todas las escenas')) ?></option>
+                                    <option value="featured"><?= h(t('Active Featured', 'Destacados activos')) ?></option>
+                                    <option value="low-usage"><?= h(t('Low usage (1–2)', 'Uso bajo (1–2)')) ?></option>
+                                    <option value="no-data"><?= h(t('Needs data', 'Necesita datos')) ?></option>
                                 </select>
                             </label>
                             <span class="scene-library-result" id="scene-library-result" aria-live="polite"></span>
@@ -1452,7 +1452,7 @@ $creatorOpen = is_array($analysis)
                     </div>
                     <div class="scene-card-grid">
                         <?php if (!$sceneCards): ?>
-                            <div class="scene-empty-library">No scenes yet. Use Create Scene to upload references and generate the first one.</div>
+                            <div class="scene-empty-library"><?= h(t('No scenes yet. Use Create Scene to upload references and generate the first one.', 'Todavía no hay escenas. Usá Crear Escena para subir referencias y generar la primera.')) ?></div>
                         <?php endif; ?>
                         <?php foreach ($sceneCards as $sceneCard): ?>
                             <?php
@@ -1481,7 +1481,7 @@ $creatorOpen = is_array($analysis)
                                     </div>
                                 </div>
                                 <?php if ($images): ?>
-                                    <a class="scene-card-thumbs-link" href="<?= h($sceneDetailUrl) ?>" aria-label="Manage <?= h((string)($category['category_name'] ?? $slug)) ?> scene">
+                                    <a class="scene-card-thumbs-link" href="<?= h($sceneDetailUrl) ?>" aria-label="<?= h(t('Manage', 'Gestionar') . ' ' . (string)($category['category_name'] ?? $slug) . ' ' . t('scene', 'escena')) ?>">
                                         <div class="scene-card-thumbs">
                                             <?php foreach (array_slice($images, 0, 3) as $image): ?>
                                                 <?php
@@ -1489,29 +1489,29 @@ $creatorOpen = is_array($analysis)
                                                 $thumbnailUrl = h(wms_media_url($relativePath, 320));
                                                 ?>
                                                 <div class="scene-card-thumb-item">
-                                                    <img src="<?= $thumbnailUrl ?>" alt="<?= h((string)($image['title'] ?? 'Scene variant')) ?>" loading="lazy" draggable="false">
+                                                    <img src="<?= $thumbnailUrl ?>" alt="<?= h((string)($image['title'] ?? t('Scene variant', 'Variante de escena'))) ?>" loading="lazy" draggable="false">
                                                 </div>
                                             <?php endforeach; ?>
                                         </div>
                                     </a>
                                 <?php else: ?>
-                                    <div class="scene-card-empty">Drop an image here to add a variant</div>
+                                    <div class="scene-card-empty"><?= h(t('Drop an image here to add a variant', 'Soltá una imagen acá para agregar una variante')) ?></div>
                                 <?php endif; ?>
                                 <div class="scene-card-meta">
-                                    <span class="scene-pill variants-count"><?= (int)($category['image_count'] ?? count($images)) ?> variants</span>
-                                    <span class="scene-pill ranking-score">Recommended <?= (int)($category['recommended_score'] ?? 0) ?></span>
-                                    <span class="scene-pill ranking-score">Popular <?= (int)($category['popularity_score'] ?? 0) ?></span>
-                                    <span class="scene-pill ranking-score">Versatile <?= (int)($category['versatility_score'] ?? 0) ?></span>
-                                    <span class="scene-pill ranking-score"><?= (int)($category['usage_count'] ?? 0) ?> uses</span>
+                                    <span class="scene-pill variants-count"><?= (int)($category['image_count'] ?? count($images)) ?> <?= h(t('variants', 'variantes')) ?></span>
+                                    <span class="scene-pill ranking-score"><?= h(t('Recommended', 'Recomendado')) ?> <?= (int)($category['recommended_score'] ?? 0) ?></span>
+                                    <span class="scene-pill ranking-score"><?= h(t('Popular', 'Popular')) ?> <?= (int)($category['popularity_score'] ?? 0) ?></span>
+                                    <span class="scene-pill ranking-score"><?= h(t('Versatile', 'Versátil')) ?> <?= (int)($category['versatility_score'] ?? 0) ?></span>
+                                    <span class="scene-pill ranking-score"><?= (int)($category['usage_count'] ?? 0) ?> <?= h(t('uses', 'usos')) ?></span>
                                     <?php if (!empty($category['featured_active'])): ?>
-                                        <span class="scene-pill featured-score">Featured <?= (int)($category['featured_score_effective'] ?? 0) ?></span>
+                                        <span class="scene-pill featured-score"><?= h(t('Featured', 'Destacado')) ?> <?= (int)($category['featured_score_effective'] ?? 0) ?></span>
                                     <?php endif; ?>
                                 </div>
-                                <a class="scene-card-open" href="<?= h($sceneDetailUrl) ?>">Manage Scene</a>
+                                <a class="scene-card-open" href="<?= h($sceneDetailUrl) ?>"><?= h(t('Manage Scene', 'Gestionar Escena')) ?></a>
                             </article>
                         <?php endforeach; ?>
                         <?php if ($sceneCards): ?>
-                            <div class="scene-empty-library" id="scene-library-no-results" hidden>No scenes match these controls.</div>
+                            <div class="scene-empty-library" id="scene-library-no-results" hidden><?= h(t('No scenes match these controls.', 'Ninguna escena coincide con estos controles.')) ?></div>
                         <?php endif; ?>
                     </div>
             </section>
@@ -1520,6 +1520,23 @@ $creatorOpen = is_array($analysis)
 </div>
 
 <script>
+const wmsI18n = {
+    onlyImageFormats: <?= json_encode(t('Only JPG, PNG or WEBP images can be added. Maximum 24 images at a time.', 'Solo se pueden agregar imágenes JPG, PNG o WEBP. Máximo 24 imágenes a la vez.')) ?>,
+    addingImage: <?= json_encode(t('Adding image…', 'Agregando imagen…')) ?>,
+    addingImages: <?= json_encode(t('Adding {0} images…', 'Agregando {0} imágenes…')) ?>,
+    resultOfTotal: <?= json_encode(t('{0} of {1}', '{0} de {1}')) ?>,
+    upToFourReferences: <?= json_encode(t('You can upload up to 4 scene references.', 'Podés subir hasta 4 referencias de escena.')) ?>,
+    mergeConfirm: <?= json_encode(t('Merge "{0}" into "{1}"?\n\nAll variants will be moved and the source scene will be removed.', '¿Unificar "{0}" en "{1}"?\n\nTodas las variantes serán movidas y la escena de origen será eliminada.')) ?>,
+    unsupportedFormat: <?= json_encode(t('Unsupported format. Use JPG, PNG or WEBP.', 'Formato no soportado. Usá JPG, PNG o WEBP.')) ?>,
+    uploadVariantConfirm: <?= json_encode(t('Upload "{0}" as a new variant in "{1}"?', '¿Subir "{0}" como una nueva variante en "{1}"?')) ?>,
+    uploading: <?= json_encode(t('Uploading...', 'Subiendo...')) ?>,
+    uploadFailed: <?= json_encode(t('Upload failed', 'La subida falló')) ?>,
+    variantUploaded: <?= json_encode(t('Variant uploaded successfully.', 'Variante subida con éxito.')) ?>,
+    uploadError: <?= json_encode(t('Upload error:', 'Error de subida:')) ?>,
+};
+function formatI18n(template, ...values) {
+    return template.replace(/\{(\d+)\}/g, (match, index) => values[index] ?? match);
+}
 document.addEventListener('DOMContentLoaded', () => {
     // -------------------------------------------------------------
     // 1. INLINE SCENE CREATOR
@@ -1564,7 +1581,7 @@ document.addEventListener('DOMContentLoaded', () => {
         const selected = supplied.filter(acceptedImage);
         if (!sourceUploader || !sourceInput || selected.length === 0) return;
         if (selected.length !== supplied.length || selected.length > 24) {
-            alert('Only JPG, PNG or WEBP images can be added. Maximum 24 images at a time.');
+            alert(wmsI18n.onlyImageFormats);
             return;
         }
         if (assignToInput && files) {
@@ -1573,8 +1590,8 @@ document.addEventListener('DOMContentLoaded', () => {
         sourceDropzone?.classList.add('is-uploading');
         if (sourceLabel) {
             sourceLabel.textContent = selected.length === 1
-                ? 'Adding image…'
-                : `Adding ${selected.length} images…`;
+                ? wmsI18n.addingImage
+                : formatI18n(wmsI18n.addingImages, selected.length);
         }
         sourceUploader.requestSubmit();
     };
@@ -1639,7 +1656,7 @@ document.addEventListener('DOMContentLoaded', () => {
             if (shouldShow) visible += 1;
         });
 
-        if (sceneResult) sceneResult.textContent = `${visible} of ${sceneCards.length}`;
+        if (sceneResult) sceneResult.textContent = formatI18n(wmsI18n.resultOfTotal, visible, sceneCards.length);
         if (sceneNoResults) sceneNoResults.hidden = visible !== 0;
     }
 
@@ -1690,7 +1707,7 @@ document.addEventListener('DOMContentLoaded', () => {
             );
             
             if (uploadedFiles.length + validFiles.length > 4) {
-                alert('You can upload up to 4 scene references.');
+                alert(wmsI18n.upToFourReferences);
                 return;
             }
 
@@ -1784,7 +1801,7 @@ document.addEventListener('DOMContentLoaded', () => {
                 const targetSlug = card.getAttribute('data-slug');
                 const targetName = card.getAttribute('data-name');
 
-                if (confirm(`Merge "${sourceName}" into "${targetName}"?\n\nAll variants will be moved and the source scene will be removed.`)) {
+                if (confirm(formatI18n(wmsI18n.mergeConfirm, sourceName, targetName))) {
                     const form = document.createElement('form');
                     form.method = 'POST';
                     form.action = 'world_mother_studio.php';
@@ -1825,14 +1842,14 @@ document.addEventListener('DOMContentLoaded', () => {
                 if (files.length > 0) {
                     const file = files[0];
                     if (!['image/jpeg', 'image/png', 'image/webp'].includes(file.type)) {
-                        alert('Unsupported format. Use JPG, PNG or WEBP.');
+                        alert(wmsI18n.unsupportedFormat);
                         return;
                     }
 
                     const targetSlug = card.getAttribute('data-slug');
                     const targetName = card.getAttribute('data-name');
 
-                    if (confirm(`Upload "${file.name}" as a new variant in "${targetName}"?`)) {
+                    if (confirm(formatI18n(wmsI18n.uploadVariantConfirm, file.name, targetName))) {
                         uploadVariantToCard(card, targetSlug, file);
                     }
                 }
@@ -1845,7 +1862,7 @@ document.addEventListener('DOMContentLoaded', () => {
         overlay.className = 'scene-card-upload-overlay';
         overlay.innerHTML = `
             <div class="spinner-sutil"></div>
-            <div class="upload-progress-text">Uploading...</div>
+            <div class="upload-progress-text">${wmsI18n.uploading}</div>
         `;
         card.appendChild(overlay);
 
@@ -1862,18 +1879,18 @@ document.addEventListener('DOMContentLoaded', () => {
         })
         .then(response => {
             if (!response.ok) {
-                return response.json().then(err => { throw new Error(err.error || 'Upload failed'); });
+                return response.json().then(err => { throw new Error(err.error || wmsI18n.uploadFailed); });
             }
             return response.json();
         })
         .then(data => {
             overlay.remove();
-            alert(data.notice || 'Variant uploaded successfully.');
+            alert(data.notice || wmsI18n.variantUploaded);
             window.location.reload();
         })
         .catch(err => {
             overlay.remove();
-            alert('Upload error: ' + err.message);
+            alert(wmsI18n.uploadError + ' ' + err.message);
         });
     }
 });

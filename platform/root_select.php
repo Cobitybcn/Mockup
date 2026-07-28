@@ -102,10 +102,10 @@ function h($v): string {
 }
 ?>
 <!doctype html>
-<html lang="en">
+<html lang="<?= h(Translator::locale($currentUser)) ?>">
 <head>
     <meta charset="utf-8">
-    <title>Select Root Image - Artwork Mockups</title>
+    <title><?= h(t('Select Root Image - Artwork Mockups', 'Seleccionar Imagen Base - Artwork Mockups')) ?></title>
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -995,47 +995,47 @@ function h($v): string {
         </header>
 
         <div class="alert-strip">
-            Candidate Selection: Review the generated versions and choose the most frontal, clean and cropped image to act as the official root.
+            <?= h(t('Candidate Selection: Review the generated versions and choose the most frontal, clean and cropped image to act as the official root.', 'Selección de candidatos: revisá las versiones generadas y elegí la imagen más frontal, limpia y encuadrada para que actúe como base oficial.')) ?>
         </div>
 
         <div class="workspace">
             <div class="workspace-header" style="display: flex; justify-content: space-between; align-items: flex-end; margin-bottom: 24px; border-bottom: 1px solid var(--gal-border); padding-bottom: 16px;">
                 <div>
-                    <h1 style="margin: 0;">Select Root Image Version</h1>
-                    <p style="margin: 6px 0 0 0; font-size: 14px; color: var(--gal-muted);">We generated <?= h($candidateCount) ?> candidates of your root image to prevent rate/crop errors. Select the best one to proceed.</p>
+                    <h1 style="margin: 0;"><?= h(t('Select Root Image Version', 'Seleccionar Versión de Imagen Base')) ?></h1>
+                    <p style="margin: 6px 0 0 0; font-size: 14px; color: var(--gal-muted);"><?= h(t('We generated', 'Generamos')) ?> <?= h($candidateCount) ?> <?= h(t('candidates of your root image to prevent rate/crop errors. Select the best one to proceed.', 'candidatos de tu imagen base para evitar errores de proporción/recorte. Seleccioná el mejor para continuar.')) ?></p>
                 </div>
                 <div class="topbar-actions" style="display: flex; gap: 12px; margin-bottom: 4px;">
-                    <a class="button-link secondary" href="waiting.php?action=cancel&job=<?= urlencode($job) ?>">Cancel Upload</a>
-                    <a class="button-link secondary" href="root_album.php">ArtWorks</a>
+                    <a class="button-link secondary" href="waiting.php?action=cancel&job=<?= urlencode($job) ?>"><?= h(t('Cancel Upload', 'Cancelar subida')) ?></a>
+                    <a class="button-link secondary" href="root_album.php"><?= h(t('ArtWorks', 'Obras')) ?></a>
                 </div>
             </div>
 
             <div class="selection-layout">
                 <!-- Left panel: Original reference image -->
                 <aside class="reference-panel">
-                    <h3>Original Upload</h3>
-                    <img class="reference-img" src="<?= h($originalUrl) ?>" alt="Original uploaded image">
+                    <h3><?= h(t('Original Upload', 'Subida Original')) ?></h3>
+                    <img class="reference-img" src="<?= h($originalUrl) ?>" alt="<?= h(t('Original uploaded image', 'Imagen original subida')) ?>">
                 </aside>
 
                 <!-- Right area: Candidate selector -->
                 <section class="candidates-area">
-                    <h2><?= h($candidateCount) ?> Candidates Generated</h2>
+                    <h2><?= h($candidateCount) ?> <?= h(t('Candidates Generated', 'Candidatos Generados')) ?></h2>
 
                     <div class="candidates-grid">
                         <?php foreach ($candidates as $idx => $candidate): ?>
                             <?php $candidateUrl = 'job_media.php?job=' . rawurlencode($job) . '&file=' . rawurlencode((string)$candidate); ?>
                             <div class="candidate-card" id="card_<?= $idx ?>" onclick="selectCandidate('<?= h($candidate) ?>', <?= $idx ?>)">
-                                <div class="candidate-num">Version <?= $idx + 1 ?></div>
+                                <div class="candidate-num"><?= h(t('Version', 'Versión')) ?> <?= $idx + 1 ?></div>
                                 <div class="candidate-frame-wrapper" style="position: relative; margin-bottom: 16px;">
                                     <div class="candidate-frame" style="margin-bottom: 0;">
-                                        <img src="<?= h($candidateUrl) ?>" alt="Candidate Version <?= $idx + 1 ?>">
+                                        <img src="<?= h($candidateUrl) ?>" alt="<?= h(t('Candidate Version', 'Versión Candidata')) ?> <?= $idx + 1 ?>">
                                     </div>
-                                    <button type="button" class="zoom-trigger-btn media-icon-button media-thumb-action media-thumb-action--right" onclick="openLightbox('<?= h($candidateUrl) ?>', 'Version <?= $idx + 1 ?>'); event.stopPropagation();" title="Zoom in / check details">
+                                    <button type="button" class="zoom-trigger-btn media-icon-button media-thumb-action media-thumb-action--right" onclick="openLightbox('<?= h($candidateUrl) ?>', <?= json_encode(t('Version', 'Versión') . ' ' . ($idx + 1)) ?>); event.stopPropagation();" title="<?= h(t('Zoom in / check details', 'Ampliar / revisar detalles')) ?>">
                                         <svg class="media-action-icon" viewBox="0 0 24 24" aria-hidden="true"><circle cx="11" cy="11" r="7"></circle><path d="m16.2 16.2 4 4M11 8v6M8 11h6"/></svg>
                                     </button>
                                 </div>
                                 <button type="button" class="select-btn" id="btn_<?= $idx ?>">
-                                    Select Version <?= $idx + 1 ?>
+                                    <?= h(t('Select Version', 'Seleccionar Versión')) ?> <?= $idx + 1 ?>
                                 </button>
                             </div>
                         <?php endforeach; ?>
@@ -1050,7 +1050,7 @@ function h($v): string {
 <div class="lightbox-modal" id="lightboxModal" onclick="closeLightbox()">
     <div class="lightbox-content" onclick="event.stopPropagation()">
         <button class="lightbox-close" onclick="closeLightbox()">&times;</button>
-        <img id="lightboxImage" src="" alt="Zoomed candidate">
+        <img id="lightboxImage" src="" alt="<?= h(t('Zoomed candidate', 'Candidato ampliado')) ?>">
         <div id="lightboxCaption" class="lightbox-caption"></div>
     </div>
 </div>
@@ -1105,15 +1105,15 @@ function h($v): string {
     </div>
     <div class="loader-status-panel">
         <div class="spinner"></div>
-        <div class="loader-text" data-typewriter data-typewriter-speed="28">Preparing Mockup Review...</div>
-        <div class="loader-sub" data-typewriter data-typewriter-speed="18" data-typewriter-delay="720">Preparing direct mockup combinations from the selected root image.</div>
+        <div class="loader-text" data-typewriter data-typewriter-speed="28"><?= h(t('Preparing Mockup Review...', 'Preparando Revisión de Mockups...')) ?></div>
+        <div class="loader-sub" data-typewriter data-typewriter-speed="18" data-typewriter-delay="720"><?= h(t('Preparing direct mockup combinations from the selected root image.', 'Preparando combinaciones directas de mockups a partir de la imagen base seleccionada.')) ?></div>
         <div class="loader-tip" id="loaderTip"></div>
     </div>
     <?php if ($isAdmin): ?>
-        <aside class="admin-overlay-prompts" aria-label="Admin mockup prompts while analyzing">
-            <h3 data-typewriter data-typewriter-speed="24" data-typewriter-delay="220">Admin - Mockup Prompts</h3>
-            <p data-typewriter data-typewriter-speed="12" data-typewriter-delay="820">Prompts will appear here once direct combinations are prepared.</p>
-            <div class="admin-overlay-empty" id="adminOverlayPromptEmpty" data-typewriter data-typewriter-speed="14" data-typewriter-delay="1560">No mockup prompts yet. Preparing direct world mother combinations...</div>
+        <aside class="admin-overlay-prompts" aria-label="<?= h(t('Admin mockup prompts while analyzing', 'Prompts de mockup para admin mientras se analiza')) ?>">
+            <h3 data-typewriter data-typewriter-speed="24" data-typewriter-delay="220"><?= h(t('Admin - Mockup Prompts', 'Admin - Prompts de Mockup')) ?></h3>
+            <p data-typewriter data-typewriter-speed="12" data-typewriter-delay="820"><?= h(t('Prompts will appear here once direct combinations are prepared.', 'Los prompts van a aparecer acá una vez que se preparen las combinaciones directas.')) ?></p>
+            <div class="admin-overlay-empty" id="adminOverlayPromptEmpty" data-typewriter data-typewriter-speed="14" data-typewriter-delay="1560"><?= h(t('No mockup prompts yet. Preparing direct world mother combinations...', 'Todavía no hay prompts de mockup. Preparando combinaciones directas de escenas...')) ?></div>
             <div class="admin-overlay-list" id="adminOverlayPromptList"></div>
         </aside>
     <?php endif; ?>
@@ -1123,6 +1123,18 @@ function h($v): string {
     const isAdmin = <?= $isAdmin ? 'true' : 'false' ?>;
     const adminPromptStatusUrl = 'admin_mockup_prompts_status.php?job=<?= rawurlencode($job) ?>';
     const reduceTypewriterMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+    const rootSelectI18n = {
+        copied: <?= json_encode(t('Copied', 'Copiado')) ?>,
+        copyPrompt: <?= json_encode(t('Copy prompt', 'Copiar prompt')) ?>,
+        couldNotLoadAdminPrompts: <?= json_encode(t('Could not load admin prompts.', 'No se pudieron cargar los prompts de admin.')) ?>,
+        proposal: <?= json_encode(t('Proposal', 'Propuesta')) ?>,
+        contextId: <?= json_encode(t('Context ID:', 'ID de contexto:')) ?>,
+        purpose: <?= json_encode(t('Purpose:', 'Propósito:')) ?>,
+        camera: <?= json_encode(t('Camera:', 'Cámara:')) ?>,
+        time: <?= json_encode(t('Time:', 'Hora:')) ?>,
+        couldNotSelectRoot: <?= json_encode(t('Could not select root image.', 'No se pudo seleccionar la imagen base.')) ?>,
+        errorPrefix: <?= json_encode(t('Error: ', 'Error: ')) ?>,
+    };
 
     function escapeHtml(value) {
         return String(value ?? '')
@@ -1150,7 +1162,7 @@ function h($v): string {
                 }
 
                 const originalText = button.textContent;
-                button.textContent = 'Copied';
+                button.textContent = rootSelectI18n.copied;
                 setTimeout(() => {
                     button.textContent = originalText;
                 }, 1400);
@@ -1215,7 +1227,7 @@ function h($v): string {
             const data = await response.json();
 
             if (!response.ok || !data.ok) {
-                throw new Error(data.error || 'Could not load admin prompts.');
+                throw new Error(data.error || rootSelectI18n.couldNotLoadAdminPrompts);
             }
 
             if (!data.ready || !Array.isArray(data.prompts) || data.prompts.length === 0) {
@@ -1228,15 +1240,15 @@ function h($v): string {
                 const textareaId = `adminOverlayPrompt${index}`;
                 return `
                     <details class="admin-overlay-prompt" ${index === 0 ? 'open' : ''}>
-                        <summary>Proposal ${escapeHtml(item.number)} - ${escapeHtml(item.name)}</summary>
+                        <summary>${rootSelectI18n.proposal} ${escapeHtml(item.number)} - ${escapeHtml(item.name)}</summary>
                         <div class="admin-overlay-meta">
-                            <span>Context ID: ${escapeHtml(item.id)}</span>
-                            <span>Purpose: ${escapeHtml(item.purpose)}</span>
-                            <span>Camera: ${escapeHtml(item.camera)}</span>
-                            <span>Time: ${escapeHtml(item.time)}</span>
+                            <span>${rootSelectI18n.contextId} ${escapeHtml(item.id)}</span>
+                            <span>${rootSelectI18n.purpose} ${escapeHtml(item.purpose)}</span>
+                            <span>${rootSelectI18n.camera} ${escapeHtml(item.camera)}</span>
+                            <span>${rootSelectI18n.time} ${escapeHtml(item.time)}</span>
                         </div>
                         <div class="admin-overlay-actions">
-                            <button type="button" class="button secondary admin-copy-overlay-prompt" data-target="${textareaId}">Copy prompt</button>
+                            <button type="button" class="button secondary admin-copy-overlay-prompt" data-target="${textareaId}">${rootSelectI18n.copyPrompt}</button>
                         </div>
                         <textarea id="${textareaId}" readonly>${escapeHtml(item.prompt)}</textarea>
                     </details>
@@ -1296,23 +1308,23 @@ function h($v): string {
             const data = await response.json();
 
             if (!response.ok || !data.ok) {
-                throw new Error(data.error || 'Could not select root image.');
+                throw new Error(data.error || rootSelectI18n.couldNotSelectRoot);
             }
 
             // Redirect to step 2 (Curatorial direction)
             window.location.href = data.redirect;
 
         } catch (err) {
-            alert('Error: ' + err.message);
+            alert(rootSelectI18n.errorPrefix + err.message);
             loader.classList.remove('active');
         }
     }
 
     const loaderTips = [
-        ['Artist profile', 'A complete profile helps the system choose stronger interiors, audience and atmosphere.'],
-        ['If mockups are not expected', 'Start by checking the selected root image: angle, crop and color fidelity matter most.'],
-        ['Choosing the best context', 'Prioritize faithful artwork, believable scale and a room that supports rather than competes.'],
-        ['Publication quality', 'Technique, dimensions and a concise statement make each artwork page more useful.']
+        [<?= json_encode(t('Artist profile', 'Perfil del artista')) ?>, <?= json_encode(t('A complete profile helps the system choose stronger interiors, audience and atmosphere.', 'Un perfil completo ayuda al sistema a elegir interiores, público y atmósfera más sólidos.')) ?>],
+        [<?= json_encode(t('If mockups are not expected', 'Si los mockups no son los esperados')) ?>, <?= json_encode(t('Start by checking the selected root image: angle, crop and color fidelity matter most.', 'Empezá revisando la imagen base seleccionada: el ángulo, el recorte y la fidelidad del color son lo más importante.')) ?>],
+        [<?= json_encode(t('Choosing the best context', 'Elegir el mejor contexto')) ?>, <?= json_encode(t('Prioritize faithful artwork, believable scale and a room that supports rather than competes.', 'Priorizá una obra fiel, una escala creíble y un ambiente que acompañe en lugar de competir.')) ?>],
+        [<?= json_encode(t('Publication quality', 'Calidad de publicación')) ?>, <?= json_encode(t('Technique, dimensions and a concise statement make each artwork page more useful.', 'La técnica, las dimensiones y una declaración concisa hacen más útil la página de cada obra.')) ?>]
     ];
     let loaderTipIndex = 0;
 

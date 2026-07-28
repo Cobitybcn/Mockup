@@ -74,22 +74,22 @@ foreach ($sets as $setId => $set) {
 }
 
 $fieldHelp = [
-    'slot_id' => ['Technical ID', 'Unique lowercase identifier without spaces. Editing a base camera stores a managed override.', 'overhead_artwork_floor_view'],
-    'slot_name' => ['Display name', 'Human-readable camera name shown in the admin.', 'Overhead artwork view on floor'],
-    'fidelity_mode' => ['Fidelity mode', 'Technical label used to group fidelity behavior or strategy.', 'world_mother_camera_adaptation'],
-    'size_classes_supported' => ['Supported sizes', 'Comma-separated list. Use the class names recognized by the engine.', 'small, medium, large, xl_or_oversize, unknown'],
-    'orientation_supported' => ['Orientaciones soportadas', 'Lista separada por comas.', 'horizontal, landscape, vertical, portrait, square, unknown'],
-    'camera_height_block' => ['Camera height', 'Defines the physical height from which the camera views the scene.', 'The camera is directly above the artwork, looking down at the floor in an overhead view.'],
-    'lens_block' => ['Lens', 'Defines lens type, compression, distortion, and visual distance.', 'Use a moderate wide-angle lens without extreme distortion.'],
-    'vertical_tilt_block' => ['Vertical tilt', 'Defines whether the camera looks up, down, or straight ahead.', 'Vertical tilt of 85 to 90 degrees downward, almost perpendicular to the floor.'],
-    'lateral_rotation_block' => ['Lateral rotation', 'Defines the lateral or orbital angle relative to the artwork.', 'Lateral rotation of 0 degrees, level and balanced from above.'],
-    'composition_block' => ['Composition', 'Defines artwork placement, crop, visual hierarchy, and context.', 'The artwork is centered and fully visible, occupying 30–50% of the frame, with floor visible around it.'],
-    'human_subject_block' => ['Human subject policy', 'Defines whether people, hands, bodies, or silhouettes may appear.', 'No people, hands, or human presence. Empty interior.'],
-    'scale_block' => ['Scale policy', 'Protects the artwork’s real physical size relative to furniture, floors, doors, and architecture.', 'The artwork preserves its real dimensions and must not appear as a mural, billboard, or miniature.'],
-    'depth_of_field_block' => ['Depth of field', 'Defines focus, sharpness, and areas that may be softened.', 'The artwork and its edges must remain sharp; the background may be softened slightly.'],
-    'scene_affinity' => ['Afinidad de escena', 'Tags separados por comas para orientar familias ambientales.', 'interior moderno, piso pulido, galeria, living minimalista'],
-    'negative_directives' => ['Restrictions / negative prompt', 'Errors this camera must avoid. Separate them with commas.', 'no deformed artwork, no invented painting, no mural scale, no visible text'],
-    'full_prompt_template' => ['Full prompt', 'Source prompt for this camera. Use placeholders where needed.', 'Generate a premium photographic mockup using only this camera slot...'],
+    'slot_id' => [t('Technical ID', 'ID técnico'), t('Unique lowercase identifier without spaces. Editing a base camera stores a managed override.', 'Identificador único en minúsculas sin espacios. Editar una cámara base guarda un override administrado.'), 'overhead_artwork_floor_view'],
+    'slot_name' => [t('Display name', 'Nombre visible'), t('Human-readable camera name shown in the admin.', 'Nombre de cámara legible mostrado en el admin.'), 'Overhead artwork view on floor'],
+    'fidelity_mode' => [t('Fidelity mode', 'Modo de fidelidad'), t('Technical label used to group fidelity behavior or strategy.', 'Etiqueta técnica usada para agrupar comportamiento o estrategia de fidelidad.'), 'world_mother_camera_adaptation'],
+    'size_classes_supported' => [t('Supported sizes', 'Tamaños soportados'), t('Comma-separated list. Use the class names recognized by the engine.', 'Lista separada por comas. Usá los nombres de clase reconocidos por el motor.'), 'small, medium, large, xl_or_oversize, unknown'],
+    'orientation_supported' => [t('Supported orientations', 'Orientaciones soportadas'), t('Comma-separated list.', 'Lista separada por comas.'), 'horizontal, landscape, vertical, portrait, square, unknown'],
+    'camera_height_block' => [t('Camera height', 'Altura de cámara'), t('Defines the physical height from which the camera views the scene.', 'Define la altura física desde la que la cámara ve la escena.'), 'The camera is directly above the artwork, looking down at the floor in an overhead view.'],
+    'lens_block' => [t('Lens', 'Lente'), t('Defines lens type, compression, distortion, and visual distance.', 'Define el tipo de lente, compresión, distorsión y distancia visual.'), 'Use a moderate wide-angle lens without extreme distortion.'],
+    'vertical_tilt_block' => [t('Vertical tilt', 'Inclinación vertical'), t('Defines whether the camera looks up, down, or straight ahead.', 'Define si la cámara mira hacia arriba, abajo o al frente.'), 'Vertical tilt of 85 to 90 degrees downward, almost perpendicular to the floor.'],
+    'lateral_rotation_block' => [t('Lateral rotation', 'Rotación lateral'), t('Defines the lateral or orbital angle relative to the artwork.', 'Define el ángulo lateral u orbital respecto a la obra.'), 'Lateral rotation of 0 degrees, level and balanced from above.'],
+    'composition_block' => [t('Composition', 'Composición'), t('Defines artwork placement, crop, visual hierarchy, and context.', 'Define la ubicación de la obra, el recorte, la jerarquía visual y el contexto.'), 'The artwork is centered and fully visible, occupying 30–50% of the frame, with floor visible around it.'],
+    'human_subject_block' => [t('Human subject policy', 'Política de sujeto humano'), t('Defines whether people, hands, bodies, or silhouettes may appear.', 'Define si pueden aparecer personas, manos, cuerpos o siluetas.'), 'No people, hands, or human presence. Empty interior.'],
+    'scale_block' => [t('Scale policy', 'Política de escala'), t('Protects the artwork\'s real physical size relative to furniture, floors, doors, and architecture.', 'Protege el tamaño físico real de la obra respecto a muebles, pisos, puertas y arquitectura.'), 'The artwork preserves its real dimensions and must not appear as a mural, billboard, or miniature.'],
+    'depth_of_field_block' => [t('Depth of field', 'Profundidad de campo'), t('Defines focus, sharpness, and areas that may be softened.', 'Define el enfoque, la nitidez y las áreas que pueden suavizarse.'), 'The artwork and its edges must remain sharp; the background may be softened slightly.'],
+    'scene_affinity' => [t('Scene affinity', 'Afinidad de escena'), t('Comma-separated tags to guide environmental families.', 'Tags separados por comas para orientar familias ambientales.'), 'interior moderno, piso pulido, galeria, living minimalista'],
+    'negative_directives' => [t('Restrictions / negative prompt', 'Restricciones / prompt negativo'), t('Errors this camera must avoid. Separate them with commas.', 'Errores que esta cámara debe evitar. Separalos con comas.'), 'no deformed artwork, no invented painting, no mural scale, no visible text'],
+    'full_prompt_template' => [t('Full prompt', 'Prompt completo'), t('Source prompt for this camera. Use placeholders where needed.', 'Prompt fuente para esta cámara. Usá placeholders donde haga falta.'), 'Generate a premium photographic mockup using only this camera slot...'],
 ];
 
 function csv_value($value): string
@@ -107,7 +107,7 @@ function camera_field(array $help, string $name, $value, int $rows = 0): void
     } else {
         echo '<input id="' . h($name) . '" type="text" name="' . h($name) . '" value="' . h($value) . '">';
     }
-    echo '<small>' . h($hint) . '<br><span>Ejemplo: ' . h($example) . '</span></small>';
+    echo '<small>' . h($hint) . '<br><span>' . h(t('Example:', 'Ejemplo:')) . ' ' . h($example) . '</span></small>';
     echo '</div>';
 }
 
@@ -120,9 +120,9 @@ function camera_board_label(array $slot): string
 function camera_origin_label(string $slotId, array $baseSlots, array $customSlots): string
 {
     if (isset($customSlots[$slotId])) {
-        return isset($baseSlots[$slotId]) ? 'Base con override custom' : 'Custom';
+        return isset($baseSlots[$slotId]) ? t('Base with custom override', 'Base con override custom') : t('Custom', 'Custom');
     }
-    return isset($baseSlots[$slotId]) ? 'Base' : 'Nueva';
+    return isset($baseSlots[$slotId]) ? t('Base', 'Base') : t('New', 'Nueva');
 }
 
 function render_camera_board_card(string $slotId, array $slot, bool $selected = false): void
@@ -130,8 +130,8 @@ function render_camera_board_card(string $slotId, array $slot, bool $selected = 
     $name = camera_board_label($slot);
     $classes = 'cmb-camera-card cmb-sortable-item' . ($selected ? ' is-selected' : '');
     echo '<article class="' . h($classes) . '" data-camera-card data-camera-id="' . h($slotId) . '" tabindex="0">';
-    echo '<button class="cmb-card-drag" type="button" data-drag-handle aria-label="Drag camera" title="Drag camera">⋮⋮</button>';
-    echo '<button class="cmb-card-edit" type="button" data-edit-camera aria-label="Edit ' . h($name) . '" title="Edit camera">Edit</button>';
+    echo '<button class="cmb-card-drag" type="button" data-drag-handle aria-label="' . h(t('Drag camera', 'Arrastrar cámara')) . '" title="' . h(t('Drag camera', 'Arrastrar cámara')) . '">⋮⋮</button>';
+    echo '<button class="cmb-card-edit" type="button" data-edit-camera aria-label="' . h(t('Edit', 'Editar')) . ' ' . h($name) . '" title="' . h(t('Edit camera', 'Editar cámara')) . '">' . h(t('Edit', 'Editar')) . '</button>';
     echo '<div class="cmb-card-visual" aria-hidden="true">';
     echo '<span class="cmb-viewfinder"><span></span></span>';
     echo '<span class="cmb-camera-mark">CAM</span>';
@@ -149,48 +149,48 @@ try {
             if (isset($_POST['board_slots_by_board']) && is_array($_POST['board_slots_by_board'])) {
                 $studio->saveSceneBoards((array)$_POST['board_slots_by_board']);
             }
-            $notice = 'Camera saved: ' . $selectedSlotId . '.';
+            $notice = t('Camera saved: ', 'Cámara guardada: ') . $selectedSlotId . '.';
         } elseif ($action === 'save_scene_quick') {
             $saved = $studio->saveSceneQuick($_POST);
             $selectedSlotId = (string)$saved['slot_id'];
             if (isset($_POST['board_slots_by_board']) && is_array($_POST['board_slots_by_board'])) {
                 $studio->saveSceneBoards((array)$_POST['board_slots_by_board']);
             }
-            $notice = 'Camera saved: ' . $selectedSlotId . '.';
+            $notice = t('Camera saved: ', 'Cámara guardada: ') . $selectedSlotId . '.';
         } elseif ($action === 'disable_slot') {
             $result = $studio->disableSlot((string)($_POST['slot_id'] ?? ''));
             $selectedSlotId = (string)$result['slot_id'];
-            $notice = 'Camera deactivated by override: ' . $selectedSlotId . '.';
+            $notice = t('Camera deactivated by override: ', 'Cámara desactivada por override: ') . $selectedSlotId . '.';
         } elseif ($action === 'set_slot_enabled') {
             $enabled = !empty($_POST['enabled']);
             $result = $studio->setSlotEnabled((string)($_POST['slot_id'] ?? ''), $enabled);
             $selectedSlotId = (string)$result['slot_id'];
-            $notice = ($enabled ? 'Camera activated: ' : 'Camera deactivated: ') . $selectedSlotId . '.';
+            $notice = ($enabled ? t('Camera activated: ', 'Cámara activada: ') : t('Camera deactivated: ', 'Cámara desactivada: ')) . $selectedSlotId . '.';
         } elseif ($action === 'delete_slot') {
             $result = $studio->deleteSlot((string)($_POST['slot_id'] ?? ''));
             $selectedSlotId = '';
             $notice = $result['mode'] === 'deleted'
-                ? 'Custom camera deleted: ' . (string)$result['slot_id'] . '.'
-                : 'The base camera is not physically deleted; it was deactivated by override: ' . (string)$result['slot_id'] . '.';
+                ? t('Custom camera deleted: ', 'Cámara custom eliminada: ') . (string)$result['slot_id'] . '.'
+                : t('The base camera is not physically deleted; it was deactivated by override: ', 'La cámara base no se elimina físicamente; se desactivó por override: ') . (string)$result['slot_id'] . '.';
         } elseif ($action === 'save_scene_board') {
             $result = $studio->saveSceneBoards((array)($_POST['board_slots_by_board'] ?? []));
             $selectedSlotId = trim((string)($_POST['selected_slot_id'] ?? $selectedSlotId));
-            $notice = 'Boards saved: ' . (int)$result['assigned_count'] . ' organized placements.';
+            $notice = t('Boards saved: ', 'Tableros guardados: ') . (int)$result['assigned_count'] . ' ' . t('organized placements.', 'ubicaciones organizadas.');
         } elseif ($action === 'purge_inactive_slots') {
             $result = $studio->purgeInactiveSlots();
             $selectedSlotId = '';
-            $notice = 'Inactive cameras deleted or hidden: ' . (int)$result['total'] . '.';
+            $notice = t('Inactive cameras deleted or hidden: ', 'Cámaras inactivas eliminadas u ocultas: ') . (int)$result['total'] . '.';
         } elseif ($action === 'test_prompt') {
             $saved = $studio->saveSlotFromForm($_POST);
             $selectedSlotId = (string)$saved['slot_id'];
             $testPrompt = $studio->quickTestPrompt($selectedSlotId, (int)($_POST['test_artwork_id'] ?? 0));
-            $notice = 'Camera saved and quick prompt test ready.';
+            $notice = t('Camera saved and quick prompt test ready.', 'Cámara guardada y prueba rápida de prompt lista.');
         } elseif ($action === 'test_image') {
             $saved = $studio->saveSlotFromForm($_POST);
             $selectedSlotId = (string)$saved['slot_id'];
             $testImage = $studio->generateQuickTestImage($selectedSlotId, (int)($_POST['test_artwork_id'] ?? 0));
             $testPrompt = (string)($testImage['prompt'] ?? '');
-            $notice = 'Camera saved and test image generated.';
+            $notice = t('Camera saved and test image generated.', 'Cámara guardada e imagen de prueba generada.');
         } elseif (in_array($action, ['draft', 'draft_publish'], true)) {
             $brief = trim((string)($_POST['brief'] ?? ''));
             $draft = $studio->draftSlot($brief, [
@@ -200,11 +200,11 @@ try {
             if ($action === 'draft_publish') {
                 $published = $studio->publishSlot($draft, (string)($_POST['publish_set_id'] ?? 'phase_2_6_experimental_v1'));
                 $selectedSlotId = (string)$published['slot_id'];
-                $notice = 'Borrador generado y publicado: ' . $selectedSlotId . '.';
+                $notice = t('Draft generated and published: ', 'Borrador generado y publicado: ') . $selectedSlotId . '.';
             } else {
                 $slot = array_merge($emptySlot, $draft);
                 $selectedSlotId = (string)($slot['slot_id'] ?? '');
-                $notice = 'Borrador generado. Revisalo y guardalo desde la ficha.';
+                $notice = t('Draft generated. Review it and save it from the sheet.', 'Borrador generado. Revisalo y guardalo desde la ficha.');
             }
             $export = $studio->exportPhpArray($draft);
         }
@@ -233,11 +233,11 @@ try {
     $error = $e->getMessage();
 }
 
-$origin = 'Nueva';
+$origin = t('New', 'Nueva');
 if ((string)$slot['slot_id'] !== '') {
     $origin = isset($customSlots[(string)$slot['slot_id']])
-        ? (isset($baseSlots[(string)$slot['slot_id']]) ? 'Base con override custom' : 'Custom')
-        : 'Base';
+        ? (isset($baseSlots[(string)$slot['slot_id']]) ? t('Base with custom override', 'Base con override custom') : t('Custom', 'Custom'))
+        : t('Base', 'Base');
 }
 $enabledSlotCount = 0;
 foreach ($studioSlots as $countedSlot) {
@@ -250,7 +250,7 @@ $customCameraConfig = $studio->customCameraConfig();
 $sceneBoards = is_array($customCameraConfig['scene_boards'] ?? null) ? $customCameraConfig['scene_boards'] : [];
 if (!isset($sceneBoards['1']) || !is_array($sceneBoards['1'])) {
     $sceneBoards['1'] = [
-        'label' => 'Board 1',
+        'label' => t('Board 1', 'Tablero 1'),
         'slots' => (array)($customCameraConfig['scene_board']['slots'] ?? []),
     ];
 }

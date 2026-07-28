@@ -294,7 +294,7 @@ try {
         if ($action === 'merge_groups' && $proposal) {
             $keys = array_values(array_filter(array_map('strval', (array)($_POST['group_keys'] ?? []))));
             if (count($keys) < 2) {
-                throw new RuntimeException('Select at least two groups to merge.');
+                throw new RuntimeException(t('Select at least two groups to merge.', 'Seleccioná al menos dos grupos para fusionar.'));
             }
             $target = null;
             foreach ($proposal['groups'] as &$group) {
@@ -310,7 +310,7 @@ try {
             }
             unset($group, $target);
             reconcile_save_proposal(reconcile_resequence($proposal));
-            $_SESSION['fichas_reconcile_notice'] = count($keys) . ' grupos fusionados.';
+            $_SESSION['fichas_reconcile_notice'] = count($keys) . ' ' . t('groups merged.', 'grupos fusionados.');
             header('Location: fichas_reconcile.php');
             exit;
         }
@@ -335,11 +335,11 @@ try {
                 }
                 unset($group);
                 if (!$moved) {
-                    throw new RuntimeException('Grupo destino inexistente.');
+                    throw new RuntimeException(t('Target group does not exist.', 'Grupo destino inexistente.'));
                 }
             }
             reconcile_save_proposal(reconcile_resequence($proposal));
-            $_SESSION['fichas_reconcile_notice'] = 'Artwork #' . $artworkId . ' moved.';
+            $_SESSION['fichas_reconcile_notice'] = t('Artwork #', 'Obra #') . $artworkId . ' ' . t('moved.', 'movida.');
             header('Location: fichas_reconcile.php');
             exit;
         }
@@ -502,12 +502,15 @@ try {
             ], JSON_PRETTY_PRINT | JSON_UNESCAPED_SLASHES));
             @unlink(FICHA_PROPOSAL_PATH);
 
-            $_SESSION['fichas_notice'] = "Reconciliation applied: {$sheetCount} sheets created, {$linked} mockups linked by lineage, {$orphans} files remain in the orphan tray.";
+            $_SESSION['fichas_notice'] = t(
+                "Reconciliation applied: {$sheetCount} sheets created, {$linked} mockups linked by lineage, {$orphans} files remain in the orphan tray.",
+                "Reconciliación aplicada: {$sheetCount} fichas creadas, {$linked} mockups vinculados por linaje, {$orphans} archivos quedan en la bandeja de huérfanos."
+            );
             header('Location: fichas.php');
             exit;
         }
 
-        throw new RuntimeException('Invalid action or missing proposal.');
+        throw new RuntimeException(t('Invalid action or missing proposal.', 'Acción inválida o propuesta faltante.'));
     }
 } catch (Throwable $e) {
     $_SESSION['fichas_reconcile_error'] = $e->getMessage();
@@ -529,10 +532,10 @@ $groups = $proposal['groups'];
 $totalArtworks = array_sum(array_map(fn($g) => count($g['artwork_ids']), $groups));
 ?>
 <!doctype html>
-<html lang="en">
+<html lang="<?= h(Translator::locale($user)) ?>">
 <head>
     <meta charset="utf-8">
-    <title>Confirmar Fichas - Artwork Mockups</title>
+    <title><?= h(t('Confirm Sheets - Artwork Mockups', 'Confirmar Fichas - Artwork Mockups')) ?></title>
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <link rel="stylesheet" href="style.css">
     <style>
@@ -559,12 +562,12 @@ $totalArtworks = array_sum(array_map(fn($g) => count($g['artwork_ids']), $groups
         <header class="app-header">
             <a class="user-chip" href="account.php"><?= h($user['email']) ?></a>
         </header>
-        <div class="alert-strip">One-time review: confirm how your artworks are grouped. Mockups are linked automatically by lineage.</div>
+        <div class="alert-strip"><?= h(t('One-time review: confirm how your artworks are grouped. Mockups are linked automatically by lineage.', 'Revisión única: confirmá cómo están agrupadas tus obras. Los mockups se vinculan automáticamente por linaje.')) ?></div>
         <div class="workspace">
             <div class="workspace-header">
                 <div>
-                    <h1>Confirmar Fichas Propuestas</h1>
-                    <p><?= count($groups) ?> sheets proposed for <?= $totalArtworks ?> root artworks (AI visual similarity + previous groupings + exact duplicates).</p>
+                    <h1><?= h(t('Confirm Proposed Sheets', 'Confirmar Fichas Propuestas')) ?></h1>
+                    <p><?= count($groups) ?> <?= h(t('sheets proposed for', 'fichas propuestas para')) ?> <?= $totalArtworks ?> <?= h(t('root artworks (AI visual similarity + previous groupings + exact duplicates).', 'obras raíz (similitud visual por IA + agrupaciones previas + duplicados exactos).')) ?></p>
                 </div>
             </div>
 
@@ -574,18 +577,18 @@ $totalArtworks = array_sum(array_map(fn($g) => count($g['artwork_ids']), $groups
             <form method="post" id="merge-form">
                 <input type="hidden" name="action" value="merge_groups">
                 <div class="reconcile-toolbar">
-                    <button type="submit" class="button-link secondary">Merge selected groups</button>
-                    <a class="button-link secondary" href="fichas_reconcile.php?rebuild=1" onclick="return confirm('Recalculate with the fast method without pair-by-pair Gemini verification? Manual adjustments on this screen will be lost. For the complete AI proposal: php scripts/build_ficha_proposal.php');">Recalculate (fast)</a>
-                    <span class="meta">★ = cover image · to merge: select 2+ groups and choose Merge</span>
+                    <button type="submit" class="button-link secondary"><?= h(t('Merge selected groups', 'Fusionar grupos seleccionados')) ?></button>
+                    <a class="button-link secondary" href="fichas_reconcile.php?rebuild=1" onclick="return confirm(<?= json_encode(t('Recalculate with the fast method without pair-by-pair Gemini verification? Manual adjustments on this screen will be lost. For the complete AI proposal: php scripts/build_ficha_proposal.php', '¿Recalcular con el método rápido sin verificación par a par con Gemini? Se perderán los ajustes manuales de esta pantalla. Para la propuesta completa con IA: php scripts/build_ficha_proposal.php')) ?>);"><?= h(t('Recalculate (fast)', 'Recalcular (rápido)')) ?></a>
+                    <span class="meta"><?= h(t('★ = cover image · to merge: select 2+ groups and choose Merge', '★ = imagen de portada · para fusionar: seleccioná 2+ grupos y elegí Fusionar')) ?></span>
                 </div>
 
                 <?php foreach ($groups as $group): ?>
                     <?php $mockupTotal = 0; foreach ($group['artwork_ids'] as $memberId) { $mockupTotal += (int)($mockupCounts[$memberId] ?? 0); } ?>
                     <div class="group-card">
                         <div class="group-head">
-                            <input type="checkbox" name="group_keys[]" value="<?= h($group['key']) ?>" title="Marcar para fusionar">
-                            <h3>Ficha propuesta <?= h(strtoupper($group['key'])) ?></h3>
-                            <span class="meta"><?= count($group['artwork_ids']) ?> root artworks · <?= $mockupTotal ?> mockups by lineage</span>
+                            <input type="checkbox" name="group_keys[]" value="<?= h($group['key']) ?>" title="<?= h(t('Mark to merge', 'Marcar para fusionar')) ?>">
+                            <h3><?= h(t('Proposed sheet', 'Ficha propuesta')) ?> <?= h(strtoupper($group['key'])) ?></h3>
+                            <span class="meta"><?= count($group['artwork_ids']) ?> <?= h(t('root artworks', 'obras raíz')) ?> · <?= $mockupTotal ?> <?= h(t('mockups by lineage', 'mockups por linaje')) ?></span>
                         </div>
                         <div class="group-thumbs">
                             <?php foreach ($group['artwork_ids'] as $memberId): ?>
@@ -598,23 +601,23 @@ $totalArtworks = array_sum(array_map(fn($g) => count($g['artwork_ids']), $groups
                                 ?>
                                 <div class="thumb-item <?= $isCanonical ? 'is-canonical' : '' ?>">
                                     <?php if ($url !== ''): ?>
-                                        <img src="<?= h($url) ?>" loading="lazy" decoding="async" title="Artwork #<?= $memberId ?>">
+                                        <img src="<?= h($url) ?>" loading="lazy" decoding="async" title="<?= h(t('Artwork #', 'Obra #')) ?><?= $memberId ?>">
                                     <?php else: ?>
-                                        <div class="empty-img">No image</div>
+                                        <div class="empty-img"><?= h(t('No image', 'Sin imagen')) ?></div>
                                     <?php endif; ?>
                                     <span class="meta">#<?= $memberId ?><?= $isCanonical ? ' ★' : '' ?> · <?= (int)($mockupCounts[$memberId] ?? 0) ?> mk</span>
                                     <div class="thumb-actions">
                                         <select onchange="moveArtwork(<?= $memberId ?>, this.value); this.selectedIndex = 0;">
-                                            <option value="">Mover…</option>
+                                            <option value=""><?= h(t('Move…', 'Mover…')) ?></option>
                                             <?php foreach ($groups as $other): ?>
                                                 <?php if ($other['key'] !== $group['key']): ?>
                                                     <option value="<?= h($other['key']) ?>"><?= h(strtoupper($other['key'])) ?></option>
                                                 <?php endif; ?>
                                             <?php endforeach; ?>
-                                            <option value="__new__">➜ Nueva ficha</option>
+                                            <option value="__new__">➜ <?= h(t('New sheet', 'Nueva ficha')) ?></option>
                                         </select>
                                         <?php if (!$isCanonical): ?>
-                                            <button type="button" onclick="setCanonical(<?= $memberId ?>, '<?= h($group['key']) ?>')" title="Usar como portada">★</button>
+                                            <button type="button" onclick="setCanonical(<?= $memberId ?>, '<?= h($group['key']) ?>')" title="<?= h(t('Use as cover', 'Usar como portada')) ?>">★</button>
                                         <?php endif; ?>
                                     </div>
                                 </div>
@@ -624,10 +627,10 @@ $totalArtworks = array_sum(array_map(fn($g) => count($g['artwork_ids']), $groups
                 <?php endforeach; ?>
             </form>
 
-            <form method="post" class="confirm-bar" onsubmit="return confirm('Sheets will be rebuilt with this grouping and all mockups will be linked by lineage. Confirm?');">
+            <form method="post" class="confirm-bar" onsubmit="return confirm(<?= json_encode(t('Sheets will be rebuilt with this grouping and all mockups will be linked by lineage. Confirm?', 'Las fichas se van a reconstruir con esta agrupación y todos los mockups se vincularán por linaje. ¿Confirmar?')) ?>);">
                 <input type="hidden" name="action" value="confirm_all">
-                <span><strong><?= count($groups) ?> sheets</strong> will be created; existing metadata will be preserved.</span>
-                <button type="submit" class="button-link primary">Confirm and create sheets</button>
+                <span><strong><?= count($groups) ?> <?= h(t('sheets', 'fichas')) ?></strong> <?= h(t('will be created; existing metadata will be preserved.', 'se van a crear; se conservarán los metadatos existentes.')) ?></span>
+                <button type="submit" class="button-link primary"><?= h(t('Confirm and create sheets', 'Confirmar y crear fichas')) ?></button>
             </form>
         </div>
     </main>

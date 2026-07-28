@@ -92,17 +92,17 @@ if ($currentStatus === 'done') {
 }
 
 $statusLabels = [
-    'queued' => 'Analyzing artwork composition...',
-    'processing' => 'Evaluating visual atmosphere...',
-    'done' => 'Refining artwork presentation...',
-    'error' => 'Error',
+    'queued' => t('Analyzing artwork composition...', 'Analizando la composición de la obra...'),
+    'processing' => t('Evaluating visual atmosphere...', 'Evaluando la atmósfera visual...'),
+    'done' => t('Refining artwork presentation...', 'Refinando la presentación de la obra...'),
+    'error' => t('Error', 'Error'),
 ];
 
 $publicStatus = $statusLabels[(string)$currentStatus] ?? (string)$currentStatus;
 $publicMessage = match ((string)$currentStatus) {
-    'queued' => 'Analyzing artwork composition and structure...',
-    'processing' => 'Evaluating visual atmosphere and dominant palette...',
-    default => 'The system is preparing the artwork presentation.',
+    'queued' => t('Analyzing artwork composition and structure...', 'Analizando la composición y estructura de la obra...'),
+    'processing' => t('Evaluating visual atmosphere and dominant palette...', 'Evaluando la atmósfera visual y la paleta dominante...'),
+    default => t('The system is preparing the artwork presentation.', 'El sistema está preparando la presentación de la obra.'),
 };
 
 $albumSlides = [];
@@ -223,10 +223,10 @@ function h($v): string {
 }
 ?>
 <!doctype html>
-<html lang="en">
+<html lang="<?= h(Translator::locale($currentUser)) ?>">
 <head>
     <meta charset="utf-8">
-    <title>Preparing Root Image - Artwork Mockups</title>
+    <title><?= h(t('Preparing Root Image - Artwork Mockups', 'Preparando Imagen Base - Artwork Mockups')) ?></title>
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <link rel="stylesheet" href="style.css">
 
@@ -485,75 +485,75 @@ function h($v): string {
         </header>
 
         <div class="alert-strip">
-            Step 1 · Create Base Image: preparing a faithful, clean and proportional base image for future mockups.
+            <?= h(t('Step 1 · Create Base Image: preparing a faithful, clean and proportional base image for future mockups.', 'Paso 1 · Crear imagen base: preparando una imagen base fiel, limpia y proporcionada para los futuros mockups.')) ?>
         </div>
 
         <div class="workspace album-wait">
             <section class="process-card">
                 <?php if ($currentStatus === 'done' && $resultUrl): ?>
 
-                    <h2>Root Image Created</h2>
-                    <p class="page-kicker">Review the base image before proceeding to curatorial direction.</p>
+                    <h2><?= h(t('Root Image Created', 'Imagen Base Creada')) ?></h2>
+                    <p class="page-kicker"><?= h(t('Review the base image before proceeding to curatorial direction.', 'Revisá la imagen base antes de avanzar a la dirección curatorial.')) ?></p>
 
                     <div class="status-box">
-                        Root image is ready. Please inspect the framing and alignment.
+                        <?= h(t('Root image is ready. Please inspect the framing and alignment.', 'La imagen base está lista. Revisá el encuadre y la alineación.')) ?>
                     </div>
 
-                    <img class="root-preview" src="<?= h($resultUrl) ?>" alt="Generated root artwork">
+                    <img class="root-preview" src="<?= h($resultUrl) ?>" alt="<?= h(t('Generated root artwork', 'Obra base generada')) ?>">
 
                     <div class="topbar-actions">
                         <a class="button-link" href="report.php?image=<?= rawurlencode(basename($resultFile)) ?>">
-                            Proceed to Step 2 · Curatorial Direction
+                            <?= h(t('Proceed to Step 2 · Curatorial Direction', 'Continuar al Paso 2 · Dirección Curatorial')) ?>
                         </a>
 
                         <a class="button-link secondary" href="create_scenes.php">
-                            Upload another artwork
+                            <?= h(t('Upload another artwork', 'Subir otra obra')) ?>
                         </a>
                     </div>
 
                 <?php elseif ($currentStatus === 'error'): ?>
 
-                    <h2>Generation Error</h2>
+                    <h2><?= h(t('Generation Error', 'Error de generación')) ?></h2>
 
                     <div class="status-box error">
-                        <?= h($error ?: $message ?: 'An unknown error occurred.') ?>
+                        <?= h($error ?: $message ?: t('An unknown error occurred.', 'Ocurrió un error desconocido.')) ?>
                     </div>
 
-                    <p>Job ID: <code><?= h($job) ?></code></p>
+                    <p><?= h(t('Job ID:', 'ID de tarea:')) ?> <code><?= h($job) ?></code></p>
 
-                    <a class="button-link" href="create_scenes.php">Go back</a>
+                    <a class="button-link" href="create_scenes.php"><?= h(t('Go back', 'Volver')) ?></a>
 
                 <?php else: ?>
 
-                    <h2>Preparing Root Image</h2>
-                    <p class="page-kicker">You can leave this window open. The system will update the progress automatically.</p>
+                    <h2><?= h(t('Preparing Root Image', 'Preparando Imagen Base')) ?></h2>
+                    <p class="page-kicker"><?= h(t('You can leave this window open. The system will update the progress automatically.', 'Podés dejar esta ventana abierta. El sistema actualizará el progreso automáticamente.')) ?></p>
 
                     <div class="status-box" id="statusBox">
-                        Status: <strong id="statusText"><?= h($publicStatus) ?></strong><br>
+                        <?= h(t('Status:', 'Estado:')) ?> <strong id="statusText"><?= h($publicStatus) ?></strong><br>
                         <span id="messageText"><?= h($publicMessage) ?></span>
                     </div>
 
-                    <div class="progress" aria-label="Generating image">
+                    <div class="progress" aria-label="<?= h(t('Generating image', 'Generando imagen')) ?>">
                         <div class="progress-bar"></div>
                     </div>
 
-                    <p style="font-size: 11px; margin-bottom: 20px;">Job ID: <code><?= h($job) ?></code></p>
-                    
+                    <p style="font-size: 11px; margin-bottom: 20px;"><?= h(t('Job ID:', 'ID de tarea:')) ?> <code><?= h($job) ?></code></p>
+
                     <div class="artist-wait-tip" id="artistWaitTip"></div>
 
                     <!-- Cancel upload option to avoid trapped users -->
                     <div style="margin-top: 24px;">
-                        <a href="waiting.php?action=cancel&job=<?= urlencode($job) ?>" class="button secondary" style="font-size: 11px; padding: 10px 18px; text-decoration: none;">Cancel Upload</a>
+                        <a href="waiting.php?action=cancel&job=<?= urlencode($job) ?>" class="button secondary" style="font-size: 11px; padding: 10px 18px; text-decoration: none;"><?= h(t('Cancel Upload', 'Cancelar subida')) ?></a>
                     </div>
 
                     <script>
                         const job = <?= json_encode($job) ?>;
                         const statusUrl = 'job_status.php?job=' + encodeURIComponent(job);
                         const waitTips = [
-                            ['Artist Profile', 'A complete profile helps the system choose better spaces, atmosphere and market positioning.'],
-                            ['If a result feels wrong', 'Try another root image or regenerate from a cleaner, more frontal base.'],
-                            ['Best mockup signal', 'Look for faithful color, believable scale, wall contact and a context that does not compete with the artwork.'],
-                            ['Publishing', 'Title, dimensions, technique and a short statement make the final artwork page stronger.']
+                            [<?= json_encode(t('Artist Profile', 'Perfil del artista')) ?>, <?= json_encode(t('A complete profile helps the system choose better spaces, atmosphere and market positioning.', 'Un perfil completo ayuda al sistema a elegir mejores espacios, atmósfera y posicionamiento de mercado.')) ?>],
+                            [<?= json_encode(t('If a result feels wrong', 'Si un resultado no se siente bien')) ?>, <?= json_encode(t('Try another root image or regenerate from a cleaner, more frontal base.', 'Probá otra imagen base o regenerá desde una base más limpia y frontal.')) ?>],
+                            [<?= json_encode(t('Best mockup signal', 'Mejor señal de mockup')) ?>, <?= json_encode(t('Look for faithful color, believable scale, wall contact and a context that does not compete with the artwork.', 'Buscá color fiel, escala creíble, contacto con la pared y un contexto que no compita con la obra.')) ?>],
+                            [<?= json_encode(t('Publishing', 'Publicación')) ?>, <?= json_encode(t('Title, dimensions, technique and a short statement make the final artwork page stronger.', 'Título, dimensiones, técnica y una breve declaración fortalecen la página final de la obra.')) ?>]
                         ];
                         let waitTipIndex = 0;
 
@@ -565,6 +565,23 @@ function h($v): string {
                             waitTipIndex++;
                         }
 
+                        const waitingI18n = {
+                            labels: {
+                                queued: <?= json_encode(t('Analyzing artwork composition...', 'Analizando la composición de la obra...')) ?>,
+                                processing: <?= json_encode(t('Evaluating visual atmosphere...', 'Evaluando la atmósfera visual...')) ?>,
+                                done: <?= json_encode(t('Refining artwork presentation...', 'Refinando la presentación de la obra...')) ?>,
+                                error: <?= json_encode(t('Error', 'Error')) ?>
+                            },
+                            messages: {
+                                queued: <?= json_encode(t('Analyzing artwork composition and structure...', 'Analizando la composición y estructura de la obra...')) ?>,
+                                processing: <?= json_encode(t('Evaluating visual atmosphere and dominant palette...', 'Evaluando la atmósfera visual y la paleta dominante...')) ?>,
+                                done: <?= json_encode(t('Artwork presentation refined. Reviewing base image...', 'Presentación de la obra refinada. Revisando imagen base...')) ?>,
+                                error: <?= json_encode(t('Generation could not be completed.', 'No se pudo completar la generación.')) ?>
+                            },
+                            pending: <?= json_encode(t('Pending', 'Pendiente')) ?>,
+                            preparingImage: <?= json_encode(t('The system is preparing the image.', 'El sistema está preparando la imagen.')) ?>
+                        };
+
                         async function checkStatus() {
                             try {
                                 const response = await fetch(statusUrl + '&t=' + Date.now(), {
@@ -573,22 +590,8 @@ function h($v): string {
 
                                 const data = await response.json();
 
-                                const labels = {
-                                    queued: 'Analyzing artwork composition...',
-                                    processing: 'Evaluating visual atmosphere...',
-                                    done: 'Refining artwork presentation...',
-                                    error: 'Error'
-                                };
-
-                                const messages = {
-                                    queued: 'Analyzing artwork composition and structure...',
-                                    processing: 'Evaluating visual atmosphere and dominant palette...',
-                                    done: 'Artwork presentation refined. Reviewing base image...',
-                                    error: 'Generation could not be completed.'
-                                };
-
-                                document.getElementById('statusText').textContent = labels[data.status] || data.status || 'Pending';
-                                document.getElementById('messageText').textContent = data.message || messages[data.status] || 'The system is preparing the image.';
+                                document.getElementById('statusText').textContent = waitingI18n.labels[data.status] || data.status || waitingI18n.pending;
+                                document.getElementById('messageText').textContent = data.message || waitingI18n.messages[data.status] || waitingI18n.preparingImage;
 
                                 if (data.status === 'done') {
                                     window.location.href = 'root_select.php?job=' + encodeURIComponent(job);
@@ -614,10 +617,10 @@ function h($v): string {
             <!-- Collapsible Admin Console Section below the card -->
             <?php if ($isAdmin && !empty($adminWaitingPrompts)): ?>
                 <details class="admin-prompts-details">
-                    <summary class="admin-prompts-summary">Admin console - View Root Prompts</summary>
-                    <aside class="admin-root-prompts" aria-label="Admin root prompts">
-                        <h3>Admin - Root Prompts</h3>
-                        <p>Complete prompts used for root images currently waiting. Only visible to administrators.</p>
+                    <summary class="admin-prompts-summary"><?= h(t('Admin console - View Root Prompts', 'Consola de admin - Ver prompts de imagen base')) ?></summary>
+                    <aside class="admin-root-prompts" aria-label="<?= h(t('Admin root prompts', 'Prompts de imagen base para admin')) ?>">
+                        <h3><?= h(t('Admin - Root Prompts', 'Admin - Prompts de imagen base')) ?></h3>
+                        <p><?= h(t('Complete prompts used for root images currently waiting. Only visible to administrators.', 'Prompts completos usados para las imágenes base actualmente en espera. Solo visible para administradores.')) ?></p>
 
                         <?php foreach ($adminWaitingPrompts as $index => $promptJob): ?>
                             <?php
@@ -633,12 +636,12 @@ function h($v): string {
                             <details class="admin-prompt-job" <?= $promptJobId === $job ? 'open' : '' ?>>
                                 <summary><?= h($promptJobId) ?> - <?= h((string)($promptJob['status'] ?? 'unknown')) ?></summary>
                                 <div class="admin-prompt-meta">
-                                    <span>File: <?= h((string)($promptJob['main_file'] ?? '')) ?></span>
-                                    <span>Measurements: <?= h($dims) ?></span>
-                                    <span>Source: <?= h((string)($promptJob['prompt_source'] ?? '')) ?></span>
+                                    <span><?= h(t('File:', 'Archivo:')) ?> <?= h((string)($promptJob['main_file'] ?? '')) ?></span>
+                                    <span><?= h(t('Measurements:', 'Medidas:')) ?> <?= h($dims) ?></span>
+                                    <span><?= h(t('Source:', 'Origen:')) ?> <?= h((string)($promptJob['prompt_source'] ?? '')) ?></span>
                                 </div>
                                 <div class="admin-prompt-actions">
-                                    <button type="button" class="button secondary admin-copy-prompt" data-target="<?= h($promptTextId) ?>">Copy prompt</button>
+                                    <button type="button" class="button secondary admin-copy-prompt" data-target="<?= h($promptTextId) ?>"><?= h(t('Copy prompt', 'Copiar prompt')) ?></button>
                                 </div>
                                 <textarea id="<?= h($promptTextId) ?>" class="admin-prompt-text" readonly><?= h((string)($promptJob['prompt'] ?? '')) ?></textarea>
                             </details>
@@ -647,6 +650,7 @@ function h($v): string {
                 </details>
 
                 <script>
+                    const adminCopyPromptCopiedLabel = <?= json_encode(t('Copied', 'Copiado')) ?>;
                     document.querySelectorAll('.admin-copy-prompt').forEach((button) => {
                         button.addEventListener('click', async () => {
                             const target = document.getElementById(button.dataset.target);
@@ -662,7 +666,7 @@ function h($v): string {
                             }
 
                             const originalText = button.textContent;
-                            button.textContent = 'Copied';
+                            button.textContent = adminCopyPromptCopiedLabel;
                             setTimeout(() => {
                                 button.textContent = originalText;
                             }, 1400);

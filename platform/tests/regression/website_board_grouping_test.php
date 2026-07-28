@@ -109,7 +109,7 @@ function run_website_board_grouping_regression_tests(): void
     TestHarness::assertTrue(!str_contains($studioNotesPage, '<h2>New Studio Note</h2>'), 'Studio Notes no repite un segundo titulo de pagina dentro del creador');
     TestHarness::assertContains('social-square-button social-square-button--studio_process studio-create-decision', $studioNotesPage, 'crear una nota reutiliza el Decision Block lavanda al final de la linea visual');
     TestHarness::assertContains('studio-create-decision__plus">+</span>', $studioNotesPage, 'la accion de crear una nota usa el simbolo + grande del patron de alta');
-    TestHarness::assertContains('studio-create-decision__label">NOTE</span>', $studioNotesPage, 'la accion principal conserva la etiqueta NOTE');
+    TestHarness::assertContains('studio-create-decision__label"><?= wsn_h(t(\'NOTE\', \'NOTA\')) ?></span>', $studioNotesPage, 'la accion principal conserva la etiqueta NOTE');
     TestHarness::assertTrue(!str_contains($studioNotesPage, 'Open Website Blog'), 'Studio Notes no muestra el acceso redundante al blog publico');
     TestHarness::assertTrue(!str_contains($studioNotesPage, 'placeholder="Title your note"'), 'el titulo se escribe dentro del borrador y no antes de crearlo');
     TestHarness::assertTrue(!str_contains($studioNotesPage, 'name="destinations[]"'), 'la creacion no adelanta decisiones de destino');
@@ -214,8 +214,8 @@ function run_website_board_grouping_regression_tests(): void
     TestHarness::assertTrue(!str_contains($studioNotesPage, 'value="prepare_english"'), 'publicar sustituye la preparación inglesa separada');
     TestHarness::assertTrue(!str_contains($studioNotesPage, 'Reanalizar y publicar'), 'la interfaz ya no mezcla análisis y publicación');
     TestHarness::assertContains("value=\"save_draft\"", $studioNotesPage, 'guardar borrador permanece como operación secundaria independiente');
-    TestHarness::assertContains("setPublished(\$userId, \$entityType, \$entityId, 'es', true)", $editorialWorker, 'la publicación congela un snapshot español');
-    TestHarness::assertContains("setPublished(\$userId, \$entityType, \$entityId, 'en', true)", $editorialWorker, 'la publicación congela un snapshot inglés');
+    TestHarness::assertContains('setPublished($userId, $entityType, $entityId, $workingLocale, true)', $editorialWorker, 'la publicación congela un snapshot del idioma de trabajo');
+    TestHarness::assertContains('setPublished($userId, $entityType, $entityId, $adaptationLocale, true)', $editorialWorker, 'la publicación congela un snapshot del idioma adaptado cuando existe');
     $editorialAdapter = (string)file_get_contents($platformRoot . '/app/Services/BilingualEditorialAdapterService.php');
     TestHarness::assertContains('studioNoteTrustedImageMetadata', $editorialAdapter, 'el Meta Analyzer reutiliza el análisis visual existente de cada mockup');
     TestHarness::assertContains('$analysisPaths', $editorialAdapter, 'solo las imágenes externas sin SEO previo llegan al análisis visual');

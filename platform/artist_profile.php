@@ -36,17 +36,17 @@ function handle_artist_photo_upload(int $userId, string $existingFile): string
         return $existingFile;
     }
     if ($errorCode !== UPLOAD_ERR_OK) {
-        throw new RuntimeException('Artist photo upload failed.');
+        throw new RuntimeException(t('Artist photo upload failed.', 'Falló la subida de la foto del artista.'));
     }
 
     $tmp = (string)($file['tmp_name'] ?? '');
     if ($tmp === '' || !is_uploaded_file($tmp)) {
-        throw new RuntimeException('Artist photo upload is invalid.');
+        throw new RuntimeException(t('Artist photo upload is invalid.', 'La subida de la foto del artista no es válida.'));
     }
 
     $info = @getimagesize($tmp);
     if (!is_array($info) || empty($info['mime'])) {
-        throw new RuntimeException('Artist photo must be a valid image.');
+        throw new RuntimeException(t('Artist photo must be a valid image.', 'La foto del artista debe ser una imagen válida.'));
     }
 
     $extensions = [
@@ -56,24 +56,24 @@ function handle_artist_photo_upload(int $userId, string $existingFile): string
     ];
     $mime = (string)$info['mime'];
     if (!isset($extensions[$mime])) {
-        throw new RuntimeException('Artist photo must be JPG, PNG, or WEBP.');
+        throw new RuntimeException(t('Artist photo must be JPG, PNG, or WEBP.', 'La foto del artista debe ser JPG, PNG o WEBP.'));
     }
 
     $dir = artist_profile_photo_dir();
     if (!is_dir($dir) && !mkdir($dir, 0775, true)) {
-        throw new RuntimeException('Could not create artist photo directory.');
+        throw new RuntimeException(t('Could not create artist photo directory.', 'No se pudo crear el directorio de fotos del artista.'));
     }
 
     $name = 'artist-' . $userId . '-' . date('Ymd-His') . '-' . bin2hex(random_bytes(4)) . '.' . $extensions[$mime];
     $target = $dir . DIRECTORY_SEPARATOR . $name;
 
     if (!move_uploaded_file($tmp, $target)) {
-        throw new RuntimeException('Could not save artist photo.');
+        throw new RuntimeException(t('Could not save artist photo.', 'No se pudo guardar la foto del artista.'));
     }
     if (StorageService::isGcsActive()
         && !StorageService::uploadFile('uploads/artist_profiles/' . $name, $target)) {
         @unlink($target);
-        throw new RuntimeException('Could not persist artist photo.');
+        throw new RuntimeException(t('Could not persist artist photo.', 'No se pudo persistir la foto del artista.'));
     }
 
     return $name;
@@ -83,7 +83,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     try {
         $postedToken = (string)($_POST['csrf'] ?? '');
         if ($postedToken === '' || !hash_equals($csrf, $postedToken)) {
-            throw new RuntimeException('The form expired. Reload the page and try again.');
+            throw new RuntimeException(t('The form expired. Reload the page and try again.', 'El formulario expiró. Recargá la página e intentá de nuevo.'));
         }
         $action = (string)($_POST['action'] ?? 'save_profile');
         $currentProfile = ArtistProfile::findForUser((int)$user['id']);
@@ -106,7 +106,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             ArtistProfile::saveForUser((int)$user['id'], $input);
             $saved = true;
         } else {
-            throw new RuntimeException('Unknown Artist Profile action.');
+            throw new RuntimeException(t('Unknown Artist Profile action.', 'Acción de Perfil de Artista desconocida.'));
         }
     } catch (Throwable $e) {
         $error = $e->getMessage();
@@ -153,17 +153,17 @@ function admin_vars_hint(bool $isAdmin, string $field): void
 
     echo '<small class="admin-vars">';
     if ($vars['prompt_variable'] !== '') {
-        echo 'Prompt variable: ' . h($vars['prompt_variable']) . '<br>';
+        echo h(t('Prompt variable:', 'Variable de prompt:')) . ' ' . h($vars['prompt_variable']) . '<br>';
     }
-    echo 'Included in: ' . h($vars['included_in']);
+    echo h(t('Included in:', 'Incluido en:')) . ' ' . h($vars['included_in']);
     echo '</small>';
 }
 ?>
 <!doctype html>
-<html lang="en">
+<html lang="<?= h(Translator::locale($user)) ?>">
 <head>
     <meta charset="utf-8">
-    <title>Artist Profile - Artwork Mockups</title>
+    <title><?= h(t('Artist Profile - Artwork Mockups', 'Perfil del Artista - Artwork Mockups')) ?></title>
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -568,32 +568,32 @@ function admin_vars_hint(bool $isAdmin, string $field): void
         </header>
 
         <div class="alert-strip">
-            Artist Context & AI Guidance: These details act as semantic context for the AI, refining visual recommendations and descriptions.
+            <?= h(t('Artist Context & AI Guidance: These details act as semantic context for the AI, refining visual recommendations and descriptions.', 'Contexto del Artista y Guía de IA: estos detalles actúan como contexto semántico para la IA, refinando recomendaciones visuales y descripciones.')) ?>
         </div>
 
         <div class="workspace">
             <div class="workspace-header artist-profile-header">
                 <div>
-                    <h1>Artist Profile</h1>
-                    <p>Configure the artist context that shapes analysis, descriptions, and mockup guidance.</p>
+                    <h1><?= h(t('Artist Profile', 'Perfil del Artista')) ?></h1>
+                    <p><?= h(t('Configure the artist context that shapes analysis, descriptions, and mockup guidance.', 'Configurá el contexto del artista que da forma al análisis, las descripciones y la guía de mockups.')) ?></p>
                 </div>
                 <div class="topbar-actions">
                     <?php if ($canUseSocial): ?>
-                        <a class="profile-connections-decision-block" href="connections.php">Connections</a>
+                        <a class="profile-connections-decision-block" href="connections.php"><?= h(t('Connections', 'Conexiones')) ?></a>
                     <?php endif; ?>
                 </div>
             </div>
 
             <?php if ($saved): ?>
-                <div class="notice">Profile saved successfully.</div>
+                <div class="notice"><?= h(t('Profile saved successfully.', 'Perfil guardado correctamente.')) ?></div>
             <?php endif; ?>
 
             <?php if ($domainSaved): ?>
-                <div class="notice">Website address saved. Verify the custom domain after adding its DNS record.</div>
+                <div class="notice"><?= h(t('Website address saved. Verify the custom domain after adding its DNS record.', 'Dirección del sitio web guardada. Verificá el dominio personalizado después de agregar su registro DNS.')) ?></div>
             <?php endif; ?>
 
             <?php if ($domainVerified): ?>
-                <div class="notice">Domain ownership verified. The artist website can now recognize this host.</div>
+                <div class="notice"><?= h(t('Domain ownership verified. The artist website can now recognize this host.', 'Propiedad del dominio verificada. El sitio web del artista ahora puede reconocer este host.')) ?></div>
             <?php endif; ?>
 
             <?php if ($error): ?>
@@ -603,47 +603,47 @@ function admin_vars_hint(bool $isAdmin, string $field): void
             <?php
             $domainStatus = (string)$domain['status'];
             $domainSummary = (string)$domain['public_host'];
-            if ($domainSummary === '') $domainSummary = 'Choose your website address';
+            if ($domainSummary === '') $domainSummary = t('Choose your website address', 'Elegí la dirección de tu sitio web');
             ?>
             <details class="domain-workspace" <?= (string)$domain['custom_domain'] !== '' && $domainStatus !== 'verified' ? 'open' : '' ?>>
                 <summary>
-                    <span class="domain-summary-copy"><span>Website address</span><strong><?= h($domainSummary) ?></strong></span>
-                    <span class="domain-status <?= $domainStatus === 'verified' ? 'domain-status--verified' : '' ?>"><?= h($domainStatus === 'verified' ? 'Verified' : ($domainStatus === 'pending' ? 'DNS pending' : 'Optional')) ?></span>
+                    <span class="domain-summary-copy"><span><?= h(t('Website address', 'Dirección del sitio web')) ?></span><strong><?= h($domainSummary) ?></strong></span>
+                    <span class="domain-status <?= $domainStatus === 'verified' ? 'domain-status--verified' : '' ?>"><?= h($domainStatus === 'verified' ? t('Verified', 'Verificado') : ($domainStatus === 'pending' ? t('DNS pending', 'DNS pendiente') : t('Optional', 'Opcional'))) ?></span>
                 </summary>
                 <div class="domain-workspace-body">
                     <form method="post" class="domain-address-grid">
                         <input type="hidden" name="csrf" value="<?= h($csrf) ?>">
                         <input type="hidden" name="action" value="save_domain">
                         <div class="form-group">
-                            <label>Artwork Mockups subdomain</label>
-                            <input type="text" name="subdomain" value="<?= h((string)$domain['subdomain']) ?>" placeholder="artist-name" pattern="^[a-z0-9](?:[a-z0-9-]*[a-z0-9])?$" title="Lowercase letters, numbers, and internal hyphens.">
-                            <small><?= h((string)$domain['subdomain']) !== '' ? h((string)$domain['subdomain']) . '.artworkmockups.com' : 'Included with every artist website.' ?></small>
+                            <label><?= h(t('Artwork Mockups subdomain', 'Subdominio de Artwork Mockups')) ?></label>
+                            <input type="text" name="subdomain" value="<?= h((string)$domain['subdomain']) ?>" placeholder="artist-name" pattern="^[a-z0-9](?:[a-z0-9-]*[a-z0-9])?$" title="<?= h(t('Lowercase letters, numbers, and internal hyphens.', 'Minúsculas, números y guiones internos.')) ?>">
+                            <small><?= h((string)$domain['subdomain']) !== '' ? h((string)$domain['subdomain']) . '.artworkmockups.com' : h(t('Included with every artist website.', 'Incluido con cada sitio web de artista.')) ?></small>
                         </div>
                         <div class="form-group">
-                            <label>Own domain</label>
+                            <label><?= h(t('Own domain', 'Dominio propio')) ?></label>
                             <input type="text" name="custom_domain" value="<?= h((string)$domain['custom_domain']) ?>" placeholder="artist.com" inputmode="url">
-                            <small>Use a domain you own. Do not include a page path.</small>
+                            <small><?= h(t('Use a domain you own. Do not include a page path.', 'Usá un dominio que te pertenezca. No incluyas una ruta de página.')) ?></small>
                         </div>
-                        <button type="submit">Save address</button>
+                        <button type="submit"><?= h(t('Save address', 'Guardar dirección')) ?></button>
                     </form>
 
                     <?php if ((string)$domain['custom_domain'] !== ''): ?>
                         <div class="domain-verification">
-                            <h3><?= $domainStatus === 'verified' ? 'Ownership verified' : 'Verify ownership' ?></h3>
-                            <p><?= $domainStatus === 'verified' ? 'Artwork Mockups will accept this verified host for your public artist website.' : 'Add this TXT record where you manage the domain, then return here and verify it.' ?></p>
+                            <h3><?= $domainStatus === 'verified' ? h(t('Ownership verified', 'Propiedad verificada')) : h(t('Verify ownership', 'Verificar propiedad')) ?></h3>
+                            <p><?= $domainStatus === 'verified' ? h(t('Artwork Mockups will accept this verified host for your public artist website.', 'Artwork Mockups aceptará este host verificado para tu sitio web público de artista.')) : h(t('Add this TXT record where you manage the domain, then return here and verify it.', 'Agregá este registro TXT donde administrás el dominio y después volvé acá para verificarlo.')) ?></p>
                             <div class="dns-records">
-                                <div><span>Type</span><code>TXT</code></div>
-                                <div><span>Name</span><code><?= h((string)$domain['verification_record']) ?></code></div>
-                                <div><span>Value</span><code><?= h((string)$domain['verification_value']) ?></code></div>
+                                <div><span><?= h(t('Type', 'Tipo')) ?></span><code>TXT</code></div>
+                                <div><span><?= h(t('Name', 'Nombre')) ?></span><code><?= h((string)$domain['verification_record']) ?></code></div>
+                                <div><span><?= h(t('Value', 'Valor')) ?></span><code><?= h((string)$domain['verification_value']) ?></code></div>
                             </div>
                             <?php if ($domainStatus !== 'verified'): ?>
                                 <form method="post">
                                     <input type="hidden" name="csrf" value="<?= h($csrf) ?>">
                                     <input type="hidden" name="action" value="verify_domain">
-                                    <button type="submit">Verify DNS</button>
+                                    <button type="submit"><?= h(t('Verify DNS', 'Verificar DNS')) ?></button>
                                 </form>
                             <?php endif; ?>
-                            <p class="domain-routing-note">Website traffic target: <strong><?= h((string)$domain['routing_target']) ?></strong>. Ownership verification does not alter your existing DNS automatically.</p>
+                            <p class="domain-routing-note"><?= h(t('Website traffic target:', 'Destino del tráfico del sitio web:')) ?> <strong><?= h((string)$domain['routing_target']) ?></strong>. <?= h(t('Ownership verification does not alter your existing DNS automatically.', 'La verificación de propiedad no altera automáticamente tu DNS existente.')) ?></p>
                         </div>
                     <?php endif; ?>
                 </div>
@@ -655,124 +655,124 @@ function admin_vars_hint(bool $isAdmin, string $field): void
                 <div class="profile-grid">
                     <!-- Column 1: Artistic Identity -->
                     <div class="profile-card">
-                        <h3>Artistic Identity</h3>
+                        <h3><?= h(t('Artistic Identity', 'Identidad Artística')) ?></h3>
 
                         <div class="artist-photo-box">
                             <div class="artist-photo-preview">
                                 <?php $artistPhotoUrl = artist_profile_photo_url((string)($profile['photo_file'] ?? '')); ?>
                                 <?php if ($artistPhotoUrl !== ''): ?>
-                                    <img src="<?= h($artistPhotoUrl) ?>" alt="Artist photo">
+                                    <img src="<?= h($artistPhotoUrl) ?>" alt="<?= h(t('Artist photo', 'Foto del artista')) ?>">
                                 <?php else: ?>
-                                    No photo
+                                    <?= h(t('No photo', 'Sin foto')) ?>
                                 <?php endif; ?>
                             </div>
                             <div class="form-group">
-                                <label>Artist Photo</label>
+                                <label><?= h(t('Artist Photo', 'Foto del Artista')) ?></label>
                                 <input type="file" name="artist_photo" accept="image/jpeg,image/png,image/webp">
                                 <input type="hidden" name="photo_file" value="<?= field_value($profile, 'photo_file') ?>">
-                                <small>JPG, PNG, or WEBP portrait image.</small>
+                                <small><?= h(t('JPG, PNG, or WEBP portrait image.', 'Imagen retrato JPG, PNG o WEBP.')) ?></small>
                             </div>
                         </div>
 
                         <div class="form-group">
-                            <label>Artistic Name</label>
-                            <input type="text" name="artist_name" value="<?= field_value($profile, 'artist_name') ?>" placeholder="e.g. Elena Rostova">
+                            <label><?= h(t('Artistic Name', 'Nombre Artístico')) ?></label>
+                            <input type="text" name="artist_name" value="<?= field_value($profile, 'artist_name') ?>" placeholder="<?= h(t('e.g. Elena Rostova', 'ej. Elena Rostova')) ?>">
                             <?php admin_vars_hint($isAdmin, 'artist_name'); ?>
                         </div>
 
                         <div class="form-group">
-                            <label>Short Artist Bio</label>
-                            <textarea name="short_bio" rows="3" placeholder="Brief biography focusing on career, studies and background..."><?= field_value($profile, 'short_bio') ?></textarea>
+                            <label><?= h(t('Short Artist Bio', 'Biografía Breve del Artista')) ?></label>
+                            <textarea name="short_bio" rows="3" placeholder="<?= h(t('Brief biography focusing on career, studies and background...', 'Biografía breve centrada en carrera, estudios y trayectoria...')) ?>"><?= field_value($profile, 'short_bio') ?></textarea>
                             <?php admin_vars_hint($isAdmin, 'short_bio'); ?>
                         </div>
 
                         <div class="form-group">
-                            <label>Artistic Statement</label>
-                            <textarea name="statement" rows="4" placeholder="Conceptual statement, intention, search or constant themes in your work..."><?= field_value($profile, 'statement') ?></textarea>
+                            <label><?= h(t('Artistic Statement', 'Declaración Artística')) ?></label>
+                            <textarea name="statement" rows="4" placeholder="<?= h(t('Conceptual statement, intention, search or constant themes in your work...', 'Declaración conceptual, intención, búsqueda o temas constantes en tu obra...')) ?>"><?= field_value($profile, 'statement') ?></textarea>
                             <?php admin_vars_hint($isAdmin, 'statement'); ?>
                         </div>
 
                         <div class="form-group">
-                            <label>Visual Language</label>
-                            <textarea name="visual_language" rows="3" placeholder="e.g. Abstract expressionism, geometric structure, textures, organic lines..."><?= field_value($profile, 'visual_language') ?></textarea>
+                            <label><?= h(t('Visual Language', 'Lenguaje Visual')) ?></label>
+                            <textarea name="visual_language" rows="3" placeholder="<?= h(t('e.g. Abstract expressionism, geometric structure, textures, organic lines...', 'ej. Expresionismo abstracto, estructura geométrica, texturas, líneas orgánicas...')) ?>"><?= field_value($profile, 'visual_language') ?></textarea>
                             <?php admin_vars_hint($isAdmin, 'visual_language'); ?>
                         </div>
 
                         <div class="form-group">
-                            <label>Recurring Symbols / Motifs</label>
-                            <textarea name="recurring_themes" rows="3" placeholder="e.g. Grids, thresholds, minerals, shadow play, anatomical forms..."><?= field_value($profile, 'recurring_themes') ?></textarea>
+                            <label><?= h(t('Recurring Symbols / Motifs', 'Símbolos / Motivos Recurrentes')) ?></label>
+                            <textarea name="recurring_themes" rows="3" placeholder="<?= h(t('e.g. Grids, thresholds, minerals, shadow play, anatomical forms...', 'ej. Grillas, umbrales, minerales, juego de sombras, formas anatómicas...')) ?>"><?= field_value($profile, 'recurring_themes') ?></textarea>
                             <?php admin_vars_hint($isAdmin, 'recurring_themes'); ?>
                         </div>
 
                         <div class="form-group">
-                            <label>Materials & Process</label>
-                            <textarea name="materials" rows="3" placeholder="e.g. Layered acrylic, spatula incisions, wood panels, pigments..."><?= field_value($profile, 'materials') ?></textarea>
+                            <label><?= h(t('Materials & Process', 'Materiales y Proceso')) ?></label>
+                            <textarea name="materials" rows="3" placeholder="<?= h(t('e.g. Layered acrylic, spatula incisions, wood panels, pigments...', 'ej. Acrílico en capas, incisiones de espátula, paneles de madera, pigmentos...')) ?>"><?= field_value($profile, 'materials') ?></textarea>
                             <?php admin_vars_hint($isAdmin, 'materials'); ?>
                         </div>
                     </div>
 
                     <!-- Column 2: Mockups & Atmospheres -->
                     <div class="profile-card">
-                        <h3>Atmospheres & Curation</h3>
+                        <h3><?= h(t('Atmospheres & Curation', 'Atmósferas y Curaduría')) ?></h3>
 
                         <div class="form-group">
-                            <label>Preferred Atmospheres</label>
-                            <textarea name="palette_notes" rows="4" placeholder="e.g. Nocturnal, mineral, warm, tense, serene, intimate, luminous, restrained..."><?= field_value($profile, 'palette_notes') ?></textarea>
-                            <small>Shorthand description of lighting and color temp preferences.</small>
+                            <label><?= h(t('Preferred Atmospheres', 'Atmósferas Preferidas')) ?></label>
+                            <textarea name="palette_notes" rows="4" placeholder="<?= h(t('e.g. Nocturnal, mineral, warm, tense, serene, intimate, luminous, restrained...', 'ej. Nocturna, mineral, cálida, tensa, serena, íntima, luminosa, contenida...')) ?>"><?= field_value($profile, 'palette_notes') ?></textarea>
+                            <small><?= h(t('Shorthand description of lighting and color temp preferences.', 'Descripción breve de preferencias de iluminación y temperatura de color.')) ?></small>
                             <?php admin_vars_hint($isAdmin, 'palette_notes'); ?>
                         </div>
 
                         <div class="form-group">
-                            <label>Preferred Mockup Styles</label>
-                            <textarea name="preferred_contexts" rows="4" placeholder="e.g. Modernist galleries, architectural concrete rooms, townhouses, clean brick walls..."><?= field_value($profile, 'preferred_contexts') ?></textarea>
-                            <small>Styles or spaces that best showcase your style.</small>
+                            <label><?= h(t('Preferred Mockup Styles', 'Estilos de Mockup Preferidos')) ?></label>
+                            <textarea name="preferred_contexts" rows="4" placeholder="<?= h(t('e.g. Modernist galleries, architectural concrete rooms, townhouses, clean brick walls...', 'ej. Galerías modernistas, salas de concreto arquitectónico, casas urbanas, paredes de ladrillo limpias...')) ?>"><?= field_value($profile, 'preferred_contexts') ?></textarea>
+                            <small><?= h(t('Styles or spaces that best showcase your style.', 'Estilos o espacios que mejor muestran tu estilo.')) ?></small>
                             <?php admin_vars_hint($isAdmin, 'preferred_contexts'); ?>
                         </div>
 
                         <div class="form-group">
-                            <label>Excluded Mockup Contexts</label>
-                            <textarea name="forbidden_contexts" rows="4" placeholder="e.g. Commercial kitchens, kids bedrooms, generic office spaces..."><?= field_value($profile, 'forbidden_contexts') ?></textarea>
-                            <small>Environments the AI must avoid when creating mockups.</small>
+                            <label><?= h(t('Excluded Mockup Contexts', 'Contextos de Mockup Excluidos')) ?></label>
+                            <textarea name="forbidden_contexts" rows="4" placeholder="<?= h(t('e.g. Commercial kitchens, kids bedrooms, generic office spaces...', 'ej. Cocinas comerciales, dormitorios infantiles, oficinas genéricas...')) ?>"><?= field_value($profile, 'forbidden_contexts') ?></textarea>
+                            <small><?= h(t('Environments the AI must avoid when creating mockups.', 'Ambientes que la IA debe evitar al crear mockups.')) ?></small>
                             <?php admin_vars_hint($isAdmin, 'forbidden_contexts'); ?>
                         </div>
 
                         <div class="form-group">
-                            <label>Forbidden Language / Exclusions</label>
-                            <textarea name="commercial_positioning" rows="5" placeholder="List words or tones to avoid in curatorial texts (e.g. do not use marketing jargon, avoid academic over-complexity)..."><?= field_value($profile, 'commercial_positioning') ?></textarea>
-                            <small>Words or phrases to exclude from AI copy generation.</small>
+                            <label><?= h(t('Forbidden Language / Exclusions', 'Lenguaje Prohibido / Exclusiones')) ?></label>
+                            <textarea name="commercial_positioning" rows="5" placeholder="<?= h(t('List words or tones to avoid in curatorial texts (e.g. do not use marketing jargon, avoid academic over-complexity)...', 'Enumerá palabras o tonos a evitar en textos curatoriales (ej. no usar jerga de marketing, evitar la sobrecomplejidad académica)...')) ?>"><?= field_value($profile, 'commercial_positioning') ?></textarea>
+                            <small><?= h(t('Words or phrases to exclude from AI copy generation.', 'Palabras o frases a excluir de la generación de textos por IA.')) ?></small>
                             <?php admin_vars_hint($isAdmin, 'commercial_positioning'); ?>
                         </div>
                     </div>
 
                     <!-- Column 3: Audience & Voice -->
                     <div class="profile-card">
-                        <h3>Audience & Voice</h3>
+                        <h3><?= h(t('Audience & Voice', 'Audiencia y Voz')) ?></h3>
 
                         <div class="form-group">
-                            <label>Tone of Voice</label>
-                            <textarea name="tone_of_voice" rows="3" placeholder="e.g. Poetic, minimalist, elegant, conversational, technical, collectors-focused..."><?= field_value($profile, 'tone_of_voice') ?></textarea>
-                            <small>Guides the writing style of artwork descriptions.</small>
+                            <label><?= h(t('Tone of Voice', 'Tono de Voz')) ?></label>
+                            <textarea name="tone_of_voice" rows="3" placeholder="<?= h(t('e.g. Poetic, minimalist, elegant, conversational, technical, collectors-focused...', 'ej. Poético, minimalista, elegante, conversacional, técnico, orientado a coleccionistas...')) ?>"><?= field_value($profile, 'tone_of_voice') ?></textarea>
+                            <small><?= h(t('Guides the writing style of artwork descriptions.', 'Guía el estilo de escritura de las descripciones de las obras.')) ?></small>
                             <?php admin_vars_hint($isAdmin, 'tone_of_voice'); ?>
                         </div>
 
                         <div class="form-group">
-                            <label>Target Audience / Presentation Context</label>
-                            <textarea name="target_audience" rows="3" placeholder="e.g. Collectors, curators, architects, quiet interiors, institutional spaces..."><?= field_value($profile, 'target_audience') ?></textarea>
-                            <small>Defines who the work should speak to and where it should feel at home.</small>
+                            <label><?= h(t('Target Audience / Presentation Context', 'Audiencia Objetivo / Contexto de Presentación')) ?></label>
+                            <textarea name="target_audience" rows="3" placeholder="<?= h(t('e.g. Collectors, curators, architects, quiet interiors, institutional spaces...', 'ej. Coleccionistas, curadores, arquitectos, interiores silenciosos, espacios institucionales...')) ?>"><?= field_value($profile, 'target_audience') ?></textarea>
+                            <small><?= h(t('Defines who the work should speak to and where it should feel at home.', 'Define a quién debe hablarle la obra y dónde debería sentirse como en casa.')) ?></small>
                             <?php admin_vars_hint($isAdmin, 'target_audience'); ?>
                         </div>
 
                         <div class="form-group">
-                            <label>Conceptual Keywords</label>
-                            <textarea name="conceptual_keywords" rows="3" placeholder="e.g. Silence, entropy, limit, construction, gravity..."><?= field_value($profile, 'conceptual_keywords') ?></textarea>
-                            <small>Core philosophical terms guiding the metadata.</small>
+                            <label><?= h(t('Conceptual Keywords', 'Palabras Clave Conceptuales')) ?></label>
+                            <textarea name="conceptual_keywords" rows="3" placeholder="<?= h(t('e.g. Silence, entropy, limit, construction, gravity...', 'ej. Silencio, entropía, límite, construcción, gravedad...')) ?>"><?= field_value($profile, 'conceptual_keywords') ?></textarea>
+                            <small><?= h(t('Core philosophical terms guiding the metadata.', 'Términos filosóficos centrales que guían los metadatos.')) ?></small>
                             <?php admin_vars_hint($isAdmin, 'conceptual_keywords'); ?>
                         </div>
                     </div>
                 </div>
 
                 <div class="submit-container">
-                    <button type="submit" class="button">Save Profile Context</button>
+                    <button type="submit" class="button"><?= h(t('Save Profile Context', 'Guardar Contexto del Perfil')) ?></button>
                 </div>
             </form>
         </div>

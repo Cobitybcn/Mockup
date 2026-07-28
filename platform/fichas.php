@@ -74,7 +74,10 @@ try {
         }
 
         (new ArtworkGroupService($pdo))->syncUser($userId);
-        $_SESSION['fichas_notice'] = "Synchronization: {$embedded} artworks embedded, {$assigned} assigned to sheets automatically" . ($pendingReview > 0 ? ", {$pendingReview} need review in the assistant." : '.');
+        $_SESSION['fichas_notice'] = t(
+            "Synchronization: {$embedded} artworks embedded, {$assigned} assigned to sheets automatically" . ($pendingReview > 0 ? ", {$pendingReview} need review in the assistant." : '.'),
+            "Sincronización: {$embedded} obras vectorizadas, {$assigned} asignadas a fichas automáticamente" . ($pendingReview > 0 ? ", {$pendingReview} necesitan revisión en el asistente." : '.')
+        );
         header('Location: fichas.php');
         exit;
     }
@@ -128,7 +131,7 @@ foreach ($sheets as $sheet) {
     $file = $canonical ? basename((string)($canonical['root_file'] ?: $canonical['main_file'] ?: '')) : (string)$sheet['source_image_file'];
     $title = trim((string)$sheet['title']);
     if ($title === '') {
-        $title = trim((string)($canonical['final_title'] ?? '')) ?: 'Ficha #' . $sheetId;
+        $title = trim((string)($canonical['final_title'] ?? '')) ?: t('Sheet #', 'Ficha #') . $sheetId;
     }
 
     if ($query !== '') {
@@ -154,10 +157,10 @@ foreach ($sheets as $sheet) {
 }
 ?>
 <!doctype html>
-<html lang="en">
+<html lang="<?= h(Translator::locale($user)) ?>">
 <head>
     <meta charset="utf-8">
-    <title>Fichas - Artwork Mockups</title>
+    <title><?= h(t('Sheets - Artwork Mockups', 'Fichas - Artwork Mockups')) ?></title>
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <link rel="stylesheet" href="style.css">
     <style>
@@ -185,12 +188,12 @@ foreach ($sheets as $sheet) {
         <header class="app-header">
             <a class="user-chip" href="account.php"><?= h($user['email']) ?></a>
         </header>
-        <div class="alert-strip">One sheet per real artwork: its root views, mockups, and metadata in one place.</div>
+        <div class="alert-strip"><?= h(t('One sheet per real artwork: its root views, mockups, and metadata in one place.', 'Una ficha por cada obra real: sus vistas raíz, mockups y metadatos en un solo lugar.')) ?></div>
         <div class="workspace">
             <div class="workspace-header">
                 <div>
-                    <h1>Artwork Sheets</h1>
-                    <p><?= count($cards) ?> sheets · <?= $orphanCount ?> mockups without a sheet · <?= count($unsheeted) ?> ungrouped root artworks</p>
+                    <h1><?= h(t('Artwork Sheets', 'Fichas de obra')) ?></h1>
+                    <p><?= count($cards) ?> <?= h(t('sheets', 'fichas')) ?> · <?= $orphanCount ?> <?= h(t('mockups without a sheet', 'mockups sin ficha')) ?> · <?= count($unsheeted) ?> <?= h(t('ungrouped root artworks', 'obras raíz sin agrupar')) ?></p>
                 </div>
             </div>
 
@@ -199,31 +202,31 @@ foreach ($sheets as $sheet) {
 
             <div class="fichas-toolbar">
                 <form class="fichas-search" method="get">
-                    <input type="text" name="q" value="<?= h($query) ?>" placeholder="Search by title, tag, or file...">
-                    <button class="button-link secondary" type="submit">Search</button>
-                    <?php if ($query !== ''): ?><a class="button-link secondary" href="fichas.php">Limpiar</a><?php endif; ?>
+                    <input type="text" name="q" value="<?= h($query) ?>" placeholder="<?= h(t('Search by title, tag, or file...', 'Buscar por título, etiqueta o archivo...')) ?>">
+                    <button class="button-link secondary" type="submit"><?= h(t('Search', 'Buscar')) ?></button>
+                    <?php if ($query !== ''): ?><a class="button-link secondary" href="fichas.php"><?= h(t('Clear', 'Limpiar')) ?></a><?php endif; ?>
                 </form>
                 <div style="display:flex; gap:8px;">
                     <form method="post" style="display:inline;">
                         <input type="hidden" name="action" value="sync_new">
-                        <button type="submit" class="button-link secondary" title="Embed new artworks and assign them to sheets by visual similarity" onclick="this.textContent='Synchronizing...';">⟳ Synchronize new artworks</button>
+                        <button type="submit" class="button-link secondary" title="<?= h(t('Embed new artworks and assign them to sheets by visual similarity', 'Vectorizar obras nuevas y asignarlas a fichas por similitud visual')) ?>" onclick="this.textContent='<?= h(t('Synchronizing...', 'Sincronizando...')) ?>';">⟳ <?= h(t('Synchronize new artworks', 'Sincronizar obras nuevas')) ?></button>
                     </form>
-                    <a class="button-link secondary" href="fichas_reconcile.php">Regroup artworks (AI assistant)</a>
+                    <a class="button-link secondary" href="fichas_reconcile.php"><?= h(t('Regroup artworks (AI assistant)', 'Reagrupar obras (asistente IA)')) ?></a>
                 </div>
             </div>
 
             <?php if (count($unsheeted) > 0 || $orphanCount > 0): ?>
                 <div class="orphan-strip">
                     <span class="meta">
-                        <?php if (count($unsheeted) > 0): ?><strong><?= count($unsheeted) ?> root artworks</strong> do not belong to a sheet yet. <?php endif; ?>
-                        <?php if ($orphanCount > 0): ?><strong><?= $orphanCount ?> mockups</strong> sin ficha (sin linaje conocido).<?php endif; ?>
+                        <?php if (count($unsheeted) > 0): ?><strong><?= count($unsheeted) ?> <?= h(t('root artworks', 'obras raíz')) ?></strong> <?= h(t('do not belong to a sheet yet.', 'todavía no pertenecen a ninguna ficha.')) ?> <?php endif; ?>
+                        <?php if ($orphanCount > 0): ?><strong><?= $orphanCount ?> <?= h(t('mockups', 'mockups')) ?></strong> <?= h(t('without a sheet (no known lineage).', 'sin ficha (sin linaje conocido).')) ?><?php endif; ?>
                     </span>
-                    <a class="button-link secondary" href="fichas_reconcile.php">Resolve in assistant</a>
+                    <a class="button-link secondary" href="fichas_reconcile.php"><?= h(t('Resolve in assistant', 'Resolver en el asistente')) ?></a>
                 </div>
             <?php endif; ?>
 
             <?php if (!$cards): ?>
-                <div class="notice">There are no sheets yet. Use the <a href="fichas_reconcile.php">grouping assistant</a> to create them from your artworks.</div>
+                <div class="notice"><?= t('There are no sheets yet. Use the <a href="fichas_reconcile.php">grouping assistant</a> to create them from your artworks.', 'Todavía no hay fichas. Usá el <a href="fichas_reconcile.php">asistente de agrupación</a> para crearlas a partir de tus obras.') ?></div>
             <?php else: ?>
                 <div class="fichas-grid">
                     <?php foreach ($cards as $card): ?>
@@ -231,15 +234,15 @@ foreach ($sheets as $sheet) {
                             <?php if ($card['image'] !== ''): ?>
                                 <img src="<?= h($card['image']) ?>" alt="<?= h($card['title']) ?>" loading="lazy" decoding="async">
                             <?php else: ?>
-                                <div class="empty-img">No image</div>
+                                <div class="empty-img"><?= h(t('No image', 'Sin imagen')) ?></div>
                             <?php endif; ?>
                             <div class="ficha-body">
                                 <span class="ficha-title" title="<?= h($card['title']) ?>"><?= h($card['title']) ?></span>
                                 <div class="ficha-stats">
-                                    <span class="stat-pill"><?= $card['members'] ?> roots</span>
-                                    <span class="stat-pill"><?= $card['mockups'] ?> mockups</span>
+                                    <span class="stat-pill"><?= $card['members'] ?> <?= h(t('roots', 'raíces')) ?></span>
+                                    <span class="stat-pill"><?= $card['mockups'] ?> <?= h(t('mockups', 'mockups')) ?></span>
                                     <span class="stat-pill <?= $card['meta_done'] === $card['meta_total'] ? 'meta-full' : 'meta-empty' ?>">
-                                        Metadatos <?= $card['meta_done'] ?>/<?= $card['meta_total'] ?>
+                                        <?= h(t('Metadata', 'Metadatos')) ?> <?= $card['meta_done'] ?>/<?= $card['meta_total'] ?>
                                     </span>
                                 </div>
                             </div>

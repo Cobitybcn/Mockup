@@ -26,14 +26,14 @@ if (empty($_SESSION['studio_notes_csrf'])) {
 if (($_SERVER['REQUEST_METHOD'] ?? 'GET') === 'POST') {
     try {
         if (!hash_equals((string)$_SESSION['studio_notes_csrf'], (string)($_POST['csrf'] ?? ''))) {
-            throw new RuntimeException('Invalid session token.');
+            throw new RuntimeException(t('Invalid session token.', 'Token de sesión inválido.'));
         }
         $action = (string)($_POST['action'] ?? '');
-        
+
         if ($action === 'create_draft') {
             $title = trim((string)($_POST['title'] ?? ''));
             if ($title === '') {
-                $title = 'Nueva nota de estudio';
+                $title = t('New studio note', 'Nueva nota de estudio');
             }
             $now = date('c');
             $payload = [
@@ -58,7 +58,7 @@ if (($_SERVER['REQUEST_METHOD'] ?? 'GET') === 'POST') {
                 $now,
             ]);
             $newId = $pdo->lastInsertId();
-            $_SESSION['wsn_notice'] = 'Borrador creado correctamente.';
+            $_SESSION['wsn_notice'] = t('Draft created successfully.', 'Borrador creado correctamente.');
             header('Location: website_studio_notes.php?draft=' . $newId);
             exit;
         }
@@ -68,15 +68,15 @@ if (($_SERVER['REQUEST_METHOD'] ?? 'GET') === 'POST') {
                 $userId,
                 (array)($_FILES['studio_note_markdown'] ?? [])
             );
-            $_SESSION['wsn_notice'] = 'ZIP bilingüe importado como borrador, sin ejecutar IA.';
+            $_SESSION['wsn_notice'] = t('Bilingual ZIP imported as a draft, without running AI.', 'ZIP bilingüe importado como borrador, sin ejecutar IA.');
             header('Location: website_studio_notes.php?draft=' . (int)$imported['id']);
             exit;
         }
-        
+
         if ($action === 'generate_bilingual') {
             $id = max(0, (int)($_POST['draft_id'] ?? 0));
             if (!$editorial->isEnabled($userId)) {
-                throw new RuntimeException('El espacio editorial bilingüe no está habilitado para esta cuenta.');
+                throw new RuntimeException(t('The bilingual editorial workspace is not enabled for this account.', 'El espacio editorial bilingüe no está habilitado para esta cuenta.'));
             }
             $currentSpanish = wsn_post_content('es');
             if (trim((string)$currentSpanish['body_html']) !== '') {
@@ -112,7 +112,7 @@ if (($_SERVER['REQUEST_METHOD'] ?? 'GET') === 'POST') {
                 'version',
                 'es',
                 $currentSpanish,
-                'Texto conservado antes de generar',
+                t('Text kept before generating', 'Texto conservado antes de generar'),
                 (int)$job['id']
             );
             if ((string)$job['status'] === 'queued' && trim((string)$job['task_name']) === '') {
@@ -126,7 +126,7 @@ if (($_SERVER['REQUEST_METHOD'] ?? 'GET') === 'POST') {
                     (new BilingualEditorialGenerationWorker($pdo))->process((int)$job['id']);
                 }
             }
-            $_SESSION['wsn_notice'] = 'La propuesta se está preparando en la pizarra. Tu texto activo no será reemplazado.';
+            $_SESSION['wsn_notice'] = t('The proposal is being prepared on the board. Your active text will not be replaced.', 'La propuesta se está preparando en la pizarra. Tu texto activo no será reemplazado.');
             header('Location: website_studio_notes.php?draft=' . $id);
             exit;
         }
@@ -163,7 +163,7 @@ if (($_SERVER['REQUEST_METHOD'] ?? 'GET') === 'POST') {
                     trim((string)($_POST['idea_title'] ?? '')),
                     trim((string)($_POST['idea_text'] ?? ''))
                 );
-                $_SESSION['wsn_notice'] = 'Idea añadida a la pizarra.';
+                $_SESSION['wsn_notice'] = t('Idea added to the board.', 'Idea añadida a la pizarra.');
             } elseif ($action === 'upload_workspace_media') {
                 $uploadResult = $websiteBoard->addNoteUploads(
                     $userId,
@@ -171,13 +171,13 @@ if (($_SERVER['REQUEST_METHOD'] ?? 'GET') === 'POST') {
                     (array)($_FILES['workspace_images'] ?? [])
                 );
                 $_SESSION['wsn_notice'] = (int)$uploadResult['count'] === 1
-                    ? 'Imagen añadida a la mesa de material.'
-                    : (int)$uploadResult['count'] . ' imágenes añadidas a la mesa de material.';
+                    ? t('Image added to the material table.', 'Imagen añadida a la mesa de material.')
+                    : (int)$uploadResult['count'] . ' ' . t('images added to the material table.', 'imágenes añadidas a la mesa de material.');
             } else {
                 $itemId = max(0, (int)($_POST['workspace_item_id'] ?? 0));
                 if ($action === 'remove_workspace_item') {
                     $studioWorkspace->remove($userId, $id, $itemId);
-                    $_SESSION['wsn_notice'] = 'Elemento retirado de la pizarra.';
+                    $_SESSION['wsn_notice'] = t('Item removed from the board.', 'Elemento retirado de la pizarra.');
                 } else {
                     $item = $studioWorkspace->item($userId, $id, $itemId);
                     $locale = (string)$item['locale'];
@@ -199,8 +199,8 @@ if (($_SERVER['REQUEST_METHOD'] ?? 'GET') === 'POST') {
                         (string)$editorial->get($userId, 'studio_note', $id, $locale)['private_memo']
                     );
                     $_SESSION['wsn_notice'] = $locale === 'es'
-                        ? 'La tarjeta se aplicó al editor español. El texto anterior quedó en Versiones.'
-                        : 'The card was applied to the English editor. The previous text remains in Versions.';
+                        ? t('The card was applied to the Spanish editor. The previous text remains in Versions.', 'La tarjeta se aplicó al editor español. El texto anterior quedó en Versiones.')
+                        : t('The card was applied to the English editor. The previous text remains in Versions.', 'The card was applied to the English editor. The previous text remains in Versions.');
                 }
             }
             header('Location: website_studio_notes.php?draft=' . $id);
@@ -211,8 +211,8 @@ if (($_SERVER['REQUEST_METHOD'] ?? 'GET') === 'POST') {
             $id = max(0, (int)($_POST['draft_id'] ?? 0));
             $spanish = wsn_post_content('es');
             $english = wsn_post_content('en');
-            if (trim((string)$spanish['title']) === '') throw new RuntimeException('El título en español es obligatorio.');
-            if (trim(strip_tags((string)$spanish['body_html'])) === '') throw new RuntimeException('Escribí el contenido español antes de guardar.');
+            if (trim((string)$spanish['title']) === '') throw new RuntimeException(t('The Spanish title is required.', 'El título en español es obligatorio.'));
+            if (trim(strip_tags((string)$spanish['body_html'])) === '') throw new RuntimeException(t('Write the Spanish content before saving.', 'Escribí el contenido español antes de guardar.'));
 
             $previousSpanishContent = (array)$editorial->get(
                 $userId,
@@ -286,7 +286,7 @@ if (($_SERVER['REQUEST_METHOD'] ?? 'GET') === 'POST') {
 
             if ($action === 'update_english') {
                 if (!$editorial->isEnabled($userId)) {
-                    throw new RuntimeException('El espacio editorial bilingüe no está habilitado para esta cuenta.');
+                    throw new RuntimeException(t('The bilingual editorial workspace is not enabled for this account.', 'El espacio editorial bilingüe no está habilitado para esta cuenta.'));
                 }
                 if (empty($changes['needs_english_update'])) {
                     // Quill can normalize visual HTML after the page was
@@ -322,16 +322,16 @@ if (($_SERVER['REQUEST_METHOD'] ?? 'GET') === 'POST') {
                             (new BilingualEditorialGenerationWorker($pdo))->process((int)$job['id']);
                         }
                     }
-                    $_SESSION['wsn_notice'] = 'Actualizando la versión inglesa y el SEO pendiente. Todavía no se publicará.';
+                    $_SESSION['wsn_notice'] = t('Updating the English version and pending SEO. It will not be published yet.', 'Actualizando la versión inglesa y el SEO pendiente. Todavía no se publicará.');
                 }
             }
             if ($action === 'publish_changes') {
                 if (!empty($changes['needs_english_update'])) {
-                    throw new RuntimeException('Actualizá la versión inglesa antes de publicar.');
+                    throw new RuntimeException(t('Update the English version before publishing.', 'Actualizá la versión inglesa antes de publicar.'));
                 }
                 $englishContent = (array)$savedEnglishState['content'];
                 if (!wsn_has_content($englishContent)) {
-                    throw new RuntimeException('Prepará la versión inglesa antes de publicar.');
+                    throw new RuntimeException(t('Prepare the English version before publishing.', 'Prepará la versión inglesa antes de publicar.'));
                 }
                 $englishContent['body_html'] = StudioNoteMediaService::mirrorImagesWithPublishedFallback(
                     (string)($savedSpanishState['content']['body_html'] ?? ''),
@@ -356,9 +356,9 @@ if (($_SERVER['REQUEST_METHOD'] ?? 'GET') === 'POST') {
                     if ($pdo->inTransaction()) $pdo->rollBack();
                     throw $publicationError;
                 }
-                $_SESSION['wsn_notice'] = 'Cambios publicados sin ejecutar IA.';
+                $_SESSION['wsn_notice'] = t('Changes published without running AI.', 'Cambios publicados sin ejecutar IA.');
             } elseif ($action !== 'update_english') {
-                $_SESSION['wsn_notice'] = 'Borrador bilingüe guardado.';
+                $_SESSION['wsn_notice'] = t('Bilingual draft saved.', 'Borrador bilingüe guardado.');
             }
             header('Location: website_studio_notes.php?draft=' . $id);
             exit;
@@ -369,11 +369,11 @@ if (($_SERVER['REQUEST_METHOD'] ?? 'GET') === 'POST') {
             $editorial->setPublished($userId, 'studio_note', $id, 'es', false);
             $editorial->setPublished($userId, 'studio_note', $id, 'en', false);
             $websiteBoard->noteAction($userId, $id, 'unpublish');
-            $_SESSION['wsn_notice'] = 'La nota fue retirada del website.';
+            $_SESSION['wsn_notice'] = t('The note was removed from the website.', 'La nota fue retirada del website.');
             header('Location: website_studio_notes.php?draft=' . $id);
             exit;
         }
-        
+
         if ($action === 'delete_draft') {
             $id = max(0, (int)($_POST['draft_id'] ?? 0));
             $pdo->prepare('DELETE FROM studio_note_workspace_items WHERE user_id=? AND note_id=?')->execute([$userId, $id]);
@@ -381,7 +381,7 @@ if (($_SERVER['REQUEST_METHOD'] ?? 'GET') === 'POST') {
             $pdo->prepare("DELETE FROM bilingual_editorial_content WHERE user_id=? AND entity_type='studio_note' AND entity_id=?")->execute([$userId, $id]);
             $stmt = $pdo->prepare('DELETE FROM social_campaigns WHERE id=? AND user_id=?');
             $stmt->execute([$id, $userId]);
-            $_SESSION['wsn_notice'] = 'Nota de estudio eliminada.';
+            $_SESSION['wsn_notice'] = t('Studio note deleted.', 'Nota de estudio eliminada.');
             header('Location: website_studio_notes.php');
             exit;
         }
@@ -532,9 +532,9 @@ $editorialProcessActive = false;
 $changeState = [
     'state' => 'english_pending',
     'primary_action' => 'update_english',
-    'status_message' => 'La versión inglesa todavía no está preparada',
-    'status_detail' => 'La adaptación inglesa y el SEO pendiente se actualizarán antes de publicar.',
-    'english_status' => 'Pendiente de actualización',
+    'status_message' => t('The English version is not ready yet', 'La versión inglesa todavía no está preparada'),
+    'status_detail' => t('The English adaptation and pending SEO will be updated before publishing.', 'La adaptación inglesa y el SEO pendiente se actualizarán antes de publicar.'),
+    'english_status' => t('Pending update', 'Pendiente de actualización'),
     'has_unpublished_changes' => true,
     'needs_english_update' => true,
 ];
@@ -620,11 +620,11 @@ natcasesort($mockupArtworkFilters);
 natcasesort($mockupSeriesFilters);
 ?>
 <!doctype html>
-<html lang="es">
+<html lang="<?= wsn_h(Translator::locale($user)) ?>">
 <head>
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width,initial-scale=1">
-    <title>Studio Notes - Artwork Mockups</title>
+    <title><?= wsn_h(t('Studio Notes - Artwork Mockups', 'Notas de Estudio - Artwork Mockups')) ?></title>
     <link rel="stylesheet" href="style.css">
     <link rel="stylesheet" href="ui-catalog.css">
     <link href="https://cdn.jsdelivr.net/npm/quill@2.0.2/dist/quill.snow.css" rel="stylesheet">
@@ -803,7 +803,7 @@ natcasesort($mockupSeriesFilters);
         <div class="studio-notes-page">
             <div class="catalog-heading">
                 <div>
-                    <h1>Studio Notes</h1>
+                    <h1><?= wsn_h(t('Studio Notes', 'Notas de Estudio')) ?></h1>
                 </div>
             </div>
 
@@ -818,28 +818,28 @@ natcasesort($mockupSeriesFilters);
 
             <?php if ($openDraft): ?>
                 <section class="studio-editor-workspace">
-                    <div class="studio-note-editor-top"><a href="website_studio_notes.php">Close</a></div>
+                    <div class="studio-note-editor-top"><a href="website_studio_notes.php"><?= wsn_h(t('Close', 'Cerrar')) ?></a></div>
                     <?php if ($mockupSources): ?>
                         <section class="studio-media-carousel" aria-labelledby="studio-media-carousel-title">
                             <div class="studio-media-carousel__toolbar">
                                 <div class="studio-media-carousel__heading">
-                                    <h2 id="studio-media-carousel-title">Mockups para la nota</h2>
-                                    <span>Arrastrá o pulsá una imagen para insertarla.</span>
+                                    <h2 id="studio-media-carousel-title"><?= wsn_h(t('Mockups for the note', 'Mockups para la nota')) ?></h2>
+                                    <span><?= wsn_h(t('Drag or tap an image to insert it.', 'Arrastrá o pulsá una imagen para insertarla.')) ?></span>
                                 </div>
                                 <div class="studio-media-carousel__filters">
-                                    <select data-mockup-artwork-filter aria-label="Filtrar mockups por obra">
-                                        <option value="">Todas las obras</option>
+                                    <select data-mockup-artwork-filter aria-label="<?= wsn_h(t('Filter mockups by artwork', 'Filtrar mockups por obra')) ?>">
+                                        <option value=""><?= wsn_h(t('All artworks', 'Todas las obras')) ?></option>
                                         <?php foreach ($mockupArtworkFilters as $artworkId => $artworkTitle): ?>
                                             <option value="<?= (int)$artworkId ?>"><?= wsn_h($artworkTitle) ?></option>
                                         <?php endforeach; ?>
                                     </select>
-                                    <select data-mockup-series-filter aria-label="Filtrar mockups por serie">
-                                        <option value="">Todas las series</option>
+                                    <select data-mockup-series-filter aria-label="<?= wsn_h(t('Filter mockups by series', 'Filtrar mockups por serie')) ?>">
+                                        <option value=""><?= wsn_h(t('All series', 'Todas las series')) ?></option>
                                         <?php foreach ($mockupSeriesFilters as $seriesId => $seriesTitle): ?>
                                             <option value="<?= (int)$seriesId ?>"><?= wsn_h($seriesTitle) ?></option>
                                         <?php endforeach; ?>
                                     </select>
-                                    <input type="search" data-mockup-search placeholder="Buscar mockup" aria-label="Buscar mockup">
+                                    <input type="search" data-mockup-search placeholder="<?= wsn_h(t('Search mockup', 'Buscar mockup')) ?>" aria-label="<?= wsn_h(t('Search mockup', 'Buscar mockup')) ?>">
                                 </div>
                             </div>
                             <div class="studio-media-carousel__rail" data-mockup-carousel>
@@ -865,16 +865,16 @@ natcasesort($mockupSeriesFilters);
                                             data-mockup-search-text="<?= wsn_h(mb_strtolower($mockupSearch)) ?>"
                                             data-mockup-guide="<?= wsn_h(json_encode($guide, JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES)) ?>"
                                             data-mockup-guide-en="<?= wsn_h(json_encode($guideEn, JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES)) ?>"
-                                            aria-label="Insertar <?= wsn_h((string)$mockupSource['label']) ?>">
+                                            aria-label="<?= wsn_h(t('Insert', 'Insertar') . ' ' . (string)$mockupSource['label']) ?>">
                                         <span class="studio-media-card__image">
                                             <img src="<?= wsn_h(wsn_media_url($mockupFile, 520)) ?>" alt="<?= wsn_h($mockupAlt) ?>" loading="lazy">
-                                            <span class="studio-media-card__state">En la nota</span>
+                                            <span class="studio-media-card__state"><?= wsn_h(t('In the note', 'En la nota')) ?></span>
                                         </span>
                                         <span class="studio-media-card__label" title="<?= wsn_h((string)$mockupSource['label']) ?>"><?= wsn_h((string)$mockupSource['label']) ?></span>
                                     </button>
                                 <?php endforeach; ?>
                             </div>
-                            <p class="studio-media-carousel__empty" data-mockup-empty hidden>No hay mockups para este filtro.</p>
+                            <p class="studio-media-carousel__empty" data-mockup-empty hidden><?= wsn_h(t('No mockups for this filter.', 'No hay mockups para este filtro.')) ?></p>
                         </section>
                     <?php endif; ?>
                     <form class="studio-note-form" method="post" enctype="multipart/form-data"
@@ -897,16 +897,16 @@ natcasesort($mockupSeriesFilters);
                                         <?= $editorialProcessActive ? 'disabled' : '' ?>
                                         <?= !$editorialProcessActive && (string)$changeState['primary_action'] === '' ? 'hidden' : '' ?>>
                                     <?php if ($editorialProcessActive): ?>
-                                        <?= $englishAdaptationActive ? 'Actualizando inglés…' : 'Procesando…' ?>
+                                        <?= $englishAdaptationActive ? wsn_h(t('Updating English…', 'Actualizando inglés…')) : wsn_h(t('Processing…', 'Procesando…')) ?>
                                     <?php else: ?>
                                         <?= (string)$changeState['primary_action'] === 'update_english'
-                                            ? 'Actualizar inglés'
-                                            : 'PUBLICAR' ?>
+                                            ? wsn_h(t('Update English', 'Actualizar inglés'))
+                                            : wsn_h(t('PUBLISH', 'PUBLICAR')) ?>
                                     <?php endif; ?>
                                 </button>
-                                <button class="button-link secondary" name="action" value="save_draft" type="submit">Guardar borrador</button>
+                                <button class="button-link secondary" name="action" value="save_draft" type="submit"><?= wsn_h(t('Save draft', 'Guardar borrador')) ?></button>
                                 <span class="studio-publication-state" data-publication-state>
-                                    <?= $editorialProcessActive ? ($englishAdaptationActive ? 'Actualizando inglés' : 'Procesando') : '' ?>
+                                    <?= $editorialProcessActive ? ($englishAdaptationActive ? wsn_h(t('Updating English', 'Actualizando inglés')) : wsn_h(t('Processing', 'Procesando'))) : '' ?>
                                 </span>
                             </div>
                         </div>
@@ -921,18 +921,18 @@ natcasesort($mockupSeriesFilters);
                                                value="<?= wsn_h((string)$spanishState['content']['title']) ?>"
                                                placeholder="Título de la nota en español" aria-label="Título de la nota en español">
                                         <div class="studio-image-tools" id="studio-image-tools" hidden>
-                                            <span class="studio-image-tools__label">Imagen</span>
-                                            <div class="studio-image-tools__group" role="group" aria-label="Tamaño de imagen">
-                                                <button type="button" data-image-size="small">Pequeña</button>
-                                                <button type="button" data-image-size="medium">Mediana</button>
-                                                <button type="button" data-image-size="large">Grande</button>
+                                            <span class="studio-image-tools__label"><?= wsn_h(t('Image', 'Imagen')) ?></span>
+                                            <div class="studio-image-tools__group" role="group" aria-label="<?= wsn_h(t('Image size', 'Tamaño de imagen')) ?>">
+                                                <button type="button" data-image-size="small"><?= wsn_h(t('Small', 'Pequeña')) ?></button>
+                                                <button type="button" data-image-size="medium"><?= wsn_h(t('Medium', 'Mediana')) ?></button>
+                                                <button type="button" data-image-size="large"><?= wsn_h(t('Large', 'Grande')) ?></button>
                                             </div>
-                                            <div class="studio-image-tools__group" role="group" aria-label="Alineación de imagen">
-                                                <button type="button" data-image-align="left">Izquierda</button>
-                                                <button type="button" data-image-align="center">Centro</button>
-                                                <button type="button" data-image-align="right">Derecha</button>
+                                            <div class="studio-image-tools__group" role="group" aria-label="<?= wsn_h(t('Image alignment', 'Alineación de imagen')) ?>">
+                                                <button type="button" data-image-align="left"><?= wsn_h(t('Left', 'Izquierda')) ?></button>
+                                                <button type="button" data-image-align="center"><?= wsn_h(t('Center', 'Centro')) ?></button>
+                                                <button type="button" data-image-align="right"><?= wsn_h(t('Right', 'Derecha')) ?></button>
                                             </div>
-                                            <button class="studio-image-tools__remove" type="button" data-image-remove>Quitar</button>
+                                            <button class="studio-image-tools__remove" type="button" data-image-remove><?= wsn_h(t('Remove', 'Quitar')) ?></button>
                                         </div>
                                         <div id="editor-container-es" class="studio-note-editor" aria-label="Contenido de la nota en español"></div>
                                         <input type="hidden" name="body_es" id="body-input-es">
@@ -947,8 +947,8 @@ natcasesort($mockupSeriesFilters);
                                         </div>
                                         <div class="studio-english-panel__lock" data-english-lock<?= $englishAdaptationActive ? '' : ' hidden' ?>>
                                             <div>
-                                                <strong>Actualizando inglés</strong>
-                                                <span>Revisando el SEO pendiente y adaptando el original español.</span>
+                                                <strong><?= wsn_h(t('Updating English', 'Actualizando inglés')) ?></strong>
+                                                <span><?= wsn_h(t('Reviewing pending SEO and adapting the Spanish original.', 'Revisando el SEO pendiente y adaptando el original español.')) ?></span>
                                             </div>
                                         </div>
                                         <div class="studio-english-panel__controls" data-english-dependent<?= $englishAdaptationActive ? ' inert' : '' ?>>
@@ -964,8 +964,8 @@ natcasesort($mockupSeriesFilters);
 
                                 <details class="studio-editorial-panel">
                                     <summary>
-                                        <span>Edición de portada y SEO</span>
-                                        <small>Metadatos por idioma</small>
+                                        <span><?= wsn_h(t('Cover and SEO editing', 'Edición de portada y SEO')) ?></span>
+                                        <small><?= wsn_h(t('Metadata per language', 'Metadatos por idioma')) ?></small>
                                     </summary>
                                     <div class="studio-editorial-panel__body studio-seo-grid">
                                         <?php foreach (['es' => ['Español', $spanishState['content']], 'en' => ['English', $englishState['content']]] as $locale => [$languageLabel, $localizedContent]): ?>
@@ -1009,9 +1009,9 @@ natcasesort($mockupSeriesFilters);
                                 <div class="studio-note-actions">
                                     <div class="studio-note-actions__secondary">
                                         <?php if ((string)$openDraft['status'] === 'published'): ?>
-                                            <button class="studio-note-secondary-action" name="action" value="unpublish_draft" type="submit">Retirar</button>
+                                            <button class="studio-note-secondary-action" name="action" value="unpublish_draft" type="submit"><?= wsn_h(t('Remove', 'Retirar')) ?></button>
                                         <?php endif; ?>
-                                        <button class="studio-note-secondary-action studio-note-secondary-action--danger" name="action" value="delete_draft" type="submit" onclick="return confirm('¿Eliminar esta Nota de estudio?')">Eliminar</button>
+                                        <button class="studio-note-secondary-action studio-note-secondary-action--danger" name="action" value="delete_draft" type="submit" onclick="return confirm(<?= wsn_h(json_encode(t('Delete this Studio Note?', '¿Eliminar esta Nota de estudio?'))) ?>)"><?= wsn_h(t('Delete', 'Eliminar')) ?></button>
                                     </div>
                                 </div>
                             </div>
@@ -1029,7 +1029,7 @@ natcasesort($mockupSeriesFilters);
                         <button class="social-square-button social-square-button--studio_process studio-create-decision" type="submit">
                             <span class="studio-create-decision__content">
                                 <span class="studio-create-decision__plus">+</span>
-                                <span class="studio-create-decision__label">NOTE</span>
+                                <span class="studio-create-decision__label"><?= wsn_h(t('NOTE', 'NOTA')) ?></span>
                             </span>
                         </button>
                     </form>
@@ -1042,12 +1042,12 @@ natcasesort($mockupSeriesFilters);
                                 type="button" data-markdown-import aria-controls="studio-note-markdown">
                             <span class="studio-create-decision__content">
                                 <span class="studio-create-decision__file-mark">ZIP</span>
-                                <span class="studio-create-decision__label">IMPORTAR</span>
+                                <span class="studio-create-decision__label"><?= wsn_h(t('IMPORT', 'IMPORTAR')) ?></span>
                             </span>
                         </button>
                     </form>
                     <?php if (!$websiteDrafts): ?>
-                        <div class="empty-state">Todavía no hay notas. Creá el primer borrador desde el bloque + Note.</div>
+                        <div class="empty-state"><?= wsn_h(t('No notes yet. Create the first draft from the + Note block.', 'Todavía no hay notas. Creá el primer borrador desde el bloque + Note.')) ?></div>
                     <?php else: ?>
                         <?php foreach ($websiteDrafts as $draft): 
                             $payload = (array)$draft['_payload']; 
@@ -1097,7 +1097,7 @@ natcasesort($mockupSeriesFilters);
                                 $snippet = mb_substr($snippet, 0, 177) . '...';
                             }
                         ?>
-                            <a class="studio-draft<?= $thumbUrl === '' ? ' studio-draft--text-only' : '' ?>" href="website_studio_notes.php?draft=<?= (int)$draft['id'] ?>" aria-label="Editar <?= wsn_h($draftTitle) ?>">
+                            <a class="studio-draft<?= $thumbUrl === '' ? ' studio-draft--text-only' : '' ?>" href="website_studio_notes.php?draft=<?= (int)$draft['id'] ?>" aria-label="<?= wsn_h(t('Edit', 'Editar') . ' ' . $draftTitle) ?>">
                                 <?php if ($thumbUrl !== ''): ?>
                                     <div class="studio-draft__thumb">
                                         <img src="<?= wsn_h($thumbUrl) ?>" alt="">
@@ -1126,7 +1126,7 @@ natcasesort($mockupSeriesFilters);
                     picker.addEventListener('change', function() {
                         if (!picker.files || !picker.files.length) return;
                         trigger.disabled = true;
-                        trigger.querySelector('.studio-create-decision__label').textContent = 'IMPORTANDO';
+                        trigger.querySelector('.studio-create-decision__label').textContent = <?= json_encode(t('IMPORTING', 'IMPORTANDO')) ?>;
                         form.requestSubmit();
                     });
                 })();
@@ -1135,6 +1135,26 @@ natcasesort($mockupSeriesFilters);
             <?php if ($openDraft): ?>
             <script>
                 document.addEventListener("DOMContentLoaded", function() {
+                    var wsnI18n = {
+                        englishImageAlert: <?= json_encode(t('Images belong to the Spanish original and are mirrored automatically into English.', 'Las imágenes pertenecen al original español y se reflejan automáticamente en inglés.')) ?>,
+                        couldNotSaveImage: <?= json_encode(t('Could not save the image.', 'No se pudo guardar la imagen.')) ?>,
+                        imageUploadTimedOut: <?= json_encode(t('The image upload took too long. Try again.', 'La carga de la imagen tardó demasiado. Volvé a intentarlo.')) ?>,
+                        spanishContentModified: <?= json_encode(t('The Spanish content was modified', 'El contenido en español fue modificado')) ?>,
+                        englishPendingDetail: <?= json_encode(t('The English adaptation and pending SEO will be updated before publishing.', 'La adaptación inglesa y el SEO pendiente se actualizarán antes de publicar.')) ?>,
+                        readyToPublish: <?= json_encode(t('Changes ready to publish', 'Cambios listos para publicar')) ?>,
+                        readyToPublishDetail: <?= json_encode(t('Publishing will use the saved versions without running AI.', 'La publicación utilizará las versiones guardadas sin ejecutar IA.')) ?>,
+                        updateEnglish: <?= json_encode(t('Update English', 'Actualizar inglés')) ?>,
+                        publish: <?= json_encode(t('PUBLISH', 'PUBLICAR')) ?>,
+                        pendingUpdate: <?= json_encode(t('Pending update', 'Pendiente de actualización')) ?>,
+                        manuallyEdited: <?= json_encode(t('Manually edited', 'Editado manualmente')) ?>,
+                        synced: <?= json_encode(t('Synced', 'Sincronizado')) ?>,
+                        finishingImageUpload: <?= json_encode(t('Finishing image upload', 'Terminando la carga de imágenes')) ?>,
+                        couldNotCompletePendingUpload: <?= json_encode(t('Could not complete the pending upload.', 'No se pudo completar la carga pendiente.')) ?>,
+                        couldNotCheckAdaptation: <?= json_encode(t('Could not check the adaptation status.', 'No se pudo consultar la adaptación.')) ?>,
+                        updatingEnglish: <?= json_encode(t('Updating English', 'Actualizando inglés')) ?>,
+                        englishUpdateFailed: <?= json_encode(t('The English update failed', 'La actualización inglesa falló')) ?>,
+                        updateNotAvailable: <?= json_encode(t('Update not available', 'Actualización no disponible')) ?>,
+                    };
                     var toolbarOptions = [
                         [{ 'header': [1, 2, 3, false] }],
                         ['bold', 'italic', 'underline'],
@@ -1300,17 +1320,17 @@ natcasesort($mockupSeriesFilters);
                         form.setAttribute('data-change-state', needsEnglish ? 'english_pending' : 'ready_to_publish');
                         publishAction.hidden = false;
                         publishAction.value = needsEnglish ? 'update_english' : 'publish_changes';
-                        publishAction.textContent = needsEnglish ? 'Actualizar inglés' : 'PUBLICAR';
+                        publishAction.textContent = needsEnglish ? wsnI18n.updateEnglish : wsnI18n.publish;
                         publishAction.classList.toggle('studio-note-publish--commit', !needsEnglish);
                         if (changeMessage) changeMessage.textContent = needsEnglish
-                            ? 'El contenido en español fue modificado'
-                            : 'Cambios listos para publicar';
+                            ? wsnI18n.spanishContentModified
+                            : wsnI18n.readyToPublish;
                         if (changeDetail) changeDetail.textContent = needsEnglish
-                            ? 'La adaptación inglesa y el SEO pendiente se actualizarán antes de publicar.'
-                            : 'La publicación utilizará las versiones guardadas sin ejecutar IA.';
+                            ? wsnI18n.englishPendingDetail
+                            : wsnI18n.readyToPublishDetail;
                         if (englishStateLabel) englishStateLabel.textContent = needsEnglish
-                            ? 'Pendiente de actualización'
-                            : (englishContentChanged ? 'Editado manualmente' : 'Sincronizado');
+                            ? wsnI18n.pendingUpdate
+                            : (englishContentChanged ? wsnI18n.manuallyEdited : wsnI18n.synced);
                     }
 
                     function parseJson(value, fallback) {
@@ -1533,13 +1553,13 @@ natcasesort($mockupSeriesFilters);
                             .then(function(response) { return response.json(); })
                             .then(function(result) {
                                 if (!result.ok || !result.url) {
-                                    throw new Error(result.error || 'No se pudo guardar la imagen.');
+                                    throw new Error(result.error || wsnI18n.couldNotSaveImage);
                                 }
                                 return result.url;
                             })
                             .catch(function(error) {
                                 if (error && error.name === 'AbortError') {
-                                    throw new Error('La carga de la imagen tardó demasiado. Volvé a intentarlo.');
+                                    throw new Error(wsnI18n.imageUploadTimedOut);
                                 }
                                 throw error;
                             })
@@ -1574,7 +1594,7 @@ natcasesort($mockupSeriesFilters);
                             quillEs.setSelection(insertAt, 0, 'silent');
                             quillEs.root.querySelectorAll('img').forEach(prepareImage);
                         }).catch(function(error) {
-                            window.alert(error.message || 'No se pudo guardar la imagen.');
+                            window.alert(error.message || wsnI18n.couldNotSaveImage);
                         }).finally(function() {
                             pendingImageUploads = Math.max(0, pendingImageUploads - files.length);
                             quillEs.enable(true);
@@ -1599,7 +1619,7 @@ natcasesort($mockupSeriesFilters);
                     var englishToolbar = quillEn.getModule('toolbar');
                     if (englishToolbar) {
                         englishToolbar.addHandler('image', function() {
-                            window.alert('Las imágenes pertenecen al original español y se reflejan automáticamente en inglés.');
+                            window.alert(wsnI18n.englishImageAlert);
                         });
                     }
                     quillEs.root.addEventListener('drop', function(event) {
@@ -1673,13 +1693,13 @@ natcasesort($mockupSeriesFilters);
                             if (!queuedSubmitAllowed && pendingImageUploads > 0) {
                                 event.preventDefault();
                                 var submitter = event.submitter || null;
-                                if (publicationState) publicationState.textContent = 'Terminando la carga de imágenes';
+                                if (publicationState) publicationState.textContent = wsnI18n.finishingImageUpload;
                                 imageUploadQueue.then(function() {
                                     queuedSubmitAllowed = true;
                                     form.requestSubmit(submitter);
                                 }).catch(function(error) {
                                     if (publicationState) publicationState.textContent = '';
-                                    window.alert(error.message || 'No se pudo completar la carga pendiente.');
+                                    window.alert(error.message || wsnI18n.couldNotCompletePendingUpload);
                                 });
                                 return;
                             }
@@ -1704,23 +1724,23 @@ natcasesort($mockupSeriesFilters);
                         fetch('bilingual_editorial.php', {method:'POST', body:body, headers:{'Accept':'application/json'}})
                             .then(function(response) { return response.json(); })
                             .then(function(result) {
-                                if (!result.ok || !result.job) throw new Error(result.error || 'No se pudo consultar la adaptación.');
+                                if (!result.ok || !result.job) throw new Error(result.error || wsnI18n.couldNotCheckAdaptation);
                                 if (publicationState) publicationState.textContent = result.job.status === 'processing'
-                                    ? 'Actualizando inglés'
+                                    ? wsnI18n.updatingEnglish
                                     : result.job.status;
                                 if (result.job.status === 'completed') {
                                     window.location.reload();
                                     return;
                                 }
                                 if (['failed', 'enqueue_failed'].indexOf(result.job.status) !== -1) {
-                                    if (publicationState) publicationState.textContent = result.job.error || 'La actualización inglesa falló';
+                                    if (publicationState) publicationState.textContent = result.job.error || wsnI18n.englishUpdateFailed;
                                     setEnglishAdaptationBusy(false);
                                     return;
                                 }
                                 window.setTimeout(pollEditorialJob, 3000);
                             })
                             .catch(function(error) {
-                                if (publicationState) publicationState.textContent = error.message || 'Actualización no disponible';
+                                if (publicationState) publicationState.textContent = error.message || wsnI18n.updateNotAvailable;
                             });
                     }
                     pollEditorialJob();

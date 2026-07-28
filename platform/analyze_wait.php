@@ -17,10 +17,10 @@ function h($v): string
 }
 ?>
 <!doctype html>
-<html lang="en">
+<html lang="<?= h(Translator::locale($currentUser)) ?>">
 <head>
     <meta charset="utf-8">
-    <title>Recalculating Analysis - Artwork Mockups</title>
+    <title><?= h(t('Recalculating Analysis - Artwork Mockups', 'Recalculando análisis - Artwork Mockups')) ?></title>
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <link rel="stylesheet" href="style.css">
     <style>
@@ -91,8 +91,8 @@ function h($v): string
 
         <div class="analysis-wait">
             <section class="analysis-card">
-                <h1>Recalculating analysis</h1>
-                <p>Preparing new curatorial directions for this artwork.</p>
+                <h1><?= h(t('Recalculating analysis', 'Recalculando análisis')) ?></h1>
+                <p><?= h(t('Preparing new curatorial directions for this artwork.', 'Preparando nuevas direcciones curatoriales para esta obra.')) ?></p>
                 <div class="analysis-error" id="analysisError"></div>
             </section>
         </div>
@@ -102,6 +102,8 @@ function h($v): string
 <script>
     const image = <?= json_encode($image, JSON_UNESCAPED_SLASHES) ?>;
     const errorBox = document.getElementById('analysisError');
+    const invalidResponseMessage = <?= json_encode(t('Analysis returned an invalid response.', 'El análisis devolvió una respuesta inválida.')) ?>;
+    const genericErrorMessage = <?= json_encode(t('Could not recalculate analysis.', 'No se pudo recalcular el análisis.')) ?>;
 
     async function runAnalysis() {
         try {
@@ -117,11 +119,11 @@ function h($v): string
             try {
                 data = JSON.parse(rawText);
             } catch (error) {
-                throw new Error(rawText.replace(/<[^>]+>/g, ' ').replace(/\s+/g, ' ').trim() || 'Analysis returned an invalid response.');
+                throw new Error(rawText.replace(/<[^>]+>/g, ' ').replace(/\s+/g, ' ').trim() || invalidResponseMessage);
             }
 
             if (!response.ok || data.ok === false) {
-                throw new Error(data.error || 'Could not recalculate analysis.');
+                throw new Error(data.error || genericErrorMessage);
             }
 
             window.location.href = 'report.php?image=' + encodeURIComponent(image);

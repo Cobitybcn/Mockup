@@ -84,10 +84,10 @@ $viewerImageUrl = (string)($current['registered_mockup_file'] ?? '') !== ''
     : 'mockup_variation_lab_file.php?file=' . rawurlencode($file);
 ?>
 <!doctype html>
-<html lang="en">
+<html lang="<?= h(Translator::locale($user)) ?>">
 <head>
     <meta charset="utf-8">
-    <title>Mockup Lab Viewer</title>
+    <title><?= h(t('Mockup Lab Viewer', 'Viewer de Mockup Lab')) ?></title>
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <style>
         * { box-sizing: border-box; }
@@ -190,26 +190,31 @@ $viewerImageUrl = (string)($current['registered_mockup_file'] ?? '') !== ''
 </head>
 <body>
     <header class="viewer-top">
-        <a class="viewer-action" href="<?= h($backUrl) ?>" title="Back to Mockup Lab" aria-label="Back to Mockup Lab">‹</a>
-        <div class="viewer-title">Mockup Lab <?= (int)($currentIndex + 1) ?> / <?= count($runs) ?></div>
+        <a class="viewer-action" href="<?= h($backUrl) ?>" title="<?= h(t('Back to Mockup Lab', 'Volver a Mockup Lab')) ?>" aria-label="<?= h(t('Back to Mockup Lab', 'Volver a Mockup Lab')) ?>">‹</a>
+        <div class="viewer-title"><?= h(t('Mockup Lab', 'Mockup Lab')) ?> <?= (int)($currentIndex + 1) ?> / <?= count($runs) ?></div>
         <?php if ($favoriteMockupId > 0): ?>
             <button
                 class="viewer-favorite-btn media-icon-button <?= $isFavorite ? 'active' : '' ?>"
                 type="button"
-                title="<?= $isFavorite ? 'Remove favorite' : 'Add favorite' ?>"
-                aria-label="<?= $isFavorite ? 'Remove favorite' : 'Add favorite' ?>"
+                title="<?= $isFavorite ? h(t('Remove favorite', 'Quitar de favoritos')) : h(t('Add favorite', 'Agregar a favoritos')) ?>"
+                aria-label="<?= $isFavorite ? h(t('Remove favorite', 'Quitar de favoritos')) : h(t('Add favorite', 'Agregar a favoritos')) ?>"
                 data-favorite-mockup
                 data-mockup-id="<?= (int)$favoriteMockupId ?>"
             ><svg class="media-action-icon" viewBox="0 0 24 24" aria-hidden="true"><path d="m12 3.7 2.55 5.17 5.71.83-4.13 4.03.97 5.69L12 16.73l-5.1 2.69.97-5.69L3.74 9.7l5.71-.83L12 3.7Z"/></svg></button>
         <?php endif; ?>
-        <a class="viewer-action media-icon-button" href="mockup_variation_lab_file.php?file=<?= rawurlencode($file) ?>" download title="Download" aria-label="Download"><svg class="media-action-icon" viewBox="0 0 24 24" aria-hidden="true"><path d="M12 3v12M7.5 10.5 12 15l4.5-4.5M5 19h14"/></svg></a>
+        <a class="viewer-action media-icon-button" href="mockup_variation_lab_file.php?file=<?= rawurlencode($file) ?>" download title="<?= h(t('Download', 'Descargar')) ?>" aria-label="<?= h(t('Download', 'Descargar')) ?>"><svg class="media-action-icon" viewBox="0 0 24 24" aria-hidden="true"><path d="M12 3v12M7.5 10.5 12 15l4.5-4.5M5 19h14"/></svg></a>
     </header>
     <main class="viewer-stage">
         <img src="<?= h($viewerImageUrl) ?>" alt="">
     </main>
-    <a class="viewer-nav prev <?= $prev === '' ? 'disabled' : '' ?>" href="<?= $prev !== '' ? 'mockup_variation_lab_viewer.php?mockup_id=' . $mockupId . '&file=' . rawurlencode($prev) : '#' ?>" aria-label="Previous">‹</a>
-    <a class="viewer-nav next <?= $next === '' ? 'disabled' : '' ?>" href="<?= $next !== '' ? 'mockup_variation_lab_viewer.php?mockup_id=' . $mockupId . '&file=' . rawurlencode($next) : '#' ?>" aria-label="Next">›</a>
+    <a class="viewer-nav prev <?= $prev === '' ? 'disabled' : '' ?>" href="<?= $prev !== '' ? 'mockup_variation_lab_viewer.php?mockup_id=' . $mockupId . '&file=' . rawurlencode($prev) : '#' ?>" aria-label="<?= h(t('Previous', 'Anterior')) ?>">‹</a>
+    <a class="viewer-nav next <?= $next === '' ? 'disabled' : '' ?>" href="<?= $next !== '' ? 'mockup_variation_lab_viewer.php?mockup_id=' . $mockupId . '&file=' . rawurlencode($next) : '#' ?>" aria-label="<?= h(t('Next', 'Siguiente')) ?>">›</a>
     <script>
+        const favoriteI18n = {
+            removeFavorite: <?= json_encode(t('Remove favorite', 'Quitar de favoritos')) ?>,
+            addFavorite: <?= json_encode(t('Add favorite', 'Agregar a favoritos')) ?>,
+            couldNotUpdate: <?= json_encode(t('Could not update favorite.', 'No se pudo actualizar el favorito.')) ?>,
+        };
         document.addEventListener('click', (event) => {
             const button = event.target.closest('[data-favorite-mockup]');
             if (!button) {
@@ -227,14 +232,14 @@ $viewerImageUrl = (string)($current['registered_mockup_file'] ?? '') !== ''
                 .then(response => response.json().then(payload => ({ ok: response.ok, payload })))
                 .then(result => {
                     if (!result.ok || !result.payload.ok) {
-                        throw new Error(result.payload.error || 'Could not update favorite.');
+                        throw new Error(result.payload.error || favoriteI18n.couldNotUpdate);
                     }
 
                     button.classList.toggle('active', !!result.payload.favorite);
-                    button.title = result.payload.favorite ? 'Remove favorite' : 'Add favorite';
+                    button.title = result.payload.favorite ? favoriteI18n.removeFavorite : favoriteI18n.addFavorite;
                     button.setAttribute('aria-label', button.title);
                 })
-                .catch(error => alert(error.message || 'Could not update favorite.'))
+                .catch(error => alert(error.message || favoriteI18n.couldNotUpdate))
                 .finally(() => {
                     button.disabled = false;
                 });

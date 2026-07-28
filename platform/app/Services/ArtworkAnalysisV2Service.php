@@ -21,9 +21,12 @@ final class ArtworkAnalysisV2Service
             basename($imagePath)
         );
         $titles = ArtworkOriginalityChecker::catalogueTitles(__DIR__ . '/../../analysis', $excludeBase);
-        $analysisLocale = 'es';
-        $analysisLanguageName = 'Spanish';
-        $analysisLanguageInstruction = 'Think, analyze and formulate the editorial reading directly in natural Spanish. Do not draft in English and translate afterward.';
+        // El analisis se piensa y redacta en el idioma de trabajo del artista.
+        $analysisLocale = $analysisLocale === 'en' ? 'en' : 'es';
+        $analysisLanguageName = $analysisLocale === 'en' ? 'English' : 'Spanish';
+        $analysisStyle = $analysisLocale === 'en' ? 'natural international English' : 'natural Spanish';
+        $analysisCounterpart = $analysisLocale === 'en' ? 'Spanish' : 'English';
+        $analysisLanguageInstruction = "Think, analyze and formulate the editorial reading directly in {$analysisStyle}. Do not draft in {$analysisCounterpart} and translate afterward.";
         $prompt = strtr(ArtworkAnalysisV2::prompt(), [
             '{analysis_language_instruction}'=>$analysisLanguageInstruction,
             '{analysis_language_name}'=>$analysisLanguageName,

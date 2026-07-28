@@ -73,10 +73,10 @@ function page_url(int $page, string $query): string
 }
 ?>
 <!doctype html>
-<html lang="en">
+<html lang="<?= h(Translator::locale($user)) ?>">
 <head>
     <meta charset="utf-8">
-    <title>Root Images - Artwork Mockups</title>
+    <title><?= h(t('Root Images - Artwork Mockups', 'Imágenes raíz - Artwork Mockups')) ?></title>
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -93,37 +93,37 @@ function page_url(int $page, string $query): string
         </header>
 
         <div class="alert-strip">
-            Your high-fidelity curated root images, isolated and verified, ready for context mockups.
+            <?= h(t('Your high-fidelity curated root images, isolated and verified, ready for context mockups.', 'Tus imágenes raíz curadas de alta fidelidad, aisladas y verificadas, listas para mockups de contexto.')) ?>
         </div>
 
         <div class="workspace">
             <div class="workspace-header">
                 <div>
-                    <h1>Root Images</h1>
-                    <p><?= h($total) ?> verified art pieces in your collection.</p>
+                    <h1><?= h(t('Root Images', 'Imágenes raíz')) ?></h1>
+                    <p><?= h($total) ?> <?= h(t('verified art pieces in your collection.', 'obras verificadas en tu colección.')) ?></p>
                 </div>
                 <div class="topbar-actions">
-                    <a class="button-link" href="create_scenes.php">Create Art</a>
-                    <a class="button-link secondary" href="root_album.php">ArtWorks</a>
+                    <a class="button-link" href="create_scenes.php"><?= h(t('Create Art', 'Crear obra')) ?></a>
+                    <a class="button-link secondary" href="root_album.php"><?= h(t('ArtWorks', 'Obras')) ?></a>
                 </div>
             </div>
 
             <form class="toolbar-form" method="get">
-                <input type="text" name="q" value="<?= h($query) ?>" placeholder="Search by title, series, or filename">
-                <button type="submit">Search</button>
+                <input type="text" name="q" value="<?= h($query) ?>" placeholder="<?= h(t('Search by title, series, or filename', 'Buscar por título, serie o nombre de archivo')) ?>">
+                <button type="submit"><?= h(t('Search', 'Buscar')) ?></button>
                 <?php if ($query !== ''): ?>
-                    <a class="button-link secondary" href="root_images.php">Clear</a>
+                    <a class="button-link secondary" href="root_images.php"><?= h(t('Clear', 'Limpiar')) ?></a>
                 <?php endif; ?>
             </form>
 
             <section class="panel">
                 <div class="section-heading">
-                    <h2>Root Image Library</h2>
-                    <p>Page <?= h($page) ?> of <?= h($totalPages) ?></p>
+                    <h2><?= h(t('Root Image Library', 'Biblioteca de imágenes raíz')) ?></h2>
+                    <p><?= h(t('Page', 'Página')) ?> <?= h($page) ?> <?= h(t('of', 'de')) ?> <?= h($totalPages) ?></p>
                 </div>
 
                 <?php if (!$artworks): ?>
-                    <div class="empty-state">No root images found. Get started by uploading a new artwork.</div>
+                    <div class="empty-state"><?= h(t('No root images found. Get started by uploading a new artwork.', 'No se encontraron imágenes raíz. Empezá subiendo una obra nueva.')) ?></div>
                 <?php else: ?>
                     <div class="grid">
                         <?php foreach ($artworks as $artwork): ?>
@@ -135,12 +135,12 @@ function page_url(int $page, string $query): string
                                 <?php endif; ?>
 
                                 <h3><?= h(Display::artworkTitle($artwork['root_file'], (string)$artwork['job_id'])) ?></h3>
-                                <p class="meta-line">Dimensions: <?= h(trim(($artwork['width'] ?: '-') . ' x ' . ($artwork['height'] ?: '-') . ' ' . $artwork['unit'])) ?></p>
+                                <p class="meta-line"><?= h(t('Dimensions:', 'Dimensiones:')) ?> <?= h(trim(($artwork['width'] ?: '-') . ' x ' . ($artwork['height'] ?: '-') . ' ' . $artwork['unit'])) ?></p>
 
                                 <div class="card-actions">
-                                    <a href="artwork.php?id=<?= h($artwork['id']) ?>">Details</a>
+                                    <a href="artwork.php?id=<?= h($artwork['id']) ?>"><?= h(t('Details', 'Detalles')) ?></a>
                                     <?php if (!empty($artwork['root_file'])): ?>
-                                        <a href="report.php?image=<?= rawurlencode(basename((string)$artwork['root_file'])) ?>">Mockups</a>
+                                        <a href="report.php?image=<?= rawurlencode(basename((string)$artwork['root_file'])) ?>"><?= h(t('Mockups', 'Mockups')) ?></a>
                                         <a href="<?= h(download_url($artwork['root_file'])) ?>" aria-label="Download root image" title="Download">
                                             <span class="download-icon" aria-hidden="true"></span>
                                         </a>
@@ -154,13 +154,13 @@ function page_url(int $page, string $query): string
                 <?php if ($totalPages > 1): ?>
                     <nav class="pagination" aria-label="Pagination">
                         <?php if ($page > 1): ?>
-                            <a class="button-link secondary" href="<?= h(page_url($page - 1, $query)) ?>">Previous</a>
+                            <a class="button-link secondary" href="<?= h(page_url($page - 1, $query)) ?>"><?= h(t('Previous', 'Anterior')) ?></a>
                         <?php endif; ?>
 
-                        <span>Page <?= h($page) ?> / <?= h($totalPages) ?></span>
+                        <span><?= h(t('Page', 'Página')) ?> <?= h($page) ?> / <?= h($totalPages) ?></span>
 
                         <?php if ($page < $totalPages): ?>
-                            <a class="button-link secondary" href="<?= h(page_url($page + 1, $query)) ?>">Next</a>
+                            <a class="button-link secondary" href="<?= h(page_url($page + 1, $query)) ?>"><?= h(t('Next', 'Siguiente')) ?></a>
                         <?php endif; ?>
                     </nav>
                 <?php endif; ?>

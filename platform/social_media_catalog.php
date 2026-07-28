@@ -21,30 +21,30 @@ function sm_media_url(?string $file, int $width = 360): string
 function sm_campaign_types(): array
 {
     return [
-        'artwork_launch' => ['title' => 'New Artwork Launch', 'objective' => 'Present a new artwork with editorial clarity.'],
-        'series_launch' => ['title' => 'New Series Launch', 'objective' => 'Present a complete series and its shared visual language.'],
-        'symbolism' => ['title' => 'Symbolism / Concept', 'objective' => 'Explain symbols, composition, territory, tension, or materiality.'],
-        'available_catalog' => ['title' => 'Available Catalog', 'objective' => 'Present the available catalog with commercial intent.'],
-        'sold_constellation' => ['title' => 'Sold Artwork / Constellation', 'objective' => 'Present the location, destination, and history of sold artworks.'],
-        'studio_process' => ['title' => 'Studio Process', 'objective' => 'Present process, visual decisions, technique, and context.'],
-        'refresh' => ['title' => 'Repost / Refresh', 'objective' => 'Bring a previously published artwork or series back into view.'],
+        'artwork_launch' => ['title' => t('New Artwork Launch', 'Lanzamiento de Obra Nueva'), 'objective' => t('Present a new artwork with editorial clarity.', 'Presentar una obra nueva con claridad editorial.')],
+        'series_launch' => ['title' => t('New Series Launch', 'Lanzamiento de Serie Nueva'), 'objective' => t('Present a complete series and its shared visual language.', 'Presentar una serie completa y su lenguaje visual compartido.')],
+        'symbolism' => ['title' => t('Symbolism / Concept', 'Simbolismo / Concepto'), 'objective' => t('Explain symbols, composition, territory, tension, or materiality.', 'Explicar símbolos, composición, territorio, tensión o materialidad.')],
+        'available_catalog' => ['title' => t('Available Catalog', 'Catálogo Disponible'), 'objective' => t('Present the available catalog with commercial intent.', 'Presentar el catálogo disponible con intención comercial.')],
+        'sold_constellation' => ['title' => t('Sold Artwork / Constellation', 'Obra Vendida / Constelación'), 'objective' => t('Present the location, destination, and history of sold artworks.', 'Presentar la ubicación, el destino y la historia de las obras vendidas.')],
+        'studio_process' => ['title' => t('Studio Process', 'Proceso de Estudio'), 'objective' => t('Present process, visual decisions, technique, and context.', 'Presentar el proceso, las decisiones visuales, la técnica y el contexto.')],
+        'refresh' => ['title' => t('Repost / Refresh', 'Repost / Actualización'), 'objective' => t('Bring a previously published artwork or series back into view.', 'Volver a mostrar una obra o serie publicada anteriormente.')],
     ];
 }
 function sm_criteria(): array
 {
     return [
-        'series' => ['title' => 'Series', 'description' => 'Group artworks and mockups from one series.'],
-        'artwork' => ['title' => 'Artwork', 'description' => 'Promote one artwork and its mockups.'],
-        'catalog' => ['title' => 'Catalog', 'description' => 'Promote the available catalog or a broader selection.'],
-        'symbolism' => ['title' => 'Symbolism', 'description' => 'Trabajar una idea visual o conceptual.'],
-        'sold_constellation' => ['title' => 'Sold / Constellation', 'description' => 'Communicate sold artworks, destination, and map.'],
+        'series' => ['title' => t('Series', 'Serie'), 'description' => t('Group artworks and mockups from one series.', 'Agrupar obras y mockups de una serie.')],
+        'artwork' => ['title' => t('Artwork', 'Obra'), 'description' => t('Promote one artwork and its mockups.', 'Promocionar una obra y sus mockups.')],
+        'catalog' => ['title' => t('Catalog', 'Catálogo'), 'description' => t('Promote the available catalog or a broader selection.', 'Promocionar el catálogo disponible o una selección más amplia.')],
+        'symbolism' => ['title' => t('Symbolism', 'Simbolismo'), 'description' => t('Work a visual or conceptual idea.', 'Trabajar una idea visual o conceptual.')],
+        'sold_constellation' => ['title' => t('Sold / Constellation', 'Vendida / Constelación'), 'description' => t('Communicate sold artworks, destination, and map.', 'Comunicar obras vendidas, destino y mapa.')],
     ];
 }
 function sm_channels(): array
 {
     return [
-        'pinterest' => ['title' => 'Pinterest', 'description' => 'Boards, vertical crop and destination link.'],
-        'meta_media' => ['title' => 'Meta Media', 'description' => 'Instagram and Facebook formats.'],
+        'pinterest' => ['title' => 'Pinterest', 'description' => t('Boards, vertical crop and destination link.', 'Tableros, recorte vertical y enlace de destino.')],
+        'meta_media' => ['title' => t('Meta Media', 'Meta Media'), 'description' => t('Instagram and Facebook formats.', 'Formatos de Instagram y Facebook.')],
     ];
 }
 function sm_social_payload_channels(?array $payload): array
@@ -78,10 +78,10 @@ function sm_status_class(string $status): string
 function sm_status_label(string $status): string
 {
     return match ($status) {
-        'draft' => 'Draft · not prepared',
-        'in_progress' => 'Publication batch in review',
-        'published' => 'Published',
-        'needs_attention' => 'Needs attention',
+        'draft' => t('Draft · not prepared', 'Borrador · no preparado'),
+        'in_progress' => t('Publication batch in review', 'Lote de publicación en revisión'),
+        'published' => t('Published', 'Publicado'),
+        'needs_attention' => t('Needs attention', 'Necesita atención'),
         default => ucfirst(str_replace('_', ' ', $status)),
     };
 }
@@ -201,28 +201,28 @@ if (!empty($_SESSION['social_campaign_error'])) {
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     try {
         if (!hash_equals((string)$_SESSION['social_campaign_csrf'], (string)($_POST['csrf'] ?? ''))) {
-            throw new RuntimeException('Invalid session token.');
+            throw new RuntimeException(t('Invalid session token.', 'Token de sesión inválido.'));
         }
 
         $action = (string)($_POST['action'] ?? '');
         if ($action === 'delete_campaign') {
             $campaignId = (int)($_POST['campaign_id'] ?? 0);
             $pdo->prepare("DELETE FROM social_campaigns WHERE id=? AND user_id=? AND status IN ('draft','in_progress')")->execute([$campaignId, $userId]);
-            $_SESSION['social_campaign_notice'] = 'Campaign draft deleted.';
+            $_SESSION['social_campaign_notice'] = t('Campaign draft deleted.', 'Borrador de campaña eliminado.');
             header('Location: social_media_catalog.php');
             exit;
         } elseif ($action === 'create_campaign_selection') {
             $type = (string)($_POST['campaign_type'] ?? '');
             $chosenCriterion = (string)($_POST['criterion'] ?? '');
-            if (!isset($types[$type])) throw new RuntimeException('Invalid campaign type.');
-            if (!isset($criteria[$chosenCriterion])) throw new RuntimeException('Invalid campaign criterion.');
+            if (!isset($types[$type])) throw new RuntimeException(t('Invalid campaign type.', 'Tipo de campaña inválido.'));
+            if (!isset($criteria[$chosenCriterion])) throw new RuntimeException(t('Invalid campaign criterion.', 'Criterio de campaña inválido.'));
 
             $mockupIds = array_values(array_unique(array_filter(array_map('intval', (array)($_POST['mockup_ids'] ?? [])))));
             $chosenChannels = array_values(array_intersect(array_map('strval', (array)($_POST['channels'] ?? [])), array_keys($channels)));
-            if (!$mockupIds) throw new RuntimeException('Select at least one mockup.');
-            if (!$chosenChannels) throw new RuntimeException('Select at least one social channel.');
+            if (!$mockupIds) throw new RuntimeException(t('Select at least one mockup.', 'Seleccioná al menos un mockup.'));
+            if (!$chosenChannels) throw new RuntimeException(t('Select at least one social channel.', 'Seleccioná al menos una red social.'));
             if (in_array('pinterest', $chosenChannels, true) && count($mockupIds) > 10) {
-                throw new RuntimeException('Pinterest campaigns support up to 10 mockups per batch.');
+                throw new RuntimeException(t('Pinterest campaigns support up to 10 mockups per batch.', 'Las campañas de Pinterest admiten hasta 10 mockups por lote.'));
             }
 
             $sourceType = trim((string)($_POST['source_type'] ?? $chosenCriterion));
@@ -271,7 +271,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                     'channels' => $existingChannels,
                 ], JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES)));
                 if ($existingSignature === $draftSignature) {
-                    $_SESSION['social_campaign_notice'] = 'Campaign draft already exists.';
+                    $_SESSION['social_campaign_notice'] = t('Campaign draft already exists.', 'El borrador de campaña ya existe.');
                     header('Location: social_media_catalog.php?draft=' . (int)$row['id']);
                     exit;
                 }
@@ -280,7 +280,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             $stmt = $pdo->prepare('INSERT INTO social_campaigns (user_id,campaign_type,title,objective,source_type,source_id,source_label,status,payload_json,created_at,updated_at) VALUES (?,?,?,?,?,?,?,?,?,?,?)');
             $stmt->execute([$userId, $type, $title, $base['objective'], $sourceType, $sourceValue, $sourceLabel, 'draft', json_encode($payload, JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES), $now, $now]);
             $newCampaignId = (int)$pdo->lastInsertId();
-            $_SESSION['social_campaign_notice'] = 'Campaign draft created with selected mockups and channels.';
+            $_SESSION['social_campaign_notice'] = t('Campaign draft created with selected mockups and channels.', 'Borrador de campaña creado con los mockups y canales seleccionados.');
             header('Location: social_media_catalog.php?draft=' . $newCampaignId);
             exit;
         }
@@ -405,7 +405,7 @@ if ($campaignType !== '' && $criterion !== '' && $sourceId !== '') {
         foreach ($artworkRows as $row) {
             if ((int)$row['id'] === $aid) {
                 $selectedArtwork = $row;
-                $sourceLabel = trim((string)$row['final_title']) ?: 'Untitled artwork';
+                $sourceLabel = trim((string)$row['final_title']) ?: t('Untitled artwork', 'Obra sin título');
                 break;
             }
         }
@@ -423,7 +423,7 @@ if ($campaignType !== '' && $criterion !== '' && $sourceId !== '') {
         }
     } elseif ($criterion === 'catalog') {
         $sourceType = 'catalog';
-        $sourceLabel = 'Available Catalog';
+        $sourceLabel = t('Available Catalog', 'Catálogo Disponible');
         $stmt = $pdo->prepare("
             SELECT m.*, a.final_title AS artwork_title, s.title AS series_title
             FROM mockups m
@@ -448,11 +448,11 @@ if ($sourceMockups) {
 }
 ?>
 <!doctype html>
-<html lang="en">
+<html lang="<?= sm_h(Translator::locale($user)) ?>">
 <head>
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width,initial-scale=1">
-    <title>Social Media Campaigns - Artwork Mockups</title>
+    <title><?= sm_h(t('Social Media Campaigns - Artwork Mockups', 'Campañas de Redes Sociales - Artwork Mockups')) ?></title>
     <link rel="stylesheet" href="style.css">
     <link rel="stylesheet" href="ui-catalog.css?v=social-square-buttons-lab-real-1">
     <style>
@@ -486,8 +486,8 @@ if ($sourceMockups) {
         <div class="social-catalog">
             <div class="catalog-heading">
                 <div>
-                    <h1>Social Media</h1>
-                    <p>Campaign → criterion → source → mockups → channels → draft.</p>
+                    <h1><?= sm_h(t('Social Media', 'Redes Sociales')) ?></h1>
+                    <p><?= sm_h(t('Campaign → criterion → source → mockups → channels → draft.', 'Campaña → criterio → fuente → mockups → canales → borrador.')) ?></p>
                 </div>
             </div>
 
@@ -497,8 +497,8 @@ if ($sourceMockups) {
             <section class="catalog-panel catalog-panel--compact social-flow-panel">
                 <div class="detail-heading">
                     <div>
-                        <h2>1. Campaign Type</h2>
-                        <p>Choose the intention first.</p>
+                        <h2>1. <?= sm_h(t('Campaign Type', 'Tipo de Campaña')) ?></h2>
+                        <p><?= sm_h(t('Choose the intention first.', 'Elegí primero la intención.')) ?></p>
                     </div>
                 </div>
                 <div class="social-square-grid">
@@ -514,8 +514,8 @@ if ($sourceMockups) {
                 <section class="catalog-panel catalog-panel--compact social-flow-panel">
                     <div class="detail-heading">
                         <div>
-                            <h2>2. Criterion</h2>
-                            <p>The selected campaign can start from any useful criterion.</p>
+                            <h2>2. <?= sm_h(t('Criterion', 'Criterio')) ?></h2>
+                            <p><?= sm_h(t('The selected campaign can start from any useful criterion.', 'La campaña seleccionada puede partir de cualquier criterio útil.')) ?></p>
                         </div>
                     </div>
                     <div class="social-square-grid">
@@ -532,24 +532,24 @@ if ($sourceMockups) {
                 <section class="catalog-panel catalog-panel--compact">
                     <div class="detail-heading">
                         <div>
-                            <h2>3. Source</h2>
-                            <p>Choose the concrete source for this campaign.</p>
+                            <h2>3. <?= sm_h(t('Source', 'Fuente')) ?></h2>
+                            <p><?= sm_h(t('Choose the concrete source for this campaign.', 'Elegí la fuente concreta para esta campaña.')) ?></p>
                         </div>
                     </div>
 
                     <?php if ($criterion === 'series'): ?>
                         <?php if (!$seriesRows): ?>
-                            <div class="empty-state">No series created yet.</div>
+                            <div class="empty-state"><?= sm_h(t('No series created yet.', 'Todavía no hay series creadas.')) ?></div>
                         <?php else: ?>
                             <div class="series-overview-list social-source-series">
                                 <?php foreach ($seriesRows as $series): $sid = (int)$series['id']; ?>
                                     <a class="series-overview-board social-source-card <?= $sourceId === (string)$sid ? 'active' : '' ?>" href="<?= sm_h(sm_page_url(['campaign' => $campaignType, 'criterion' => 'series', 'source_id' => $sid])) ?>">
                                         <div class="series-overview-head">
                                             <h3><?= sm_h($series['title']) ?></h3>
-                                            <span><?= (int)$series['artwork_count'] ?> artworks</span>
+                                            <span><?= (int)$series['artwork_count'] ?> <?= sm_h(t('artworks', 'obras')) ?></span>
                                         </div>
                                         <div class="series-overview-grid series-overview-grid--preview">
-                                            <?php foreach (($seriesPreview[$sid] ?? []) as $artwork): $title = trim((string)$artwork['final_title']) ?: 'Untitled'; $file = (string)($artwork['root_file'] ?: $artwork['main_file']); ?>
+                                            <?php foreach (($seriesPreview[$sid] ?? []) as $artwork): $title = trim((string)$artwork['final_title']) ?: t('Untitled', 'Sin título'); $file = (string)($artwork['root_file'] ?: $artwork['main_file']); ?>
                                                 <span class="series-overview-card"><img src="<?= sm_h(sm_media_url($file, 360)) ?>" alt="<?= sm_h($title) ?>"><strong><?= sm_h($title) ?></strong></span>
                                             <?php endforeach; ?>
                                         </div>
@@ -559,7 +559,7 @@ if ($sourceMockups) {
                         <?php endif; ?>
                     <?php elseif (in_array($criterion, ['artwork', 'symbolism'], true)): ?>
                         <div class="catalog-thumbnail-grid">
-                            <?php foreach ($artworkRows as $artwork): $title = trim((string)$artwork['final_title']) ?: 'Untitled artwork'; $file = (string)($artwork['root_file'] ?: $artwork['main_file']); ?>
+                            <?php foreach ($artworkRows as $artwork): $title = trim((string)$artwork['final_title']) ?: t('Untitled artwork', 'Obra sin título'); $file = (string)($artwork['root_file'] ?: $artwork['main_file']); ?>
                                 <a class="website-card website-card-link <?= $sourceId === (string)$artwork['id'] ? 'active' : '' ?>" href="<?= sm_h(sm_page_url(['campaign' => $campaignType, 'criterion' => $criterion, 'source_id' => (int)$artwork['id']])) ?>">
                                     <div class="website-card__image"><img src="<?= sm_h(sm_media_url($file, 600)) ?>" alt="<?= sm_h($title) ?>"></div>
                                     <div class="website-card__summary">
@@ -571,11 +571,11 @@ if ($sourceMockups) {
                         </div>
                     <?php elseif ($criterion === 'catalog'): ?>
                         <a class="campaign-step-card active" href="<?= sm_h(sm_page_url(['campaign' => $campaignType, 'criterion' => 'catalog', 'source_id' => 'available_catalog'])) ?>">
-                            <h3>Available Catalog</h3>
-                            <p>Use the complete available mockup pool as campaign material.</p>
+                            <h3><?= sm_h(t('Available Catalog', 'Catálogo Disponible')) ?></h3>
+                            <p><?= sm_h(t('Use the complete available mockup pool as campaign material.', 'Usá todo el conjunto de mockups disponibles como material de campaña.')) ?></p>
                         </a>
                     <?php else: ?>
-                        <div class="empty-state">This criterion needs its source model next.</div>
+                        <div class="empty-state"><?= sm_h(t('This criterion needs its source model next.', 'Este criterio necesita su modelo de fuente a continuación.')) ?></div>
                     <?php endif; ?>
                 </section>
             <?php endif; ?>
@@ -593,8 +593,8 @@ if ($sourceMockups) {
 
                         <div class="detail-heading social-channel-heading">
                             <div>
-                                <h2>4. Destination</h2>
-                                <p>Choose the publishing medium first; mockup selection depends on this.</p>
+                                <h2>4. <?= sm_h(t('Destination', 'Destino')) ?></h2>
+                                <p><?= sm_h(t('Choose the publishing medium first; mockup selection depends on this.', 'Elegí primero el medio de publicación; la selección de mockups depende de esto.')) ?></p>
                             </div>
                         </div>
                         <div class="social-channel-grid">
@@ -610,12 +610,12 @@ if ($sourceMockups) {
                         <div class="detail-heading">
                             <div>
                                 <h2>5. Mockups</h2>
-                                <p><?= sm_h($sourceLabel) ?> · choose the visual material after the destination. Pinterest batches accept up to 10 mockups.</p>
+                                <p><?= sm_h($sourceLabel) ?> · <?= sm_h(t('choose the visual material after the destination. Pinterest batches accept up to 10 mockups.', 'elegí el material visual después del destino. Los lotes de Pinterest admiten hasta 10 mockups.')) ?></p>
                             </div>
                         </div>
 
                         <?php if (!$sourceMockups): ?>
-                            <div class="empty-state">No mockups found for this source.</div>
+                            <div class="empty-state"><?= sm_h(t('No mockups found for this source.', 'No se encontraron mockups para esta fuente.')) ?></div>
                         <?php else: ?>
                             <div class="social-mockup-select-grid">
                                 <?php foreach ($sourceMockups as $mockup): ?>
@@ -624,14 +624,14 @@ if ($sourceMockups) {
                                         <input type="checkbox" name="mockup_ids[]" value="<?= (int)$mockup['id'] ?>">
                                         <img src="<?= sm_h(sm_media_url((string)$mockup['mockup_file'], 520)) ?>" alt="<?= sm_h($label) ?>" loading="lazy">
                                         <strong><?= sm_h(Display::contextTitle((string)$mockup['context_id'])) ?></strong>
-                                        <?php if ($isFavorite): ?><span>Favorite</span><?php endif; ?>
+                                        <?php if ($isFavorite): ?><span><?= sm_h(t('Favorite', 'Favorito')) ?></span><?php endif; ?>
                                     </label>
                                 <?php endforeach; ?>
                             </div>
                         <?php endif; ?>
 
                         <div class="social-campaign-submit">
-                            <button type="submit">Create Campaign Draft</button>
+                            <button type="submit"><?= sm_h(t('Create Campaign Draft', 'Crear Borrador de Campaña')) ?></button>
                         </div>
                     </form>
                 </section>
@@ -663,17 +663,17 @@ if ($sourceMockups) {
                 <section class="catalog-panel catalog-panel--compact">
                     <div class="detail-heading">
                         <div>
-                            <span class="current-campaign-tag <?= $campaignPublished ? 'current-campaign-tag--published' : '' ?>"><?= $campaignPublished ? 'Published history' : 'Current draft · not a new publication yet' ?></span>
-                            <h2><?= $campaignPublished ? 'Published Campaign' : 'Current Campaign Draft' ?></h2>
-                            <p>Campaign #<?= (int)$openDraft['id'] ?> · <?= sm_h($openDraft['title']) ?></p>
+                            <span class="current-campaign-tag <?= $campaignPublished ? 'current-campaign-tag--published' : '' ?>"><?= $campaignPublished ? sm_h(t('Published history', 'Historial publicado')) : sm_h(t('Current draft · not a new publication yet', 'Borrador actual · todavía no es una nueva publicación')) ?></span>
+                            <h2><?= $campaignPublished ? sm_h(t('Published Campaign', 'Campaña Publicada')) : sm_h(t('Current Campaign Draft', 'Borrador de Campaña Actual')) ?></h2>
+                            <p><?= sm_h(t('Campaign', 'Campaña')) ?> #<?= (int)$openDraft['id'] ?> · <?= sm_h($openDraft['title']) ?></p>
                         </div>
-                        <a class="button-link secondary" href="social_media_catalog.php">Close current campaign</a>
+                        <a class="button-link secondary" href="social_media_catalog.php"><?= sm_h(t('Close current campaign', 'Cerrar campaña actual')) ?></a>
                     </div>
                     <div class="copy-grid">
-                        <article class="copy-card"><h3>Status</h3><p><?= sm_h(sm_status_label((string)$openDraft['status'])) ?></p></article>
-                        <article class="copy-card"><h3>Source</h3><p><?= sm_h($openDraft['source_label']) ?></p></article>
-                        <article class="copy-card"><h3>Campaign channels</h3><p><?= sm_h(implode(', ', $draftChannelTitles)) ?></p></article>
-                        <article class="copy-card"><h3>Mockups</h3><p><?= count($draftMockupIds) ?> selected</p></article>
+                        <article class="copy-card"><h3><?= sm_h(t('Status', 'Estado')) ?></h3><p><?= sm_h(sm_status_label((string)$openDraft['status'])) ?></p></article>
+                        <article class="copy-card"><h3><?= sm_h(t('Source', 'Fuente')) ?></h3><p><?= sm_h($openDraft['source_label']) ?></p></article>
+                        <article class="copy-card"><h3><?= sm_h(t('Campaign channels', 'Canales de la campaña')) ?></h3><p><?= sm_h(implode(', ', $draftChannelTitles)) ?></p></article>
+                        <article class="copy-card"><h3>Mockups</h3><p><?= count($draftMockupIds) ?> <?= sm_h(t('selected', 'seleccionados')) ?></p></article>
                     </div>
                     <p><?= sm_h($openDraft['objective']) ?></p>
                     <?php if ($openDraftMockups): ?>
@@ -686,46 +686,46 @@ if ($sourceMockups) {
                             <?php endforeach; ?>
                         </div>
                     <?php else: ?>
-                        <div class="empty-state">No mockups selected.</div>
+                        <div class="empty-state"><?= sm_h(t('No mockups selected.', 'No hay mockups seleccionados.')) ?></div>
                     <?php endif; ?>
                     <?php if ($hasPinterest): ?>
                         <section class="pinterest-campaign-bridge">
                             <div class="pinterest-campaign-bridge__head">
                                 <div>
-                                    <h3>Pinterest campaign</h3>
-                                    <p>Prepare the selected mockups, then review boards, copy, crop and destination before approving publication.</p>
+                                    <h3><?= sm_h(t('Pinterest campaign', 'Campaña de Pinterest')) ?></h3>
+                                    <p><?= sm_h(t('Prepare the selected mockups, then review boards, copy, crop and destination before approving publication.', 'Prepará los mockups seleccionados y después revisá tableros, textos, recorte y destino antes de aprobar la publicación.')) ?></p>
                                 </div>
                                 <span class="pinterest-campaign-bridge__status"><?= sm_h($pinterestStatus) ?></span>
                             </div>
                             <?php if ($pinterestBatchId > 0): ?>
-                                <a class="button-link primary" href="pinterest_batch_review.php?id=<?= $pinterestBatchId ?>">Review Pinterest batch</a>
+                                <a class="button-link primary" href="pinterest_batch_review.php?id=<?= $pinterestBatchId ?>"><?= sm_h(t('Review Pinterest batch', 'Revisar lote de Pinterest')) ?></a>
                             <?php elseif (count($draftMockupIds) <= 10): ?>
                                 <form method="post" action="pinterest_batch_create.php">
                                     <input type="hidden" name="csrf" value="<?= sm_h($_SESSION['pinterest_batch_create_csrf']) ?>">
                                     <input type="hidden" name="campaign_id" value="<?= (int)$openDraft['id'] ?>">
                                     <label>
-                                        Destination link
+                                        <?= sm_h(t('Destination link', 'Enlace de destino')) ?>
                                         <input type="url" name="destination_url" value="<?= sm_h($pinterestDefaultDestination) ?>" placeholder="https://example.com/artwork" required>
                                     </label>
                                     <?php if ($isAdmin): ?>
                                         <label>
-                                            Pinterest identity
+                                            <?= sm_h(t('Pinterest identity', 'Identidad de Pinterest')) ?>
                                             <select name="purpose">
-                                                <option value="artist">Artist account<?= (($pinterestConnections['artist']['status'] ?? '') === 'connected') ? ' · connected' : '' ?></option>
-                                                <option value="platform">Artwork Mockups<?= (($pinterestConnections['platform']['status'] ?? '') === 'connected') ? ' · connected' : '' ?></option>
+                                                <option value="artist"><?= sm_h(t('Artist account', 'Cuenta del artista')) ?><?= (($pinterestConnections['artist']['status'] ?? '') === 'connected') ? ' · ' . sm_h(t('connected', 'conectada')) : '' ?></option>
+                                                <option value="platform">Artwork Mockups<?= (($pinterestConnections['platform']['status'] ?? '') === 'connected') ? ' · ' . sm_h(t('connected', 'conectada')) : '' ?></option>
                                             </select>
                                         </label>
                                     <?php else: ?>
                                         <input type="hidden" name="purpose" value="artist">
                                     <?php endif; ?>
-                                    <button class="button-link primary" type="submit">Prepare Pinterest batch</button>
+                                    <button class="button-link primary" type="submit"><?= sm_h(t('Prepare Pinterest batch', 'Preparar lote de Pinterest')) ?></button>
                                 </form>
                             <?php else: ?>
-                                <div class="notice-card notice-error">Pinterest accepts a maximum of 10 mockups. Modify this campaign before preparing the batch.</div>
+                                <div class="notice-card notice-error"><?= sm_h(t('Pinterest accepts a maximum of 10 mockups. Modify this campaign before preparing the batch.', 'Pinterest acepta un máximo de 10 mockups. Modificá esta campaña antes de preparar el lote.')) ?></div>
                             <?php endif; ?>
                             <div class="pinterest-campaign-bridge__links">
-                                <a class="button-link secondary" href="connections.php#pinterest">Manage connection</a>
-                                <span><?= count($draftMockupIds) ?> mockups selected · nothing is published during preparation.</span>
+                                <a class="button-link secondary" href="connections.php#pinterest"><?= sm_h(t('Manage connection', 'Gestionar conexión')) ?></a>
+                                <span><?= count($draftMockupIds) ?> <?= sm_h(t('mockups selected · nothing is published during preparation.', 'mockups seleccionados · no se publica nada durante la preparación.')) ?></span>
                             </div>
                         </section>
                     <?php endif; ?>
@@ -740,20 +740,20 @@ if ($sourceMockups) {
                         <section class="meta-campaign-bridge">
                             <div class="meta-campaign-bridge__head">
                                 <div>
-                                    <h3>Facebook / Instagram publication</h3>
-                                    <p><?= $metaBatches ? 'Completed and pending publications remain separate. You may prepare only a destination that has not been used yet.' : 'Choose Facebook, Instagram, or both explicitly. Nothing is selected automatically.' ?></p>
+                                    <h3><?= sm_h(t('Facebook / Instagram publication', 'Publicación en Facebook / Instagram')) ?></h3>
+                                    <p><?= $metaBatches ? sm_h(t('Completed and pending publications remain separate. You may prepare only a destination that has not been used yet.', 'Las publicaciones completadas y pendientes se mantienen separadas. Solo podés preparar un destino que todavía no se haya usado.')) : sm_h(t('Choose Facebook, Instagram, or both explicitly. Nothing is selected automatically.', 'Elegí Facebook, Instagram o ambos explícitamente. No se selecciona nada automáticamente.')) ?></p>
                                 </div>
                                 <span class="meta-campaign-bridge__status"><?= sm_h(sm_status_label($metaStatus)) ?></span>
                             </div>
                             <?php if ($metaBatches): ?>
-                                <div class="existing-meta-batches" aria-label="Existing publication batches">
+                                <div class="existing-meta-batches" aria-label="<?= sm_h(t('Existing publication batches', 'Lotes de publicación existentes')) ?>">
                                     <?php foreach ($metaBatches as $existingMetaBatch): ?>
                                         <div class="existing-meta-batch">
                                             <div>
                                                 <strong><?= sm_h(implode(' + ', array_map('ucfirst', $existingMetaBatch['destinations']))) ?></strong>
-                                                <span><?= sm_h(sm_status_label((string)$existingMetaBatch['status'])) ?> · Batch #<?= (int)$existingMetaBatch['batch_id'] ?></span>
+                                                <span><?= sm_h(sm_status_label((string)$existingMetaBatch['status'])) ?> · <?= sm_h(t('Batch', 'Lote')) ?> #<?= (int)$existingMetaBatch['batch_id'] ?></span>
                                             </div>
-                                            <a class="button-link secondary" href="meta_batch_review.php?id=<?= (int)$existingMetaBatch['batch_id'] ?>"><?= (string)$existingMetaBatch['status'] === 'published' ? 'Open history' : 'Continue review' ?></a>
+                                            <a class="button-link secondary" href="meta_batch_review.php?id=<?= (int)$existingMetaBatch['batch_id'] ?>"><?= (string)$existingMetaBatch['status'] === 'published' ? sm_h(t('Open history', 'Abrir historial')) : sm_h(t('Continue review', 'Continuar revisión')) ?></a>
                                         </div>
                                     <?php endforeach; ?>
                                 </div>
@@ -763,53 +763,53 @@ if ($sourceMockups) {
                                     <input type="hidden" name="csrf" value="<?= sm_h($_SESSION['meta_batch_create_csrf']) ?>">
                                     <input type="hidden" name="campaign_id" value="<?= (int)$openDraft['id'] ?>">
                                     <div>
-                                        <span style="display:block;margin-bottom:6px;color:var(--muted);font-size:11px">Choose destinations for this new batch</span>
+                                        <span style="display:block;margin-bottom:6px;color:var(--muted);font-size:11px"><?= sm_h(t('Choose destinations for this new batch', 'Elegí destinos para este lote nuevo')) ?></span>
                                         <div class="meta-destinations">
                                             <?php if (in_array('facebook', $availableMetaDestinations, true)): ?><label class="meta-destination-option">
                                                 <input type="checkbox" name="meta_channels[]" value="facebook">
-                                                <span><strong>Facebook</strong><small>Artwork Mockups Page · <?= $artistFacebookConnected ? 'connected' : 'not connected' ?></small></span>
+                                                <span><strong>Facebook</strong><small>Artwork Mockups Page · <?= $artistFacebookConnected ? sm_h(t('connected', 'conectada')) : sm_h(t('not connected', 'no conectada')) ?></small></span>
                                             </label><?php endif; ?>
                                             <?php if (in_array('instagram', $availableMetaDestinations, true)): ?><label class="meta-destination-option">
                                                 <input type="checkbox" name="meta_channels[]" value="instagram">
-                                                <span><strong>Instagram</strong><small><?= $artistInstagramUsername !== '' ? '@'.sm_h($artistInstagramUsername) : 'Artist account' ?> · <?= $artistInstagramConnected ? 'connected' : 'not connected' ?></small></span>
+                                                <span><strong>Instagram</strong><small><?= $artistInstagramUsername !== '' ? '@'.sm_h($artistInstagramUsername) : sm_h(t('Artist account', 'Cuenta del artista')) ?> · <?= $artistInstagramConnected ? sm_h(t('connected', 'conectada')) : sm_h(t('not connected', 'no conectada')) ?></small></span>
                                             </label><?php endif; ?>
                                         </div>
                                     </div>
                                     <label>
-                                        Destination link · optional
-                                        <input type="url" name="destination_url" value="<?= sm_h($pinterestDefaultDestination) ?>" placeholder="https://mauriziovalch.com/artwork/...">
+                                        <?= sm_h(t('Destination link · optional', 'Enlace de destino · opcional')) ?>
+                                        <input type="url" name="destination_url" value="<?= sm_h($pinterestDefaultDestination) ?>" placeholder="https://example.com/artwork/...">
                                     </label>
                                     <?php if ($isAdmin): ?>
                                         <label>
-                                            Publishing identity
+                                            <?= sm_h(t('Publishing identity', 'Identidad de publicación')) ?>
                                             <select name="purpose">
-                                                <option value="artist">Maurizio Valch · artist connections</option>
-                                                <option value="platform">Artwork Mockups platform · Facebook <?= $platformFacebookConnected ? 'connected' : 'not connected' ?> / Instagram <?= $platformInstagramConnected ? 'connected' : 'not connected' ?></option>
+                                                <option value="artist"><?= sm_h(t('Artist · artist connections', 'Artista · conexiones del artista')) ?></option>
+                                                <option value="platform"><?= sm_h(t('Artwork Mockups platform', 'Plataforma Artwork Mockups')) ?> · Facebook <?= $platformFacebookConnected ? sm_h(t('connected', 'conectada')) : sm_h(t('not connected', 'no conectada')) ?> / Instagram <?= $platformInstagramConnected ? sm_h(t('connected', 'conectada')) : sm_h(t('not connected', 'no conectada')) ?></option>
                                             </select>
                                         </label>
                                     <?php else: ?>
                                         <input type="hidden" name="purpose" value="artist">
                                     <?php endif; ?>
-                                    <button class="button-link primary" type="submit" data-create-meta-batch>Prepare selected destination</button>
+                                    <button class="button-link primary" type="submit" data-create-meta-batch><?= sm_h(t('Prepare selected destination', 'Preparar destino seleccionado')) ?></button>
                                 </form>
                             <?php elseif ($availableMetaDestinations && count($draftMockupIds) > 10): ?>
-                                <div class="notice-card notice-error">Meta batches support a maximum of 10 mockups. Modify this campaign before preparing the batch.</div>
+                                <div class="notice-card notice-error"><?= sm_h(t('Meta batches support a maximum of 10 mockups. Modify this campaign before preparing the batch.', 'Los lotes de Meta admiten un máximo de 10 mockups. Modificá esta campaña antes de preparar el lote.')) ?></div>
                             <?php elseif (!$availableMetaDestinations): ?>
-                                <div class="notice-card">Facebook and Instagram already have publication batches for this campaign.</div>
+                                <div class="notice-card"><?= sm_h(t('Facebook and Instagram already have publication batches for this campaign.', 'Facebook e Instagram ya tienen lotes de publicación para esta campaña.')) ?></div>
                             <?php endif; ?>
                             <div class="meta-campaign-bridge__links">
-                                <a class="button-link secondary" href="connections.php#facebook">Facebook connection</a>
-                                <a class="button-link secondary" href="connections.php#instagram">Instagram connection</a>
-                                <span><?= count($draftMockupIds) ?> mockups in this campaign · creating a batch never publishes.</span>
+                                <a class="button-link secondary" href="connections.php#facebook"><?= sm_h(t('Facebook connection', 'Conexión de Facebook')) ?></a>
+                                <a class="button-link secondary" href="connections.php#instagram"><?= sm_h(t('Instagram connection', 'Conexión de Instagram')) ?></a>
+                                <span><?= count($draftMockupIds) ?> <?= sm_h(t('mockups in this campaign · creating a batch never publishes.', 'mockups en esta campaña · crear un lote nunca publica.')) ?></span>
                             </div>
                         </section>
                     <?php endif; ?>
                     <?php if (!$campaignPublished): ?><div class="draft-actions">
-                        <a class="button-link secondary" href="<?= sm_h($modifyUrl) ?>">Modify current draft</a>
-                        <form method="post" onsubmit="return confirm('Delete this campaign draft?');">
+                        <a class="button-link secondary" href="<?= sm_h($modifyUrl) ?>"><?= sm_h(t('Modify current draft', 'Modificar borrador actual')) ?></a>
+                        <form method="post" onsubmit="return confirm(<?= json_encode(t('Delete this campaign draft?', '¿Eliminar este borrador de campaña?')) ?>);">
                             <input type="hidden" name="csrf" value="<?= sm_h($_SESSION['social_campaign_csrf']) ?>">
                             <input type="hidden" name="campaign_id" value="<?= (int)$openDraft['id'] ?>">
-                            <button class="button-link secondary" name="action" value="delete_campaign">Delete current draft</button>
+                            <button class="button-link secondary" name="action" value="delete_campaign"><?= sm_h(t('Delete current draft', 'Eliminar borrador actual')) ?></button>
                         </form>
                     </div><?php endif; ?>
                 </section>
@@ -822,22 +822,22 @@ if ($sourceMockups) {
             <section class="catalog-panel catalog-panel--compact">
                 <div class="detail-heading">
                     <div>
-                        <h2>Active Campaign Drafts</h2>
-                        <p>Unpublished campaigns only. The current campaign shown above is not repeated here.</p>
+                        <h2><?= sm_h(t('Active Campaign Drafts', 'Borradores de Campaña Activos')) ?></h2>
+                        <p><?= sm_h(t('Unpublished campaigns only. The current campaign shown above is not repeated here.', 'Solo campañas sin publicar. La campaña actual mostrada arriba no se repite acá.')) ?></p>
                     </div>
                 </div>
                 <?php if (!$otherActiveCampaigns): ?>
-                    <div class="empty-state"><?= $openDraft && !$campaignPublished ? 'No other active campaign drafts.' : 'No active campaign drafts.' ?></div>
+                    <div class="empty-state"><?= $openDraft && !$campaignPublished ? sm_h(t('No other active campaign drafts.', 'No hay otros borradores de campaña activos.')) : sm_h(t('No active campaign drafts.', 'No hay borradores de campaña activos.')) ?></div>
                 <?php else: ?>
                     <div class="board-lanes">
                         <?php foreach ($otherActiveCampaigns as $campaign): $payload = json_decode((string)$campaign['payload_json'], true); ?>
                             <article class="board-lane">
                                 <h2><?= sm_h($campaign['title']) ?></h2>
                                 <p><?= sm_h($campaign['objective']) ?></p>
-                                <p><strong>Source:</strong> <?= sm_h($campaign['source_label']) ?></p>
+                                <p><strong><?= sm_h(t('Source:', 'Fuente:')) ?></strong> <?= sm_h($campaign['source_label']) ?></p>
                                 <?php $campaignChannels = sm_social_payload_channels(is_array($payload) ? $payload : null); ?>
                                 <?php $campaignMockups = is_array($payload) ? array_values(array_filter(array_map('intval', (array)($payload['mockup_ids'] ?? [])))) : []; ?>
-                                <?php if ($campaignChannels): ?><p><strong>Channels:</strong> <?= sm_h(implode(', ', sm_channel_titles($campaignChannels))) ?></p><?php endif; ?>
+                                <?php if ($campaignChannels): ?><p><strong><?= sm_h(t('Channels:', 'Canales:')) ?></strong> <?= sm_h(implode(', ', sm_channel_titles($campaignChannels))) ?></p><?php endif; ?>
                                 <p><strong>Mockups:</strong> <?= count($campaignMockups) ?></p>
                                 <span class="status-pill <?= sm_h(sm_status_class((string)$campaign['status'])) ?>"><?= sm_h(sm_status_label((string)$campaign['status'])) ?></span>
                                 <?php
@@ -851,12 +851,12 @@ if ($sourceMockups) {
                                 }
                                 ?>
                                 <div class="draft-actions">
-                                    <a class="button-link secondary" href="<?= sm_h(sm_page_url(['draft' => (int)$campaign['id']])) ?>">Open this draft</a>
-                                    <a class="button-link secondary" href="<?= sm_h($modifyUrl) ?>">Modify this draft</a>
-                                    <form method="post" onsubmit="return confirm('Delete this campaign draft?');">
+                                    <a class="button-link secondary" href="<?= sm_h(sm_page_url(['draft' => (int)$campaign['id']])) ?>"><?= sm_h(t('Open this draft', 'Abrir este borrador')) ?></a>
+                                    <a class="button-link secondary" href="<?= sm_h($modifyUrl) ?>"><?= sm_h(t('Modify this draft', 'Modificar este borrador')) ?></a>
+                                    <form method="post" onsubmit="return confirm(<?= json_encode(t('Delete this campaign draft?', '¿Eliminar este borrador de campaña?')) ?>);">
                                         <input type="hidden" name="csrf" value="<?= sm_h($_SESSION['social_campaign_csrf']) ?>">
                                         <input type="hidden" name="campaign_id" value="<?= (int)$campaign['id'] ?>">
-                                        <button class="button-link secondary" name="action" value="delete_campaign">Delete</button>
+                                        <button class="button-link secondary" name="action" value="delete_campaign"><?= sm_h(t('Delete', 'Eliminar')) ?></button>
                                     </form>
                                 </div>
                             </article>
@@ -868,23 +868,23 @@ if ($sourceMockups) {
             <section class="catalog-panel catalog-panel--compact campaign-history">
                 <div class="detail-heading">
                     <div>
-                        <h2>Publication History</h2>
-                        <p>Published destinations remain as history. Open a record when another destination is still available.</p>
+                        <h2><?= sm_h(t('Publication History', 'Historial de Publicación')) ?></h2>
+                        <p><?= sm_h(t('Published destinations remain as history. Open a record when another destination is still available.', 'Los destinos publicados quedan como historial. Abrí un registro cuando todavía haya otro destino disponible.')) ?></p>
                     </div>
                 </div>
                 <?php if (!$otherPublishedCampaigns): ?>
-                    <div class="empty-state"><?= $openDraft && $campaignPublished ? 'The publication shown above is the current history record.' : 'No completed campaign publications yet.' ?></div>
+                    <div class="empty-state"><?= $openDraft && $campaignPublished ? sm_h(t('The publication shown above is the current history record.', 'La publicación mostrada arriba es el registro de historial actual.')) : sm_h(t('No completed campaign publications yet.', 'Todavía no hay publicaciones de campaña completadas.')) ?></div>
                 <?php else: ?>
                     <div class="board-lanes">
                         <?php foreach ($otherPublishedCampaigns as $campaign): $payload = json_decode((string)$campaign['payload_json'], true); $campaignChannels = sm_social_payload_channels(is_array($payload) ? $payload : null); $publishedDestinations = sm_meta_destination_titles(is_array($payload) ? $payload : null); $missingDestinations = array_values(array_diff(['Facebook', 'Instagram'], $publishedDestinations)); ?>
                             <article class="board-lane">
-                                <span class="current-campaign-tag current-campaign-tag--published"><?= $missingDestinations ? sm_h(implode(' / ', $publishedDestinations)) . ' published · ' . sm_h(implode(' / ', $missingDestinations)) . ' available' : 'Published' ?></span>
+                                <span class="current-campaign-tag current-campaign-tag--published"><?= $missingDestinations ? sm_h(implode(' / ', $publishedDestinations)) . ' ' . sm_h(t('published', 'publicado')) . ' · ' . sm_h(implode(' / ', $missingDestinations)) . ' ' . sm_h(t('available', 'disponible')) : sm_h(t('Published', 'Publicado')) ?></span>
                                 <h2><?= sm_h($campaign['title']) ?></h2>
-                                <p><strong>Source:</strong> <?= sm_h($campaign['source_label']) ?></p>
-                                <?php if ($campaignChannels): ?><p><strong>Campaign channels:</strong> <?= sm_h(implode(', ', sm_channel_titles($campaignChannels))) ?></p><?php endif; ?>
-                                <?php if ($publishedDestinations): ?><p><strong>Facebook / Instagram destinations:</strong> <?= sm_h(implode(', ', $publishedDestinations)) ?></p><?php endif; ?>
-                                <time datetime="<?= sm_h((string)$campaign['updated_at']) ?>">Completed <?= sm_h((string)$campaign['updated_at']) ?></time>
-                                <div class="draft-actions"><a class="button-link secondary" href="<?= sm_h(sm_page_url(['draft' => (int)$campaign['id']])) ?>"><?= $missingDestinations ? 'Continue with ' . sm_h(implode(' / ', $missingDestinations)) : 'Open publication history' ?></a></div>
+                                <p><strong><?= sm_h(t('Source:', 'Fuente:')) ?></strong> <?= sm_h($campaign['source_label']) ?></p>
+                                <?php if ($campaignChannels): ?><p><strong><?= sm_h(t('Campaign channels:', 'Canales de la campaña:')) ?></strong> <?= sm_h(implode(', ', sm_channel_titles($campaignChannels))) ?></p><?php endif; ?>
+                                <?php if ($publishedDestinations): ?><p><strong><?= sm_h(t('Facebook / Instagram destinations:', 'Destinos de Facebook / Instagram:')) ?></strong> <?= sm_h(implode(', ', $publishedDestinations)) ?></p><?php endif; ?>
+                                <time datetime="<?= sm_h((string)$campaign['updated_at']) ?>"><?= sm_h(t('Completed', 'Completado')) ?> <?= sm_h((string)$campaign['updated_at']) ?></time>
+                                <div class="draft-actions"><a class="button-link secondary" href="<?= sm_h(sm_page_url(['draft' => (int)$campaign['id']])) ?>"><?= $missingDestinations ? sm_h(t('Continue with', 'Continuar con')) . ' ' . sm_h(implode(' / ', $missingDestinations)) : sm_h(t('Open publication history', 'Abrir historial de publicación')) ?></a></div>
                             </article>
                         <?php endforeach; ?>
                     </div>
@@ -899,7 +899,7 @@ document.querySelectorAll('[data-meta-destination-form]').forEach(form=>{
     form.addEventListener('submit',event=>{
         if(!destinations.some(input=>input.checked)){
             event.preventDefault();
-            alert('Choose Facebook, Instagram, or both for this new publication batch.');
+            alert(<?= json_encode(t('Choose Facebook, Instagram, or both for this new publication batch.', 'Elegí Facebook, Instagram o ambos para este nuevo lote de publicación.')) ?>);
         }
     });
 });

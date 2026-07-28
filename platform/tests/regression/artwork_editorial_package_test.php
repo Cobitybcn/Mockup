@@ -66,7 +66,15 @@ function run_artwork_editorial_package_tests(): void
         id INTEGER PRIMARY KEY,user_id INTEGER NOT NULL,source_artwork_id INTEGER,artwork_group_id INTEGER,
         artwork_file TEXT NOT NULL DEFAULT '',mockup_file TEXT NOT NULL DEFAULT ''
     )");
+    $pdo->exec("CREATE TABLE user_language_policy (
+        user_id INTEGER NOT NULL PRIMARY KEY,working_locale TEXT NOT NULL,publication_locales_json TEXT NOT NULL,
+        interface_locale TEXT NOT NULL DEFAULT '',created_at TEXT NOT NULL,updated_at TEXT NOT NULL
+    )");
     $pdo->exec("INSERT INTO users VALUES (7,'artist@example.com')");
+    // Este artista trabaja en espanol y publica en espanol+ingles (como Maurizio);
+    // sin una politica explicita el default ahora es ingles.
+    $pdo->exec("INSERT INTO user_language_policy (user_id,working_locale,publication_locales_json,created_at,updated_at)
+        VALUES (7,'es','[\"es\",\"en\"]','2026-07-01T10:00:00Z','2026-07-01T10:00:00Z')");
     $pdo->exec("INSERT INTO artist_profiles (id,user_id,artist_name,statement) VALUES (1,7,'Artist','Studio statement')");
     $pdo->exec("INSERT INTO artwork_series VALUES (3,7,'STRATA','','','Layered territories','Avoid decorative claims')");
     $pdo->exec("INSERT INTO artworks VALUES (11,7,'SOL DIVISUS',3,31,'sol-divisus.jpg')");

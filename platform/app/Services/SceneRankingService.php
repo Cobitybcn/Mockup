@@ -323,17 +323,11 @@ final class SceneRankingService
     private function favoriteMockupCategories(array $categoryByMockupId): array
     {
         $counts = [];
-        $base = $this->storageBasePath . DIRECTORY_SEPARATOR . 'mockup_favorites';
-        foreach (glob($base . DIRECTORY_SEPARATOR . 'user_*.json') ?: [] as $path) {
-            $decoded = json_decode((string)file_get_contents($path), true);
-            if (!is_array($decoded)) {
-                continue;
-            }
-            foreach (array_unique(array_map('intval', $decoded)) as $mockupId) {
-                $slug = $categoryByMockupId[$mockupId] ?? '';
-                if ($slug !== '') {
-                    $counts[$slug] = (int)($counts[$slug] ?? 0) + 1;
-                }
+        $stmt = $this->pdo->query('SELECT user_id, mockup_id FROM mockup_favorites');
+        foreach ($stmt->fetchAll(PDO::FETCH_ASSOC) as $row) {
+            $slug = $categoryByMockupId[(int)$row['mockup_id']] ?? '';
+            if ($slug !== '') {
+                $counts[$slug] = (int)($counts[$slug] ?? 0) + 1;
             }
         }
         return $counts;

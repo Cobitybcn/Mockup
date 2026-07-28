@@ -46,6 +46,41 @@ final class AppPublishedLocalization
         }
     }
 
+    /**
+     * Locales this artist actually publishes in, per their platform-side
+     * `LanguagePolicy`. Mirrors `LanguagePolicy::compatibilityPolicy()` exactly:
+     * an artist without an explicit policy row (every account before this
+     * feature existed, including the studio's own) keeps publishing in
+     * Spanish + English, so the public site's behavior does not change for them.
+     *
+     * @return list<string>
+     */
+    public function publicationLocales(): array
+    {
+        $fallback = ['es', 'en'];
+        try {
+            $stmt = $this->pdo->prepare('SELECT publication_locales_json FROM user_language_policy WHERE user_id = ? LIMIT 1');
+            $stmt->execute([$this->userId()]);
+            $row = $stmt->fetch();
+        } catch (PDOException $error) {
+            // No policy table yet (older install): keep historical es+en behavior.
+            return $fallback;
+        }
+        if (!is_array($row)) return $fallback;
+
+        $decoded = json_decode((string)($row['publication_locales_json'] ?? ''), true);
+        if (!is_array($decoded)) return $fallback;
+
+        $locales = [];
+        foreach ($decoded as $locale) {
+            $candidate = strtolower(trim((string)$locale));
+            if (in_array($candidate, ['es', 'en'], true) && !in_array($candidate, $locales, true)) {
+                $locales[] = $candidate;
+            }
+        }
+        return $locales !== [] ? $locales : $fallback;
+    }
+
     public function content(string $entityType, int $entityId, string $locale = 'es'): array
     {
         if ($entityId <= 0 || !in_array($entityType, ['series', 'artwork', 'mockup'], true)) return [];

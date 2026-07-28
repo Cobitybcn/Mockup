@@ -180,7 +180,9 @@ try {
         if (ProviderSettings::isRealMode() && ProviderSettings::allowRealApi() && $generationProvider === 'gemini') {
             try {
                 $v2Stmt=Database::connection()->prepare('SELECT * FROM artworks WHERE job_id=? LIMIT 1');$v2Stmt->execute([(string)$diskStatus['job_id']]);$v2Artwork=$v2Stmt->fetch(PDO::FETCH_ASSOC);
-                if(is_array($v2Artwork)){
+                // El paquete editorial pertenece a Artist Pro y se prepara cuando el
+                // artista lo pide. Crear la obra no lo genera por su cuenta.
+                if(is_array($v2Artwork) && FeatureAccess::allowsUserId((int)$v2Artwork['user_id'], FeatureAccess::EDITORIAL_MANAGE)){
                     $v2Profile=ArtistProfile::findForUser((int)$v2Artwork['user_id']);
                     $v2AnalysisLocale=(new BilingualEditorialService(Database::connection()))->sourceLocale((int)$v2Artwork['user_id']);
                     $v2Generated=(new ArtworkAnalysisV2Service(new GeminiImageClient(), $pdo))->generateDraft($v2Artwork,$v2Profile,RESULTS_DIR.DIRECTORY_SEPARATOR.$selectedRootFile,(string)($diskStatus['artist_notes']??'Automatic v2 analysis for new artwork.'),$v2AnalysisLocale);

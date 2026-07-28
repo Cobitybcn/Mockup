@@ -18,10 +18,11 @@ function run_scene_ranking_service_regression_tests(): void
     )");
     $migration = require dirname(__DIR__, 2) . '/migrations/schema/20260719_000002_scene_ranking.php';
     $migration['up']($pdo);
+    $favoritesMigration = require dirname(__DIR__, 2) . '/migrations/schema/20260728_000001_mockup_favorites.php';
+    $favoritesMigration['up']($pdo);
 
     $storage = sys_get_temp_dir() . DIRECTORY_SEPARATOR . 'scene-ranking-' . bin2hex(random_bytes(5));
     mkdir($storage . DIRECTORY_SEPARATOR . 'world_mother_favorites', 0775, true);
-    mkdir($storage . DIRECTORY_SEPARATOR . 'mockup_favorites', 0775, true);
     file_put_contents($storage . DIRECTORY_SEPARATOR . 'world_mother_favorites' . DIRECTORY_SEPARATOR . 'user_8.json', json_encode(['new_scene']));
 
     $insert = $pdo->prepare('INSERT INTO mockups
@@ -40,7 +41,8 @@ function run_scene_ranking_service_regression_tests(): void
             'created_at' => date(DATE_ATOM),
         ]);
     }
-    file_put_contents($storage . DIRECTORY_SEPARATOR . 'mockup_favorites' . DIRECTORY_SEPARATOR . 'user_7.json', json_encode([1]));
+    $pdo->prepare('INSERT INTO mockup_favorites (user_id,mockup_id,created_at) VALUES (?,?,?)')
+        ->execute([7, 1, date(DATE_ATOM)]);
 
     $service = new SceneRankingService($pdo, $storage);
     $categories = $service->enrich([
@@ -121,8 +123,6 @@ function run_scene_ranking_service_regression_tests(): void
     );
 
     foreach (glob($storage . DIRECTORY_SEPARATOR . 'world_mother_favorites' . DIRECTORY_SEPARATOR . '*') ?: [] as $file) unlink($file);
-    foreach (glob($storage . DIRECTORY_SEPARATOR . 'mockup_favorites' . DIRECTORY_SEPARATOR . '*') ?: [] as $file) unlink($file);
     rmdir($storage . DIRECTORY_SEPARATOR . 'world_mother_favorites');
-    rmdir($storage . DIRECTORY_SEPARATOR . 'mockup_favorites');
     rmdir($storage);
 }

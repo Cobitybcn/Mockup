@@ -161,10 +161,10 @@ function mockup_album_label(array $mockup): string
             $artworkTitle = trim((string)($mockup['artwork_title'] ?? ''));
         }
         if ($artworkTitle !== '') {
-            return $artworkTitle . ' · Imported';
+            return $artworkTitle . ' · ' . t('Imported', 'Importado');
         }
         $originalName = trim((string)($state['import']['original_filename'] ?? ''));
-        return $originalName !== '' ? $originalName : 'Imported Mockup';
+        return $originalName !== '' ? $originalName : t('Imported Mockup', 'Mockup Importado');
     }
     $combo = is_array($state) ? (array)($state['combination'] ?? []) : [];
     $label = trim((string)($combo['camera_slot_name'] ?? ''));
@@ -176,10 +176,10 @@ function mockup_album_label(array $mockup): string
 }
 ?>
 <!doctype html>
-<html lang="en">
+<html lang="<?= h(Translator::locale($user)) ?>">
 <head>
     <meta charset="utf-8">
-    <title>Mockup Album - Artwork Mockups</title>
+    <title><?= h(t('Mockup Album - Artwork Mockups', 'Álbum de Mockups - Artwork Mockups')) ?></title>
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <link rel="stylesheet" href="style.css">
     <link rel="stylesheet" href="ui-catalog.css">
@@ -637,26 +637,26 @@ function mockup_album_label(array $mockup): string
         </header>
 
         <div class="alert-strip">
-            Full archive of generated curatorial mockups.
+            <?= h(t('Full archive of generated curatorial mockups.', 'Archivo completo de mockups curatoriales generados.')) ?>
         </div>
 
         <div class="workspace">
             <div class="workspace-header mockup-album-header">
                 <div>
-                    <h1>Mockup Album</h1>
-                    <p><?= h($total) ?> images saved in your private archive.</p>
+                    <h1><?= h(t('Mockup Album', 'Álbum de Mockups')) ?></h1>
+                    <p><?= h($total) ?> <?= h(t('images saved in your private archive.', 'imágenes guardadas en tu archivo privado.')) ?></p>
                 </div>
                 <div class="topbar-actions">
-                    <a class="mockup-import-decision-block" href="mockup_upload.php">Import Mockups</a>
+                    <a class="mockup-import-decision-block" href="mockup_upload.php"><?= h(t('Import Mockups', 'Importar Mockups')) ?></a>
                 </div>
             </div>
 
             <form class="toolbar-form<?= $query !== '' ? ' has-clear' : '' ?>" method="get">
                 <?php if ($bilingualExperiment): ?><input type="hidden" name="bilingual_experiment" value="1"><?php endif; ?>
-                <input type="text" name="q" value="<?= h($query) ?>" placeholder="Search by context, file or artwork title">
-                <button type="submit">Search</button>
+                <input type="text" name="q" value="<?= h($query) ?>" placeholder="<?= h(t('Search by context, file or artwork title', 'Buscar por contexto, archivo o título de obra')) ?>">
+                <button type="submit"><?= h(t('Search', 'Buscar')) ?></button>
                 <?php if ($query !== ''): ?>
-                    <a class="button-link secondary" href="mockups.php<?= $bilingualExperiment ? '?bilingual_experiment=1' : '' ?>">Clear</a>
+                    <a class="button-link secondary" href="mockups.php<?= $bilingualExperiment ? '?bilingual_experiment=1' : '' ?>"><?= h(t('Clear', 'Limpiar')) ?></a>
                 <?php endif; ?>
             </form>
             <?php if($canUseSocial && $pinterestBatchError!==''):?><div class="notice error"><?=h($pinterestBatchError)?></div><?php endif;?>
@@ -664,20 +664,20 @@ function mockup_album_label(array $mockup): string
             <style>.pinterest-batch-picker{display:none;margin-bottom:18px}.pinterest-batch-picker.is-active{display:block}.pinterest-batch-fields{display:flex;gap:12px;align-items:end;flex-wrap:wrap}.pinterest-batch-mobile-toggle{display:none}.pinterest-batch-destination{flex:1;min-width:300px}.pinterest-batch-destination strong,.pinterest-batch-destination small{display:block}.pinterest-batch-destination small{margin:5px 0 8px;color:#796457}.pinterest-thumb-select{position:absolute;z-index:4;left:12px;bottom:12px;width:38px;height:38px;border:0;border-radius:50%;display:grid;place-items:center;background:#bd081c!important;box-shadow:0 3px 12px rgba(0,0,0,.2);cursor:pointer;opacity:.78;transition:opacity .18s,transform .18s,box-shadow .18s,background .18s}.pinterest-thumb-select:hover{opacity:.94;transform:scale(1.05);background:#a50718!important}.pinterest-thumb-select input{position:absolute;opacity:0;pointer-events:none}.pinterest-thumb-select svg{display:block;width:19px;height:26px;fill:#fff}.pinterest-thumb-select:has(input:checked){opacity:1;transform:scale(1.06);background:#bd081c!important;box-shadow:0 0 0 3px rgba(189,8,28,.3),0 4px 14px rgba(0,0,0,.22)}@media(max-width:760px){.pinterest-batch-picker.is-active{position:sticky;bottom:8px;z-index:20;padding:10px;margin:0 0 14px;box-shadow:0 8px 28px rgba(0,0,0,.18)}.pinterest-batch-mobile-toggle{display:flex;width:100%;align-items:center;justify-content:space-between;border:0;background:transparent;padding:8px 10px;font-weight:700;color:#342b26}.pinterest-batch-mobile-toggle::after{content:'+';font-size:1.4rem}.pinterest-batch-picker.is-open .pinterest-batch-mobile-toggle::after{content:'−'}.pinterest-batch-fields{display:none;padding:12px 8px 6px}.pinterest-batch-picker.is-open .pinterest-batch-fields{display:flex}.pinterest-batch-destination{min-width:100%}.pinterest-batch-fields label:not(.pinterest-batch-destination),.pinterest-batch-fields button{width:100%}}</style>
             <form id="pinterest-batch-form" class="panel pinterest-batch-picker" method="post" action="pinterest_batch_create.php" aria-hidden="true">
                 <input type="hidden" name="csrf" value="<?=h($_SESSION['pinterest_batch_create_csrf'])?>">
-                <button class="pinterest-batch-mobile-toggle" type="button" aria-expanded="false">Pinterest batch <span data-batch-count-mobile>(0)</span></button>
+                <button class="pinterest-batch-mobile-toggle" type="button" aria-expanded="false"><?= h(t('Pinterest batch', 'Lote de Pinterest')) ?> <span data-batch-count-mobile>(0)</span></button>
                 <div class="pinterest-batch-fields">
-                <label class="pinterest-batch-destination"><strong>Destination link for this batch</strong><small>Every selected Pin in this batch will open this page.</small><input type="url" name="destination_url" value="<?=h(app_env('APP_PUBLIC_URL','https://artworkmockups.com'))?>" placeholder="https://example.com/landing-page" required></label>
-                <?php if($isAdmin):?><label>Identity<select name="purpose"><option value="platform">Artwork Mockups</option><option value="artist">Artist</option></select></label><?php else:?><input type="hidden" name="purpose" value="artist"><?php endif;?>
-                <button class="button-link primary" type="submit">Prepare selected mockups <span data-batch-count>(0)</span></button>
-                <small style="width:100%">Select between 1 and 10 mockups below. Nothing is published during preparation.</small>
+                <label class="pinterest-batch-destination"><strong><?= h(t('Destination link for this batch', 'Enlace de destino para este lote')) ?></strong><small><?= h(t('Every selected Pin in this batch will open this page.', 'Cada Pin seleccionado en este lote va a abrir esta página.')) ?></small><input type="url" name="destination_url" value="<?=h(app_env('APP_PUBLIC_URL','https://artworkmockups.com'))?>" placeholder="https://example.com/landing-page" required></label>
+                <?php if($isAdmin):?><label><?= h(t('Identity', 'Identidad')) ?><select name="purpose"><option value="platform">Artwork Mockups</option><option value="artist"><?= h(t('Artist', 'Artista')) ?></option></select></label><?php else:?><input type="hidden" name="purpose" value="artist"><?php endif;?>
+                <button class="button-link primary" type="submit"><?= h(t('Prepare selected mockups', 'Preparar mockups seleccionados')) ?> <span data-batch-count>(0)</span></button>
+                <small style="width:100%"><?= h(t('Select between 1 and 10 mockups below. Nothing is published during preparation.', 'Seleccioná entre 1 y 10 mockups a continuación. No se publica nada durante la preparación.')) ?></small>
                 </div>
             </form>
             <?php endif; ?>
 
-            <section class="favorite-mockups-strip-panel" aria-label="Favorite mockups">
+            <section class="favorite-mockups-strip-panel" aria-label="<?= h(t('Favorite mockups', 'Mockups favoritos')) ?>">
                 <div class="favorite-mockups-strip-head">
-                    <span>Favorite Mockups</span>
-                    <span class="favorite-mockups-count"><?= count($favoriteMockups) ?> selected</span>
+                    <span><?= h(t('Favorite Mockups', 'Mockups Favoritos')) ?></span>
+                    <span class="favorite-mockups-count"><?= count($favoriteMockups) ?> <?= h(t('selected', 'seleccionados')) ?></span>
                 </div>
                 <?php if ($favoriteMockups): ?>
                     <div class="favorite-mockups-strip">
@@ -697,18 +697,18 @@ function mockup_album_label(array $mockup): string
                         <?php endforeach; ?>
                     </div>
                 <?php else: ?>
-                    <div class="favorite-empty-strip">No favorites yet.</div>
+                    <div class="favorite-empty-strip"><?= h(t('No favorites yet.', 'Todavía no hay favoritos.')) ?></div>
                 <?php endif; ?>
             </section>
 
             <section class="panel mockup-archive-panel">
                 <div class="section-heading">
-                    <h2>Mockup Album Archive</h2>
-                    <p>Page <?= h($page) ?> of <?= h($totalPages) ?></p>
+                    <h2><?= h(t('Mockup Album Archive', 'Archivo del Álbum de Mockups')) ?></h2>
+                    <p><?= h(t('Page', 'Página')) ?> <?= h($page) ?> <?= h(t('of', 'de')) ?> <?= h($totalPages) ?></p>
                 </div>
 
                 <?php if (!$mockups): ?>
-                    <div class="empty-state">No mockups to display.</div>
+                    <div class="empty-state"><?= h(t('No mockups to display.', 'No hay mockups para mostrar.')) ?></div>
                 <?php else: ?>
                     <div class="grid">
                         <?php foreach ($mockups as $mockup): ?>
@@ -719,21 +719,21 @@ function mockup_album_label(array $mockup): string
                             ?>
                             <article class="item-card">
                                 <div class="mockup-image-wrap">
-                                    <a href="<?= h($mockupHref) ?>" aria-label="Open mockup">
+                                    <a href="<?= h($mockupHref) ?>" aria-label="<?= h(t('Open mockup', 'Abrir mockup')) ?>">
                                         <img src="<?= h(result_url($mockup['mockup_file'], 520)) ?>" alt="Mockup" loading="lazy" decoding="async">
                                     </a>
                                     <button
                                         class="album-favorite-btn media-icon-button media-thumb-action media-thumb-action--left <?= isset($favoriteLookup[(int)$mockup['id']]) ? 'active' : '' ?>"
                                         type="button"
-                                        title="<?= isset($favoriteLookup[(int)$mockup['id']]) ? 'Remove favorite' : 'Add favorite' ?>"
-                                        aria-label="<?= isset($favoriteLookup[(int)$mockup['id']]) ? 'Remove favorite' : 'Add favorite' ?>"
+                                        title="<?= isset($favoriteLookup[(int)$mockup['id']]) ? h(t('Remove favorite', 'Quitar de favoritos')) : h(t('Add favorite', 'Agregar a favoritos')) ?>"
+                                        aria-label="<?= isset($favoriteLookup[(int)$mockup['id']]) ? h(t('Remove favorite', 'Quitar de favoritos')) : h(t('Add favorite', 'Agregar a favoritos')) ?>"
                                         data-favorite-mockup
                                         data-mockup-id="<?= (int)$mockup['id'] ?>"
                                     ><svg class="media-action-icon" viewBox="0 0 24 24" aria-hidden="true"><path d="m12 3.7 2.55 5.17 5.71.83-4.13 4.03.97 5.69L12 16.73l-5.1 2.69.97-5.69L3.74 9.7l5.71-.83L12 3.7Z"/></svg></button>
-                                    <a class="media-icon-button media-thumb-action media-thumb-action--right-secondary" href="<?= h(download_url($mockup['mockup_file'])) ?>" aria-label="Download mockup" title="Download mockup">
+                                    <a class="media-icon-button media-thumb-action media-thumb-action--right-secondary" href="<?= h(download_url($mockup['mockup_file'])) ?>" aria-label="<?= h(t('Download mockup', 'Descargar mockup')) ?>" title="<?= h(t('Download mockup', 'Descargar mockup')) ?>">
                                         <svg class="media-action-icon" viewBox="0 0 24 24" aria-hidden="true"><path d="M12 3v12M7.5 10.5 12 15l4.5-4.5M5 19h14"/></svg>
                                     </a>
-                                    <button class="luxury-delete-btn media-icon-button media-thumb-action media-thumb-action--right is-danger" type="button" title="Delete mockup" aria-label="Delete mockup" data-delete-mockup data-mockup-id="<?= (int)$mockup['id'] ?>">
+                                    <button class="luxury-delete-btn media-icon-button media-thumb-action media-thumb-action--right is-danger" type="button" title="<?= h(t('Delete mockup', 'Eliminar mockup')) ?>" aria-label="<?= h(t('Delete mockup', 'Eliminar mockup')) ?>" data-delete-mockup data-mockup-id="<?= (int)$mockup['id'] ?>">
                                         <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M8.5 8.5h7l-.55 9h-5.9l-.55-9Z"/><path d="M7.5 6.5h9M10 6.5V5h4v1.5M10.5 11v4.2M13.5 11v4.2"/></svg>
                                     </button>
                                 </div>
@@ -746,10 +746,10 @@ function mockup_album_label(array $mockup): string
                 <?php endif; ?>
 
                 <?php if ($totalPages > 1): ?>
-                    <nav class="pagination" aria-label="Pagination">
+                    <nav class="pagination" aria-label="<?= h(t('Pagination', 'Paginación')) ?>">
                         <?php if ($page > 1): ?>
-                            <a class="button-link secondary" href="<?= h(page_url(1, $query, $bilingualExperiment)) ?>">First</a>
-                            <a class="button-link secondary" href="<?= h(page_url($page - 1, $query, $bilingualExperiment)) ?>">Previous</a>
+                            <a class="button-link secondary" href="<?= h(page_url(1, $query, $bilingualExperiment)) ?>"><?= h(t('First', 'Primera')) ?></a>
+                            <a class="button-link secondary" href="<?= h(page_url($page - 1, $query, $bilingualExperiment)) ?>"><?= h(t('Previous', 'Anterior')) ?></a>
                         <?php endif; ?>
 
                         <?php $visiblePages = pagination_pages($page, $totalPages); ?>
@@ -767,14 +767,14 @@ function mockup_album_label(array $mockup): string
                         <?php endforeach; ?>
 
                         <?php if ($page < $totalPages): ?>
-                            <a class="button-link secondary" href="<?= h(page_url($page + 1, $query, $bilingualExperiment)) ?>">Next</a>
-                            <a class="button-link secondary" href="<?= h(page_url($totalPages, $query, $bilingualExperiment)) ?>">Last</a>
+                            <a class="button-link secondary" href="<?= h(page_url($page + 1, $query, $bilingualExperiment)) ?>"><?= h(t('Next', 'Siguiente')) ?></a>
+                            <a class="button-link secondary" href="<?= h(page_url($totalPages, $query, $bilingualExperiment)) ?>"><?= h(t('Last', 'Última')) ?></a>
                         <?php endif; ?>
                         <form method="get" style="display:inline-flex; gap:6px; align-items:center; margin:0;">
                             <?php if ($query !== ''): ?>
                                 <input type="hidden" name="q" value="<?= h($query) ?>">
                             <?php endif; ?>
-                            <label style="margin:0; font-size:11px; color:var(--muted);">Go to</label>
+                            <label style="margin:0; font-size:11px; color:var(--muted);"><?= h(t('Go to', 'Ir a')) ?></label>
                             <select name="page" onchange="this.form.submit()" style="width:auto; min-width:72px; padding:8px 10px;">
                                 <?php for ($jumpPage = 1; $jumpPage <= $totalPages; $jumpPage++): ?>
                                     <option value="<?= $jumpPage ?>" <?= $jumpPage === $page ? 'selected' : '' ?>><?= $jumpPage ?></option>
@@ -788,6 +788,16 @@ function mockup_album_label(array $mockup): string
     </main>
 </div>
 <script>
+const mockupsAlbumI18n = {
+    deleteConfirm: <?= json_encode(t('Delete this mockup permanently? This cannot be undone.', '¿Eliminar este mockup permanentemente? Esto no se puede deshacer.')) ?>,
+    couldNotDelete: <?= json_encode(t('Could not delete mockup.', 'No se pudo eliminar el mockup.')) ?>,
+    couldNotUpdateFavorite: <?= json_encode(t('Could not update favorite.', 'No se pudo actualizar el favorito.')) ?>,
+    removeFavorite: <?= json_encode(t('Remove favorite', 'Quitar de favoritos')) ?>,
+    addFavorite: <?= json_encode(t('Add favorite', 'Agregar a favoritos')) ?>,
+    chooseUpTo10: <?= json_encode(t('Choose up to 10 mockups.', 'Elegí hasta 10 mockups.')) ?>,
+    selectAtLeastOne: <?= json_encode(t('Select at least one mockup.', 'Seleccioná al menos un mockup.')) ?>,
+};
+
 function parseAlbumJson(response) {
     return response.text().then(text => {
         let parsed;
@@ -801,7 +811,7 @@ document.addEventListener('click', event => {
     if (deleteButton) {
         event.preventDefault();
         event.stopPropagation();
-        if (!confirm('Delete this mockup permanently? This cannot be undone.')) {
+        if (!confirm(mockupsAlbumI18n.deleteConfirm)) {
             return;
         }
         const formData = new FormData();
@@ -811,7 +821,7 @@ document.addEventListener('click', event => {
         fetch('delete_mockup_result.php', { method: 'POST', body: formData })
             .then(parseAlbumJson)
             .then(result => {
-                if (!result.ok) throw new Error(result.error || 'Could not delete mockup.');
+                if (!result.ok) throw new Error(result.error || mockupsAlbumI18n.couldNotDelete);
                 window.location.reload();
             })
             .catch(err => {
@@ -837,10 +847,10 @@ document.addEventListener('click', event => {
         .then(parseAlbumJson)
         .then(result => {
             if (!result.ok) {
-                throw new Error(result.error || 'Could not update favorite.');
+                throw new Error(result.error || mockupsAlbumI18n.couldNotUpdateFavorite);
             }
             button.classList.toggle('active', !!result.favorite);
-            button.title = result.favorite ? 'Remove favorite' : 'Add favorite';
+            button.title = result.favorite ? mockupsAlbumI18n.removeFavorite : mockupsAlbumI18n.addFavorite;
             button.setAttribute('aria-label', button.title);
         })
         .catch(err => {
@@ -865,10 +875,10 @@ document.addEventListener('click', event => {
         if(checked.length===0){form?.classList.remove('is-open');form?.querySelector('.pinterest-batch-mobile-toggle')?.setAttribute('aria-expanded','false');}
     };
     boxes.forEach(box=>box.addEventListener('change',()=>{
-        if(boxes.filter(item=>item.checked).length>10){box.checked=false;alert('Choose up to 10 mockups.');}
+        if(boxes.filter(item=>item.checked).length>10){box.checked=false;alert(mockupsAlbumI18n.chooseUpTo10);}
         refresh();
     }));
-    form?.addEventListener('submit',e=>{if(boxes.filter(box=>box.checked).length<1){e.preventDefault();alert('Select at least one mockup.');}});
+    form?.addEventListener('submit',e=>{if(boxes.filter(box=>box.checked).length<1){e.preventDefault();alert(mockupsAlbumI18n.selectAtLeastOne);}});
     form?.querySelector('.pinterest-batch-mobile-toggle')?.addEventListener('click',event=>{
         const open=form.classList.toggle('is-open');
         event.currentTarget.setAttribute('aria-expanded',open?'true':'false');

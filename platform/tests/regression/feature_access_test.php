@@ -100,7 +100,7 @@ function run_feature_access_regression_tests(): void
     TestHarness::assertTrue(
         str_contains($sidebar, '<div class="sidebar-publishing-tabs">')
         && str_contains($sidebar, '$videoStudioActive')
-        && str_contains($sidebar, '>Video Lab</a>'),
+        && str_contains($sidebar, "><?= h(t('Video Lab', 'Video Lab')) ?></a>"),
         'Video Lab appears with Studio Notes and Social Media Board'
     );
     foreach (['Video' => 'Video', 'Website' => 'Website', 'Social' => 'Social'] as $featureLabel => $accessVariable) {

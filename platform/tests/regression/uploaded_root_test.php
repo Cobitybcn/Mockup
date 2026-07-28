@@ -35,7 +35,7 @@ function run_uploaded_root_regression_tests(): void
     );
 
     TestHarness::assertContains(
-        'INSERT INTO artworks (user_id, job_id, main_file, root_file, status, width, height, depth, unit, created_at, updated_at)',
+        'INSERT INTO artworks (user_id, job_id, main_file, root_file, status, final_title, width, height, depth, unit, created_at, updated_at)',
         $source,
         'el INSERT a artworks conserva las columnas esperadas'
     );
@@ -126,7 +126,7 @@ function run_uploaded_root_regression_tests(): void
         'ArtWorks no duplica Account junto a la accion creativa'
     );
     TestHarness::assertContains(
-        'href="create_scenes.php">Create Art</a>',
+        'href="create_scenes.php"><?= h(t(\'Create Art\', \'Crear Obra\')) ?></a>',
         $rootAlbumSource,
         'ArtWorks conserva Create Art como su accion principal'
     );
@@ -155,7 +155,7 @@ function run_uploaded_root_regression_tests(): void
     );
     TestHarness::assertTrue(
         str_contains($artworkPageSource, 'class="related-mockups-create-decision"')
-            && str_contains($artworkPageSource, 'href="mockup_combinations_review.php?id=<?= (int)$id ?>">Create Mockups</a>'),
+            && str_contains($artworkPageSource, 'href="mockup_combinations_review.php?id=<?= (int)$id ?>"><?= h(t(\'Create Mockups\', \'Crear Mockups\')) ?></a>'),
         'una obra sin mockups ofrece Create Mockups como Decision Block contextual'
     );
     TestHarness::assertContains(
@@ -234,12 +234,12 @@ function run_uploaded_root_regression_tests(): void
         'cada resultado identifica de forma visible la escena usada, incluso al mezclar generaciones'
     );
     TestHarness::assertContains(
-        "'variant_label' => 'Set ' . \$rowSceneBoardIndex . (\$boardOrder > 0 ? ' · View ' . \$boardOrder : '')",
+        "'variant_label' => t('Set', 'Conjunto') . ' ' . \$rowSceneBoardIndex . (\$boardOrder > 0 ? ' · ' . t('View', 'Vista') . ' ' . \$boardOrder : '')",
         $sceneResultsSource,
         'los conjuntos y sus vistas usan terminos comprensibles para el usuario'
     );
     TestHarness::assertContains(
-        "?> results</span>",
+        "?> <?= h(t('results', 'resultados')) ?></span>",
         $sceneResultsSource,
         'el contador conserva el mismo idioma ingles que el encabezado de resultados'
     );
@@ -259,7 +259,7 @@ function run_uploaded_root_regression_tests(): void
         'las tarjetas de resultados ya no muestran batch ni posicion'
     );
     TestHarness::assertContains(
-        "\$sceneTitle = 'Scene not recorded';",
+        "\$sceneTitle = t('Scene not recorded', 'Escena no registrada');",
         $sceneResultsSource,
         'los resultados antiguos sin metadato explican que la escena no fue registrada'
     );
@@ -351,11 +351,10 @@ function run_uploaded_root_regression_tests(): void
         'Videos explica su flujo con la misma jerarquia editorial de Explore Scenes'
     );
     TestHarness::assertTrue(
-        !str_contains($videosSource, 'Biblioteca')
-            && !str_contains($videosSource, 'Videos finales')
-            && !str_contains($videosSource, 'Videos generados')
-            && !str_contains($videosSource, '>Obra<'),
-        'Videos mantiene sus rotulos visibles en ingles'
+        str_contains($videosSource, "t('Library', 'Biblioteca')")
+            && str_contains($videosSource, "t('Final videos', 'Videos finales')")
+            && str_contains($videosSource, "t('Generated videos', 'Videos generados')"),
+        'Videos traduce sus rotulos visibles via t() en lugar de dejarlos fijos en ingles'
     );
     TestHarness::assertContains(
         'videos-play media-play-control',
@@ -363,7 +362,7 @@ function run_uploaded_root_regression_tests(): void
         'los botones de reproduccion usan el mismo tratamiento de vidrio'
     );
     TestHarness::assertContains(
-        'class="media-thumb-action-cluster" aria-label="Video actions"',
+        'class="media-thumb-action-cluster" aria-label="<?= videos_h(t(\'Video actions\', \'Acciones del video\')) ?>"',
         $videosSource,
         'editar y descargar video quedan alineados sobre el thumbnail'
     );
@@ -390,12 +389,12 @@ function run_uploaded_root_regression_tests(): void
     $videoStudioPageSource = (string)file_get_contents(dirname(__DIR__, 2) . '/video.php');
     $videoStudioCssSource = (string)file_get_contents(dirname(__DIR__, 2) . '/video_studio.css');
     TestHarness::assertContains(
-        '<span class="vds-catalog-kicker">Reference Catalog</span>',
+        '<span class="vds-catalog-kicker"><?= vds_h(t(\'Reference Catalog\', \'Catálogo de referencias\')) ?></span>',
         $videoStudioPageSource,
         'Video Studio identifica el catalogo de referencias como rotulo secundario'
     );
     TestHarness::assertContains(
-        '<h1 id="vds-catalog-title">Video Lab</h1>',
+        '<h1 id="vds-catalog-title"><?= vds_h(t(\'Video Lab\', \'Video Lab\')) ?></h1>',
         $videoStudioPageSource,
         'Video Studio usa como titulo principal el nombre real de la seccion'
     );
@@ -411,12 +410,12 @@ function run_uploaded_root_regression_tests(): void
     );
     $socialBoardSource = (string)file_get_contents(dirname(__DIR__, 2) . '/social_media_board.php');
     TestHarness::assertContains(
-        '<span class="smb-catalog-kicker">Mockup Catalog</span>',
+        '<span class="smb-catalog-kicker"><?= smb_h(t(\'Mockup Catalog\', \'Catálogo de Mockups\')) ?></span>',
         $socialBoardSource,
         'Social Media identifica el catalogo de mockups como rotulo secundario'
     );
     TestHarness::assertContains(
-        '<h2 id="smb-catalog-title">Social Media Board</h2>',
+        '<h2 id="smb-catalog-title"><?= smb_h(t(\'Social Media Board\', \'Tablero de Redes Sociales\')) ?></h2>',
         $socialBoardSource,
         'Social Media usa como titulo principal el nombre real de la seccion'
     );
@@ -517,7 +516,7 @@ function run_uploaded_root_regression_tests(): void
         'el encabezado de Series separa titulo, estado y metadatos con jerarquia editorial'
     );
     TestHarness::assertContains(
-        'class="series-title-label">Series</span><span class="series-title-name"',
+        'class="series-title-label"><?= series_h(t(\'Series\', \'Series\')) ?></span><span class="series-title-name"',
         $seriesSource,
         'Series y su nombre comparten tipografia y tamano dentro del mismo titulo'
     );
@@ -707,7 +706,7 @@ function run_uploaded_root_regression_tests(): void
     );
     $artworksSource = (string)file_get_contents(dirname(__DIR__, 2) . '/root_album.php');
     TestHarness::assertContains(
-        'name="series" aria-label="Filter ArtWorks by series"',
+        'name="series" aria-label="<?= h(t(\'Filter ArtWorks by series\', \'Filtrar Obras por serie\')) ?>"',
         $artworksSource,
         'ArtWorks permite filtrar una serie concreta'
     );
@@ -764,7 +763,7 @@ function run_uploaded_root_regression_tests(): void
         'una generacion individual queda registrada para avisar cuando termine'
     );
     TestHarness::assertContains(
-        "successCount + ' TASKS IN BACKGROUND'",
+        "formatI18n(mcrvI18n.tasksInBackground, successCount)",
         $sceneReviewSource,
         'un lote permite seguir navegando mientras se generan sus resultados'
     );
@@ -926,7 +925,7 @@ function run_uploaded_root_regression_tests(): void
         'Scene Mockups se actualiza automaticamente cuando termina una nueva tanda visible'
     );
     TestHarness::assertContains(
-        "newScenes + ' new scenes ready'",
+        "newScenes + sidebarGenerationI18n.newScenesReadySuffix",
         $sidebarSource,
         'fuera de resultados el aviso distingue claramente las escenas nuevas'
     );

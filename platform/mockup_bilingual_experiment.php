@@ -30,7 +30,7 @@ function mbe_text(mixed $value): string
             ? (string)$item
             : (string)json_encode($item, JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES), $value));
     }
-    if (is_bool($value)) return $value ? 'Yes' : 'No';
+    if (is_bool($value)) return $value ? t('Yes', 'Sí') : t('No', 'No');
     return trim((string)$value);
 }
 
@@ -195,7 +195,7 @@ $viewerBack = 'mockup_bilingual_experiment.php?id=' . $mockupId;
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width,initial-scale=1">
     <meta name="robots" content="noindex,nofollow">
-    <title><?= mbe_h($title) ?> · Mockup Sheet</title>
+    <title><?= mbe_h($title) ?> · <?= mbe_h(t('Mockup Sheet', 'Ficha de Mockup')) ?></title>
     <link rel="stylesheet" href="style.css">
     <link rel="stylesheet" href="media-controls.css?v=2">
     <link rel="stylesheet" href="bilingual-editorial.css?v=20260724-1">
@@ -303,33 +303,33 @@ $viewerBack = 'mockup_bilingual_experiment.php?id=' . $mockupId;
                     <h1 class="mockup-title-heading" contenteditable="true" role="textbox" data-universal-title aria-label="Título del mockup"><?= mbe_h($title) ?></h1>
                     <p class="mockup-title-memo">STRATA X — LIMEN · MOCKUP I — NUHRĀ (ܢܘܗܪܐ) · no traducir</p>
                 </div>
-                <a class="mockup-studio-note" href="viewer.php?id=<?= $mockupId ?>&amp;back=<?= rawurlencode($viewerBack) ?>">Open Viewer</a>
+                <a class="mockup-studio-note" href="viewer.php?id=<?= $mockupId ?>&amp;back=<?= rawurlencode($viewerBack) ?>"><?= mbe_h(t('Open Viewer', 'Abrir Viewer')) ?></a>
             </div>
             <?php if ($mockupRelationshipLine !== ''): ?><p class="mockup-title-relationship"><?= mbe_h($mockupRelationshipLine) ?></p><?php endif; ?>
             </div>
 
-            <section class="panel mockup-overview-panel" aria-label="Mockup album">
+            <section class="panel mockup-overview-panel" aria-label="<?= mbe_h(t('Mockup album', 'Álbum de mockups')) ?>">
                 <div class="mockup-overview-grid">
                     <div class="mockup-overview-main">
                     <section class="mockup-favorites-card">
-                        <div class="mockup-section-heading"><h2>Favorite Mockups</h2><span class="mockup-section-count"><?= count($favoriteMockups) ?> selected</span></div>
+                        <div class="mockup-section-heading"><h2><?= mbe_h(t('Favorite Mockups', 'Mockups favoritos')) ?></h2><span class="mockup-section-count"><?= count($favoriteMockups) ?> <?= mbe_h(t('selected', 'seleccionados')) ?></span></div>
                         <?php if ($favoriteMockups): ?>
                             <div class="mockup-favorites-grid">
                                 <?php foreach ($favoriteMockups as $favorite): ?>
                                     <?php $favoriteId=(int)$favorite['id']; $favoriteLabel=Display::contextTitle((string)$favorite['context_id']); ?>
                                     <article class="mockup-favorite-card <?= $favoriteId===$mockupId?'is-current':'' ?>">
-                                        <a href="mockup_bilingual_experiment.php?id=<?= $favoriteId ?>" aria-label="Abrir ficha de <?= mbe_h($favoriteLabel) ?>">
+                                        <a href="mockup_bilingual_experiment.php?id=<?= $favoriteId ?>" aria-label="<?= mbe_h(t('Open sheet for', 'Abrir ficha de')) ?> <?= mbe_h($favoriteLabel) ?>">
                                             <img src="<?= mbe_h(mbe_media($favorite['mockup_file'], 900)) ?>" alt="<?= mbe_h($favoriteLabel) ?>">
                                         </a>
-                                        <?php if ($favoriteId===$mockupId): ?><span class="mockup-current-pill">Current</span><?php endif; ?>
-                                        <button class="mockup-favorite-toggle active" type="button" title="Remove favorite" aria-label="Remove favorite" data-favorite-mockup data-mockup-id="<?= $favoriteId ?>"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="m12 3.7 2.55 5.17 5.71.83-4.13 4.03.97 5.69L12 16.73l-5.1 2.69.97-5.69L3.74 9.7l5.71-.83L12 3.7Z"/></svg></button>
-                                        <a class="mockup-card-action" href="viewer.php?id=<?= $favoriteId ?>&amp;back=<?= rawurlencode('mockup_bilingual_experiment.php?id='.$favoriteId) ?>">Viewer</a>
+                                        <?php if ($favoriteId===$mockupId): ?><span class="mockup-current-pill"><?= mbe_h(t('Current', 'Actual')) ?></span><?php endif; ?>
+                                        <button class="mockup-favorite-toggle active" type="button" title="<?= mbe_h(t('Remove favorite', 'Quitar de favoritos')) ?>" aria-label="<?= mbe_h(t('Remove favorite', 'Quitar de favoritos')) ?>" data-favorite-mockup data-mockup-id="<?= $favoriteId ?>"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="m12 3.7 2.55 5.17 5.71.83-4.13 4.03.97 5.69L12 16.73l-5.1 2.69.97-5.69L3.74 9.7l5.71-.83L12 3.7Z"/></svg></button>
+                                        <a class="mockup-card-action" href="viewer.php?id=<?= $favoriteId ?>&amp;back=<?= rawurlencode('mockup_bilingual_experiment.php?id='.$favoriteId) ?>"><?= mbe_h(t('Viewer', 'Viewer')) ?></a>
                                         <div class="mockup-favorite-caption"><span><?= mbe_h($favoriteLabel) ?></span><span>#<?= $favoriteId ?></span></div>
                                     </article>
                                 <?php endforeach; ?>
                             </div>
                         <?php else: ?>
-                            <div class="mockup-empty">Marcá tus mejores mockups con la estrella.<br>Van a aparecer aquí en gran formato.</div>
+                            <div class="mockup-empty"><?= t('Mark your best mockups with the star.<br>They will appear here in large format.', 'Marcá tus mejores mockups con la estrella.<br>Van a aparecer aquí en gran formato.') ?></div>
                         <?php endif; ?>
                     </section>
 
@@ -364,14 +364,14 @@ $viewerBack = 'mockup_bilingual_experiment.php?id=' . $mockupId;
                     </div>
 
                     <aside class="mockup-related-panel">
-                        <div class="mockup-section-heading"><h3>Mockup Album <span class="mockup-section-count">· <?= $albumCount ?></span></h3><a class="related-mockups-upload-link" href="mockup_upload.php?id=<?= $artworkId ?>">+ Import</a></div>
+                        <div class="mockup-section-heading"><h3><?= mbe_h(t('Mockup Album', 'Álbum de Mockups')) ?> <span class="mockup-section-count">· <?= $albumCount ?></span></h3><a class="related-mockups-upload-link" href="mockup_upload.php?id=<?= $artworkId ?>">+ <?= mbe_h(t('Import', 'Importar')) ?></a></div>
                         <div class="mockup-related-grid">
                             <?php foreach ($relatedMockups as $related): ?>
                                 <?php $relatedId=(int)$related['id']; $relatedLabel=Display::contextTitle((string)$related['context_id']); $isFavorite=isset($favoriteLookup[$relatedId]); ?>
                                 <article class="mockup-related-card <?= $relatedId===$mockupId?'is-current':'' ?>">
-                                    <a href="mockup_bilingual_experiment.php?id=<?= $relatedId ?>" aria-label="Abrir ficha de <?= mbe_h($relatedLabel) ?>"><img src="<?= mbe_h(mbe_media($related['mockup_file'], 520)) ?>" alt="<?= mbe_h($relatedLabel) ?>" loading="lazy"></a>
-                                    <button class="mockup-favorite-toggle <?= $isFavorite?'active':'' ?>" type="button" title="<?= $isFavorite?'Remove favorite':'Add favorite' ?>" aria-label="<?= $isFavorite?'Remove favorite':'Add favorite' ?>" data-favorite-mockup data-mockup-id="<?= $relatedId ?>"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="m12 3.7 2.55 5.17 5.71.83-4.13 4.03.97 5.69L12 16.73l-5.1 2.69.97-5.69L3.74 9.7l5.71-.83L12 3.7Z"/></svg></button>
-                                    <?php if ($relatedId===$mockupId): ?><a class="mockup-card-action" href="viewer.php?id=<?= $relatedId ?>&amp;back=<?= rawurlencode($viewerBack) ?>">Viewer</a><?php endif; ?>
+                                    <a href="mockup_bilingual_experiment.php?id=<?= $relatedId ?>" aria-label="<?= mbe_h(t('Open sheet for', 'Abrir ficha de')) ?> <?= mbe_h($relatedLabel) ?>"><img src="<?= mbe_h(mbe_media($related['mockup_file'], 520)) ?>" alt="<?= mbe_h($relatedLabel) ?>" loading="lazy"></a>
+                                    <button class="mockup-favorite-toggle <?= $isFavorite?'active':'' ?>" type="button" title="<?= $isFavorite?mbe_h(t('Remove favorite','Quitar de favoritos')):mbe_h(t('Add favorite','Agregar a favoritos')) ?>" aria-label="<?= $isFavorite?mbe_h(t('Remove favorite','Quitar de favoritos')):mbe_h(t('Add favorite','Agregar a favoritos')) ?>" data-favorite-mockup data-mockup-id="<?= $relatedId ?>"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="m12 3.7 2.55 5.17 5.71.83-4.13 4.03.97 5.69L12 16.73l-5.1 2.69.97-5.69L3.74 9.7l5.71-.83L12 3.7Z"/></svg></button>
+                                    <?php if ($relatedId===$mockupId): ?><a class="mockup-card-action" href="viewer.php?id=<?= $relatedId ?>&amp;back=<?= rawurlencode($viewerBack) ?>"><?= mbe_h(t('Viewer', 'Viewer')) ?></a><?php endif; ?>
                                 </article>
                             <?php endforeach; ?>
                         </div>
@@ -393,10 +393,10 @@ document.addEventListener('click', async (event) => {
     try {
         const response = await fetch('toggle_mockup_favorite.php', {method:'POST', body});
         const result = await response.json();
-        if (!response.ok || !result.ok) throw new Error(result.error || 'Could not update favorite.');
+        if (!response.ok || !result.ok) throw new Error(result.error || <?= json_encode(t('Could not update favorite.', 'No se pudo actualizar el favorito.')) ?>);
         window.location.reload();
     } catch (error) {
-        window.alert(error.message || 'Could not update favorite.');
+        window.alert(error.message || <?= json_encode(t('Could not update favorite.', 'No se pudo actualizar el favorito.')) ?>);
         button.disabled = false;
     }
 });

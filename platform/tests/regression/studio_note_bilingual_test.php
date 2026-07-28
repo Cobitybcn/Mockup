@@ -20,8 +20,13 @@ function run_studio_note_bilingual_tests(): void
     $contentMigration['up']($pdo);
     $publicationMigration = require dirname(__DIR__, 2) . '/migrations/schema/20260722_000003_bilingual_spanish_publication.php';
     $publicationMigration['up']($pdo);
+    $languagePolicyMigration = require dirname(__DIR__, 2) . '/migrations/schema/20260727_000001_user_language_policy.php';
+    $languagePolicyMigration['up']($pdo);
 
     $pdo->exec("INSERT INTO users VALUES (7,'artist@example.com')");
+    // Este artista trabaja en espanol y publica en espanol+ingles (como Maurizio);
+    // sin una politica explicita el default ahora es ingles.
+    $pdo->exec("INSERT INTO user_language_policy (user_id,working_locale,publication_locales_json,interface_locale,created_at,updated_at) VALUES (7,'es','[\"es\",\"en\"]','',datetime('now'),datetime('now'))");
     $payload = json_encode([
         'channels' => ['website_blog'],
         'destinations' => ['website_blog'],

@@ -140,6 +140,9 @@ $extraFiles = [];
 
 $isUserSceneFlow = !empty($_POST['user_scene_flow']);
 $realDimensionsEnabled = !empty($_POST['real_dimensions_enabled']);
+// El titulo lo pone el artista al crear la obra. Ningun analisis automatico
+// decide como se llama; si queda vacio, puede completarse despues a mano.
+$artworkTitle = mb_substr(trim(strip_tags((string)($_POST['artwork_title'] ?? ''))), 0, 160);
 $width  = trim((string)($_POST['width'] ?? ''));
 $height = trim((string)($_POST['height'] ?? ''));
 $depth  = trim((string)($_POST['depth'] ?? '3'));
@@ -228,14 +231,15 @@ if (StorageService::isGcsActive()) {
 }
 
 $stmt = $pdo->prepare("
-    INSERT INTO artworks (user_id, job_id, main_file, status, width, height, depth, unit, created_at, updated_at)
-    VALUES (:user_id, :job_id, :main_file, :status, :width, :height, :depth, :unit, :created_at, :updated_at)
+    INSERT INTO artworks (user_id, job_id, main_file, status, final_title, width, height, depth, unit, created_at, updated_at)
+    VALUES (:user_id, :job_id, :main_file, :status, :final_title, :width, :height, :depth, :unit, :created_at, :updated_at)
 ");
 $stmt->execute([
     'user_id' => (int)$currentUser['id'],
     'job_id' => $jobId,
     'main_file' => basename($mainInputFile),
     'status' => 'queued',
+    'final_title' => $artworkTitle,
     'width' => $width,
     'height' => $height,
     'depth' => $depth,

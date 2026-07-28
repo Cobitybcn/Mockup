@@ -26,7 +26,7 @@ if ($id > 0) {
     $artwork = $stmt->fetch();
     if (!is_array($artwork)) {
         http_response_code(404);
-        die('Artwork not found.');
+        die(t('Artwork not found.', 'Obra no encontrada.'));
     }
 }
 
@@ -193,9 +193,9 @@ function h($value): string
 function root_album_label(string $viewType): string
 {
     return [
-        'frontal' => 'Frontal',
-        'three-quarter-left' => '3/4 Left',
-        'three-quarter-right' => '3/4 Right',
+        'frontal' => t('Frontal', 'Frontal'),
+        'three-quarter-left' => t('3/4 Left', '3/4 Izquierda'),
+        'three-quarter-right' => t('3/4 Right', '3/4 Derecha'),
     ][$viewType] ?? ucwords(str_replace(['-', '_'], ' ', $viewType));
 }
 
@@ -532,10 +532,10 @@ function root_album_adopt_root_artwork(PDO $pdo, int $userId, string $rootFile):
 }
 ?>
 <!doctype html>
-<html lang="en">
+<html lang="<?= h(Translator::locale($user)) ?>">
 <head>
     <meta charset="utf-8">
-    <title>Root Album - Artwork Mockups</title>
+    <title><?= h(t('Root Album - Artwork Mockups', 'Álbum de Imágenes Base - Artwork Mockups')) ?></title>
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <link rel="stylesheet" href="style.css">
     <link rel="stylesheet" href="ui-catalog.css">
@@ -921,27 +921,27 @@ function root_album_adopt_root_artwork(PDO $pdo, int $userId, string $rootFile):
         </header>
         <?php if ($id <= 0): ?>
             <div class="alert-strip">
-                Artwork Mockups analyzes each artwork before generating mockups, helping artists choose visual environments that respect the work’s style, palette, composition and emotional atmosphere.
+                <?= h(t('Artwork Mockups analyzes each artwork before generating mockups, helping artists choose visual environments that respect the work’s style, palette, composition and emotional atmosphere.', 'Artwork Mockups analiza cada obra antes de generar mockups, ayudando a los artistas a elegir ambientes visuales que respeten el estilo, la paleta, la composición y la atmósfera emocional de la obra.')) ?>
             </div>
         <?php endif; ?>
         <div class="workspace">
             <?php if ($id <= 0): ?>
                 <?php if ($artworksPreviewActive): ?>
-                    <aside class="ui-preview-notice" aria-label="Visual consistency preview">
-                        <span><strong>Preview</strong> ArtWorks consistency</span>
-                        <a href="root_album.php<?= $selectedArtworkSeriesId > 0 ? '?series=' . (int)$selectedArtworkSeriesId : '' ?>">Exit preview</a>
+                    <aside class="ui-preview-notice" aria-label="<?= h(t('Visual consistency preview', 'Vista previa de consistencia visual')) ?>">
+                        <span><strong><?= h(t('Preview', 'Vista previa')) ?></strong> <?= h(t('ArtWorks consistency', 'Consistencia de Obras')) ?></span>
+                        <a href="root_album.php<?= $selectedArtworkSeriesId > 0 ? '?series=' . (int)$selectedArtworkSeriesId : '' ?>"><?= h(t('Exit preview', 'Salir de la vista previa')) ?></a>
                     </aside>
                 <?php endif; ?>
                 <div class="workspace-header workspace-header--artworks">
                     <div>
-                        <h1>ArtWorks</h1>
-                        <p>Canonical artworks with official root views and attached mockups.</p>
+                        <h1><?= h(t('ArtWorks', 'Obras')) ?></h1>
+                        <p><?= h(t('Canonical artworks with official root views and attached mockups.', 'Obras canónicas con vistas base oficiales y mockups asociados.')) ?></p>
                         <form class="root-album-series-filter" method="get">
                             <?php if ($artworksPreviewActive): ?>
                                 <input type="hidden" name="design_preview" value="artworks-kpi">
                             <?php endif; ?>
-                            <select name="series" aria-label="Filter ArtWorks by series" onchange="this.form.submit()">
-                                <option value="">All series</option>
+                            <select name="series" aria-label="<?= h(t('Filter ArtWorks by series', 'Filtrar Obras por serie')) ?>" onchange="this.form.submit()">
+                                <option value=""><?= h(t('All series', 'Todas las series')) ?></option>
                                 <?php foreach ($artworkSeriesRows as $seriesRow): ?>
                                     <option value="<?= (int)$seriesRow['id'] ?>" <?= $selectedArtworkSeriesId === (int)$seriesRow['id'] ? 'selected' : '' ?>><?= h($seriesRow['title']) ?></option>
                                 <?php endforeach; ?>
@@ -949,13 +949,13 @@ function root_album_adopt_root_artwork(PDO $pdo, int $userId, string $rootFile):
                         </form>
                     </div>
                     <div class="artworks-primary-action">
-                        <a class="artworks-decision-block" href="create_scenes.php">Create Art</a>
+                        <a class="artworks-decision-block" href="create_scenes.php"><?= h(t('Create Art', 'Crear Obra')) ?></a>
                     </div>
                 </div>
 
-                <section class="stats" aria-label="ArtWorks summary">
+                <section class="stats" aria-label="<?= h(t('ArtWorks summary', 'Resumen de Obras')) ?>">
                     <div class="stat-card" data-preview-counter="artworks">
-                        <span>Artworks</span>
+                        <span><?= h(t('Artworks', 'Obras')) ?></span>
                         <strong><?= h($rootTotal) ?></strong>
                     </div>
                     <div class="stat-card" data-preview-counter="mockups">
@@ -963,26 +963,26 @@ function root_album_adopt_root_artwork(PDO $pdo, int $userId, string $rootFile):
                         <strong><?= h($mockupTotal) ?></strong>
                     </div>
                     <div class="stat-card" data-preview-counter="variants">
-                        <span>Variants</span>
+                        <span><?= h(t('Variants', 'Variantes')) ?></span>
                         <strong><?= h($variantRootTotal) ?></strong>
                     </div>
                     <div class="stat-card" data-preview-counter="credits">
-                        <span>Credits</span>
+                        <span><?= h(t('Credits', 'Créditos')) ?></span>
                         <strong><?= h($user['credits']) ?></strong>
                     </div>
                 </section>
             <?php else: ?>
                 <div class="workspace-header">
                     <div>
-                        <h1>Root Album</h1>
-                        <p>Official root views for this artwork.</p>
+                        <h1><?= h(t('Root Album', 'Álbum de Imágenes Base')) ?></h1>
+                        <p><?= h(t('Official root views for this artwork.', 'Vistas base oficiales de esta obra.')) ?></p>
                     </div>
                     <div class="root-album-actions">
-                        <a class="button-link secondary" href="artwork_details.php?id=<?= (int)$id ?>">Artwork Details</a>
+                        <a class="button-link secondary" href="artwork_details.php?id=<?= (int)$id ?>"><?= h(t('Artwork Details', 'Detalles de la Obra')) ?></a>
                         <?php if (!empty($missing)): ?>
-                            <form method="post" action="complete_root_views.php" onsubmit="return confirm('Generate missing root views from the current root image?');">
+                            <form method="post" action="complete_root_views.php" onsubmit="return confirm(<?= json_encode(t('Generate missing root views from the current root image?', '¿Generar las vistas base faltantes a partir de la imagen base actual?')) ?>);">
                                 <input type="hidden" name="artwork_id" value="<?= (int)$id ?>">
-                                <button type="submit">Complete Root Views</button>
+                                <button type="submit"><?= h(t('Complete Root Views', 'Completar Vistas Base')) ?></button>
                             </form>
                         <?php endif; ?>
                     </div>
@@ -993,8 +993,8 @@ function root_album_adopt_root_artwork(PDO $pdo, int $userId, string $rootFile):
                 <section class="panel root-pending-panel" id="pendientes" style="border-left: 3px solid var(--accent); background: rgba(154, 123, 86, 0.02); margin-bottom: 30px;">
                     <div class="section-heading" style="display: flex; justify-content: space-between; align-items: center; width: 100%;">
                         <div>
-                            <h2 style="margin:0;">Pending Artworks & Selections</h2>
-                            <p style="margin:4px 0 0; font-size:12px; color:var(--muted);"><?= count($pendingArtworks) ?> pieces requiring attention</p>
+                            <h2 style="margin:0;"><?= h(t('Pending Artworks & Selections', 'Obras y Selecciones Pendientes')) ?></h2>
+                            <p style="margin:4px 0 0; font-size:12px; color:var(--muted);"><?= count($pendingArtworks) ?> <?= h(t('pieces requiring attention', 'piezas que requieren atención')) ?></p>
                         </div>
                         <div style="display: flex; gap: 8px; align-items: center;">
                             <?php
@@ -1010,14 +1010,14 @@ function root_album_adopt_root_artwork(PDO $pdo, int $userId, string $rootFile):
                             }
                             if ($hasClearable):
                             ?>
-                                <form method="post" onsubmit="return confirm('Are you sure you want to clean all stuck or failed uploads? Uploads started less than 5 minutes ago will be kept.');" style="margin: 0;">
+                                <form method="post" onsubmit="return confirm(<?= json_encode(t('Are you sure you want to clean all stuck or failed uploads? Uploads started less than 5 minutes ago will be kept.', '¿Seguro que querés limpiar todas las subidas atascadas o fallidas? Las subidas iniciadas hace menos de 5 minutos se mantendrán.')) ?>);" style="margin: 0;">
                                     <input type="hidden" name="action" value="clear_stuck">
-                                    <button type="submit" class="button-link secondary" style="font-size: 11px; padding: 6px 12px; border: 1px solid #e53e3e; color: #e53e3e; background: transparent; cursor: pointer; border-radius: 4px; transition: all 0.2s; width: auto; margin-top: 0;">Limpiar atascados</button>
+                                    <button type="submit" class="button-link secondary" style="font-size: 11px; padding: 6px 12px; border: 1px solid #e53e3e; color: #e53e3e; background: transparent; cursor: pointer; border-radius: 4px; transition: all 0.2s; width: auto; margin-top: 0;"><?= h(t('Clean up stuck', 'Limpiar atascados')) ?></button>
                                 </form>
                             <?php endif; ?>
-                            <form method="post" onsubmit="return confirm('Discard all pending artworks and selections? This cannot be undone.');" style="margin: 0;">
+                            <form method="post" onsubmit="return confirm(<?= json_encode(t('Discard all pending artworks and selections? This cannot be undone.', '¿Descartar todas las obras y selecciones pendientes? Esto no se puede deshacer.')) ?>);" style="margin: 0;">
                                 <input type="hidden" name="action" value="discard_all_pending">
-                                <button type="submit" class="button-link secondary" style="width: auto; margin-top: 0; font-size: 11px; padding: 6px 12px; border-color: var(--danger); color: var(--danger); background: transparent;">Discard all pending</button>
+                                <button type="submit" class="button-link secondary" style="width: auto; margin-top: 0; font-size: 11px; padding: 6px 12px; border-color: var(--danger); color: var(--danger); background: transparent;"><?= h(t('Discard all pending', 'Descartar todas las pendientes')) ?></button>
                             </form>
                         </div>
                     </div>
@@ -1025,26 +1025,26 @@ function root_album_adopt_root_artwork(PDO $pdo, int $userId, string $rootFile):
                         <?php foreach ($pendingArtworks as $pending): ?>
                             <article class="item-card" style="opacity: 0.95; background: var(--surface); padding: 16px; border: 1px solid var(--line); border-radius: var(--radius); box-shadow: var(--shadow);">
                                 <h3 style="margin: 0 0 8px; font-size: 14px; text-align: left; font-family: var(--font-sans); font-weight: 600;">
-                                    <?= h($pending['final_title'] !== '' ? $pending['final_title'] : 'Artwork Upload (' . date('m/d H:i', strtotime($pending['created_at'])) . ')') ?>
+                                    <?= h($pending['final_title'] !== '' ? $pending['final_title'] : t('Artwork Upload (', 'Subida de obra (') . date('m/d H:i', strtotime($pending['created_at'])) . ')') ?>
                                 </h3>
                                 <div style="margin: 8px 0; text-align: left;">
                                     <?php if ($pending['status'] === 'awaiting_selection'): ?>
-                                        <span class="status-pill done" style="background: var(--accent); color: white; border-color: var(--accent); margin: 0;">Awaiting Selection</span>
+                                        <span class="status-pill done" style="background: var(--accent); color: white; border-color: var(--accent); margin: 0;"><?= h(t('Awaiting Selection', 'Esperando Selección')) ?></span>
                                     <?php else: ?>
                                         <span class="status-pill <?= h($pending['status']) ?>" style="margin: 0;"><?= h($pending['status']) ?></span>
                                     <?php endif; ?>
                                 </div>
-                                <p class="meta-line" style="text-align: left; margin: 4px 0 0; font-size: 11px;">Uploaded: <?= h(date('Y-m-d H:i', strtotime($pending['created_at']))) ?></p>
+                                <p class="meta-line" style="text-align: left; margin: 4px 0 0; font-size: 11px;"><?= h(t('Uploaded:', 'Subido:')) ?> <?= h(date('Y-m-d H:i', strtotime($pending['created_at']))) ?></p>
                                 <div class="card-actions" style="margin-top: 14px; display: flex; gap: 8px; justify-content: flex-start;">
                                     <?php if ($pending['status'] === 'awaiting_selection'): ?>
-                                        <a class="button-link" href="root_select.php?job=<?= rawurlencode((string)$pending['job_id']) ?>" style="font-size: 11px; padding: 6px 12px; color: white !important; width: auto; margin-top: 0;">Select Version</a>
+                                        <a class="button-link" href="root_select.php?job=<?= rawurlencode((string)$pending['job_id']) ?>" style="font-size: 11px; padding: 6px 12px; color: white !important; width: auto; margin-top: 0;"><?= h(t('Select Version', 'Seleccionar Versión')) ?></a>
                                     <?php else: ?>
-                                        <a class="button-link secondary" href="waiting.php?job=<?= rawurlencode((string)$pending['job_id']) ?>" style="font-size: 11px; padding: 6px 12px; width: auto; margin-top: 0;">View Status</a>
+                                        <a class="button-link secondary" href="waiting.php?job=<?= rawurlencode((string)$pending['job_id']) ?>" style="font-size: 11px; padding: 6px 12px; width: auto; margin-top: 0;"><?= h(t('View Status', 'Ver Estado')) ?></a>
                                     <?php endif; ?>
-                                    <form method="post" onsubmit="return confirm('Discard this pending artwork? This cannot be undone.');" style="margin: 0;">
+                                    <form method="post" onsubmit="return confirm(<?= json_encode(t('Discard this pending artwork? This cannot be undone.', '¿Descartar esta obra pendiente? Esto no se puede deshacer.')) ?>);" style="margin: 0;">
                                         <input type="hidden" name="action" value="discard_pending">
                                         <input type="hidden" name="artwork_id" value="<?= h($pending['id']) ?>">
-                                        <button type="submit" class="button-link secondary" style="width: auto; margin-top: 0; font-size: 11px; padding: 6px 12px; border-color: var(--danger); color: var(--danger); background: transparent;">Discard</button>
+                                        <button type="submit" class="button-link secondary" style="width: auto; margin-top: 0; font-size: 11px; padding: 6px 12px; border-color: var(--danger); color: var(--danger); background: transparent;"><?= h(t('Discard', 'Descartar')) ?></button>
                                     </form>
                                 </div>
                             </article>
@@ -1054,14 +1054,14 @@ function root_album_adopt_root_artwork(PDO $pdo, int $userId, string $rootFile):
             <?php endif; ?>
 
             <?php if (isset($_GET['selected'])): ?>
-                <div class="notice">Official root view updated.</div>
+                <div class="notice"><?= h(t('Official root view updated.', 'Vista base oficial actualizada.')) ?></div>
             <?php endif; ?>
             <?php if (isset($_GET['merged'])): ?>
-                <div class="notice">The duplicate was resolved. All root images and mockups are now grouped under one artwork.</div>
+                <div class="notice"><?= h(t('The duplicate was resolved. All root images and mockups are now grouped under one artwork.', 'El duplicado fue resuelto. Todas las imágenes base y mockups ahora están agrupados bajo una sola obra.')) ?></div>
             <?php endif; ?>
 
             <?php if ($id > 0 && !empty($missing)): ?>
-                <div class="notice">Missing root views: <?= h(implode(', ', $missing)) ?>.</div>
+                <div class="notice"><?= h(t('Missing root views:', 'Vistas base faltantes:')) ?> <?= h(implode(', ', $missing)) ?>.</div>
             <?php endif; ?>
             <?php if ($albumLoadError !== ''): ?>
                 <div class="notice error"><?= h($albumLoadError) ?></div>
@@ -1080,7 +1080,7 @@ function root_album_adopt_root_artwork(PDO $pdo, int $userId, string $rootFile):
                                     $title = trim((string)($albumArtwork['group_title'] ?? ''));
                                 }
                                 if ($title === '') {
-                                    $title = 'Untitled';
+                                    $title = t('Untitled', 'Sin título');
                                 }
                                 $seriesTitle = ArtworkSeries::display((string)($albumArtwork['series_title'] ?: $albumArtwork['series'] ?? ''));
                                 $width = trim((string)($albumArtwork['width'] ?? ''));
@@ -1099,7 +1099,7 @@ function root_album_adopt_root_artwork(PDO $pdo, int $userId, string $rootFile):
                                         <?php if ($selectedArtworkSeriesId > 0): ?><span class="series-artwork-order" data-series-order-position><?= str_pad((string)$desktopSeriesOrder, 2, '0', STR_PAD_LEFT) ?></span><?php endif; ?>
                                     </a>
                                     <?php if (count($albumArtworks) > 1): ?>
-                                        <button class="artwork-merge-btn media-icon-button media-thumb-action media-thumb-action--right-secondary" type="button" title="Merge with another artwork" aria-label="Merge with another artwork"
+                                        <button class="artwork-merge-btn media-icon-button media-thumb-action media-thumb-action--right-secondary" type="button" title="<?= h(t('Merge with another artwork', 'Fusionar con otra obra')) ?>" aria-label="<?= h(t('Merge with another artwork', 'Fusionar con otra obra')) ?>"
                                             data-merge-source
                                             data-group-id="<?= (int)$albumArtwork['group_id'] ?>"
                                             data-artwork-id="<?= (int)$albumArtwork['id'] ?>"
@@ -1111,18 +1111,18 @@ function root_album_adopt_root_artwork(PDO $pdo, int $userId, string $rootFile):
                                             <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M9.5 7.5H7a4 4 0 0 0 0 8h2.5M14.5 7.5H17a4 4 0 0 1 0 8h-2.5M8.5 11.5h7"/></svg>
                                         </button>
                                     <?php endif; ?>
-                                    <button class="artwork-delete-btn media-icon-button media-thumb-action media-thumb-action--right is-danger" type="button" title="Delete artwork" aria-label="Delete artwork" data-delete-artwork data-artwork-id="<?= (int)$albumArtwork['id'] ?>">
+                                    <button class="artwork-delete-btn media-icon-button media-thumb-action media-thumb-action--right is-danger" type="button" title="<?= h(t('Delete artwork', 'Eliminar obra')) ?>" aria-label="<?= h(t('Delete artwork', 'Eliminar obra')) ?>" data-delete-artwork data-artwork-id="<?= (int)$albumArtwork['id'] ?>">
                                         <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M8.5 8.5h7l-.55 9h-5.9l-.55-9Z"/><path d="M7.5 6.5h9M10 6.5V5h4v1.5M10.5 11v4.2M13.5 11v4.2"/></svg>
                                     </button>
                                     <h2 class="root-album-title"><?= h($title) ?><?php if ($seriesTitle !== ''): ?> <span class="title-series-soft">(<?= h($seriesTitle) ?>)</span><?php endif; ?></h2>
                                     <p class="root-album-subtitle">
                                         <?php if ($artworksPreviewActive): ?>
-                                            <?= $size !== '' ? h($size) . ' · ' : '' ?><?= h((string)$rootCount) ?> roots · <?= h((string)$mockupCount) ?> mockups
+                                            <?= $size !== '' ? h($size) . ' · ' : '' ?><?= h((string)$rootCount) ?> <?= h(t('roots', 'raíces')) ?> · <?= h((string)$mockupCount) ?> mockups
                                         <?php else: ?>
-                                            Group #<?= (int)($albumArtwork['group_id'] ?? 0) ?> · Artwork #<?= (int)($albumArtwork['id'] ?? 0) ?>
+                                            <?= h(t('Group', 'Grupo')) ?> #<?= (int)($albumArtwork['group_id'] ?? 0) ?> · <?= h(t('Artwork', 'Obra')) ?> #<?= (int)($albumArtwork['id'] ?? 0) ?>
                                             <?= $size !== '' ? ' - ' . h($size) : '' ?>
-                                            · <?= h((string)$officialCount) ?> official / <?= h((string)$rootCount) ?> roots
-                                            <?= $variantCount > 0 ? ' · ' . h((string)$variantCount) . ' variants' : '' ?>
+                                            · <?= h((string)$officialCount) ?> <?= h(t('official', 'oficiales')) ?> / <?= h((string)$rootCount) ?> <?= h(t('roots', 'raíces')) ?>
+                                            <?= $variantCount > 0 ? ' · ' . h((string)$variantCount) . ' ' . h(t('variants', 'variantes')) : '' ?>
                                             <?= $mockupCount > 0 ? ' · ' . h((string)$mockupCount) . ' mockups' : '' ?>
                                         <?php endif; ?>
                                     </p>
@@ -1130,7 +1130,7 @@ function root_album_adopt_root_artwork(PDO $pdo, int $userId, string $rootFile):
                             <?php endforeach; ?>
                         </div>
                     <?php else: ?>
-                        <div class="notice">No ArtWorks are available yet.</div>
+                        <div class="notice"><?= h(t('No ArtWorks are available yet.', 'Todavía no hay obras disponibles.')) ?></div>
                     <?php endif; ?>
                 <?php elseif ($candidates): ?>
                     <div class="root-album-grid">
@@ -1142,7 +1142,7 @@ function root_album_adopt_root_artwork(PDO $pdo, int $userId, string $rootFile):
                                 <div class="root-album-meta">
                                     <strong><?= h(root_album_label($candidate['view_type'])) ?></strong>
                                     <?php if ($candidate['is_selected']): ?>
-                                        <span>Selected</span>
+                                        <span><?= h(t('Selected', 'Seleccionada')) ?></span>
                                     <?php endif; ?>
                                 </div>
                                 <?php if (!$candidate['is_selected']): ?>
@@ -1151,14 +1151,14 @@ function root_album_adopt_root_artwork(PDO $pdo, int $userId, string $rootFile):
                                         <input type="hidden" name="action" value="select_root_candidate">
                                         <input type="hidden" name="candidate_id" value="<?= (int)$candidate['id'] ?>">
                                         <input type="hidden" name="candidate_file" value="<?= h($candidate['file_name']) ?>">
-                                        <button type="submit" class="secondary">Set As Official Root</button>
+                                        <button type="submit" class="secondary"><?= h(t('Set As Official Root', 'Definir Como Base Oficial')) ?></button>
                                     </form>
                                 <?php endif; ?>
                             </article>
                         <?php endforeach; ?>
                     </div>
                 <?php else: ?>
-                    <div class="notice">No root images are available for this artwork yet.</div>
+                    <div class="notice"><?= h(t('No root images are available for this artwork yet.', 'Todavía no hay imágenes base disponibles para esta obra.')) ?></div>
                 <?php endif; ?>
             </section>
         </div>
@@ -1167,16 +1167,16 @@ function root_album_adopt_root_artwork(PDO $pdo, int $userId, string $rootFile):
 <?php if ($id <= 0 && count($albumArtworks) > 1): ?>
 <div class="merge-artwork-backdrop" data-merge-dialog hidden>
     <section class="merge-artwork-dialog" role="dialog" aria-modal="true" aria-labelledby="merge-artwork-title">
-        <span class="merge-artwork-kicker">Resolve duplicate</span>
-        <h2 id="merge-artwork-title">Merge with another artwork</h2>
-        <p class="merge-artwork-intro">Choose the other reference, then choose which one should remain the primary artwork. No root images or mockups will be deleted.</p>
-        <input class="merge-artwork-search" type="search" data-merge-search placeholder="Search by artwork title…" autocomplete="off">
-        <div class="merge-artwork-picker" data-merge-picker aria-label="Choose duplicate artwork">
+        <span class="merge-artwork-kicker"><?= h(t('Resolve duplicate', 'Resolver duplicado')) ?></span>
+        <h2 id="merge-artwork-title"><?= h(t('Merge with another artwork', 'Fusionar con otra obra')) ?></h2>
+        <p class="merge-artwork-intro"><?= h(t('Choose the other reference, then choose which one should remain the primary artwork. No root images or mockups will be deleted.', 'Elegí la otra referencia y después elegí cuál debe quedar como obra principal. No se eliminará ninguna imagen base ni mockup.')) ?></p>
+        <input class="merge-artwork-search" type="search" data-merge-search placeholder="<?= h(t('Search by artwork title…', 'Buscar por título de obra…')) ?>" autocomplete="off">
+        <div class="merge-artwork-picker" data-merge-picker aria-label="<?= h(t('Choose duplicate artwork', 'Elegir obra duplicada')) ?>">
             <?php foreach ($albumArtworks as $mergeCandidate): ?>
                 <?php
                 $mergeTitle = trim((string)($mergeCandidate['final_title'] ?? ''));
                 if ($mergeTitle === '') $mergeTitle = trim((string)($mergeCandidate['group_title'] ?? ''));
-                if ($mergeTitle === '') $mergeTitle = 'Untitled';
+                if ($mergeTitle === '') $mergeTitle = t('Untitled', 'Sin título');
                 $mergeWidth = trim((string)($mergeCandidate['width'] ?? ''));
                 $mergeHeight = trim((string)($mergeCandidate['height'] ?? ''));
                 $mergeUnit = trim((string)($mergeCandidate['unit'] ?? 'cm'));
@@ -1190,16 +1190,16 @@ function root_album_adopt_root_artwork(PDO $pdo, int $userId, string $rootFile):
                     data-mockups="<?= (int)$mergeCandidate['mockup_count'] ?>"
                     data-roots="<?= (int)$mergeCandidate['root_count'] ?>"
                     data-width="<?= h($mergeWidth) ?>" data-height="<?= h($mergeHeight) ?>" data-unit="<?= h($mergeUnit) ?>">
-                    <span class="merge-likely-badge">Possible duplicate</span>
+                    <span class="merge-likely-badge"><?= h(t('Possible duplicate', 'Posible duplicado')) ?></span>
                     <img src="<?= h(root_album_media_url((string)$mergeCandidate['root_file'])) ?>" alt="" loading="lazy">
                     <strong><?= h($mergeTitle) ?></strong>
-                    <small><?= (int)$mergeCandidate['root_count'] ?> roots · <?= (int)$mergeCandidate['mockup_count'] ?> mockups</small>
+                    <small><?= (int)$mergeCandidate['root_count'] ?> <?= h(t('roots', 'raíces')) ?> · <?= (int)$mergeCandidate['mockup_count'] ?> mockups</small>
                 </button>
             <?php endforeach; ?>
         </div>
 
         <div class="merge-primary-panel" data-merge-primary-panel hidden>
-            <strong>Which one should remain the primary artwork?</strong>
+            <strong><?= h(t('Which one should remain the primary artwork?', '¿Cuál debe quedar como obra principal?')) ?></strong>
             <div class="merge-primary-options">
                 <label class="merge-primary-option">
                     <input type="radio" name="merge_primary" value="source" checked>
@@ -1217,13 +1217,24 @@ function root_album_adopt_root_artwork(PDO $pdo, int $userId, string $rootFile):
 
         <div class="merge-dialog-error" data-merge-error role="alert"></div>
         <div class="merge-dialog-actions">
-            <button class="button-link secondary" type="button" data-merge-cancel>Cancel</button>
-            <button class="button-link merge-confirm" type="button" data-merge-confirm disabled>Merge artworks</button>
+            <button class="button-link secondary" type="button" data-merge-cancel><?= h(t('Cancel', 'Cancelar')) ?></button>
+            <button class="button-link merge-confirm" type="button" data-merge-confirm disabled><?= h(t('Merge artworks', 'Fusionar obras')) ?></button>
         </div>
     </section>
 </div>
 <?php endif; ?>
 <script>
+const rootAlbumI18n = {
+    untitled: <?= json_encode(t('Untitled', 'Sin título')) ?>,
+    preservesText: <?= json_encode(t(' root images and ', ' imágenes base y ')) ?>,
+    preservesSuffix: <?= json_encode(t(' mockups will be preserved. The secondary reference will remain internally to preserve provenance.', ' mockups se conservarán. La referencia secundaria se mantendrá internamente para preservar la procedencia.')) ?>,
+    merging: <?= json_encode(t('Merging…', 'Fusionando…')) ?>,
+    couldNotMerge: <?= json_encode(t('The artworks could not be merged.', 'No se pudieron fusionar las obras.')) ?>,
+    mergeArtworks: <?= json_encode(t('Merge artworks', 'Fusionar obras')) ?>,
+    deleteArtworkConfirm: <?= json_encode(t('Delete this artwork, all its root views and associated mockups? This cannot be undone.', '¿Eliminar esta obra, todas sus vistas base y los mockups asociados? Esto no se puede deshacer.')) ?>,
+    couldNotDelete: <?= json_encode(t('Could not delete artwork.', 'No se pudo eliminar la obra.')) ?>,
+};
+
 function parseArtworkDeleteJson(response) {
     return response.text().then(text => {
         try { return JSON.parse(text); } catch (err) { throw new Error(text.substring(0, 220)); }
@@ -1237,7 +1248,7 @@ function mergeArtworkData(element) {
     return {
         groupId: Number(element?.dataset.groupId || 0),
         artworkId: Number(element?.dataset.artworkId || 0),
-        title: element?.dataset.title || 'Untitled',
+        title: element?.dataset.title || rootAlbumI18n.untitled,
         image: element?.dataset.image || '',
         mockups: Number(element?.dataset.mockups || 0),
         roots: Number(element?.dataset.roots || 0),
@@ -1260,7 +1271,7 @@ function fillPrimaryOption(role, artwork) {
     const meta = mergeDialog?.querySelector('[data-merge-primary-meta="' + role + '"]');
     if (image) image.src = artwork.image;
     if (title) title.textContent = artwork.title;
-    if (meta) meta.textContent = artwork.roots + ' roots · ' + artwork.mockups + ' mockups';
+    if (meta) meta.textContent = artwork.roots + ' <?= h(t('roots', 'raíces')) ?> · ' + artwork.mockups + ' mockups';
 }
 
 function closeMergeDialog() {
@@ -1300,7 +1311,7 @@ function selectMergeCandidate(button) {
     fillPrimaryOption('candidate', mergeState.candidate);
     const totalRoots = mergeState.source.roots + mergeState.candidate.roots;
     const totalMockups = mergeState.source.mockups + mergeState.candidate.mockups;
-    mergeDialog.querySelector('[data-merge-preserves]').textContent = totalRoots + ' root images and ' + totalMockups + ' mockups will be preserved. The secondary reference will remain internally to preserve provenance.';
+    mergeDialog.querySelector('[data-merge-preserves]').textContent = totalRoots + rootAlbumI18n.preservesText + totalMockups + rootAlbumI18n.preservesSuffix;
     mergeDialog.querySelector('[data-merge-primary-panel]').hidden = false;
     mergeDialog.querySelector('[data-merge-confirm]').disabled = false;
 }
@@ -1335,19 +1346,19 @@ mergeDialog?.addEventListener('click', event => {
     form.append('second_group_id', String(mergeState.candidate.groupId));
     form.append('primary_group_id', String(primary.groupId));
     confirmButton.disabled = true;
-    confirmButton.textContent = 'Fusionando…';
+    confirmButton.textContent = rootAlbumI18n.merging;
     error.textContent = '';
 
     fetch('merge_artwork_groups.php', { method: 'POST', body: form })
         .then(parseArtworkDeleteJson)
         .then(result => {
-            if (!result.ok) throw new Error(result.error || 'The artworks could not be merged.');
+            if (!result.ok) throw new Error(result.error || rootAlbumI18n.couldNotMerge);
             window.location.href = result.redirect_url || 'root_album.php?merged=1';
         })
         .catch(err => {
             error.textContent = err.message;
             confirmButton.disabled = false;
-            confirmButton.textContent = 'Merge artworks';
+            confirmButton.textContent = rootAlbumI18n.mergeArtworks;
         });
 });
 
@@ -1368,7 +1379,7 @@ document.addEventListener('click', event => {
     if (!button) return;
     event.preventDefault();
     event.stopPropagation();
-    if (!confirm('Delete this artwork, all its root views and associated mockups? This cannot be undone.')) return;
+    if (!confirm(rootAlbumI18n.deleteArtworkConfirm)) return;
 
     const artworkId = button.getAttribute('data-artwork-id') || '';
     const formData = new FormData();
@@ -1378,7 +1389,7 @@ document.addEventListener('click', event => {
     fetch('delete_artwork_group.php', { method: 'POST', body: formData })
         .then(parseArtworkDeleteJson)
         .then(result => {
-            if (!result.ok) throw new Error(result.error || 'Could not delete artwork.');
+            if (!result.ok) throw new Error(result.error || rootAlbumI18n.couldNotDelete);
             window.location.reload();
         })
         .catch(err => {

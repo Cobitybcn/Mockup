@@ -415,10 +415,10 @@ if ($isCli) {
     header('Content-Type: text/html; charset=utf-8');
     ?>
     <!doctype html>
-    <html lang="en">
+    <html lang="<?= htmlspecialchars(Translator::locale()) ?>">
     <head>
         <meta charset="utf-8">
-        <title>Technical Mockup Audit - Artwork #<?= (int)$artworkId ?></title>
+        <title><?= htmlspecialchars(t('Technical Mockup Audit', 'Auditoría Técnica de Mockups')) ?> - <?= htmlspecialchars(t('Artwork', 'Obra')) ?> #<?= (int)$artworkId ?></title>
         <meta name="viewport" content="width=device-width, initial-scale=1">
         <link rel="preconnect" href="https://fonts.googleapis.com">
         <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -736,15 +736,15 @@ if ($isCli) {
     <div class="container">
         <header>
             <div>
-                <h1>Mockup Generation Audit Report</h1>
+                <h1><?= htmlspecialchars(t('Mockup Generation Audit Report', 'Reporte de Auditoría de Generación de Mockups')) ?></h1>
                 <div class="artwork-meta">
-                    Artwork: <strong><?= htmlspecialchars($auditReport['artwork_title']) ?></strong> (ID: <?= (int)$artworkId ?>) |
-                    Dimensiones: <strong><?= htmlspecialchars((string)($artwork['width'] ?? '')) ?> x <?= htmlspecialchars((string)($artwork['height'] ?? '')) ?> x <?= htmlspecialchars((string)($artwork['depth'] ?? '')) ?> <?= htmlspecialchars((string)($artwork['unit'] ?? '')) ?></strong> |
-                    Root File: <strong><?= htmlspecialchars(basename($auditReport['artwork_root_file'])) ?></strong>
+                    <?= htmlspecialchars(t('Artwork', 'Obra')) ?>: <strong><?= htmlspecialchars($auditReport['artwork_title']) ?></strong> (ID: <?= (int)$artworkId ?>) |
+                    <?= htmlspecialchars(t('Dimensions', 'Dimensiones')) ?>: <strong><?= htmlspecialchars((string)($artwork['width'] ?? '')) ?> x <?= htmlspecialchars((string)($artwork['height'] ?? '')) ?> x <?= htmlspecialchars((string)($artwork['depth'] ?? '')) ?> <?= htmlspecialchars((string)($artwork['unit'] ?? '')) ?></strong> |
+                    <?= htmlspecialchars(t('Root File', 'Archivo Base')) ?>: <strong><?= htmlspecialchars(basename($auditReport['artwork_root_file'])) ?></strong>
                 </div>
             </div>
             <div>
-                <span class="tag">Read Only &mdash; Diagnostics</span>
+                <span class="tag"><?= t('Read Only &mdash; Diagnostics', 'Solo Lectura &mdash; Diagnóstico') ?></span>
             </div>
         </header>
         
@@ -754,35 +754,35 @@ if ($isCli) {
                     <div class="card-header">
                         <div>
                             <h2 class="card-title"><?= htmlspecialchars($mAudit['context_name']) ?></h2>
-                            <p class="card-subtitle">Mockup ID: <?= (int)$mAudit['mockup_id'] ?> | Context ID: <?= (int)$mAudit['context_id'] ?> | Generado el: <?= htmlspecialchars($mAudit['created_at']) ?></p>
+                            <p class="card-subtitle">Mockup ID: <?= (int)$mAudit['mockup_id'] ?> | Context ID: <?= (int)$mAudit['context_id'] ?> | <?= htmlspecialchars(t('Generated on:', 'Generado el:')) ?> <?= htmlspecialchars($mAudit['created_at']) ?></p>
                         </div>
                         <div>
-                            <span class="tag" style="background:var(--line); color:var(--ink);">Modelo: <?= htmlspecialchars($mAudit['model_used']) ?></span>
+                            <span class="tag" style="background:var(--line); color:var(--ink);"><?= htmlspecialchars(t('Model:', 'Modelo:')) ?> <?= htmlspecialchars($mAudit['model_used']) ?></span>
                         </div>
                     </div>
-                    
+
                     <div class="meta-panel">
                         <div class="meta-item">
-                            <span>Tipo de Espacio</span>
+                            <span><?= htmlspecialchars(t('Space Type', 'Tipo de Espacio')) ?></span>
                             <p><?= htmlspecialchars($mAudit['space_type']) ?></p>
                         </div>
                         <div class="meta-item">
-                            <span>Atmosphere</span>
+                            <span><?= htmlspecialchars(t('Atmosphere', 'Atmósfera')) ?></span>
                             <p><?= htmlspecialchars($mAudit['atmosphere']) ?></p>
                         </div>
                         <div class="meta-item">
-                            <span>Assigned Camera</span>
+                            <span><?= htmlspecialchars(t('Assigned Camera', 'Cámara Asignada')) ?></span>
                             <p><?= htmlspecialchars($mAudit['camera_view_assigned']) ?> (<?= htmlspecialchars($mAudit['camera_distance_assigned']) ?>)</p>
                         </div>
                         <div class="meta-item">
-                            <span>Presencia Humana</span>
+                            <span><?= htmlspecialchars(t('Human Presence', 'Presencia Humana')) ?></span>
                             <p><?= htmlspecialchars($mAudit['human_presence']) ?></p>
                         </div>
                     </div>
 
                     <?php if (!empty($mAudit['degradation_causes'])): ?>
                         <div class="degradation-box">
-                            <h4>Critical Quality Degradation Points Detected:</h4>
+                            <h4><?= htmlspecialchars(t('Critical Quality Degradation Points Detected:', 'Puntos Críticos de Degradación de Calidad Detectados:')) ?></h4>
                             <ul>
                                 <?php foreach ($mAudit['degradation_causes'] as $cause): ?>
                                     <li><?= $cause ?></li>
@@ -790,57 +790,57 @@ if ($isCli) {
                             </ul>
                         </div>
                     <?php endif; ?>
-                    
+
                     <div class="audit-section">
-                        <h3 class="section-title">Parameter and Rule Verification</h3>
+                        <h3 class="section-title"><?= htmlspecialchars(t('Parameter and Rule Verification', 'Verificación de Parámetros y Reglas')) ?></h3>
                         <div class="verification-grid">
                             <div class="verification-item">
-                                Propuesta Original mockup_contexts
+                                <?= htmlspecialchars(t('Original mockup_contexts Proposal', 'Propuesta Original mockup_contexts')) ?>
                                 <span class="status-badge <?= $mAudit['verification']['respects_context_proposal'] ? 'status-ok' : 'status-fail' ?>">
-                                    <?= $mAudit['verification']['respects_context_proposal'] ? 'Cumplido' : 'No Cumplido' ?>
+                                    <?= $mAudit['verification']['respects_context_proposal'] ? htmlspecialchars(t('Met', 'Cumplido')) : htmlspecialchars(t('Not Met', 'No Cumplido')) ?>
                                 </span>
                             </div>
                             <div class="verification-item">
-                                Reglas Activas ADMIN (Template)
+                                <?= htmlspecialchars(t('Active ADMIN Rules (Template)', 'Reglas Activas ADMIN (Template)')) ?>
                                 <span class="status-badge <?= $mAudit['verification']['respects_admin_rules'] ? 'status-ok' : 'status-fail' ?>">
-                                    <?= $mAudit['verification']['respects_admin_rules'] ? 'Cumplido' : 'No Cumplido' ?>
+                                    <?= $mAudit['verification']['respects_admin_rules'] ? htmlspecialchars(t('Met', 'Cumplido')) : htmlspecialchars(t('Not Met', 'No Cumplido')) ?>
                                 </span>
                             </div>
                             <div class="verification-item">
-                                Assigned Camera Angle
+                                <?= htmlspecialchars(t('Assigned Camera Angle', 'Ángulo de Cámara Asignado')) ?>
                                 <span class="status-badge <?= $mAudit['verification']['respects_camera_view'] ? 'status-ok' : 'status-fail' ?>">
-                                    <?= $mAudit['verification']['respects_camera_view'] ? 'Cumplido' : 'No Cumplido' ?>
+                                    <?= $mAudit['verification']['respects_camera_view'] ? htmlspecialchars(t('Met', 'Cumplido')) : htmlspecialchars(t('Not Met', 'No Cumplido')) ?>
                                 </span>
                             </div>
                             <div class="verification-item">
-                                Negative Prompt Directives
+                                <?= htmlspecialchars(t('Negative Prompt Directives', 'Directivas de Prompt Negativo')) ?>
                                 <span class="status-badge <?= $mAudit['verification']['respects_negative_prompt'] ? 'status-ok' : 'status-fail' ?>">
-                                    <?= $mAudit['verification']['respects_negative_prompt'] ? 'Cumplido' : 'No Cumplido' ?>
+                                    <?= $mAudit['verification']['respects_negative_prompt'] ? htmlspecialchars(t('Met', 'Cumplido')) : htmlspecialchars(t('Not Met', 'No Cumplido')) ?>
                                 </span>
                             </div>
                             <div class="verification-item">
-                                Physical Artwork Reference
+                                <?= htmlspecialchars(t('Physical Artwork Reference', 'Referencia Física de la Obra')) ?>
                                 <span class="status-badge <?= $mAudit['verification']['respects_physical_reference'] ? 'status-ok' : 'status-fail' ?>">
-                                    <?= $mAudit['verification']['respects_physical_reference'] ? 'Cumplido' : 'No Cumplido' ?>
+                                    <?= $mAudit['verification']['respects_physical_reference'] ? htmlspecialchars(t('Met', 'Cumplido')) : htmlspecialchars(t('Not Met', 'No Cumplido')) ?>
                                 </span>
                             </div>
                             <div class="verification-item">
-                                Escala Real de Canvas
+                                <?= htmlspecialchars(t('Real Canvas Scale', 'Escala Real de Canvas')) ?>
                                 <span class="status-badge <?= $mAudit['verification']['respects_scale'] ? 'status-ok' : 'status-fail' ?>">
-                                    <?= $mAudit['verification']['respects_scale'] ? 'Cumplido' : 'No Cumplido' ?>
+                                    <?= $mAudit['verification']['respects_scale'] ? htmlspecialchars(t('Met', 'Cumplido')) : htmlspecialchars(t('Not Met', 'No Cumplido')) ?>
                                 </span>
                             </div>
                             <div class="verification-item">
-                                Physical Stretcher Depth
+                                <?= htmlspecialchars(t('Physical Stretcher Depth', 'Grosor Físico del Bastidor')) ?>
                                 <span class="status-badge <?= $mAudit['verification']['respects_frame_thickness'] ? 'status-ok' : 'status-fail' ?>">
-                                    <?= $mAudit['verification']['respects_frame_thickness'] ? 'Cumplido' : 'No Cumplido' ?>
+                                    <?= $mAudit['verification']['respects_frame_thickness'] ? htmlspecialchars(t('Met', 'Cumplido')) : htmlspecialchars(t('Not Met', 'No Cumplido')) ?>
                                 </span>
                             </div>
                         </div>
 
                         <?php if (!empty($mAudit['verification']['failures'])): ?>
                             <div class="failures-list">
-                                <h4>Fallos de Invariantes Encontrados:</h4>
+                                <h4><?= htmlspecialchars(t('Invariant Failures Found:', 'Fallos de Invariantes Encontrados:')) ?></h4>
                                 <ul>
                                     <?php foreach ($mAudit['verification']['failures'] as $fail): ?>
                                         <li><?= htmlspecialchars($fail) ?></li>
@@ -849,12 +849,12 @@ if ($isCli) {
                             </div>
                         <?php endif; ?>
                     </div>
-                    
+
                     <div class="audit-section">
-                        <h3 class="section-title">Textos, Defaults y Reglas Legacy Activas</h3>
+                        <h3 class="section-title"><?= htmlspecialchars(t('Texts, Defaults and Active Legacy Rules', 'Textos, Defaults y Reglas Legacy Activas')) ?></h3>
                         <?php if (empty($mAudit['legacy_rules']) && empty($mAudit['scenery_directives'])): ?>
                             <div class="verification-item" style="justify-content: flex-start; color: var(--muted);">
-                                No legacy or hidden text detected in the prompt.
+                                <?= htmlspecialchars(t('No legacy or hidden text detected in the prompt.', 'No se detectó texto legacy ni oculto en el prompt.')) ?>
                             </div>
                         <?php else: ?>
                             <ul class="logs-list">
@@ -869,41 +869,41 @@ if ($isCli) {
                     </div>
 
                     <div class="audit-section">
-                        <h3 class="section-title">Datos Comerciales / Curatoriales de Propuesta</h3>
+                        <h3 class="section-title"><?= htmlspecialchars(t('Commercial / Curatorial Proposal Data', 'Datos Comerciales / Curatoriales de Propuesta')) ?></h3>
                         <div class="meta-panel">
                             <div class="meta-item" style="grid-column: span 2;">
-                                <span>Curatorial Rationale</span>
+                                <span><?= htmlspecialchars(t('Curatorial Rationale', 'Justificación Curatorial')) ?></span>
                                 <p style="font-weight:normal; font-size:13px;"><?= htmlspecialchars($mAudit['curatorial_reason']) ?></p>
                             </div>
                             <div class="meta-item" style="grid-column: span 2;">
-                                <span>Commercial Rationale</span>
+                                <span><?= htmlspecialchars(t('Commercial Rationale', 'Justificación Comercial')) ?></span>
                                 <p style="font-weight:normal; font-size:13px;"><?= htmlspecialchars($mAudit['commercial_reason']) ?></p>
                             </div>
                         </div>
                     </div>
-                    
+
                     <div class="audit-section">
                         <div class="prompt-split">
                             <div>
-                                <h3 class="section-title">Prompt Original (mockup_contexts)</h3>
+                                <h3 class="section-title"><?= htmlspecialchars(t('Original Prompt (mockup_contexts)', 'Prompt Original (mockup_contexts)')) ?></h3>
                                 <div class="prompt-box"><?= htmlspecialchars($mAudit['original_mockup_prompt']) ?></div>
-                                
-                                <h3 class="section-title">Negative Prompt Original</h3>
+
+                                <h3 class="section-title"><?= htmlspecialchars(t('Original Negative Prompt', 'Negative Prompt Original')) ?></h3>
                                 <div class="prompt-box" style="max-height: 80px;"><?= htmlspecialchars($mAudit['original_negative_prompt']) ?></div>
                             </div>
                             <div>
-                                <h3 class="section-title">Prompt Compuesto Final Enviado (Vertex/Gemini)</h3>
+                                <h3 class="section-title"><?= htmlspecialchars(t('Final Composed Prompt Sent (Vertex/Gemini)', 'Prompt Compuesto Final Enviado (Vertex/Gemini)')) ?></h3>
                                 <div class="prompt-box" style="max-height: 350px;"><?= htmlspecialchars($mAudit['composed_prompt']) ?></div>
                             </div>
                         </div>
                     </div>
 
                     <div class="audit-section">
-                        <h3 class="section-title">Generated Image</h3>
-                        <p style="font-size: 13px; color: var(--muted); margin-bottom: 8px;">Ruta: <code><?= htmlspecialchars($imagePath) ?></code></p>
-                        <a href="<?= htmlspecialchars($mAudit['generated_file_url']) ?>" target="_blank" class="btn">Open Full Image</a>
+                        <h3 class="section-title"><?= htmlspecialchars(t('Generated Image', 'Imagen Generada')) ?></h3>
+                        <p style="font-size: 13px; color: var(--muted); margin-bottom: 8px;"><?= htmlspecialchars(t('Path:', 'Ruta:')) ?> <code><?= htmlspecialchars($imagePath) ?></code></p>
+                        <a href="<?= htmlspecialchars($mAudit['generated_file_url']) ?>" target="_blank" class="btn"><?= htmlspecialchars(t('Open Full Image', 'Abrir Imagen Completa')) ?></a>
                         <br>
-                        <img src="<?= htmlspecialchars($mAudit['generated_file_url']) ?>" class="img-preview" alt="Mockup preview" />
+                        <img src="<?= htmlspecialchars($mAudit['generated_file_url']) ?>" class="img-preview" alt="<?= htmlspecialchars(t('Mockup preview', 'Vista previa del mockup')) ?>" />
                     </div>
                 </div>
             <?php endforeach; ?>

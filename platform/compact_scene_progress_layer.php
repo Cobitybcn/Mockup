@@ -1,3 +1,11 @@
+<?php
+if (!function_exists('h')) {
+    function h($value): string
+    {
+        return htmlspecialchars((string)$value, ENT_QUOTES, 'UTF-8');
+    }
+}
+?>
 <style>
     .compact-scene-progress-layer {
         position: fixed;
@@ -214,20 +222,20 @@
 <section
     class="compact-scene-progress-layer"
     data-compact-scene-progress-layer
-    aria-label="Background scene creation progress"
+    aria-label="<?= h(t('Background scene creation progress', 'Progreso de creación de escenas en segundo plano')) ?>"
     hidden
 >
     <header class="compact-scene-progress-head">
         <div class="compact-scene-progress-title" aria-live="polite">
             <span class="compact-scene-progress-live" aria-hidden="true"></span>
-            <span data-compact-scene-progress-title>Creating scenes in background</span>
+            <span data-compact-scene-progress-title><?= h(t('Creating scenes in background', 'Creando escenas en segundo plano')) ?></span>
         </div>
         <div class="compact-scene-progress-actions">
-            <button class="compact-scene-progress-action" type="button" data-compact-scene-progress-minimize aria-label="Minimize progress" title="Minimize progress">
+            <button class="compact-scene-progress-action" type="button" data-compact-scene-progress-minimize aria-label="<?= h(t('Minimize progress', 'Minimizar progreso')) ?>" title="<?= h(t('Minimize progress', 'Minimizar progreso')) ?>">
                 <svg class="icon-minimize" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true"><path stroke-linecap="round" stroke-width="1.8" d="M6 12h12"/></svg>
                 <svg class="icon-expand" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.8" d="M8 3H3v5m13-5h5v5M8 21H3v-5m13 5h5v-5"/></svg>
             </button>
-            <button class="compact-scene-progress-action" type="button" data-compact-scene-progress-hide aria-label="Hide progress" title="Hide progress">
+            <button class="compact-scene-progress-action" type="button" data-compact-scene-progress-hide aria-label="<?= h(t('Hide progress', 'Ocultar progreso')) ?>" title="<?= h(t('Hide progress', 'Ocultar progreso')) ?>">
                 <svg fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true"><path stroke-linecap="round" stroke-width="1.8" d="M6 6l12 12M18 6 6 18"/></svg>
             </button>
         </div>
@@ -237,16 +245,30 @@
         class="compact-scene-progress-frame"
         data-compact-scene-progress-frame
         name="artwork-scene-progress-frame"
-        title="Scene creation progress"
+        title="<?= h(t('Scene creation progress', 'Progreso de creación de escenas')) ?>"
         src="about:blank"
     ></iframe>
 </section>
 <button class="compact-scene-progress-reopen" type="button" data-compact-scene-progress-reopen hidden>
     <span class="compact-scene-progress-live" aria-hidden="true"></span>
-    <span>Scenes in background</span>
+    <span><?= h(t('Scenes in background', 'Escenas en segundo plano')) ?></span>
 </button>
 <script>
 (function () {
+    const compactSceneI18n = {
+        expandProgress: <?= json_encode(t('Expand progress', 'Expandir progreso')) ?>,
+        minimizeProgress: <?= json_encode(t('Minimize progress', 'Minimizar progreso')) ?>,
+        scenesInBackground: <?= json_encode(t('Scenes in background', 'Escenas en segundo plano')) ?>,
+        creatingScenesInBackground: <?= json_encode(t('Creating scenes in background', 'Creando escenas en segundo plano')) ?>,
+        preparingArtworkInBackground: <?= json_encode(t('Preparing artwork in background', 'Preparando la obra en segundo plano')) ?>,
+        sceneCreationNeedsAttention: <?= json_encode(t('Scene creation needs attention', 'La creación de escenas necesita atención')) ?>,
+        oneSceneReady: <?= json_encode(t('1 scene is ready', '1 escena está lista')) ?>,
+        scenesNeedAttention: <?= json_encode(t('Scenes need attention', 'Las escenas necesitan atención')) ?>,
+        scenesReady: <?= json_encode(t('Scenes ready', 'Escenas listas')) ?>,
+        scenesReadySuffix: <?= json_encode(t(' scenes are ready', ' escenas están listas')) ?>,
+        scenesReadyFailedSuffix: <?= json_encode(t(' scenes ready · ', ' escenas listas · ')) ?>,
+        failedSuffix: <?= json_encode(t(' failed', ' fallaron')) ?>,
+    };
     const layer = document.querySelector('[data-compact-scene-progress-layer]');
     const frame = document.querySelector('[data-compact-scene-progress-frame]');
     const title = document.querySelector('[data-compact-scene-progress-title]');
@@ -260,14 +282,14 @@
 
     function setMinimized(minimized) {
         layer.classList.toggle('is-minimized', minimized);
-        minimizeButton.setAttribute('aria-label', minimized ? 'Expand progress' : 'Minimize progress');
-        minimizeButton.title = minimized ? 'Expand progress' : 'Minimize progress';
+        minimizeButton.setAttribute('aria-label', minimized ? compactSceneI18n.expandProgress : compactSceneI18n.minimizeProgress);
+        minimizeButton.title = minimized ? compactSceneI18n.expandProgress : compactSceneI18n.minimizeProgress;
     }
 
     function showProgress(label) {
         layer.classList.remove('is-complete', 'has-errors');
         reopenButton.classList.remove('is-complete', 'has-errors');
-        if (reopenLabel) reopenLabel.textContent = 'Scenes in background';
+        if (reopenLabel) reopenLabel.textContent = compactSceneI18n.scenesInBackground;
         if (title && label) title.textContent = label;
         layer.hidden = false;
         reopenButton.hidden = true;
@@ -301,17 +323,17 @@
         reopenButton.classList.add('is-complete');
         reopenButton.classList.toggle('has-errors', hasErrors);
         const completedLabel = hasErrors
-            ? (readyCount > 0 ? readyCount + ' scenes ready · ' + failedCount + ' failed' : 'Scene creation needs attention')
-            : (readyCount === 1 ? '1 scene is ready' : readyCount + ' scenes are ready');
+            ? (readyCount > 0 ? readyCount + compactSceneI18n.scenesReadyFailedSuffix + failedCount + compactSceneI18n.failedSuffix : compactSceneI18n.sceneCreationNeedsAttention)
+            : (readyCount === 1 ? compactSceneI18n.oneSceneReady : readyCount + compactSceneI18n.scenesReadySuffix);
         if (title) title.textContent = completedLabel;
-        if (reopenLabel) reopenLabel.textContent = hasErrors ? 'Scenes need attention' : 'Scenes ready';
+        if (reopenLabel) reopenLabel.textContent = hasErrors ? compactSceneI18n.scenesNeedAttention : compactSceneI18n.scenesReady;
     }
 
     window.openArtworkSceneProgress = function (sourceUrl) {
         const target = new URL(sourceUrl, window.location.href);
         target.searchParams.set('embedded', '1');
         frame.src = target.href;
-        showProgress('Creating scenes in background');
+        showProgress(compactSceneI18n.creatingScenesInBackground);
     };
 
     window.submitArtworkSceneProgress = function (form) {
@@ -321,7 +343,7 @@
         form.querySelectorAll('[type="submit"]').forEach(button => { button.disabled = true; });
         const previousTarget = form.getAttribute('target');
         form.setAttribute('target', frame.name);
-        showProgress('Preparing artwork in background');
+        showProgress(compactSceneI18n.preparingArtworkInBackground);
         HTMLFormElement.prototype.submit.call(form);
         if (previousTarget === null) form.removeAttribute('target');
         else form.setAttribute('target', previousTarget);
@@ -342,9 +364,9 @@
         try {
             const path = frame.contentWindow.location.pathname;
             if (title && path.endsWith('/create_scenes_wait.php')) {
-                title.textContent = 'Preparing artwork in background';
+                title.textContent = compactSceneI18n.preparingArtworkInBackground;
             } else if (title && path.endsWith('/mockup_combinations_review.php')) {
-                title.textContent = 'Creating scenes in background';
+                title.textContent = compactSceneI18n.creatingScenesInBackground;
             }
         } catch (error) {
         }

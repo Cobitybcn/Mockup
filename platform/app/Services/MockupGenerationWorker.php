@@ -189,7 +189,11 @@ final class MockupGenerationWorker
                 'error' => '',
             ]);
 
-            if (ProviderSettings::isRealMode() && ProviderSettings::allowRealApi() && $generationProvider === 'gemini') {
+            if (ProviderSettings::isRealMode()
+                && ProviderSettings::allowRealApi()
+                && $generationProvider === 'gemini'
+                && FeatureAccess::allowsUserId((int)$job['user_id'], FeatureAccess::EDITORIAL_MANAGE)
+            ) {
                 try {
                     $sheetService = new ArtworkSheetService($pdo);
                     $artworkSheet = $sheetService->sheetForArtwork((int)$artwork['id'], (int)$job['user_id']);

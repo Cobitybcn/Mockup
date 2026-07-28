@@ -18,7 +18,7 @@ $resetLink = '';
 $csrf = Auth::csrfToken('admin_users');
 
 if ($_SERVER['REQUEST_METHOD'] === 'POST' && !Auth::validateCsrf((string)($_POST['csrf'] ?? ''), 'admin_users')) {
-    $error = 'Your form session expired. Reload the page and try again.';
+    $error = t('Your form session expired. Reload the page and try again.', 'La sesión del formulario expiró. Recargá la página e intentá de nuevo.');
     $_POST = [];
 }
 
@@ -41,7 +41,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['action']) && $_POST['
     $targetCredits = (int)($_POST['credits'] ?? 0);
     $reason = trim((string)($_POST['reason'] ?? ''));
     if ($reason === '') {
-        $reason = 'Admin adjustment';
+        $reason = t('Admin adjustment', 'Ajuste de administrador');
     }
 
     if ($targetUserId > 0 && $targetCredits >= 0) {
@@ -49,10 +49,10 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['action']) && $_POST['
             Database::setCredits($targetUserId, $targetCredits, $reason);
             $saved = true;
         } catch (Exception $e) {
-            $error = 'Error updating credits: ' . $e->getMessage();
+            $error = t('Error updating credits: ', 'Error al actualizar créditos: ') . $e->getMessage();
         }
     } else {
-        $error = 'Invalid user ID or credit amount.';
+        $error = t('Invalid user ID or credit amount.', 'ID de usuario o cantidad de créditos inválidos.');
     }
 }
 
@@ -62,6 +62,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && ($_POST['action'] ?? '') === 'updat
     $planCode = (string)($_POST['plan_code'] ?? FeatureAccess::PLAN_ARTIST_STUDIO);
     $submittedOverrides = is_array($_POST['feature_overrides'] ?? null) ? $_POST['feature_overrides'] : [];
     $featureAliases = [
+        'editorial' => FeatureAccess::EDITORIAL_MANAGE,
         'website' => FeatureAccess::WEBSITE_MANAGE,
         'social' => FeatureAccess::SOCIAL_MANAGE,
         'video' => FeatureAccess::VIDEO_MANAGE,
@@ -72,11 +73,11 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && ($_POST['action'] ?? '') === 'updat
     }
 
     if (!$targetUser) {
-        $error = 'User not found.';
+        $error = t('User not found.', 'Usuario no encontrado.');
     } elseif (Auth::isAdmin($targetUser)) {
-        $error = 'Admin accounts already have complete access.';
+        $error = t('Admin accounts already have complete access.', 'Las cuentas de administrador ya tienen acceso completo.');
     } elseif (!array_key_exists($planCode, FeatureAccess::plans())) {
-        $error = 'Invalid artist plan.';
+        $error = t('Invalid artist plan.', 'Plan de artista inválido.');
     } else {
         try {
             FeatureAccess::updateUserAccess(
@@ -88,9 +89,9 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && ($_POST['action'] ?? '') === 'updat
                 (int)$currentUser['id'],
                 'admin_users'
             );
-            $notice = 'Artist plan and feature access updated successfully.';
+            $notice = t('Artist plan and feature access updated successfully.', 'Plan de artista y acceso a funciones actualizados correctamente.');
         } catch (Throwable $e) {
-            $error = 'Error updating access: ' . $e->getMessage();
+            $error = t('Error updating access: ', 'Error al actualizar el acceso: ') . $e->getMessage();
         }
     }
 }
@@ -100,13 +101,13 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && ($_POST['action'] ?? '') === 'send_
     $targetUser = admin_user_by_id($pdo, $targetUserId);
 
     if (!$targetUser) {
-        $error = 'User not found.';
+        $error = t('User not found.', 'Usuario no encontrado.');
     } else {
         $result = Auth::requestPasswordReset((string)$targetUser['email']);
         $resetLink = (string)($result['debug_link'] ?? '');
         $notice = $resetLink !== ''
-            ? 'Password reset link generated.'
-            : 'Password reset email requested. If mail is configured, the user will receive it.';
+            ? t('Password reset link generated.', 'Enlace de restablecimiento de contraseña generado.')
+            : t('Password reset email requested. If mail is configured, the user will receive it.', 'Se solicitó el correo de restablecimiento de contraseña. Si el correo está configurado, el usuario lo recibirá.');
     }
 }
 
@@ -116,13 +117,13 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && ($_POST['action'] ?? '') === 'delet
     $targetUser = admin_user_by_id($pdo, $targetUserId);
 
     if (!$targetUser) {
-        $error = 'User not found.';
+        $error = t('User not found.', 'Usuario no encontrado.');
     } elseif ($targetUserId === (int)$currentUser['id']) {
-        $error = 'You cannot delete your own account from this panel.';
+        $error = t('You cannot delete your own account from this panel.', 'No podés eliminar tu propia cuenta desde este panel.');
     } elseif (Auth::isAdmin($targetUser)) {
-        $error = 'Admin users are protected. Remove admin status manually before deleting.';
+        $error = t('Admin users are protected. Remove admin status manually before deleting.', 'Los usuarios administradores están protegidos. Quitá el estado de administrador manualmente antes de eliminar.');
     } elseif ($confirmation !== 'DELETE') {
-        $error = 'Type DELETE to confirm user deletion.';
+        $error = t('Type DELETE to confirm user deletion.', 'Escribí DELETE para confirmar la eliminación del usuario.');
     } else {
         try {
             Database::withBusyRetry(function () use ($pdo, $targetUserId): void {
@@ -139,9 +140,9 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && ($_POST['action'] ?? '') === 'delet
                     throw $e;
                 }
             });
-            $notice = 'User deleted successfully.';
+            $notice = t('User deleted successfully.', 'Usuario eliminado correctamente.');
         } catch (Throwable $e) {
-            $error = 'Error deleting user: ' . $e->getMessage();
+            $error = t('Error deleting user: ', 'Error al eliminar usuario: ') . $e->getMessage();
         }
     }
 }
@@ -152,9 +153,9 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && ($_POST['action'] ?? '') === 'bulk_
     $confirmation = trim((string)($_POST['bulk_delete_confirmation'] ?? ''));
 
     if (empty($selectedIds)) {
-        $error = 'Select at least one user to delete.';
+        $error = t('Select at least one user to delete.', 'Seleccioná al menos un usuario para eliminar.');
     } elseif ($confirmation !== 'DELETE') {
-        $error = 'Type DELETE to confirm bulk deletion.';
+        $error = t('Type DELETE to confirm bulk deletion.', 'Escribí DELETE para confirmar la eliminación masiva.');
     } else {
         try {
             $deletedCount = Database::withBusyRetry(function () use ($pdo, $selectedIds, $currentUser): int {
@@ -192,10 +193,10 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && ($_POST['action'] ?? '') === 'bulk_
             });
 
             $notice = $deletedCount > 0
-                ? "{$deletedCount} user(s) deleted successfully."
-                : 'No users were deleted. Admin and current accounts are protected.';
+                ? "{$deletedCount} " . t('user(s) deleted successfully.', 'usuario(s) eliminado(s) correctamente.')
+                : t('No users were deleted. Admin and current accounts are protected.', 'No se eliminó ningún usuario. Las cuentas de administrador y la actual están protegidas.');
         } catch (Throwable $e) {
-            $error = 'Error deleting selected users: ' . $e->getMessage();
+            $error = t('Error deleting selected users: ', 'Error al eliminar los usuarios seleccionados: ') . $e->getMessage();
         }
     }
 }
@@ -227,10 +228,10 @@ $totalProArtists = count(array_filter($users, static fn(array $u): bool =>
 
 ?>
 <!doctype html>
-<html lang="en">
+<html lang="<?= h(Translator::locale($currentUser)) ?>">
 <head>
     <meta charset="utf-8">
-    <title>Users & Credits - Artwork Mockups</title>
+    <title><?= h(t('Users & Credits - Artwork Mockups', 'Usuarios y Créditos - Artwork Mockups')) ?></title>
     <link rel="stylesheet" href="style.css">
     <style>
         .users-table-container {
@@ -468,30 +469,30 @@ $totalProArtists = count(array_filter($users, static fn(array $u): bool =>
         </header>
 
         <div class="alert-strip">
-            Administration panel for managing registered users and their credit balances.
+            <?= h(t('Administration panel for managing registered users and their credit balances.', 'Panel de administración para gestionar usuarios registrados y sus saldos de créditos.')) ?>
         </div>
 
         <div class="workspace">
             <div class="workspace-header">
                 <div>
-                    <h1>Users & Credits</h1>
-                    <p>Load credits, promote users, and audit mockup generation balance transactions.</p>
+                    <h1><?= h(t('Users & Credits', 'Usuarios y Créditos')) ?></h1>
+                    <p><?= h(t('Load credits, promote users, and audit mockup generation balance transactions.', 'Cargá créditos, promové usuarios y auditá las transacciones de saldo de generación de mockups.')) ?></p>
                 </div>
                 <div class="topbar-actions">
-                    <a class="button-link secondary" href="admin_api_keys.php">API Settings</a>
-                    <a class="button-link secondary" href="root_album.php">ArtWorks</a>
+                    <a class="button-link secondary" href="admin_api_keys.php"><?= h(t('API Settings', 'Configuración de API')) ?></a>
+                    <a class="button-link secondary" href="root_album.php"><?= h(t('ArtWorks', 'Obras')) ?></a>
                 </div>
             </div>
 
             <?php if ($saved): ?>
-                <div class="notice">Credits adjusted successfully.</div>
+                <div class="notice"><?= h(t('Credits adjusted successfully.', 'Créditos ajustados correctamente.')) ?></div>
             <?php endif; ?>
 
             <?php if ($notice !== ''): ?>
                 <div class="notice">
                     <?= h($notice) ?>
                     <?php if ($resetLink !== ''): ?>
-                        <br><a href="<?= h($resetLink) ?>">Open password reset link</a>
+                        <br><a href="<?= h($resetLink) ?>"><?= h(t('Open password reset link', 'Abrir enlace de restablecimiento de contraseña')) ?></a>
                     <?php endif; ?>
                 </div>
             <?php endif; ?>
@@ -503,51 +504,51 @@ $totalProArtists = count(array_filter($users, static fn(array $u): bool =>
             <!-- General System Stats -->
             <div class="stats">
                 <div class="stat-card">
-                    <span>Total Registered Users</span>
+                    <span><?= h(t('Total Registered Users', 'Usuarios Registrados Totales')) ?></span>
                     <strong><?= $totalUsers ?></strong>
                 </div>
                 <div class="stat-card">
-                    <span>Total Active Credits</span>
+                    <span><?= h(t('Total Active Credits', 'Créditos Activos Totales')) ?></span>
                     <strong><?= $totalCredits ?></strong>
                 </div>
                 <div class="stat-card">
-                    <span>Administrator Accounts</span>
+                    <span><?= h(t('Administrator Accounts', 'Cuentas de Administrador')) ?></span>
                     <strong><?= $totalAdmins ?></strong>
                 </div>
                 <div class="stat-card">
-                    <span>Artist Pro Accounts</span>
+                    <span><?= h(t('Artist Pro Accounts', 'Cuentas de Artista Pro')) ?></span>
                     <strong><?= $totalProArtists ?></strong>
                 </div>
             </div>
 
             <!-- Users Directory List -->
             <section class="panel">
-                <h2>Users Directory</h2>
+                <h2><?= h(t('Users Directory', 'Directorio de Usuarios')) ?></h2>
                 <p style="color: var(--muted); margin-bottom: 16px;">
-                    Review registered artist accounts and adjust their credit balances in real-time.
+                    <?= h(t('Review registered artist accounts and adjust their credit balances in real-time.', 'Revisá las cuentas de artistas registradas y ajustá sus saldos de créditos en tiempo real.')) ?>
                 </p>
                 <div class="bulk-actions">
-                    <span style="color: var(--muted); font-size: 12px;">Select generated/test users to remove. Admin accounts are ignored.</span>
-                    <form id="bulkDeleteUsersForm" method="post" onsubmit="return confirm('Delete selected users and their related data? This cannot be undone.');">
+                    <span style="color: var(--muted); font-size: 12px;"><?= h(t('Select generated/test users to remove. Admin accounts are ignored.', 'Seleccioná usuarios generados/de prueba para eliminar. Las cuentas de administrador se ignoran.')) ?></span>
+                    <form id="bulkDeleteUsersForm" method="post" onsubmit="return confirm(<?= json_encode(t('Delete selected users and their related data? This cannot be undone.', '¿Eliminar los usuarios seleccionados y sus datos relacionados? Esto no se puede deshacer.')) ?>);">
                         <input type="hidden" name="csrf" value="<?= htmlspecialchars($csrf, ENT_QUOTES, 'UTF-8') ?>">
                         <input type="hidden" name="action" value="bulk_delete_users">
                         <input type="text" name="bulk_delete_confirmation" placeholder="DELETE" autocomplete="off" required>
-                        <button type="submit" class="danger-button">Delete selected</button>
+                        <button type="submit" class="danger-button"><?= h(t('Delete selected', 'Eliminar seleccionados')) ?></button>
                     </form>
                 </div>
                 <div class="users-table-container">
                     <table class="premium-table">
                         <thead>
                         <tr>
-                            <th>Select</th>
-                            <th>User ID</th>
-                            <th>Name</th>
-                            <th>Email Address</th>
-                            <th>Role</th>
-                            <th>Plan & Feature Access</th>
-                            <th>Credits</th>
-                            <th style="width: 420px;">Adjust Credit Balance</th>
-                            <th style="width: 260px;">Account Actions</th>
+                            <th><?= h(t('Select', 'Seleccionar')) ?></th>
+                            <th><?= h(t('User ID', 'ID de Usuario')) ?></th>
+                            <th><?= h(t('Name', 'Nombre')) ?></th>
+                            <th><?= h(t('Email Address', 'Correo Electrónico')) ?></th>
+                            <th><?= h(t('Role', 'Rol')) ?></th>
+                            <th><?= h(t('Plan & Feature Access', 'Plan y Acceso a Funciones')) ?></th>
+                            <th><?= h(t('Credits', 'Créditos')) ?></th>
+                            <th style="width: 420px;"><?= h(t('Adjust Credit Balance', 'Ajustar Saldo de Créditos')) ?></th>
+                            <th style="width: 260px;"><?= h(t('Account Actions', 'Acciones de Cuenta')) ?></th>
                         </tr>
                         </thead>
                         <tbody>
@@ -563,14 +564,14 @@ $totalProArtists = count(array_filter($users, static fn(array $u): bool =>
                                 <td><?= h($u['email']) ?></td>
                                 <td>
                                     <?php if (!empty($u['is_admin'])): ?>
-                                        <span class="user-role-badge admin">Admin</span>
+                                        <span class="user-role-badge admin"><?= h(t('Admin', 'Admin')) ?></span>
                                     <?php else: ?>
-                                        <span class="user-role-badge">Artist</span>
+                                        <span class="user-role-badge"><?= h(t('Artist', 'Artista')) ?></span>
                                     <?php endif; ?>
                                 </td>
                                 <td>
                                     <?php if (Auth::isAdmin($u)): ?>
-                                        <span class="user-role-badge admin">Complete access</span>
+                                        <span class="user-role-badge admin"><?= h(t('Complete access', 'Acceso completo')) ?></span>
                                     <?php else: ?>
                                         <?php $userOverrides = FeatureAccess::overridesForUser((int)$u['id']); ?>
                                         <details class="access-details">
@@ -580,25 +581,25 @@ $totalProArtists = count(array_filter($users, static fn(array $u): bool =>
                                                 <input type="hidden" name="action" value="update_access">
                                                 <input type="hidden" name="user_id" value="<?= (int)$u['id'] ?>">
                                                 <label>
-                                                    Artist plan
+                                                    <?= h(t('Artist plan', 'Plan de artista')) ?>
                                                     <select name="plan_code">
                                                         <?php foreach (FeatureAccess::plans() as $planCode => $planLabel): ?>
                                                             <option value="<?= h($planCode) ?>" <?= FeatureAccess::planForUser($u) === $planCode ? 'selected' : '' ?>><?= h($planLabel) ?></option>
                                                         <?php endforeach; ?>
                                                     </select>
                                                 </label>
-                                                <?php foreach (['website' => FeatureAccess::WEBSITE_MANAGE, 'social' => FeatureAccess::SOCIAL_MANAGE, 'video' => FeatureAccess::VIDEO_MANAGE] as $featureAlias => $featureKey): ?>
+                                                <?php foreach (['editorial' => FeatureAccess::EDITORIAL_MANAGE, 'website' => FeatureAccess::WEBSITE_MANAGE, 'social' => FeatureAccess::SOCIAL_MANAGE, 'video' => FeatureAccess::VIDEO_MANAGE] as $featureAlias => $featureKey): ?>
                                                     <?php $overrideState = array_key_exists($featureKey, $userOverrides) ? ($userOverrides[$featureKey] ? 'allow' : 'deny') : 'inherit'; ?>
                                                     <label>
-                                                        <?= h(FeatureAccess::overridableFeatures()[$featureKey]) ?> override
+                                                        <?= h(FeatureAccess::overridableFeatures()[$featureKey]) ?> <?= h(t('override', 'anulación')) ?>
                                                         <select name="feature_overrides[<?= h($featureAlias) ?>]">
-                                                            <option value="inherit" <?= $overrideState === 'inherit' ? 'selected' : '' ?>>According to plan</option>
-                                                            <option value="allow" <?= $overrideState === 'allow' ? 'selected' : '' ?>>Beta access enabled</option>
-                                                            <option value="deny" <?= $overrideState === 'deny' ? 'selected' : '' ?>>Explicitly disabled</option>
+                                                            <option value="inherit" <?= $overrideState === 'inherit' ? 'selected' : '' ?>><?= h(t('According to plan', 'Según el plan')) ?></option>
+                                                            <option value="allow" <?= $overrideState === 'allow' ? 'selected' : '' ?>><?= h(t('Beta access enabled', 'Acceso beta habilitado')) ?></option>
+                                                            <option value="deny" <?= $overrideState === 'deny' ? 'selected' : '' ?>><?= h(t('Explicitly disabled', 'Explícitamente deshabilitado')) ?></option>
                                                         </select>
                                                     </label>
                                                 <?php endforeach; ?>
-                                                <button type="submit">Save access</button>
+                                                <button type="submit"><?= h(t('Save access', 'Guardar acceso')) ?></button>
                                             </form>
                                         </details>
                                     <?php endif; ?>
@@ -613,9 +614,9 @@ $totalProArtists = count(array_filter($users, static fn(array $u): bool =>
                                         <input type="hidden" name="csrf" value="<?= htmlspecialchars($csrf, ENT_QUOTES, 'UTF-8') ?>">
                                         <input type="hidden" name="action" value="update_credits">
                                         <input type="hidden" name="user_id" value="<?= (int)$u['id'] ?>">
-                                        <input type="number" name="credits" value="<?= (int)$u['credits'] ?>" min="0" required placeholder="Credits">
-                                        <input type="text" name="reason" placeholder="Reason (e.g. Purchase, Promo)" required>
-                                        <button type="submit" class="button">Set</button>
+                                        <input type="number" name="credits" value="<?= (int)$u['credits'] ?>" min="0" required placeholder="<?= h(t('Credits', 'Créditos')) ?>">
+                                        <input type="text" name="reason" placeholder="<?= h(t('Reason (e.g. Purchase, Promo)', 'Motivo (ej. Compra, Promoción)')) ?>" required>
+                                        <button type="submit" class="button"><?= h(t('Set', 'Fijar')) ?></button>
                                     </form>
                                 </td>
                                 <td>
@@ -625,20 +626,20 @@ $totalProArtists = count(array_filter($users, static fn(array $u): bool =>
                                                 <input type="hidden" name="csrf" value="<?= htmlspecialchars($csrf, ENT_QUOTES, 'UTF-8') ?>">
                                                 <input type="hidden" name="action" value="send_password_reset">
                                                 <input type="hidden" name="user_id" value="<?= (int)$u['id'] ?>">
-                                                <button type="submit" class="secondary">Reset link</button>
+                                                <button type="submit" class="secondary"><?= h(t('Reset link', 'Enlace de restablecimiento')) ?></button>
                                             </form>
                                         </div>
                                         <?php if ((int)$u['id'] === (int)$currentUser['id']): ?>
-                                            <small>Current admin account protected.</small>
+                                            <small><?= h(t('Current admin account protected.', 'Cuenta de administrador actual protegida.')) ?></small>
                                         <?php elseif (Auth::isAdmin($u)): ?>
-                                            <small>Admin account protected.</small>
+                                            <small><?= h(t('Admin account protected.', 'Cuenta de administrador protegida.')) ?></small>
                                         <?php else: ?>
-                                            <form method="post" class="delete-user-form" onsubmit="return confirm('Delete this user and related data? This cannot be undone.');">
+                                            <form method="post" class="delete-user-form" onsubmit="return confirm(<?= json_encode(t('Delete this user and related data? This cannot be undone.', '¿Eliminar este usuario y sus datos relacionados? Esto no se puede deshacer.')) ?>);">
                                                 <input type="hidden" name="csrf" value="<?= htmlspecialchars($csrf, ENT_QUOTES, 'UTF-8') ?>">
                                                 <input type="hidden" name="action" value="delete_user">
                                                 <input type="hidden" name="user_id" value="<?= (int)$u['id'] ?>">
                                                 <input type="text" name="delete_confirmation" placeholder="DELETE" autocomplete="off" required>
-                                                <button type="submit" class="danger-button">Delete</button>
+                                                <button type="submit" class="danger-button"><?= h(t('Delete', 'Eliminar')) ?></button>
                                             </form>
                                         <?php endif; ?>
                                     </div>
@@ -652,26 +653,26 @@ $totalProArtists = count(array_filter($users, static fn(array $u): bool =>
 
             <!-- Credit Transactions Audit Log -->
             <section class="panel transaction-log">
-                <h2>Recent Transactions (Audit Log)</h2>
+                <h2><?= h(t('Recent Transactions (Audit Log)', 'Transacciones Recientes (Registro de Auditoría)')) ?></h2>
                 <p style="color: var(--muted); margin-bottom: 16px;">
-                    Historical transactions of credit adjustments (mockup generation costs, administrative additions, and error refunds).
+                    <?= h(t('Historical transactions of credit adjustments (mockup generation costs, administrative additions, and error refunds).', 'Historial de transacciones de ajustes de créditos (costos de generación de mockups, agregados administrativos y reembolsos por error).')) ?>
                 </p>
                 <div class="users-table-container">
                     <table class="premium-table">
                         <thead>
                         <tr>
-                            <th>Transaction ID</th>
-                            <th>User Email</th>
-                            <th>Amount</th>
-                            <th>Reason</th>
-                            <th>Timestamp</th>
+                            <th><?= h(t('Transaction ID', 'ID de Transacción')) ?></th>
+                            <th><?= h(t('User Email', 'Correo del Usuario')) ?></th>
+                            <th><?= h(t('Amount', 'Monto')) ?></th>
+                            <th><?= h(t('Reason', 'Motivo')) ?></th>
+                            <th><?= h(t('Timestamp', 'Fecha y hora')) ?></th>
                         </tr>
                         </thead>
                         <tbody>
                         <?php if (empty($transactions)): ?>
                             <tr>
                                 <td colspan="5" style="text-align: center; color: var(--muted); padding: 20px;">
-                                    No transactions recorded yet.
+                                    <?= h(t('No transactions recorded yet.', 'Todavía no hay transacciones registradas.')) ?>
                                 </td>
                             </tr>
                         <?php else: ?>

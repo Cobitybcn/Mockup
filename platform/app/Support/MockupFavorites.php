@@ -8,27 +8,16 @@ final class MockupFavorites
      */
     public static function idsForUser(int $userId): array
     {
-        $path = self::path($userId);
-        if (!is_file($path) && class_exists('StorageService') && StorageService::isGcsActive()) {
-            $dir = dirname($path);
-            if (!is_dir($dir)) {
-                mkdir($dir, 0775, true);
-            }
-            StorageService::downloadFile(self::storageKey($userId), $path);
-        }
-        if (!is_file($path)) {
+        if ($userId <= 0) {
             return [];
         }
 
-        $decoded = json_decode((string)file_get_contents($path), true);
-        if (!is_array($decoded)) {
-            return [];
-        }
+        $stmt = Database::connection()->prepare(
+            'SELECT mockup_id FROM mockup_favorites WHERE user_id = ? ORDER BY id DESC'
+        );
+        $stmt->execute([$userId]);
 
-        return array_values(array_unique(array_filter(
-            array_map('intval', $decoded),
-            static fn (int $id): bool => $id > 0
-        )));
+        return array_map('intval', $stmt->fetchAll(PDO::FETCH_COLUMN) ?: []);
     }
 
     /**
@@ -72,12 +61,9 @@ final class MockupFavorites
             return;
         }
 
-        $favorites = array_values(array_filter(
-            self::idsForUser($userId),
-            static fn (int $id): bool => $id !== $mockupId
-        ));
-
-        self::write($userId, $favorites);
+        Database::connection()
+            ->prepare('DELETE FROM mockup_favorites WHERE user_id = ? AND mockup_id = ?')
+            ->execute([$userId, $mockupId]);
     }
 
     /**
@@ -98,53 +84,21 @@ final class MockupFavorites
             throw new RuntimeException('Mockup not found.');
         }
 
-        $favorites = self::idsForUser($userId);
-        $favorite = !in_array($mockupId, $favorites, true);
-        if ($favorite) {
-            array_unshift($favorites, $mockupId);
-        } else {
-            $favorites = array_values(array_filter($favorites, static fn (int $id): bool => $id !== $mockupId));
-        }
-        $favorites = array_values(array_unique(array_filter($favorites, static fn (int $id): bool => $id > 0)));
+        $existing = $pdo->prepare('SELECT id FROM mockup_favorites WHERE user_id = ? AND mockup_id = ? LIMIT 1');
+        $existing->execute([$userId, $mockupId]);
+        $favorite = !$existing->fetch();
 
-        self::write($userId, $favorites);
+        if ($favorite) {
+            $pdo->prepare('INSERT INTO mockup_favorites (user_id, mockup_id, created_at) VALUES (?, ?, ?)')
+                ->execute([$userId, $mockupId, date(DATE_ATOM)]);
+        } else {
+            $pdo->prepare('DELETE FROM mockup_favorites WHERE user_id = ? AND mockup_id = ?')
+                ->execute([$userId, $mockupId]);
+        }
 
         return [
             'favorite' => $favorite,
-            'favorites' => $favorites,
+            'favorites' => self::idsForUser($userId),
         ];
-    }
-
-    /**
-     * @param array<int,int> $ids
-     */
-    private static function write(int $userId, array $ids): void
-    {
-        $dir = dirname(__DIR__, 2) . DIRECTORY_SEPARATOR . 'storage' . DIRECTORY_SEPARATOR . 'mockup_favorites';
-        if (!is_dir($dir) && !mkdir($dir, 0775, true) && !is_dir($dir)) {
-            throw new RuntimeException('Could not create mockup favorites directory.');
-        }
-
-        $written = file_put_contents(
-            self::path($userId),
-            json_encode(array_values($ids), JSON_PRETTY_PRINT | JSON_UNESCAPED_SLASHES)
-        );
-        if ($written === false) {
-            throw new RuntimeException('Could not save mockup favorites.');
-        }
-        if (class_exists('StorageService') && StorageService::isGcsActive()
-            && !StorageService::uploadFile(self::storageKey($userId), self::path($userId))) {
-            throw new RuntimeException('Could not persist mockup favorites.');
-        }
-    }
-
-    private static function path(int $userId): string
-    {
-        return dirname(__DIR__, 2) . DIRECTORY_SEPARATOR . 'storage' . DIRECTORY_SEPARATOR . 'mockup_favorites' . DIRECTORY_SEPARATOR . 'user_' . $userId . '.json';
-    }
-
-    private static function storageKey(int $userId): string
-    {
-        return 'storage/mockup_favorites/user_' . $userId . '.json';
     }
 }

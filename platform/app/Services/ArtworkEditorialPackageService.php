@@ -418,13 +418,20 @@ final class ArtworkEditorialPackageService
         string $entityType,
         int $entityId
     ): ?string {
-        $spanish = $editorial->get($userId, $entityType, $entityId, 'es');
-        $english = $editorial->get($userId, $entityType, $entityId, 'en');
-        if (!$this->hasRequiredContent($entityType, (array)$spanish['content'])) {
+        $working = $editorial->sourceLocale($userId);
+        $adaptationLocale = $editorial->primaryAdaptationTarget($userId);
+        $master = $editorial->get($userId, $entityType, $entityId, $working);
+        if (!$this->hasRequiredContent($entityType, (array)$master['content'])) {
             return 'prepare';
         }
-        if ((string)$english['status'] !== 'current'
-            || !$this->hasRequiredContent($entityType, (array)$english['content'])) {
+        if ($adaptationLocale === '') {
+            // El artista publica solo en su idioma de trabajo: con el master
+            // completo no queda adaptacion pendiente.
+            return null;
+        }
+        $adapted = $editorial->get($userId, $entityType, $entityId, $adaptationLocale);
+        if ((string)$adapted['status'] !== 'current'
+            || !$this->hasRequiredContent($entityType, (array)$adapted['content'])) {
             return 'adapt';
         }
         return null;
@@ -532,7 +539,7 @@ final class ArtworkEditorialPackageService
             try {
                 $entityType = (string)$item['entity_type'];
                 $entityId = (int)$item['entity_id'];
-                $spanish = $editorial->get((int)$package['user_id'], $entityType, $entityId, 'es');
+                $spanish = $editorial->get((int)$package['user_id'], $entityType, $entityId, $editorial->sourceLocale((int)$package['user_id']));
                 $job = $jobsService->createOrReuse(
                     (int)$package['user_id'],
                     $entityType,

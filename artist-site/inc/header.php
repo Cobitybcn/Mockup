@@ -21,6 +21,10 @@ $localizedCanonical = artist_site_url_with_language(
     (string)($languageCanonicals[$currentLanguage] ?? $meta['canonical']),
     $currentLanguage
 );
+$publicationLocales = app_publication_locales();
+// The artist's default publication language stands in for x-default: prefer
+// English (the historical default), otherwise the artist's only language.
+$defaultPublicationLocale = in_array('en', $publicationLocales, true) ? 'en' : ($publicationLocales[0] ?? 'en');
 ?>
 <!doctype html>
 <html lang="<?= e($currentLanguage) ?>">
@@ -34,12 +38,14 @@ $localizedCanonical = artist_site_url_with_language(
     <?php if (!empty($meta['robots'])): ?><meta name="robots" content="<?= e($meta['robots']) ?>"><?php endif; ?>
     <?php if (!empty($meta['keywords'])): ?><meta name="keywords" content="<?= e($meta['keywords']) ?>"><?php endif; ?>
     <link rel="canonical" href="<?= e($localizedCanonical) ?>">
-    <?php if (!$hasExplicitLanguageCanonicals || isset($languageCanonicals['es'])): ?>
+    <?php if (in_array('es', $publicationLocales, true) && (!$hasExplicitLanguageCanonicals || isset($languageCanonicals['es']))): ?>
         <link rel="alternate" hreflang="es" href="<?= e(artist_site_url_with_language((string)($languageCanonicals['es'] ?? $meta['canonical']), 'es')) ?>">
     <?php endif; ?>
-    <?php if (!$hasExplicitLanguageCanonicals || isset($languageCanonicals['en'])): ?>
+    <?php if (in_array('en', $publicationLocales, true) && (!$hasExplicitLanguageCanonicals || isset($languageCanonicals['en']))): ?>
         <link rel="alternate" hreflang="en" href="<?= e(artist_site_url_with_language((string)($languageCanonicals['en'] ?? $meta['canonical']), 'en')) ?>">
-        <link rel="alternate" hreflang="x-default" href="<?= e(artist_site_url_with_language((string)($languageCanonicals['en'] ?? $meta['canonical']), 'en')) ?>">
+    <?php endif; ?>
+    <?php if (!$hasExplicitLanguageCanonicals || isset($languageCanonicals[$defaultPublicationLocale])): ?>
+        <link rel="alternate" hreflang="x-default" href="<?= e(artist_site_url_with_language((string)($languageCanonicals[$defaultPublicationLocale] ?? $meta['canonical']), $defaultPublicationLocale)) ?>">
     <?php endif; ?>
     <meta property="og:title" content="<?= e($meta['title']) ?>">
     <meta property="og:description" content="<?= e($meta['description']) ?>">
@@ -90,11 +96,17 @@ $localizedCanonical = artist_site_url_with_language(
             <input id="site-search-input" name="q" type="search" placeholder="<?= e(site_t('Search works or series', 'Buscar obras o series')) ?>" autocomplete="off">
             <button type="submit"><?= e(site_t('Search', 'Buscar')) ?></button>
         </form>
+        <?php if (count($publicationLocales) > 1): ?>
         <nav class="language-switch" aria-label="<?= e(site_t('Language', 'Idioma')) ?>">
-            <a href="<?= e(artist_site_language_url('es')) ?>" lang="es" hreflang="es"<?= $currentLanguage === 'es' ? ' class="is-active" aria-current="true"' : '' ?>>ES</a>
-            <span aria-hidden="true">/</span>
-            <a href="<?= e(artist_site_language_url('en')) ?>" lang="en" hreflang="en"<?= $currentLanguage === 'en' ? ' class="is-active" aria-current="true"' : '' ?>>EN</a>
+            <?php if (in_array('es', $publicationLocales, true)): ?>
+                <a href="<?= e(artist_site_language_url('es')) ?>" lang="es" hreflang="es"<?= $currentLanguage === 'es' ? ' class="is-active" aria-current="true"' : '' ?>>ES</a>
+            <?php endif; ?>
+            <?php if (in_array('es', $publicationLocales, true) && in_array('en', $publicationLocales, true)): ?><span aria-hidden="true">/</span><?php endif; ?>
+            <?php if (in_array('en', $publicationLocales, true)): ?>
+                <a href="<?= e(artist_site_language_url('en')) ?>" lang="en" hreflang="en"<?= $currentLanguage === 'en' ? ' class="is-active" aria-current="true"' : '' ?>>EN</a>
+            <?php endif; ?>
         </nav>
+        <?php endif; ?>
     </div>
 </header>
 <main>

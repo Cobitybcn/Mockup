@@ -319,7 +319,7 @@ if ($id <= 0) {
         exit;
     }
     http_response_code(404);
-    die('Artwork ID is missing and no root artwork is available.');
+    die(t('Artwork ID is missing and no root artwork is available.', 'Falta el ID de la obra y no hay ninguna obra raíz disponible.'));
 }
 
 $stmt = $pdo->prepare('SELECT * FROM artworks WHERE id = :id LIMIT 1');
@@ -327,11 +327,11 @@ $stmt->execute(['id' => $id]);
 $artwork = $stmt->fetch();
 if (!$artwork) {
     http_response_code(404);
-    die('Artwork not found.');
+    die(t('Artwork not found.', 'Obra no encontrada.'));
 }
 if ((int)$artwork['user_id'] !== (int)$user['id'] && !Auth::isAdmin($user)) {
     http_response_code(403);
-    die('Access denied.');
+    die(t('Access denied.', 'Acceso denegado.'));
 }
 if ((int)$artwork['user_id'] === (int)$user['id']) {
     scenes_remember_last_artwork($pdo, (int)$user['id'], $id);
@@ -367,15 +367,15 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && ($_POST['action'] ?? '') === 'choos
 function get_friendly_camera_name(string $slug): string
 {
     $mapping = [
-        'corte-agresivo-de-esquina-de-obra-loft' => 'Loft - Close-up Corner',
-        'corte-agresivo-de-esquina-de-obra-loft-1' => 'Loft - Close-up Corner A',
-        'corte-agresivo-de-esquina-de-obra-loft-2' => 'Loft - Close-up Corner B',
-        'frontal-close-up-loft' => 'Loft - Frontal Close-up',
-        'frontal-close-up-loft-1' => 'Loft - Frontal Close-up A',
-        'frontal-close-up-loft-2' => 'Loft - Frontal Close-up B',
-        'borde-de-canvas-close-up-loft' => 'Loft - Canvas Edge Detail',
-        'contrapicado-78-loft' => 'Loft - Low Angle 7/8',
-        'frontal-lejos-loft' => 'Loft - Frontal Wide View'
+        'corte-agresivo-de-esquina-de-obra-loft' => t('Loft - Close-up Corner', 'Loft - Esquina en Primer Plano'),
+        'corte-agresivo-de-esquina-de-obra-loft-1' => t('Loft - Close-up Corner A', 'Loft - Esquina en Primer Plano A'),
+        'corte-agresivo-de-esquina-de-obra-loft-2' => t('Loft - Close-up Corner B', 'Loft - Esquina en Primer Plano B'),
+        'frontal-close-up-loft' => t('Loft - Frontal Close-up', 'Loft - Frontal en Primer Plano'),
+        'frontal-close-up-loft-1' => t('Loft - Frontal Close-up A', 'Loft - Frontal en Primer Plano A'),
+        'frontal-close-up-loft-2' => t('Loft - Frontal Close-up B', 'Loft - Frontal en Primer Plano B'),
+        'borde-de-canvas-close-up-loft' => t('Loft - Canvas Edge Detail', 'Loft - Detalle de Borde de Lienzo'),
+        'contrapicado-78-loft' => t('Loft - Low Angle 7/8', 'Loft - Contrapicado 7/8'),
+        'frontal-lejos-loft' => t('Loft - Frontal Wide View', 'Loft - Frontal de Plano General')
     ];
 
     if (isset($mapping[$slug])) {
@@ -402,9 +402,9 @@ function world_mother_image_url(string $file): string
 function scene_root_view_label(string $viewType): string
 {
     return [
-        'frontal' => 'Frontal',
-        'three-quarter-left' => '3/4 Left',
-        'three-quarter-right' => '3/4 Right',
+        'frontal' => t('Frontal', 'Frontal'),
+        'three-quarter-left' => t('3/4 Left', '3/4 Izquierda'),
+        'three-quarter-right' => t('3/4 Right', '3/4 Derecha'),
     ][$viewType] ?? ucwords(str_replace(['-', '_'], ' ', $viewType));
 }
 
@@ -559,11 +559,11 @@ foreach ($cameraSlots as $cameraSlot) {
     }
 }
 $suggestedWorldMotherCategories = (array)($review['suggested_world_mother_categories'] ?? []);
-$scenePageTitle = 'Explore Scenes';
+$scenePageTitle = t('Explore Scenes', 'Explorar Escenas');
 $cameraBoardMeta = [
-    1 => ['name' => 'Essential Views', 'description' => 'Balanced front, perspective and artwork detail views.'],
-    2 => ['name' => 'Dramatic Angles', 'description' => 'Extreme architectural, aerial and close-edge viewpoints.'],
-    3 => ['name' => 'Editorial Perspectives', 'description' => 'Expressive low, aerial, leaning and corner compositions.'],
+    1 => ['name' => t('Essential Views', 'Vistas Esenciales'), 'description' => t('Balanced front, perspective and artwork detail views.', 'Vistas equilibradas de frente, perspectiva y detalle de la obra.')],
+    2 => ['name' => t('Dramatic Angles', 'Ángulos Dramáticos'), 'description' => t('Extreme architectural, aerial and close-edge viewpoints.', 'Puntos de vista arquitectónicos extremos, aéreos y de borde cercano.')],
+    3 => ['name' => t('Editorial Perspectives', 'Perspectivas Editoriales'), 'description' => t('Expressive low, aerial, leaning and corner compositions.', 'Composiciones expresivas bajas, aéreas, inclinadas y de esquina.')],
 ];
 $selectedWorldMotherImages = stable_world_mother_pool_for_artwork(
     (new WorldMotherLibrary())->imagesForCategory($selectedWorldMotherCategory),
@@ -580,7 +580,7 @@ foreach ($selectedWorldMotherImages as $sceneImage) {
     $selectedWorldMotherClientPool[] = [
         'relative_path' => $relativePath,
         'url' => $previewUrl,
-        'title' => (string)($sceneImage['title'] ?? 'Scene family reference'),
+        'title' => (string)($sceneImage['title'] ?? t('Scene family reference', 'Referencia de familia de escena')),
     ];
 }
 $selectedWorldMotherClientPairOptions = [];
@@ -600,7 +600,7 @@ foreach ($reviewsByBoard as $availableBoardIndex => $boardReview) {
                 $clientPair[] = [
                     'relative_path' => $relativePath,
                     'url' => $previewUrl,
-                    'title' => (string)($sceneImage['title'] ?? 'Scene family reference'),
+                    'title' => (string)($sceneImage['title'] ?? t('Scene family reference', 'Referencia de familia de escena')),
                 ];
             }
             if ($clientPair) {
@@ -672,7 +672,7 @@ if (!$currentOptionKnown) {
 
 ?>
 <!doctype html>
-<html lang="en">
+<html lang="<?= h(Translator::locale($user)) ?>">
 <head>
     <meta charset="utf-8">
     <title><?= h($scenePageTitle) ?> - Artwork Mockups</title>
@@ -2194,21 +2194,21 @@ if (!$currentOptionKnown) {
         <?php if ($compactSceneFlow): ?>
             <section class="compact-scene-status" id="compactSceneStatus" aria-live="polite">
                 <div class="generation-spinner" id="compactSceneSpinner" aria-hidden="true"></div>
-                <h1 id="compactSceneTitle">Creating <?= (int)$compactSceneLimit ?> scene<?= $compactSceneLimit === 1 ? '' : 's' ?></h1>
-                <p id="compactSceneMessage">Registering the scene tasks.</p>
-                <div class="compact-view-progress" aria-label="Scene progress">
+                <h1 id="compactSceneTitle"><?= $compactSceneLimit === 1 ? h(t('Creating', 'Creando') . ' 1 ' . t('scene', 'escena')) : h(t('Creating', 'Creando') . ' ' . (int)$compactSceneLimit . ' ' . t('scenes', 'escenas')) ?></h1>
+                <p id="compactSceneMessage"><?= h(t('Registering the scene tasks.', 'Registrando las tareas de escena.')) ?></p>
+                <div class="compact-view-progress" aria-label="<?= h(t('Scene progress', 'Progreso de escena')) ?>">
                     <?php for ($compactViewIndex = 1; $compactViewIndex <= $compactSceneLimit; $compactViewIndex++): ?>
                         <div class="compact-view-row queued" data-compact-view-row="<?= $compactViewIndex ?>">
                             <div class="compact-view-head">
-                                <strong>View <?= $compactViewIndex ?></strong>
-                                <span data-compact-view-status="<?= $compactViewIndex ?>">Queued</span>
+                                <strong><?= h(t('View', 'Vista')) ?> <?= $compactViewIndex ?></strong>
+                                <span data-compact-view-status="<?= $compactViewIndex ?>"><?= h(t('Queued', 'En cola')) ?></span>
                             </div>
                             <div class="compact-view-track"><div class="compact-view-bar"></div></div>
                         </div>
                     <?php endfor; ?>
                 </div>
                 <div class="compact-scene-actions" id="compactSceneActions" hidden>
-                    <button class="button-link compact-scene-primary" id="compactSceneContinue" type="button">Continue working</button>
+                    <button class="button-link compact-scene-primary" id="compactSceneContinue" type="button"><?= h(t('Continue working', 'Seguir trabajando')) ?></button>
                 </div>
                 <div class="compact-tip" id="compactSceneTip"></div>
             </section>
@@ -2217,7 +2217,7 @@ if (!$currentOptionKnown) {
             <a class="user-chip" href="account.php"><?= h($user['email']) ?></a>
         </header>
 
-        <div class="alert-strip">Choose a visual direction and generate scene combinations for the active artwork.</div>
+        <div class="alert-strip"><?= h(t('Choose a visual direction and generate scene combinations for the active artwork.', 'Elegí una dirección visual y generá combinaciones de escena para la obra activa.')) ?></div>
 
         <div class="workspace">
             <div class="scene-header-v3">
@@ -2227,19 +2227,19 @@ if (!$currentOptionKnown) {
                     </div>
                     <div class="header-desc-block">
                         <p class="scene-page-desc">
-                            <span class="desc-kicker">Choose a scene style for your artwork.</span>
-                            <span class="desc-instructions">Each set combines your root artwork with a visual scene direction: architecture, light, atmosphere and spatial mood. The AI uses this reference to place your artwork naturally into high-end mockup environments, without changing the original artwork.</span>
+                            <span class="desc-kicker"><?= h(t('Choose a scene style for your artwork.', 'Elegí un estilo de escena para tu obra.')) ?></span>
+                            <span class="desc-instructions"><?= h(t('Each set combines your root artwork with a visual scene direction: architecture, light, atmosphere and spatial mood. The AI uses this reference to place your artwork naturally into high-end mockup environments, without changing the original artwork.', 'Cada conjunto combina tu obra raíz con una dirección visual de escena: arquitectura, luz, atmósfera y clima espacial. La IA usa esta referencia para colocar tu obra de forma natural en entornos de mockup de alta gama, sin modificar la obra original.')) ?></span>
                         </p>
                     </div>
                 </div>
                 <div class="scene-primary-action">
-                    <button class="button-link" type="button" id="generate-all-btn" onclick="<?= $sceneSelectionFlow ? 'startCompactSceneFlow(this)' : 'generateAllCombinations(this)' ?>"><?= ($compactSceneFlow || $sceneSelectionFlow) ? 'Create 4 scenes' : 'Generate These 4 Views' ?></button>
+                    <button class="button-link" type="button" id="generate-all-btn" onclick="<?= $sceneSelectionFlow ? 'startCompactSceneFlow(this)' : 'generateAllCombinations(this)' ?>"><?= ($compactSceneFlow || $sceneSelectionFlow) ? h(t('Create 4 scenes', 'Crear 4 escenas')) : h(t('Generate These 4 Views', 'Generar Estas 4 Vistas')) ?></button>
                 </div>
             </div>
 
-            <section class="scene-direction-panel" aria-label="Scene direction">
+            <section class="scene-direction-panel" aria-label="<?= h(t('Scene direction', 'Dirección de escena')) ?>">
                 <div class="scene-direction-browser">
-                    <span>Choose a visual direction</span>
+                    <span><?= h(t('Choose a visual direction', 'Elegí una dirección visual')) ?></span>
                     <div class="scene-direction-strip">
                         <?php foreach ($sceneDirectionOptions as $sceneOption): ?>
                             <?php
@@ -2270,8 +2270,8 @@ if (!$currentOptionKnown) {
                         <?php endforeach; ?>
                     </div>
                     <label class="scene-select-hidden">
-                        Scene direction
-                        <select id="scene-select" aria-label="Select scene direction">
+                        <?= h(t('Scene direction', 'Dirección de escena')) ?>
+                        <select id="scene-select" aria-label="<?= h(t('Select scene direction', 'Seleccionar dirección de escena')) ?>">
                             <?php foreach ($sceneDirectionOptions as $sceneOption): ?>
                                 <option value="<?= h((string)$sceneOption['slug']) ?>" <?= (string)$sceneOption['slug'] === $selectedWorldMotherCategory ? 'selected' : '' ?>>
                                     <?= h((string)$sceneOption['name']) ?>
@@ -2282,12 +2282,12 @@ if (!$currentOptionKnown) {
                 </div>
             </section>
 
-            <section class="camera-board-selector" aria-label="Camera view sets">
+            <section class="camera-board-selector" aria-label="<?= h(t('Camera view sets', 'Conjuntos de vistas de cámara')) ?>">
                 <div class="camera-board-selector-head">
-                    <strong>Choose a camera set</strong>
-                    <span id="camera-board-summary">Showing 4 of 12 available cameras · <?= h((string)($cameraBoardMeta[$sceneBoardIndex]['name'] ?? ('Set ' . $sceneBoardIndex))) ?></span>
+                    <strong><?= h(t('Choose a camera set', 'Elegí un conjunto de cámaras')) ?></strong>
+                    <span id="camera-board-summary"><?= h(t('Showing 4 of 12 available cameras', 'Mostrando 4 de 12 cámaras disponibles')) ?> · <?= h((string)($cameraBoardMeta[$sceneBoardIndex]['name'] ?? (t('Set', 'Conjunto') . ' ' . $sceneBoardIndex))) ?></span>
                 </div>
-                <div class="camera-board-tabs" role="tablist" aria-label="Camera sets">
+                <div class="camera-board-tabs" role="tablist" aria-label="<?= h(t('Camera sets', 'Conjuntos de cámaras')) ?>">
                     <?php foreach ($cameraBoardMeta as $availableBoardIndex => $boardMeta): ?>
                         <button
                             class="camera-board-tab <?= $availableBoardIndex === $sceneBoardIndex ? 'active' : '' ?>"
@@ -2302,7 +2302,7 @@ if (!$currentOptionKnown) {
                                 <strong><?= h((string)$boardMeta['name']) ?></strong>
                                 <small><?= h((string)$boardMeta['description']) ?></small>
                             </span>
-                            <span class="camera-board-count">4 views</span>
+                            <span class="camera-board-count"><?= h(t('4 views', '4 vistas')) ?></span>
                         </button>
                     <?php endforeach; ?>
                 </div>
@@ -2310,7 +2310,7 @@ if (!$currentOptionKnown) {
 
             <?php if (!empty($review['validation_notes'])): ?>
                 <div class="notice warning">
-                    <strong>Review notes:</strong>
+                    <strong><?= h(t('Review notes:', 'Notas de revisión:')) ?></strong>
                     <ul style="margin: 6px 0 0 18px;">
                         <?php foreach ((array)$review['validation_notes'] as $note): ?>
                             <li><?= h($note) ?></li>
@@ -2335,12 +2335,12 @@ if (!$currentOptionKnown) {
                         if ($referenceUrl !== '') {
                             $worldReferenceImages[] = [
                                 'url' => $referenceUrl,
-                                'title' => (string)($referenceImage['title'] ?? 'Scene family reference'),
+                                'title' => (string)($referenceImage['title'] ?? t('Scene family reference', 'Referencia de familia de escena')),
                             ];
                         }
                     }
                     if (!$worldReferenceImages && $worldImageUrl !== '') {
-                        $worldReferenceImages[] = ['url' => $worldImageUrl, 'title' => 'Scene family reference'];
+                        $worldReferenceImages[] = ['url' => $worldImageUrl, 'title' => t('Scene family reference', 'Referencia de familia de escena')];
                     }
                     $generatedWorldMother = (array)($combo['world_mother_selection']['generated_world_mother'] ?? []);
                     $missingWorldMother = (array)($combo['world_mother_selection']['missing_world_mother'] ?? []);
@@ -2363,11 +2363,11 @@ if (!$currentOptionKnown) {
                     }
                     $cameraGroupName = trim((string)($combo['camera_slot_group_name'] ?? ''));
                     if ($cameraGroupName === '') {
-                        $cameraGroupName = 'Camera group ' . ((int)floor(($idx - 1) / 3) + 1);
+                        $cameraGroupName = t('Camera group', 'Grupo de cámara') . ' ' . ((int)floor(($idx - 1) / 3) + 1);
                     }
                     $cameraVariantLabel = trim((string)($combo['camera_slot_variant_label'] ?? ''));
                     if ($cameraVariantLabel === '') {
-                        $cameraVariantLabel = 'View ' . $idx;
+                        $cameraVariantLabel = t('View', 'Vista') . ' ' . $idx;
                     }
                     ?>
                     <?php $columnClass = $idx === 1 ? 'edge-left' : ($idx === 4 ? 'edge-right' : ''); ?>
@@ -2391,7 +2391,7 @@ if (!$currentOptionKnown) {
 
                         <div class="combination-body">
                             <div class="thumb-row">
-                                <div class="thumb-box scene-reference-thumb scene-family-reference" aria-label="Scene family references">
+                                <div class="thumb-box scene-reference-thumb scene-family-reference" aria-label="<?= h(t('Scene family references', 'Referencias de familia de escena')) ?>">
                                     <div class="scene-family-images reference-count-<?= count($worldReferenceImages) ?>" aria-live="polite">
                                         <?php foreach ($worldReferenceImages as $referenceImage): ?>
                                             <img src="<?= h((string)$referenceImage['url']) ?>" alt="" title="<?= h((string)$referenceImage['title']) ?>">
@@ -2401,33 +2401,33 @@ if (!$currentOptionKnown) {
                             </div>
                             <?php if ($pairOptionCount > 1): ?>
                                 <div class="scene-reference-actions">
-                                    <button class="scene-reference-cycle" type="button" onclick="cycleSceneReferencePair(this)">Try another visual combination</button>
+                                    <button class="scene-reference-cycle" type="button" onclick="cycleSceneReferencePair(this)"><?= h(t('Try another visual combination', 'Probar otra combinación visual')) ?></button>
                                 </div>
                             <?php endif; ?>
 
                             <?php if ($isGeneratedWorldMother): ?>
                                 <div class="auto-world-panel">
-                                    <strong>Beta auto-generated scene mother</strong>
-                                    This scene mother was created earlier. For this beta flow, prefer replacing it with a curated manual image if quality is not enough.
+                                    <strong><?= h(t('Beta auto-generated scene mother', 'Madre de escena autogenerada (beta)')) ?></strong>
+                                    <?= h(t('This scene mother was created earlier. For this beta flow, prefer replacing it with a curated manual image if quality is not enough.', 'Esta madre de escena se creó anteriormente. Para este flujo beta, es preferible reemplazarla por una imagen curada manualmente si la calidad no es suficiente.')) ?>
                                     <?php if ($worldImageUrl !== ''): ?>
-                                        <br><a href="<?= h($worldImageUrl) ?>" target="_blank" rel="noopener">Open generated image</a>
+                                        <br><a href="<?= h($worldImageUrl) ?>" target="_blank" rel="noopener"><?= h(t('Open generated image', 'Abrir imagen generada')) ?></a>
                                     <?php endif; ?>
                                     <?php if (!empty($generatedWorldMother['audit_file'])): ?>
-                                        <br>Audit: <code><?= h($generatedWorldMother['audit_file']) ?></code>
+                                        <br><?= h(t('Audit:', 'Auditoría:')) ?> <code><?= h($generatedWorldMother['audit_file']) ?></code>
                                     <?php endif; ?>
                                 </div>
                             <?php endif; ?>
                             <?php if ($isMissingWorldMother): ?>
                                 <div class="auto-world-panel">
-                                    <strong>Beta scene mother pending</strong>
-                                    Add one image manually to <code><?= h($missingWorldMother['folder'] ?? ('storage/world_mothers/' . $combo['world_mother_category'])) ?></code>, then refresh. The system will not generate this scene mother automatically.
+                                    <strong><?= h(t('Beta scene mother pending', 'Madre de escena pendiente (beta)')) ?></strong>
+                                    <?= h(t('Add one image manually to', 'Agregá una imagen manualmente en')) ?> <code><?= h($missingWorldMother['folder'] ?? ('storage/world_mothers/' . $combo['world_mother_category'])) ?></code>, <?= h(t('then refresh. The system will not generate this scene mother automatically.', 'y luego actualizá. El sistema no generará esta madre de escena automáticamente.')) ?>
                                 </div>
                             <?php endif; ?>
 
                             <?php if ($isAdmin && $referencePoolCount > 1): ?>
                                 <details class="admin-reference-picker">
-                                    <summary>Admin References</summary>
-                                    <div class="admin-reference-grid" aria-label="Choose exact scene reference anchor">
+                                    <summary><?= h(t('Admin References', 'Referencias de Administrador')) ?></summary>
+                                    <div class="admin-reference-grid" aria-label="<?= h(t('Choose exact scene reference anchor', 'Elegir el ancla exacta de referencia de escena')) ?>">
                                         <?php foreach ($selectedWorldMotherClientPool as $imagePosition => $referenceImage): ?>
                                             <button
                                                 class="admin-reference-option <?= in_array((string)$referenceImage['relative_path'], $currentReferencePaths, true) ? 'active' : '' ?>"
@@ -2436,7 +2436,7 @@ if (!$currentOptionKnown) {
                                                 data-reference-path="<?= h((string)$referenceImage['relative_path']) ?>"
                                                 onclick="chooseSceneReference(this)"
                                                 title="<?= h((string)$referenceImage['title']) ?>"
-                                                aria-label="Use <?= h((string)$referenceImage['title']) ?> as the first reference"
+                                                aria-label="<?= h(t('Use', 'Usar') . ' ' . (string)$referenceImage['title'] . ' ' . t('as the first reference', 'como primera referencia')) ?>"
                                             >
                                                 <img src="<?= h((string)$referenceImage['url']) ?>" alt="">
                                             </button>
@@ -2457,7 +2457,7 @@ if (!$currentOptionKnown) {
                                     <?php endif; ?>
                                 <?php endforeach; ?>
                                 <label>
-                                    <strong style="display:block; font-size:10px; text-transform:uppercase; color:var(--muted); margin-bottom:4px;">Selected Camera Slot</strong>
+                                    <strong style="display:block; font-size:10px; text-transform:uppercase; color:var(--muted); margin-bottom:4px;"><?= h(t('Selected Camera Slot', 'Cámara Seleccionada')) ?></strong>
                                     <select name="slot[<?= $idx ?>]" onchange="this.form.submit()">
                                         <?php foreach ((array)($cameraSlotsByBoard[$comboBoardIndex] ?? []) as $slot): ?>
                                             <?php $slotId = (string)($slot['slot_id'] ?? ''); ?>
@@ -2467,11 +2467,11 @@ if (!$currentOptionKnown) {
                                         <?php endforeach; ?>
                                     </select>
                                 </label>
-                                <button class="button-link secondary" type="submit">Refresh Preview</button>
+                                <button class="button-link secondary" type="submit"><?= h(t('Refresh Preview', 'Actualizar Vista Previa')) ?></button>
                             </form>
 
                             <div class="beta-hidden-stage">
-                                <strong style="display:block; font-size:10px; text-transform:uppercase; color:var(--muted); margin-bottom:6px;">Final Prompt Preview</strong>
+                                <strong style="display:block; font-size:10px; text-transform:uppercase; color:var(--muted); margin-bottom:6px;"><?= h(t('Final Prompt Preview', 'Vista Previa del Prompt Final')) ?></strong>
                                 <textarea class="prompt-preview" readonly><?= h($combo['final_prompt_preview']) ?></textarea>
                             </div>
 
@@ -2504,7 +2504,7 @@ if (!$currentOptionKnown) {
                                     data-validation-notes="<?= h(implode(' | ', array_map('strval', (array)($combo['validation_notes'] ?? [])))) ?>"
                                     onclick="prepareCombination(this)"
                                     <?= empty($combo['generation_ready']) ? 'disabled' : '' ?>
-                                >Generate This Combination</button>
+                                ><?= h(t('Generate This Combination', 'Generar Esta Combinación')) ?></button>
                             </div>
                         </div>
                     </details>
@@ -2518,16 +2518,86 @@ if (!$currentOptionKnown) {
 <div class="generation-overlay" id="generation-overlay" role="status" aria-live="polite" aria-hidden="true">
     <div class="generation-overlay-card">
         <div class="generation-spinner" aria-hidden="true"></div>
-        <strong id="generation-overlay-title">Generating scenes</strong>
-        <p id="generation-overlay-message">Preparing the selected artwork and scene reference.</p>
+        <strong id="generation-overlay-title"><?= h(t('Generating scenes', 'Generando escenas')) ?></strong>
+        <p id="generation-overlay-message"><?= h(t('Preparing the selected artwork and scene reference.', 'Preparando la obra seleccionada y la referencia de escena.')) ?></p>
         <div class="overlay-actions">
-            <button type="button" id="overlay-minimize-btn" class="button-link secondary" onclick="toggleOverlayMinimize(event)">Minimizar</button>
-            <button type="button" id="overlay-maximize-btn" class="button-link secondary" style="display: none;" onclick="toggleOverlayMaximize(event)">Ver Detalles</button>
+            <button type="button" id="overlay-minimize-btn" class="button-link secondary" onclick="toggleOverlayMinimize(event)"><?= h(t('Minimize', 'Minimizar')) ?></button>
+            <button type="button" id="overlay-maximize-btn" class="button-link secondary" style="display: none;" onclick="toggleOverlayMaximize(event)"><?= h(t('View Details', 'Ver Detalles')) ?></button>
         </div>
     </div>
 </div>
 
 <script>
+const mcrvI18n = {
+    sceneFamilyReference: <?= json_encode(t('Scene family reference', 'Referencia de familia de escena')) ?>,
+    showingCameras: <?= json_encode(t('Showing 4 of 12 available cameras', 'Mostrando 4 de 12 cámaras disponibles')) ?>,
+    setLabel: <?= json_encode(t('Set', 'Conjunto')) ?>,
+    generateThese4Views: <?= json_encode(t('Generate These 4 Views', 'Generar Estas 4 Vistas')) ?>,
+    exploreScenes: <?= json_encode(t('Explore Scenes', 'Explorar Escenas')) ?>,
+    unloadWarning: <?= json_encode(t('The generation requests are still being registered. Wait a moment until they appear in the background activity indicator.', 'Las solicitudes de generación todavía se están registrando. Esperá un momento hasta que aparezcan en el indicador de actividad en segundo plano.')) ?>,
+    generatingScenes: <?= json_encode(t('Generating scenes', 'Generando escenas')) ?>,
+    preparingArtworkAndScene: <?= json_encode(t('Preparing the selected artwork and scene reference.', 'Preparando la obra seleccionada y la referencia de escena.')) ?>,
+    selectedCamera: <?= json_encode(t('selected camera', 'cámara seleccionada')) ?>,
+    generateCameraConfirm: <?= json_encode(t('Generate this camera now?\n\n{0}\n\nThis may consume a real API credit when real API mode is enabled.', '¿Generar esta cámara ahora?\n\n{0}\n\nEsto puede consumir un crédito real de API si el modo de API real está habilitado.')) ?>,
+    generatingScene: <?= json_encode(t('Generating scene', 'Generando escena')) ?>,
+    workingOnCamera: <?= json_encode(t('Working on {0}. This can take a moment.', 'Trabajando en {0}. Esto puede tardar un momento.')) ?>,
+    workingInBackground: <?= json_encode(t('Working in background', 'Trabajando en segundo plano')) ?>,
+    taskRegistered: <?= json_encode(t('Task registered. You can continue through the app; a notice will appear when the result is ready.', 'Tarea registrada. Podés seguir usando la app; aparecerá un aviso cuando el resultado esté listo.')) ?>,
+    generatingEllipsis: <?= json_encode(t('Generating...', 'Generando...')) ?>,
+    generatingImageDetail: <?= json_encode(t('Generating image from root artwork, world mother reference, selected camera, and ADMIN prompt.', 'Generando imagen a partir de la obra raíz, la referencia de escena, la cámara seleccionada y el prompt de ADMIN.')) ?>,
+    queuedWillContinue: <?= json_encode(t('Queued. It will continue if you leave this page.', 'En cola. Continuará aunque salgas de esta página.')) ?>,
+    inBackground: <?= json_encode(t('In background', 'En segundo plano')) ?>,
+    imageGenerated: <?= json_encode(t('Image generated.', 'Imagen generada.')) ?>,
+    evaluateResults: <?= json_encode(t('Evaluate results', 'Evaluar resultados')) ?>,
+    generated: <?= json_encode(t('Generated', 'Generado')) ?>,
+    preparationFailed: <?= json_encode(t('Preparation failed.', 'La preparación falló.')) ?>,
+    preparationFailedPrefix: <?= json_encode(t('Preparation failed:', 'La preparación falló:')) ?>,
+    chooseSceneStyleFirst: <?= json_encode(t('Choose a scene style before creating the mockups.', 'Elegí un estilo de escena antes de crear los mockups.')) ?>,
+    compactSceneTips: <?= json_encode([
+        t('Use a clear photo with the artwork filling most of the frame.', 'Usá una foto clara con la obra ocupando la mayor parte del cuadro.'),
+        t('Scene views explore different angles and compositions for the same artwork.', 'Las vistas de escena exploran diferentes ángulos y composiciones para la misma obra.'),
+        t('Scale helps the mockups keep the artwork believable in each space.', 'La escala ayuda a que los mockups mantengan la obra creíble en cada espacio.'),
+        t('You can create 4 more views after the first set is ready.', 'Podés crear 4 vistas más después de que el primer conjunto esté listo.'),
+    ]) ?>,
+    sceneIs: <?= json_encode(t('scene is', 'escena está')) ?>,
+    scenesAre: <?= json_encode(t('scenes are', 'escenas están')) ?>,
+    beingCreated: <?= json_encode(t('being created', 'siendo creadas')) ?>,
+    sceneCould: <?= json_encode(t('scene could', 'escena pudo')) ?>,
+    scenesCould: <?= json_encode(t('scenes could', 'escenas pudieron')) ?>,
+    notBeRegistered: <?= json_encode(t('not be registered. The others will continue in the background.', 'no ser registrada(s). Las demás continuarán en segundo plano.')) ?>,
+    continueInBackgroundNote: <?= json_encode(t('They will continue in the background. You do not need to keep this page open.', 'Continuarán en segundo plano. No necesitás mantener esta página abierta.')) ?>,
+    sceneIsReady: <?= json_encode(t('scene is ready', 'escena está lista')) ?>,
+    scenesAreReady: <?= json_encode(t('scenes are ready', 'escenas están listas')) ?>,
+    scenesCouldNotBeCreated: <?= json_encode(t('The scenes could not be created', 'Las escenas no se pudieron crear')) ?>,
+    notBeCompleted: <?= json_encode(t('not be completed. You can review the available results.', 'no se pudieron completar. Podés revisar los resultados disponibles.')) ?>,
+    completeSetReady: <?= json_encode(t('The complete set is ready to review.', 'El conjunto completo está listo para revisar.')) ?>,
+    ready: <?= json_encode(t('Ready', 'Listo')) ?>,
+    failed: <?= json_encode(t('Failed', 'Fallido')) ?>,
+    creating: <?= json_encode(t('Creating', 'Creando')) ?>,
+    couldNotLoadProgress: <?= json_encode(t('Could not load scene progress.', 'No se pudo cargar el progreso de la escena.')) ?>,
+    noCombinationsAvailableReason: <?= json_encode(t('No combinations are available to generate.\n\nReason:\n- {0}', 'No hay combinaciones disponibles para generar.\n\nMotivo:\n- {0}')) ?>,
+    noCombinationsAvailable: <?= json_encode(t('No combinations are available to generate. Open one scene card to inspect its validation notes.', 'No hay combinaciones disponibles para generar. Abrí una tarjeta de escena para ver sus notas de validación.')) ?>,
+    createScenesNowConfirm: <?= json_encode(t('Create {0} scenes with {1} now?', '¿Crear {0} escenas con {1} ahora?')) ?>,
+    generateAllCombinationsConfirm: <?= json_encode(t('Generate all {0} combinations with {1}? This may consume one real API credit per combination when real API mode is enabled.', '¿Generar las {0} combinaciones con {1}? Esto puede consumir un crédito real de API por combinación si el modo de API real está habilitado.')) ?>,
+    generatingCount: <?= json_encode(t('Generating {0} / {1}...', 'Generando {0} / {1}...')) ?>,
+    creating4Scenes: <?= json_encode(t('Creating 4 scenes', 'Creando 4 escenas')) ?>,
+    registeringTasksQueued: <?= json_encode(t('Registering {0} tasks. Queued {1} of {0}.', 'Registrando {0} tareas. En cola {1} de {0}.')) ?>,
+    retryingOneScene: <?= json_encode(t('Retrying one scene', 'Reintentando una escena')) ?>,
+    quotaPushedBack: <?= json_encode(t('{0} quota pushed back on {1}. Waiting {2}s before retry.', '{0} rechazó la cuota en {1}. Esperando {2}s antes de reintentar.')) ?>,
+    retrying: <?= json_encode(t('Retrying', 'Reintentando')) ?>,
+    unknownError: <?= json_encode(t('Unknown error', 'Error desconocido')) ?>,
+    oneTaskInBackground: <?= json_encode(t('1 TASK IN BACKGROUND', '1 TAREA EN SEGUNDO PLANO')) ?>,
+    tasksInBackground: <?= json_encode(t('{0} TASKS IN BACKGROUND', '{0} TAREAS EN SEGUNDO PLANO')) ?>,
+    scenesRegisteredFailedToRegister: <?= json_encode(t('{0} scenes registered. Failed to register: {1}.', '{0} escenas registradas. Fallaron al registrar: {1}.')) ?>,
+    tasksRegisteredFailedToRegister: <?= json_encode(t('Tasks registered: {0}, failed to register: {1}.', 'Tareas registradas: {0}, fallaron al registrar: {1}.')) ?>,
+    failedCombinations: <?= json_encode(t('Failed combinations:', 'Combinaciones fallidas:')) ?>,
+    registeredTasksContinue: <?= json_encode(t('Registered tasks will continue in the background.', 'Las tareas registradas continuarán en segundo plano.')) ?>,
+    noCombinationsGenerated: <?= json_encode(t('No combinations were generated.', 'No se generó ninguna combinación.')) ?>,
+    checkMessagesOnCards: <?= json_encode(t('Check the messages on each card.', 'Revisá los mensajes en cada tarjeta.')) ?>,
+};
+function formatI18n(template, ...values) {
+    return template.replace(/\{(\d+)\}/g, (match, index) => values[index] ?? match);
+}
 const ACTIVE_ARTWORK_ROOT_FILE = <?= json_encode(basename((string)$artwork['root_file'])) ?>;
 const MOCKUP_BATCH_WORKER_COUNT = <?= (int)ProviderSettings::mockupWorkerCount() ?>;
 const GENERATION_PROVIDER = <?= json_encode($selectedGenerationProvider) ?>;
@@ -2602,7 +2672,7 @@ function applySceneReferenceVariant(card, requestedOffset) {
             const image = document.createElement('img');
             image.src = reference.url;
             image.alt = '';
-            image.title = reference.title || 'Scene family reference';
+            image.title = reference.title || mcrvI18n.sceneFamilyReference;
             return image;
         }));
         imageContainer.classList.remove('reference-count-1', 'reference-count-2');
@@ -2683,9 +2753,9 @@ function switchCameraBoard(boardIndex, trigger = null) {
 
     const meta = CAMERA_BOARD_META[boardIndex] || {};
     const summary = document.getElementById('camera-board-summary');
-    if (summary) summary.textContent = 'Showing 4 of 12 available cameras · ' + (meta.name || ('Set ' + boardIndex));
+    if (summary) summary.textContent = mcrvI18n.showingCameras + ' · ' + (meta.name || (mcrvI18n.setLabel + ' ' + boardIndex));
     const generateButton = document.getElementById('generate-all-btn');
-    if (generateButton && !USER_SCENE_FLOW) generateButton.textContent = 'Generate These 4 Views';
+    if (generateButton && !USER_SCENE_FLOW) generateButton.textContent = mcrvI18n.generateThese4Views;
 
     const url = new URL(window.location.href);
     url.searchParams.set('board', String(boardIndex));
@@ -2703,14 +2773,14 @@ function switchCameraBoard(boardIndex, trigger = null) {
         href.searchParams.set('board', String(boardIndex));
         card.href = href.toString();
     });
-    document.title = 'Explore Scenes · ' + (meta.name || ('Set ' + boardIndex)) + ' - Artwork Mockups';
+    document.title = mcrvI18n.exploreScenes + ' · ' + (meta.name || (mcrvI18n.setLabel + ' ' + boardIndex)) + ' - Artwork Mockups';
     trigger?.focus({ preventScroll: true });
 }
 
 window.addEventListener('beforeunload', function (e) {
     if (isGenerationRunning) {
         e.preventDefault();
-        e.returnValue = 'The generation requests are still being registered. Wait a moment until they appear in the background activity indicator.';
+        e.returnValue = mcrvI18n.unloadWarning;
         return e.returnValue;
     }
 });
@@ -2742,8 +2812,8 @@ function toggleOverlayMaximize(e) {
 function showGenerationOverlay(title, message) {
     if (USER_SCENE_FLOW) return;
     if (!generationOverlay) return;
-    generationOverlayTitle.textContent = title || 'Generating scenes';
-    generationOverlayMessage.textContent = message || 'Preparing the selected artwork and scene reference.';
+    generationOverlayTitle.textContent = title || mcrvI18n.generatingScenes;
+    generationOverlayMessage.textContent = message || mcrvI18n.preparingArtworkAndScene;
     generationOverlay.classList.add('active');
     generationOverlay.setAttribute('aria-hidden', 'false');
 }
@@ -2764,14 +2834,14 @@ function createGenerationRunId() {
 }
 
 function prepareCombination(btn, skipConfirm = false, generationRunId = '') {
-    const cameraName = btn.getAttribute('data-camera-name') || 'selected camera';
+    const cameraName = btn.getAttribute('data-camera-name') || mcrvI18n.selectedCamera;
     const cameraSlot = btn.getAttribute('data-camera-slot') || '';
     const label = cameraName + (cameraSlot ? ' [' + cameraSlot + ']' : '');
-    if (!skipConfirm && !confirm('Generate this camera now?\n\n' + label + '\n\nThis may consume a real API credit when real API mode is enabled.')) {
+    if (!skipConfirm && !confirm(formatI18n(mcrvI18n.generateCameraConfirm, label))) {
         return;
     }
     if (!skipConfirm) {
-        showGenerationOverlay('Generating scene', 'Working on ' + cameraName + '. This can take a moment.');
+        showGenerationOverlay(mcrvI18n.generatingScene, formatI18n(mcrvI18n.workingOnCamera, cameraName));
         isGenerationRunning = true;
     }
     const generation = runCombinationGeneration(btn, generationRunId || createGenerationRunId());
@@ -2781,9 +2851,9 @@ function prepareCombination(btn, skipConfirm = false, generationRunId = '') {
 
     return generation.then(result => {
         const status = btn.closest('[data-combination-card]')?.querySelector('.prepare-result');
-        btn.textContent = 'Working in background';
+        btn.textContent = mcrvI18n.workingInBackground;
         if (status) {
-            status.textContent = 'Task registered. You can continue through the app; a notice will appear when the result is ready.';
+            status.textContent = mcrvI18n.taskRegistered;
         }
         return result;
     });
@@ -2814,8 +2884,8 @@ function runCombinationGeneration(btn, generationRunId = '') {
 
     btn.disabled = true;
     const originalText = btn.textContent;
-    btn.textContent = 'Generating...';
-    if (status) status.textContent = 'Generating image from root artwork, world mother reference, selected camera, and ADMIN prompt.';
+    btn.textContent = mcrvI18n.generatingEllipsis;
+    if (status) status.textContent = mcrvI18n.generatingImageDetail;
     console.info('[scene-generation] request start', { index: index, camera: btn.getAttribute('data-camera-name') || '', provider: GENERATION_PROVIDER });
 
     return fetch('generate_mockup_combination.php', { method: 'POST', body: formData })
@@ -2828,8 +2898,8 @@ function runCombinationGeneration(btn, generationRunId = '') {
             if (result.status === 200 && result.body.ok) {
                 if (result.body.enqueued) {
                     const jobId = result.body.job_id;
-                    status.textContent = 'Queued. It will continue if you leave this page.';
-                    btn.textContent = 'In background';
+                    status.textContent = mcrvI18n.queuedWillContinue;
+                    btn.textContent = mcrvI18n.inBackground;
                     if (!btn.dataset.batchGeneration) {
                         window.artworkGenerationTracker?.trackJobs([jobId]);
                     }
@@ -2837,19 +2907,19 @@ function runCombinationGeneration(btn, generationRunId = '') {
                     return result.body;
                 } else {
                     console.info('[scene-generation] request done', { index: index, enqueued: false });
-                    status.innerHTML = (result.body.message || 'Image generated.') + ' <a href="' + result.body.results_url + '">Evaluate results</a>';
-                    btn.textContent = 'Generated';
+                    status.innerHTML = (result.body.message || mcrvI18n.imageGenerated) + ' <a href="' + result.body.results_url + '">' + mcrvI18n.evaluateResults + '</a>';
+                    btn.textContent = mcrvI18n.generated;
                     return result.body;
                 }
             } else {
-                status.textContent = (result.body && result.body.error) ? result.body.error : 'Preparation failed.';
+                status.textContent = (result.body && result.body.error) ? result.body.error : mcrvI18n.preparationFailed;
                 btn.disabled = false;
                 btn.textContent = originalText;
                 throw new Error(status.textContent);
             }
         })
         .catch(err => {
-            status.textContent = 'Preparation failed: ' + err.message;
+            status.textContent = mcrvI18n.preparationFailedPrefix + ' ' + err.message;
             btn.disabled = false;
             btn.textContent = originalText;
             throw err;
@@ -2874,7 +2944,7 @@ function waitForRetry(ms) {
 function startCompactSceneFlow(btn) {
     const slug = SELECTED_SCENE_CATEGORY || '';
     if (slug === '') {
-        alert('Choose a scene style before creating the mockups.');
+        alert(mcrvI18n.chooseSceneStyleFirst);
         return;
     }
 
@@ -2900,12 +2970,7 @@ function setCompactViewState(index, state, label) {
     status.textContent = label;
 }
 
-const compactSceneTips = [
-    'Use a clear photo with the artwork filling most of the frame.',
-    'Scene views explore different angles and compositions for the same artwork.',
-    'Scale helps the mockups keep the artwork believable in each space.',
-    'You can create 4 more views after the first set is ready.'
-];
+const compactSceneTips = mcrvI18n.compactSceneTips;
 let compactSceneTipIndex = 0;
 let compactScenePollTimer = 0;
 let compactSceneJobs = [];
@@ -2933,12 +2998,12 @@ function showCompactSceneBackgroundChoice(jobs, registrationFailures, immediateR
     const message = document.getElementById('compactSceneMessage');
     const actions = document.getElementById('compactSceneActions');
     if (title) {
-        title.textContent = compactSceneCountLabel(jobs.length, 'scene is', 'scenes are') + ' being created';
+        title.textContent = compactSceneCountLabel(jobs.length, mcrvI18n.sceneIs, mcrvI18n.scenesAre) + ' ' + mcrvI18n.beingCreated;
     }
     if (message) {
         message.textContent = registrationFailures > 0
-            ? compactSceneCountLabel(registrationFailures, 'scene could', 'scenes could') + ' not be registered. The others will continue in the background.'
-            : 'They will continue in the background. You do not need to keep this page open.';
+            ? compactSceneCountLabel(registrationFailures, mcrvI18n.sceneCould, mcrvI18n.scenesCould) + ' ' + mcrvI18n.notBeRegistered
+            : mcrvI18n.continueInBackgroundNote;
     }
     if (actions) actions.hidden = false;
     pollCompactSceneBatch();
@@ -2955,13 +3020,13 @@ function finishCompactSceneBatch(readyCount, failedCount) {
     if (actions) actions.hidden = false;
     if (title) {
         title.textContent = readyCount > 0
-            ? compactSceneCountLabel(readyCount, 'scene is ready', 'scenes are ready')
-            : 'The scenes could not be created';
+            ? compactSceneCountLabel(readyCount, mcrvI18n.sceneIsReady, mcrvI18n.scenesAreReady)
+            : mcrvI18n.scenesCouldNotBeCreated;
     }
     if (message) {
         message.textContent = failedCount > 0
-            ? compactSceneCountLabel(failedCount, 'scene could', 'scenes could') + ' not be completed. You can review the available results.'
-            : 'The complete set is ready to review.';
+            ? compactSceneCountLabel(failedCount, mcrvI18n.sceneCould, mcrvI18n.scenesCould) + ' ' + mcrvI18n.notBeCompleted
+            : mcrvI18n.completeSetReady;
     }
     if (window.parent !== window) {
         window.parent.postMessage({
@@ -2976,17 +3041,17 @@ function updateCompactSceneJob(job, item) {
     if (!item) return false;
     const status = String(item.status || '');
     if (status === 'done') {
-        setCompactViewState(job.viewIndex, 'ready', 'Ready');
+        setCompactViewState(job.viewIndex, 'ready', mcrvI18n.ready);
         return true;
     }
     if (status === 'error' || status === 'failed_enqueue') {
-        setCompactViewState(job.viewIndex, 'failed', 'Failed');
+        setCompactViewState(job.viewIndex, 'failed', mcrvI18n.failed);
         return true;
     }
     if (status === 'processing') {
-        setCompactViewState(job.viewIndex, 'creating', 'Creating');
+        setCompactViewState(job.viewIndex, 'creating', mcrvI18n.creating);
     } else {
-        setCompactViewState(job.viewIndex, 'queued', 'In background');
+        setCompactViewState(job.viewIndex, 'queued', mcrvI18n.inBackground);
     }
     return false;
 }
@@ -2994,12 +3059,21 @@ function updateCompactSceneJob(job, item) {
 async function pollCompactSceneBatch() {
     if (!USER_SCENE_FLOW || compactSceneJobs.length === 0) return;
     try {
-        const response = await fetch(SCENE_ACTIVITY_URL, {
+        // La actividad solo devuelve trabajos activos salvo que se pidan por id.
+        // Sin esto un trabajo terminado desaparece de la respuesta y el lote
+        // nunca alcanza su estado final.
+        const requestUrl = new URL(SCENE_ACTIVITY_URL);
+        const trackedIds = compactSceneJobs
+            .map(job => Number(job.jobId))
+            .filter(id => id > 0);
+        if (trackedIds.length) requestUrl.searchParams.set('ids', trackedIds.join(','));
+
+        const response = await fetch(requestUrl.href, {
             headers: { Accept: 'application/json' },
             cache: 'no-store'
         });
         const data = await response.json();
-        if (!response.ok || !data.ok) throw new Error(data.error || 'Could not load scene progress.');
+        if (!response.ok || !data.ok) throw new Error(data.error || mcrvI18n.couldNotLoadProgress);
 
         const items = Array.isArray(data.items) ? data.items : [];
         const byId = new Map(items.map(item => [Number(item.id), item]));
@@ -3051,13 +3125,13 @@ async function generateAllCombinations(btn) {
             .filter((reason, index, list) => list.indexOf(reason) === index)
             .slice(0, 6);
         alert(reasons.length
-            ? 'No combinations are available to generate.\n\nReason:\n- ' + reasons.join('\n- ')
-            : 'No combinations are available to generate. Open one scene card to inspect its validation notes.');
+            ? formatI18n(mcrvI18n.noCombinationsAvailableReason, reasons.join('\n- '))
+            : mcrvI18n.noCombinationsAvailable);
         return;
     }
     const confirmText = USER_SCENE_FLOW
-        ? 'Create ' + buttons.length + ' scenes with ' + GENERATION_PROVIDER_LABEL + ' now?'
-        : 'Generate all ' + buttons.length + ' combinations with ' + GENERATION_PROVIDER_LABEL + '? This may consume one real API credit per combination when real API mode is enabled.';
+        ? formatI18n(mcrvI18n.createScenesNowConfirm, buttons.length, GENERATION_PROVIDER_LABEL)
+        : formatI18n(mcrvI18n.generateAllCombinationsConfirm, buttons.length, GENERATION_PROVIDER_LABEL);
     const shouldConfirmBatch = btn.getAttribute('data-skip-batch-confirm') !== '1';
     if (shouldConfirmBatch && !confirm(confirmText)) {
         return;
@@ -3081,10 +3155,10 @@ async function generateAllCombinations(btn) {
     });
     let nextIndex = 0;
     let completedCount = 0;
-    btn.textContent = 'Generating 0 / ' + buttons.length + '...';
+    btn.textContent = formatI18n(mcrvI18n.generatingCount, 0, buttons.length);
     showGenerationOverlay(
-        USER_SCENE_FLOW ? 'Creating 4 scenes' : 'Generating scenes',
-        'Registering ' + buttons.length + ' tasks. Queued 0 of ' + buttons.length + '.'
+        USER_SCENE_FLOW ? mcrvI18n.creating4Scenes : mcrvI18n.generatingScenes,
+        formatI18n(mcrvI18n.registeringTasksQueued, buttons.length, 0)
     );
 
     const runNext = async () => {
@@ -3093,11 +3167,11 @@ async function generateAllCombinations(btn) {
             const comboBtn = buttons[currentIndex];
             const compactViewIndex = currentIndex + 1;
             comboBtn.dataset.batchGeneration = '1';
-            setCompactViewState(compactViewIndex, 'creating', 'Creating');
-            btn.textContent = 'Generating ' + completedCount + ' / ' + buttons.length + '...';
+            setCompactViewState(compactViewIndex, 'creating', mcrvI18n.creating);
+            btn.textContent = formatI18n(mcrvI18n.generatingCount, completedCount, buttons.length);
             showGenerationOverlay(
-                USER_SCENE_FLOW ? 'Creating 4 scenes' : 'Generating scenes',
-                'Registering tasks. Queued ' + completedCount + ' of ' + buttons.length + '.'
+                USER_SCENE_FLOW ? mcrvI18n.creating4Scenes : mcrvI18n.generatingScenes,
+                formatI18n(mcrvI18n.registeringTasksQueued, buttons.length, completedCount)
             );
             try {
                 let generationResult;
@@ -3109,37 +3183,37 @@ async function generateAllCombinations(btn) {
                     }
 
                     const retryDelay = 12000 + Math.floor(Math.random() * 8000);
-                    const cameraName = comboBtn.getAttribute('data-camera-name') || 'selected camera';
+                    const cameraName = comboBtn.getAttribute('data-camera-name') || mcrvI18n.selectedCamera;
                     showGenerationOverlay(
-                        'Retrying one scene',
-                        GENERATION_PROVIDER_LABEL + ' quota pushed back on ' + cameraName + '. Waiting ' + Math.round(retryDelay / 1000) + 's before retry.'
+                        mcrvI18n.retryingOneScene,
+                        formatI18n(mcrvI18n.quotaPushedBack, GENERATION_PROVIDER_LABEL, cameraName, Math.round(retryDelay / 1000))
                     );
-                    setCompactViewState(compactViewIndex, 'retrying', 'Retrying');
+                    setCompactViewState(compactViewIndex, 'retrying', mcrvI18n.retrying);
                     await waitForRetry(retryDelay);
-                    setCompactViewState(compactViewIndex, 'creating', 'Creating');
+                    setCompactViewState(compactViewIndex, 'creating', mcrvI18n.creating);
                     generationResult = await prepareCombination(comboBtn, true, generationRunId);
                 }
                 successCount++;
                 if (generationResult?.enqueued && generationResult.job_id) {
                     compactBatchJobs.push({ jobId: Number(generationResult.job_id), viewIndex: compactViewIndex });
-                    setCompactViewState(compactViewIndex, 'queued', 'In background');
+                    setCompactViewState(compactViewIndex, 'queued', mcrvI18n.inBackground);
                 } else {
-                    setCompactViewState(compactViewIndex, 'ready', 'Ready');
+                    setCompactViewState(compactViewIndex, 'ready', mcrvI18n.ready);
                 }
             } catch (err) {
                 failCount++;
-                setCompactViewState(compactViewIndex, 'failed', 'Failed');
+                setCompactViewState(compactViewIndex, 'failed', mcrvI18n.failed);
                 failures.push({
                     index: comboBtn.getAttribute('data-index') || '?',
-                    camera: comboBtn.getAttribute('data-camera-name') || 'selected camera',
-                    error: err && err.message ? err.message : 'Unknown error',
+                    camera: comboBtn.getAttribute('data-camera-name') || mcrvI18n.selectedCamera,
+                    error: err && err.message ? err.message : mcrvI18n.unknownError,
                 });
             } finally {
                 completedCount++;
-                btn.textContent = 'Generating ' + completedCount + ' / ' + buttons.length + '...';
+                btn.textContent = formatI18n(mcrvI18n.generatingCount, completedCount, buttons.length);
                 showGenerationOverlay(
-                    USER_SCENE_FLOW ? 'Creating 4 scenes' : 'Generating scenes',
-                    'Registering tasks. Queued ' + completedCount + ' of ' + buttons.length + '.'
+                    USER_SCENE_FLOW ? mcrvI18n.creating4Scenes : mcrvI18n.generatingScenes,
+                    formatI18n(mcrvI18n.registeringTasksQueued, buttons.length, completedCount)
                 );
                 delete comboBtn.dataset.batchGeneration;
             }
@@ -3161,16 +3235,16 @@ async function generateAllCombinations(btn) {
     if (successCount > 0) {
         if (failures.length > 0 && !USER_SCENE_FLOW) {
             let summary = (USER_SCENE_FLOW
-                ? successCount + ' scenes registered. Failed to register: ' + failCount + '.'
-                : 'Tasks registered: ' + successCount + ', failed to register: ' + failCount + '.')
-                + '\n\nFailed combinations:\n' + failures
+                ? formatI18n(mcrvI18n.scenesRegisteredFailedToRegister, successCount, failCount)
+                : formatI18n(mcrvI18n.tasksRegisteredFailedToRegister, successCount, failCount))
+                + '\n\n' + mcrvI18n.failedCombinations + '\n' + failures
                 .slice(0, 8)
                 .map(item => '- #' + item.index + ' ' + item.camera + ': ' + item.error.substring(0, 600))
                 .join('\n')
-                + '\n\nRegistered tasks will continue in the background.';
+                + '\n\n' + mcrvI18n.registeredTasksContinue;
             alert(summary);
         }
-        btn.textContent = successCount === 1 ? '1 TASK IN BACKGROUND' : successCount + ' TASKS IN BACKGROUND';
+        btn.textContent = successCount === 1 ? mcrvI18n.oneTaskInBackground : formatI18n(mcrvI18n.tasksInBackground, successCount);
         if (USER_SCENE_FLOW) {
             if (compactBatchJobs.length > 0) {
                 showCompactSceneBackgroundChoice(compactBatchJobs, failCount, successCount - compactBatchJobs.length);
@@ -3185,14 +3259,14 @@ async function generateAllCombinations(btn) {
         }, 3200);
         return;
     } else {
-        let summary = 'No combinations were generated.';
+        let summary = mcrvI18n.noCombinationsGenerated;
         if (failures.length > 0) {
-            summary += '\n\nFailed combinations:\n' + failures
+            summary += '\n\n' + mcrvI18n.failedCombinations + '\n' + failures
                 .slice(0, 8)
                 .map(item => '- #' + item.index + ' ' + item.camera + ': ' + item.error.substring(0, 600))
                 .join('\n');
         } else {
-            summary += ' Check the messages on each card.';
+            summary += ' ' + mcrvI18n.checkMessagesOnCards;
         }
         alert(summary);
     }

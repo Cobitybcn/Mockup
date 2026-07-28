@@ -13,6 +13,7 @@ try {
     $user = Auth::requireUser();
     Auth::requireValidCsrf((string)($_POST['csrf'] ?? ''), 'bilingual_editorial');
     $userId = (int)$user['id'];
+    FeatureAccess::requireJson($user, FeatureAccess::EDITORIAL_MANAGE, 'Editorial content');
     $service = new BilingualEditorialService(Database::connection());
     if (!$service->isEnabled($userId)) {
         throw new RuntimeException('The bilingual editorial pilot is not enabled for this account.');

@@ -53,16 +53,16 @@ function h($v): string
 }
 
 $rootViews = [
-    'root_artwork_rules_frontal' => ['label' => 'Vista Frontal', 'badge' => 'V1', 'color' => '#4a7c59'],
-    'root_artwork_rules_left'    => ['label' => '3/4 Izquierda', 'badge' => 'V2', 'color' => '#5c6b8a'],
-    'root_artwork_rules_right'   => ['label' => '3/4 Derecha',   'badge' => 'V3', 'color' => '#8a5c5c'],
+    'root_artwork_rules_frontal' => ['label' => t('Front View', 'Vista Frontal'), 'badge' => 'V1', 'color' => '#4a7c59'],
+    'root_artwork_rules_left'    => ['label' => t('3/4 Left', '3/4 Izquierda'), 'badge' => 'V2', 'color' => '#5c6b8a'],
+    'root_artwork_rules_right'   => ['label' => t('3/4 Right', '3/4 Derecha'),   'badge' => 'V3', 'color' => '#8a5c5c'],
 ];
 ?>
 <!doctype html>
-<html lang="en">
+<html lang="<?= h(Translator::locale($user)) ?>">
 <head>
     <meta charset="utf-8">
-    <title>System Prompts - Artwork Mockups</title>
+    <title><?= h(t('System Prompts - Artwork Mockups', 'Prompts del Sistema - Artwork Mockups')) ?></title>
     <link rel="stylesheet" href="style.css">
     <style>
         /* ── Page layout ── */
@@ -396,16 +396,16 @@ $rootViews = [
         <div class="workspace">
             <div class="workspace-header">
                 <div>
-                    <h1>System Prompts</h1>
-                    <p>Prompt directives sent to Vertex AI. Each field is the exact text sent — no mixing, no hidden additions.</p>
+                    <h1><?= h(t('System Prompts', 'Prompts del Sistema')) ?></h1>
+                    <p><?= h(t('Prompt directives sent to Vertex AI. Each field is the exact text sent — no mixing, no hidden additions.', 'Directivas de prompt enviadas a Vertex AI. Cada campo es el texto exacto que se envía — sin mezclas, sin agregados ocultos.')) ?></p>
                 </div>
                 <div class="topbar-actions">
-                    <a class="button-link secondary" href="root_album.php">ArtWorks</a>
+                    <a class="button-link secondary" href="root_album.php"><?= h(t('ArtWorks', 'Obras')) ?></a>
                 </div>
             </div>
 
             <?php if ($saved): ?>
-                <div class="notice">Settings saved. Next generation will use these prompts.</div>
+                <div class="notice"><?= h(t('Settings saved. Next generation will use these prompts.', 'Configuración guardada. La próxima generación usará estos prompts.')) ?></div>
             <?php endif; ?>
 
             <form method="post" class="form">
@@ -418,11 +418,11 @@ $rootViews = [
                 <div class="prompt-section">
                     <div class="prompt-section-header">
                         <div class="prompt-section-header-left">
-                            <h2 class="prompt-section-title">Root Artwork</h2>
-                            <span class="section-badge">Formulario 1</span>
+                            <h2 class="prompt-section-title"><?= h(t('Root Artwork', 'Obra Base')) ?></h2>
+                            <span class="section-badge"><?= h(t('Form 1', 'Formulario 1')) ?></span>
                         </div>
                         <div class="prompt-section-meta">
-                            <label for="root_artwork_count">Versions to generate</label>
+                            <label for="root_artwork_count"><?= h(t('Versions to generate', 'Versiones a generar')) ?></label>
                             <input
                                 type="number"
                                 id="root_artwork_count"
@@ -446,7 +446,7 @@ $rootViews = [
                                     <span class="view-card-title"><?= h($view['label']) ?></span>
                                 </div>
                                 <div class="view-card-body">
-                                    <p class="view-card-help">Complete prompt used exclusively for this view. It is sent to Vertex AI unchanged.</p>
+                                    <p class="view-card-help"><?= h(t('Complete prompt used exclusively for this view. It is sent to Vertex AI unchanged.', 'Prompt completo usado exclusivamente para esta vista. Se envía a Vertex AI sin cambios.')) ?></p>
                                     <textarea
                                         id="<?= h($key) ?>"
                                         name="<?= h($key) ?>"
@@ -462,10 +462,10 @@ $rootViews = [
                                         <svg width="10" height="10" viewBox="0 0 10 10" fill="none">
                                             <path d="M3 1.5L7 5L3 8.5" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
                                         </svg>
-                                        Valor por defecto
+                                        <?= h(t('Default value', 'Valor por defecto')) ?>
                                     </button>
                                     <div class="default-editor-panel" id="panel-<?= h($key) ?>">
-                                        <span class="default-editor-label">Restore text</span>
+                                        <span class="default-editor-label"><?= h(t('Restore text', 'Restaurar texto')) ?></span>
                                         <textarea
                                             id="<?= h($key) ?>_default"
                                             name="default_directives[<?= h($key) ?>]"
@@ -475,7 +475,7 @@ $rootViews = [
                                             class="secondary restore-btn use-default-directive"
                                             data-target="<?= h($key) ?>"
                                             data-source="<?= h($key) ?>_default"
-                                        >↩ Restaurar</button>
+                                        >↩ <?= h(t('Restore', 'Restaurar')) ?></button>
                                     </div>
                                     <?php endif; ?>
                                 </div>
@@ -489,8 +489,8 @@ $rootViews = [
 
                 <!-- ── Sticky save bar ── -->
                 <div class="save-bar">
-                    <span class="save-bar-hint">Changes apply from the next generation onward.</span>
-                    <button type="submit">Save changes</button>
+                    <span class="save-bar-hint"><?= h(t('Changes apply from the next generation onward.', 'Los cambios se aplican a partir de la próxima generación.')) ?></span>
+                    <button type="submit"><?= h(t('Save changes', 'Guardar cambios')) ?></button>
                 </div>
 
             </form>

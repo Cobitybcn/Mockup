@@ -1,6 +1,13 @@
 <?php
 declare(strict_types=1);
 
+if (!function_exists('h')) {
+    function h($value): string
+    {
+        return htmlspecialchars((string)$value, ENT_QUOTES, 'UTF-8');
+    }
+}
+
 // Resolve current user and admin role
 $sidebarUser = isset($user) ? $user : (isset($currentUser) ? $currentUser : Auth::user());
 $sidebarIsAdmin = $sidebarUser ? Auth::isAdmin($sidebarUser) : false;
@@ -10,6 +17,11 @@ $sidebarEnvironmentDatabase = trim(app_env('DB_DATABASE', ''));
 
 $currentPage = basename($_SERVER['PHP_SELF']);
 $queryString = $_SERVER['QUERY_STRING'] ?? '';
+
+if ($sidebarUser && $currentPage !== 'artist_onboarding.php' && !ArtistOnboarding::isComplete($sidebarUser)) {
+    echo '<script>window.location.replace(' . json_encode('artist_onboarding.php', JSON_UNESCAPED_SLASHES) . ');</script>';
+    exit;
+}
 $sidebarBilingualExperiment = ($sidebarUser && (new BilingualEditorialService(Database::connection()))->isEnabled((int)$sidebarUser['id']))
     || (string)($_GET['bilingual_experiment'] ?? '') === '1'
     || $currentPage === 'mockup_bilingual_experiment.php';
@@ -839,78 +851,78 @@ if ($generatedResultsActive && $sidebarContextArtworkId > 0) {
             <span class="brand-title">ARTWORK MOCKUPS <span class="brand-mark"></span></span>
         </a>
         <details class="sidebar-mobile-menu sidebar-mobile-menu-head">
-            <summary aria-label="Open menu"><span></span><span></span><span></span></summary>
+            <summary aria-label="<?= h(t('Open menu', 'Abrir menú')) ?>"><span></span><span></span><span></span></summary>
             <div class="sidebar-mobile-panel">
                 <?php if ($sidebarIsAdmin): ?>
                     <div class="sidebar-mobile-section">
-                        <span>View mode</span>
-                        <div class="sidebar-mobile-flow-selector" role="group" aria-label="Cambiar entre vista normal y admin">
-                            <button type="button" data-sidebar-flow-mode-option="normal">Normal</button>
-                            <button type="button" data-sidebar-flow-mode-option="admin">Admin</button>
+                        <span><?= h(t('View mode', 'Modo de vista')) ?></span>
+                        <div class="sidebar-mobile-flow-selector" role="group" aria-label="<?= h(t('Switch between normal and admin view', 'Cambiar entre vista normal y admin')) ?>">
+                            <button type="button" data-sidebar-flow-mode-option="normal"><?= h(t('Normal', 'Normal')) ?></button>
+                            <button type="button" data-sidebar-flow-mode-option="admin"><?= h(t('Admin', 'Admin')) ?></button>
                         </div>
                     </div>
                 <?php endif; ?>
                 <div class="sidebar-mobile-section">
-                    <span>Create</span>
-                    <a class="normal-flow-only <?= $createScenesActive ? 'active' : '' ?>" href="create_scenes.php">Create Art</a>
+                    <span><?= h(t('Create', 'Crear')) ?></span>
+                    <a class="normal-flow-only <?= $createScenesActive ? 'active' : '' ?>" href="create_scenes.php"><?= h(t('Create Art', 'Crear Obra')) ?></a>
                     <?php if ($sidebarIsAdmin): ?>
-                        <a class="admin-flow-only <?= $step1Active ? 'active' : '' ?>" href="create_scenes.php">Create Art</a>
+                        <a class="admin-flow-only <?= $step1Active ? 'active' : '' ?>" href="create_scenes.php"><?= h(t('Create Art', 'Crear Obra')) ?></a>
                     <?php endif; ?>
-                    <a class="<?= $generatedResultsActive ? 'active' : '' ?>" href="<?= htmlspecialchars($generatedResultsUrl, ENT_QUOTES, 'UTF-8') ?>">Art Mockups</a>
-                    <a class="<?= $variationLabActive ? 'active' : '' ?>" href="<?= htmlspecialchars($variationLabUrl, ENT_QUOTES, 'UTF-8') ?>">Mockup Lab</a>
+                    <a class="<?= $generatedResultsActive ? 'active' : '' ?>" href="<?= htmlspecialchars($generatedResultsUrl, ENT_QUOTES, 'UTF-8') ?>"><?= h(t('Art Mockups', 'Mockups de Obra')) ?></a>
+                    <a class="<?= $variationLabActive ? 'active' : '' ?>" href="<?= htmlspecialchars($variationLabUrl, ENT_QUOTES, 'UTF-8') ?>"><?= h(t('Mockup Lab', 'Mockup Lab')) ?></a>
                 </div>
                 <div class="sidebar-mobile-section">
-                    <span>Library</span>
-                    <a class="<?= $seriesActive ? 'active' : '' ?>" href="series.php">Series</a>
-                    <a class="<?= $rootAlbumActive ? 'active' : '' ?>" href="<?= htmlspecialchars($rootAlbumUrl, ENT_QUOTES, 'UTF-8') ?>">ArtWorks</a>
-                    <a class="<?= $mockupsActive ? 'active' : '' ?>" href="<?= htmlspecialchars($sidebarMockupAlbumUrl, ENT_QUOTES, 'UTF-8') ?>">Mockup Album</a>
+                    <span><?= h(t('Library', 'Biblioteca')) ?></span>
+                    <a class="<?= $seriesActive ? 'active' : '' ?>" href="series.php"><?= h(t('Series', 'Series')) ?></a>
+                    <a class="<?= $rootAlbumActive ? 'active' : '' ?>" href="<?= htmlspecialchars($rootAlbumUrl, ENT_QUOTES, 'UTF-8') ?>"><?= h(t('ArtWorks', 'Obras')) ?></a>
+                    <a class="<?= $mockupsActive ? 'active' : '' ?>" href="<?= htmlspecialchars($sidebarMockupAlbumUrl, ENT_QUOTES, 'UTF-8') ?>"><?= h(t('Mockup Album', 'Álbum de Mockups')) ?></a>
                     <?php if ($sidebarCanUseVideo): ?>
-                        <a class="<?= $videosActive ? 'active' : '' ?>" href="<?= htmlspecialchars($sidebarVideosUrl, ENT_QUOTES, 'UTF-8') ?>">Videos</a>
+                        <a class="<?= $videosActive ? 'active' : '' ?>" href="<?= htmlspecialchars($sidebarVideosUrl, ENT_QUOTES, 'UTF-8') ?>"><?= h(t('Videos', 'Videos')) ?></a>
                     <?php endif; ?>
                 </div>
                 <div class="sidebar-mobile-section sidebar-publishing-mobile">
-                    <span>Publish</span>
+                    <span><?= h(t('Publish', 'Publicar')) ?></span>
                     <?php if ($sidebarCanUseWebsite): ?>
-                        <a class="<?= $studioNotesActive ? 'active' : '' ?>" href="<?= htmlspecialchars($sidebarStudioNotesUrl, ENT_QUOTES, 'UTF-8') ?>">Studio Notes</a>
+                        <a class="<?= $studioNotesActive ? 'active' : '' ?>" href="<?= htmlspecialchars($sidebarStudioNotesUrl, ENT_QUOTES, 'UTF-8') ?>"><?= h(t('Studio Notes', 'Notas de Estudio')) ?></a>
                     <?php endif; ?>
                     <?php if ($sidebarCanUseSocial): ?>
-                        <a class="<?= $socialMediaCatalogActive ? 'active' : '' ?>" href="<?= htmlspecialchars($sidebarSocialUrl, ENT_QUOTES, 'UTF-8') ?>">Social Media Board</a>
+                        <a class="<?= $socialMediaCatalogActive ? 'active' : '' ?>" href="<?= htmlspecialchars($sidebarSocialUrl, ENT_QUOTES, 'UTF-8') ?>"><?= h(t('Social Media Board', 'Tablero de Redes Sociales')) ?></a>
                     <?php endif; ?>
                     <?php if ($sidebarCanUseVideo): ?>
-                        <a class="<?= $videoStudioActive ? 'active' : '' ?>" href="<?= htmlspecialchars($sidebarVideoStudioUrl, ENT_QUOTES, 'UTF-8') ?>">Video Lab</a>
+                        <a class="<?= $videoStudioActive ? 'active' : '' ?>" href="<?= htmlspecialchars($sidebarVideoStudioUrl, ENT_QUOTES, 'UTF-8') ?>"><?= h(t('Video Lab', 'Video Lab')) ?></a>
                     <?php endif; ?>
                 </div>
                 <?php if ($sidebarIsAdmin): ?>
                     <div class="sidebar-mobile-section sidebar-studios-mobile">
-                        <span>Studios</span>
-                        <a class="<?= $worldMotherActive ? 'active' : '' ?>" href="world_mother_studio.php">Scene Estudio</a>
-                        <a class="<?= $cameraStudioActive ? 'active' : '' ?>" href="camera_studio.php">Camera Boards</a>
+                        <span><?= h(t('Studios', 'Estudios')) ?></span>
+                        <a class="<?= $worldMotherActive ? 'active' : '' ?>" href="world_mother_studio.php"><?= h(t('Scene Studio', 'Estudio de Escenas')) ?></a>
+                        <a class="<?= $cameraStudioActive ? 'active' : '' ?>" href="camera_studio.php"><?= h(t('Camera Boards', 'Tableros de Cámara')) ?></a>
                     </div>
                 <?php endif; ?>
                 <?php if ($sidebarIsAdmin): ?>
                     <div class="sidebar-mobile-section">
-                        <span>Admin</span>
-                        <a class="<?= $profileActive ? 'active' : '' ?>" href="artist_profile.php">Artist Profile</a>
-                        <a class="<?= $accountActive ? 'active' : '' ?>" href="account.php">Account</a>
-                        <?php if ($sidebarCanUseWebsite): ?><a href="<?= htmlspecialchars($sidebarStoreUrl, ENT_QUOTES, 'UTF-8') ?>">Store</a><?php endif; ?>
-                        <a class="<?= $usersActive ? 'active' : '' ?>" href="admin_users.php">Users & Credits</a>
-                        <a class="<?= $promptsActive ? 'active' : '' ?>" href="admin_prompts.php">Prompts</a>
-                        <a class="<?= $apiActive ? 'active' : '' ?>" href="admin_api_keys.php">API Settings</a>
+                        <span><?= h(t('Admin', 'Admin')) ?></span>
+                        <a class="<?= $profileActive ? 'active' : '' ?>" href="artist_profile.php"><?= h(t('Artist Profile', 'Perfil del Artista')) ?></a>
+                        <a class="<?= $accountActive ? 'active' : '' ?>" href="account.php"><?= h(t('Account', 'Cuenta')) ?></a>
+                        <?php if ($sidebarCanUseWebsite): ?><a href="<?= htmlspecialchars($sidebarStoreUrl, ENT_QUOTES, 'UTF-8') ?>"><?= h(t('Store', 'Tienda')) ?></a><?php endif; ?>
+                        <a class="<?= $usersActive ? 'active' : '' ?>" href="admin_users.php"><?= h(t('Users & Credits', 'Usuarios y Créditos')) ?></a>
+                        <a class="<?= $promptsActive ? 'active' : '' ?>" href="admin_prompts.php"><?= h(t('Prompts', 'Prompts')) ?></a>
+                        <a class="<?= $apiActive ? 'active' : '' ?>" href="admin_api_keys.php"><?= h(t('API Settings', 'Configuración de API')) ?></a>
                         <?php if ($sidebarCanUseSocial): ?>
-                            <a class="<?= $connectionsActive ? 'active' : '' ?>" href="connections.php">Connections</a>
+                            <a class="<?= $connectionsActive ? 'active' : '' ?>" href="connections.php"><?= h(t('Connections', 'Conexiones')) ?></a>
                         <?php endif; ?>
-                        <a href="logout.php">Logout</a>
+                        <a href="logout.php"><?= h(t('Logout', 'Cerrar sesión')) ?></a>
                     </div>
                 <?php else: ?>
                     <div class="sidebar-mobile-section">
-                        <span>Admin</span>
-                        <a class="<?= $profileActive ? 'active' : '' ?>" href="artist_profile.php">Artist Profile</a>
-                        <a class="<?= $accountActive ? 'active' : '' ?>" href="account.php">Account</a>
-                        <?php if ($sidebarCanUseWebsite): ?><a href="<?= htmlspecialchars($sidebarStoreUrl, ENT_QUOTES, 'UTF-8') ?>">Store</a><?php endif; ?>
+                        <span><?= h(t('Admin', 'Admin')) ?></span>
+                        <a class="<?= $profileActive ? 'active' : '' ?>" href="artist_profile.php"><?= h(t('Artist Profile', 'Perfil del Artista')) ?></a>
+                        <a class="<?= $accountActive ? 'active' : '' ?>" href="account.php"><?= h(t('Account', 'Cuenta')) ?></a>
+                        <?php if ($sidebarCanUseWebsite): ?><a href="<?= htmlspecialchars($sidebarStoreUrl, ENT_QUOTES, 'UTF-8') ?>"><?= h(t('Store', 'Tienda')) ?></a><?php endif; ?>
                         <?php if ($sidebarCanUseSocial): ?>
-                            <a class="<?= $connectionsActive ? 'active' : '' ?>" href="connections.php">Connections</a>
+                            <a class="<?= $connectionsActive ? 'active' : '' ?>" href="connections.php"><?= h(t('Connections', 'Conexiones')) ?></a>
                         <?php endif; ?>
-                        <a href="logout.php">Logout</a>
+                        <a href="logout.php"><?= h(t('Logout', 'Cerrar sesión')) ?></a>
                     </div>
                 <?php endif; ?>
             </div>
@@ -928,22 +940,22 @@ if ($generatedResultsActive && $sidebarContextArtworkId > 0) {
                     <span>Create Art</span>
                 </a>
                 <?php if ($sidebarIsAdmin): ?>
-                    <a class="sidebar-tab mobile-hide-upload admin-flow-only <?= $step1Active ? 'active' : '' ?>" href="create_scenes.php">Create Art</a>
+                    <a class="sidebar-tab mobile-hide-upload admin-flow-only <?= $step1Active ? 'active' : '' ?>" href="create_scenes.php"><?= h(t('Create Art', 'Crear Obra')) ?></a>
                 <?php endif; ?>
                 <?php if ($sidebarIsAdmin && (!$step5Disabled || $step5Active)): ?>
-                    <a class="sidebar-tab admin-flow-only <?= $step5Active && !$variationLabActive && !$generatedResultsActive ? 'active' : '' ?>" href="<?= htmlspecialchars($step5Url, ENT_QUOTES, 'UTF-8') ?>">Scenes</a>
+                    <a class="sidebar-tab admin-flow-only <?= $step5Active && !$variationLabActive && !$generatedResultsActive ? 'active' : '' ?>" href="<?= htmlspecialchars($step5Url, ENT_QUOTES, 'UTF-8') ?>"><?= h(t('Scenes', 'Escenas')) ?></a>
                 <?php endif; ?>
-                <a class="sidebar-tab <?= $generatedResultsActive ? 'active' : '' ?>" href="<?= htmlspecialchars($generatedResultsUrl, ENT_QUOTES, 'UTF-8') ?>">Art Mockups</a>
-                <a class="sidebar-tab <?= $variationLabActive ? 'active' : '' ?>" href="<?= htmlspecialchars($variationLabUrl, ENT_QUOTES, 'UTF-8') ?>">Mockup Lab</a>
+                <a class="sidebar-tab <?= $generatedResultsActive ? 'active' : '' ?>" href="<?= htmlspecialchars($generatedResultsUrl, ENT_QUOTES, 'UTF-8') ?>"><?= h(t('Art Mockups', 'Mockups de Obra')) ?></a>
+                <a class="sidebar-tab <?= $variationLabActive ? 'active' : '' ?>" href="<?= htmlspecialchars($variationLabUrl, ENT_QUOTES, 'UTF-8') ?>"><?= h(t('Mockup Lab', 'Mockup Lab')) ?></a>
             </div>
         </section>
 
         <?php if ($sidebarUsesCompactBasicNavigation): ?>
             <section class="sidebar-tab-group sidebar-basic-library" aria-label="Library">
                 <div class="sidebar-tab-row">
-                    <a class="sidebar-tab <?= $seriesActive ? 'active' : '' ?>" href="series.php">Series</a>
-                    <a class="sidebar-tab <?= $rootAlbumActive ? 'active' : '' ?>" href="<?= htmlspecialchars($rootAlbumUrl, ENT_QUOTES, 'UTF-8') ?>">ArtWorks</a>
-                    <a class="sidebar-tab <?= $mockupsActive ? 'active' : '' ?>" href="<?= htmlspecialchars($sidebarMockupAlbumUrl, ENT_QUOTES, 'UTF-8') ?>">Mockup Album</a>
+                    <a class="sidebar-tab <?= $seriesActive ? 'active' : '' ?>" href="series.php"><?= h(t('Series', 'Series')) ?></a>
+                    <a class="sidebar-tab <?= $rootAlbumActive ? 'active' : '' ?>" href="<?= htmlspecialchars($rootAlbumUrl, ENT_QUOTES, 'UTF-8') ?>"><?= h(t('ArtWorks', 'Obras')) ?></a>
+                    <a class="sidebar-tab <?= $mockupsActive ? 'active' : '' ?>" href="<?= htmlspecialchars($sidebarMockupAlbumUrl, ENT_QUOTES, 'UTF-8') ?>"><?= h(t('Mockup Album', 'Álbum de Mockups')) ?></a>
                 </div>
             </section>
         <?php endif; ?>
@@ -951,8 +963,8 @@ if ($generatedResultsActive && $sidebarContextArtworkId > 0) {
         <?php if ($sidebarIsAdmin): ?>
             <section class="sidebar-mode-switch-wrap" aria-label="Flow view selector">
                 <label class="sidebar-mode-switch" for="sidebar-flow-mode-toggle">
-                    <span id="sidebar-flow-mode-label">Admin</span>
-                    <input type="checkbox" id="sidebar-flow-mode-toggle" aria-label="Cambiar entre flujo usuario normal y admin">
+                    <span id="sidebar-flow-mode-label"><?= h(t('Admin', 'Admin')) ?></span>
+                    <input type="checkbox" id="sidebar-flow-mode-toggle" aria-label="<?= h(t('Switch between normal and admin user flow', 'Cambiar entre flujo usuario normal y admin')) ?>">
                     <span class="sidebar-mode-switch-track" aria-hidden="true"></span>
                 </label>
             </section>
@@ -961,22 +973,22 @@ if ($generatedResultsActive && $sidebarContextArtworkId > 0) {
         <?php if (!$sidebarUsesCompactBasicNavigation): ?>
             <section class="sidebar-context">
                 <div class="sidebar-tab-row">
-                    <a class="sidebar-tab <?= $seriesActive ? 'active' : '' ?>" href="series.php">Series</a>
-                    <a class="sidebar-tab <?= $rootAlbumActive ? 'active' : '' ?>" href="<?= htmlspecialchars($rootAlbumUrl, ENT_QUOTES, 'UTF-8') ?>">ArtWorks</a>
-                    <a class="sidebar-tab <?= $mockupsActive ? 'active' : '' ?>" href="<?= htmlspecialchars($sidebarMockupAlbumUrl, ENT_QUOTES, 'UTF-8') ?>">Mockup Album</a>
+                    <a class="sidebar-tab <?= $seriesActive ? 'active' : '' ?>" href="series.php"><?= h(t('Series', 'Series')) ?></a>
+                    <a class="sidebar-tab <?= $rootAlbumActive ? 'active' : '' ?>" href="<?= htmlspecialchars($rootAlbumUrl, ENT_QUOTES, 'UTF-8') ?>"><?= h(t('ArtWorks', 'Obras')) ?></a>
+                    <a class="sidebar-tab <?= $mockupsActive ? 'active' : '' ?>" href="<?= htmlspecialchars($sidebarMockupAlbumUrl, ENT_QUOTES, 'UTF-8') ?>"><?= h(t('Mockup Album', 'Álbum de Mockups')) ?></a>
                     <?php if ($sidebarCanUseVideo): ?>
-                        <a class="sidebar-tab <?= $videosActive ? 'active' : '' ?>" href="<?= htmlspecialchars($sidebarVideosUrl, ENT_QUOTES, 'UTF-8') ?>">Videos</a>
+                        <a class="sidebar-tab <?= $videosActive ? 'active' : '' ?>" href="<?= htmlspecialchars($sidebarVideosUrl, ENT_QUOTES, 'UTF-8') ?>"><?= h(t('Videos', 'Videos')) ?></a>
                     <?php endif; ?>
                     <span class="sidebar-library-divider" aria-hidden="true"></span>
                     <div class="sidebar-publishing-tabs">
                         <?php if ($sidebarCanUseWebsite): ?>
-                            <a class="sidebar-tab <?= $studioNotesActive ? 'active' : '' ?>" href="<?= htmlspecialchars($sidebarStudioNotesUrl, ENT_QUOTES, 'UTF-8') ?>">Studio Notes</a>
+                            <a class="sidebar-tab <?= $studioNotesActive ? 'active' : '' ?>" href="<?= htmlspecialchars($sidebarStudioNotesUrl, ENT_QUOTES, 'UTF-8') ?>"><?= h(t('Studio Notes', 'Notas de Estudio')) ?></a>
                         <?php endif; ?>
                         <?php if ($sidebarCanUseSocial): ?>
-                            <a class="sidebar-tab <?= $socialMediaCatalogActive ? 'active' : '' ?>" href="<?= htmlspecialchars($sidebarSocialUrl, ENT_QUOTES, 'UTF-8') ?>">Social Media Board</a>
+                            <a class="sidebar-tab <?= $socialMediaCatalogActive ? 'active' : '' ?>" href="<?= htmlspecialchars($sidebarSocialUrl, ENT_QUOTES, 'UTF-8') ?>"><?= h(t('Social Media Board', 'Tablero de Redes Sociales')) ?></a>
                         <?php endif; ?>
                         <?php if ($sidebarCanUseVideo): ?>
-                            <a class="sidebar-tab <?= $videoStudioActive ? 'active' : '' ?>" href="<?= htmlspecialchars($sidebarVideoStudioUrl, ENT_QUOTES, 'UTF-8') ?>">Video Lab</a>
+                            <a class="sidebar-tab <?= $videoStudioActive ? 'active' : '' ?>" href="<?= htmlspecialchars($sidebarVideoStudioUrl, ENT_QUOTES, 'UTF-8') ?>"><?= h(t('Video Lab', 'Video Lab')) ?></a>
                         <?php endif; ?>
                     </div>
                 </div>
@@ -986,8 +998,8 @@ if ($generatedResultsActive && $sidebarContextArtworkId > 0) {
         <?php if ($sidebarIsAdmin): ?>
             <section class="sidebar-studios" aria-label="Studios">
                 <div class="sidebar-tab-row">
-                    <a class="sidebar-tab <?= $worldMotherActive ? 'active' : '' ?>" href="world_mother_studio.php">Scene Estudio</a>
-                    <a class="sidebar-tab <?= $cameraStudioActive ? 'active' : '' ?>" href="camera_studio.php">Camera Boards</a>
+                    <a class="sidebar-tab <?= $worldMotherActive ? 'active' : '' ?>" href="world_mother_studio.php"><?= h(t('Scene Studio', 'Estudio de Escenas')) ?></a>
+                    <a class="sidebar-tab <?= $cameraStudioActive ? 'active' : '' ?>" href="camera_studio.php"><?= h(t('Camera Boards', 'Tableros de Cámara')) ?></a>
                 </div>
             </section>
         <?php endif; ?>
@@ -997,95 +1009,95 @@ if ($generatedResultsActive && $sidebarContextArtworkId > 0) {
     <?php if ($sidebarUsesCompactBasicNavigation): ?>
         <section class="sidebar-account sidebar-basic-profile" aria-label="Artist account">
             <div class="sidebar-tab-row">
-                <a class="sidebar-tab <?= $profileActive ? 'active' : '' ?>" href="artist_profile.php">Artist Profile</a>
+                <a class="sidebar-tab <?= $profileActive ? 'active' : '' ?>" href="artist_profile.php"><?= h(t('Artist Profile', 'Perfil del Artista')) ?></a>
             </div>
         </section>
     <?php else: ?>
         <section class="sidebar-account sidebar-profile-account" aria-label="Artist account">
             <div class="sidebar-tab-row">
-                <a class="sidebar-tab <?= $profileActive ? 'active' : '' ?>" href="artist_profile.php">Artist Profile</a>
+                <a class="sidebar-tab <?= $profileActive ? 'active' : '' ?>" href="artist_profile.php"><?= h(t('Artist Profile', 'Perfil del Artista')) ?></a>
             </div>
         </section>
     <?php endif; ?>
 
     <details class="sidebar-more">
-        <summary>Admin</summary>
+        <summary><?= h(t('Admin', 'Admin')) ?></summary>
         <ul class="nav">
-            <li><a class="<?= $accountActive ? 'active' : '' ?>" href="account.php">Account</a></li>
-            <?php if ($sidebarCanUseWebsite): ?><li><a href="<?= htmlspecialchars($sidebarStoreUrl, ENT_QUOTES, 'UTF-8') ?>">Store</a></li><?php endif; ?>
+            <li><a class="<?= $accountActive ? 'active' : '' ?>" href="account.php"><?= h(t('Account', 'Cuenta')) ?></a></li>
+            <?php if ($sidebarCanUseWebsite): ?><li><a href="<?= htmlspecialchars($sidebarStoreUrl, ENT_QUOTES, 'UTF-8') ?>"><?= h(t('Store', 'Tienda')) ?></a></li><?php endif; ?>
             <?php if ($sidebarIsAdmin): ?>
-                <li><a class="<?= $usersActive ? 'active' : '' ?>" href="admin_users.php">Users & Credits</a></li>
-                <li><a class="<?= $promptsActive ? 'active' : '' ?>" href="admin_prompts.php">Prompts</a></li>
-                <li><a class="<?= $apiActive ? 'active' : '' ?>" href="admin_api_keys.php">API Settings</a></li>
+                <li><a class="<?= $usersActive ? 'active' : '' ?>" href="admin_users.php"><?= h(t('Users & Credits', 'Usuarios y Créditos')) ?></a></li>
+                <li><a class="<?= $promptsActive ? 'active' : '' ?>" href="admin_prompts.php"><?= h(t('Prompts', 'Prompts')) ?></a></li>
+                <li><a class="<?= $apiActive ? 'active' : '' ?>" href="admin_api_keys.php"><?= h(t('API Settings', 'Configuración de API')) ?></a></li>
             <?php endif; ?>
             <?php if ($sidebarCanUseSocial): ?>
-                <li><a class="<?= $connectionsActive ? 'active' : '' ?>" href="connections.php">Connections</a></li>
+                <li><a class="<?= $connectionsActive ? 'active' : '' ?>" href="connections.php"><?= h(t('Connections', 'Conexiones')) ?></a></li>
             <?php endif; ?>
-            <li><a href="logout.php">Logout</a></li>
+            <li><a href="logout.php"><?= h(t('Logout', 'Cerrar sesión')) ?></a></li>
         </ul>
     </details>
 
     <details class="sidebar-mobile-menu">
-        <summary aria-label="Open menu"><span></span><span></span><span></span></summary>
+        <summary aria-label="<?= h(t('Open menu', 'Abrir menú')) ?>"><span></span><span></span><span></span></summary>
         <div class="sidebar-mobile-panel">
             <div class="sidebar-mobile-section">
-                <span>Library</span>
-                <a class="<?= $seriesActive ? 'active' : '' ?>" href="series.php">Series</a>
-                <a class="<?= $rootAlbumActive ? 'active' : '' ?>" href="<?= htmlspecialchars($rootAlbumUrl, ENT_QUOTES, 'UTF-8') ?>">ArtWorks</a>
-                <a class="<?= $mockupsActive ? 'active' : '' ?>" href="<?= htmlspecialchars($sidebarMockupAlbumUrl, ENT_QUOTES, 'UTF-8') ?>">Mockup Album</a>
+                <span><?= h(t('Library', 'Biblioteca')) ?></span>
+                <a class="<?= $seriesActive ? 'active' : '' ?>" href="series.php"><?= h(t('Series', 'Series')) ?></a>
+                <a class="<?= $rootAlbumActive ? 'active' : '' ?>" href="<?= htmlspecialchars($rootAlbumUrl, ENT_QUOTES, 'UTF-8') ?>"><?= h(t('ArtWorks', 'Obras')) ?></a>
+                <a class="<?= $mockupsActive ? 'active' : '' ?>" href="<?= htmlspecialchars($sidebarMockupAlbumUrl, ENT_QUOTES, 'UTF-8') ?>"><?= h(t('Mockup Album', 'Álbum de Mockups')) ?></a>
                 <?php if ($sidebarCanUseVideo): ?>
-                    <a class="<?= $videosActive ? 'active' : '' ?>" href="<?= htmlspecialchars($sidebarVideosUrl, ENT_QUOTES, 'UTF-8') ?>">Videos</a>
+                    <a class="<?= $videosActive ? 'active' : '' ?>" href="<?= htmlspecialchars($sidebarVideosUrl, ENT_QUOTES, 'UTF-8') ?>"><?= h(t('Videos', 'Videos')) ?></a>
                 <?php endif; ?>
             </div>
             <div class="sidebar-mobile-section sidebar-publishing-mobile">
-                <span>Publish</span>
+                <span><?= h(t('Publish', 'Publicar')) ?></span>
                 <?php if ($sidebarCanUseWebsite): ?>
-                    <a class="<?= $studioNotesActive ? 'active' : '' ?>" href="<?= htmlspecialchars($sidebarStudioNotesUrl, ENT_QUOTES, 'UTF-8') ?>">Studio Notes</a>
+                    <a class="<?= $studioNotesActive ? 'active' : '' ?>" href="<?= htmlspecialchars($sidebarStudioNotesUrl, ENT_QUOTES, 'UTF-8') ?>"><?= h(t('Studio Notes', 'Notas de Estudio')) ?></a>
                 <?php endif; ?>
                 <?php if ($sidebarCanUseSocial): ?>
-                    <a class="<?= $socialMediaCatalogActive ? 'active' : '' ?>" href="<?= htmlspecialchars($sidebarSocialUrl, ENT_QUOTES, 'UTF-8') ?>">Social Media Board</a>
+                    <a class="<?= $socialMediaCatalogActive ? 'active' : '' ?>" href="<?= htmlspecialchars($sidebarSocialUrl, ENT_QUOTES, 'UTF-8') ?>"><?= h(t('Social Media Board', 'Tablero de Redes Sociales')) ?></a>
                 <?php endif; ?>
                 <?php if ($sidebarCanUseVideo): ?>
-                    <a class="<?= $videoStudioActive ? 'active' : '' ?>" href="<?= htmlspecialchars($sidebarVideoStudioUrl, ENT_QUOTES, 'UTF-8') ?>">Video Lab</a>
+                    <a class="<?= $videoStudioActive ? 'active' : '' ?>" href="<?= htmlspecialchars($sidebarVideoStudioUrl, ENT_QUOTES, 'UTF-8') ?>"><?= h(t('Video Lab', 'Video Lab')) ?></a>
                 <?php endif; ?>
             </div>
             <?php if ($sidebarIsAdmin): ?>
                 <div class="sidebar-mobile-section sidebar-studios-mobile">
-                    <span>Studios</span>
-                    <a class="<?= $worldMotherActive ? 'active' : '' ?>" href="world_mother_studio.php">Scene Estudio</a>
-                    <a class="<?= $cameraStudioActive ? 'active' : '' ?>" href="camera_studio.php">Camera Boards</a>
+                    <span><?= h(t('Studios', 'Estudios')) ?></span>
+                    <a class="<?= $worldMotherActive ? 'active' : '' ?>" href="world_mother_studio.php"><?= h(t('Scene Studio', 'Estudio de Escenas')) ?></a>
+                    <a class="<?= $cameraStudioActive ? 'active' : '' ?>" href="camera_studio.php"><?= h(t('Camera Boards', 'Tableros de Cámara')) ?></a>
                 </div>
             <?php endif; ?>
             <?php if ($sidebarIsAdmin): ?>
                 <div class="sidebar-mobile-section">
-                    <span>Admin</span>
-                    <a class="<?= $profileActive ? 'active' : '' ?>" href="artist_profile.php">Artist Profile</a>
-                    <a class="<?= $accountActive ? 'active' : '' ?>" href="account.php">Account</a>
-                    <?php if ($sidebarCanUseWebsite): ?><a href="<?= htmlspecialchars($sidebarStoreUrl, ENT_QUOTES, 'UTF-8') ?>">Store</a><?php endif; ?>
-                    <a class="<?= $usersActive ? 'active' : '' ?>" href="admin_users.php">Users & Credits</a>
-                    <a class="<?= $promptsActive ? 'active' : '' ?>" href="admin_prompts.php">Prompts</a>
-                    <a class="<?= $apiActive ? 'active' : '' ?>" href="admin_api_keys.php">API Settings</a>
+                    <span><?= h(t('Admin', 'Admin')) ?></span>
+                    <a class="<?= $profileActive ? 'active' : '' ?>" href="artist_profile.php"><?= h(t('Artist Profile', 'Perfil del Artista')) ?></a>
+                    <a class="<?= $accountActive ? 'active' : '' ?>" href="account.php"><?= h(t('Account', 'Cuenta')) ?></a>
+                    <?php if ($sidebarCanUseWebsite): ?><a href="<?= htmlspecialchars($sidebarStoreUrl, ENT_QUOTES, 'UTF-8') ?>"><?= h(t('Store', 'Tienda')) ?></a><?php endif; ?>
+                    <a class="<?= $usersActive ? 'active' : '' ?>" href="admin_users.php"><?= h(t('Users & Credits', 'Usuarios y Créditos')) ?></a>
+                    <a class="<?= $promptsActive ? 'active' : '' ?>" href="admin_prompts.php"><?= h(t('Prompts', 'Prompts')) ?></a>
+                    <a class="<?= $apiActive ? 'active' : '' ?>" href="admin_api_keys.php"><?= h(t('API Settings', 'Configuración de API')) ?></a>
                     <?php if ($sidebarCanUseSocial): ?>
-                        <a class="<?= $connectionsActive ? 'active' : '' ?>" href="connections.php">Connections</a>
+                        <a class="<?= $connectionsActive ? 'active' : '' ?>" href="connections.php"><?= h(t('Connections', 'Conexiones')) ?></a>
                     <?php endif; ?>
-                    <a href="logout.php">Logout</a>
+                    <a href="logout.php"><?= h(t('Logout', 'Cerrar sesión')) ?></a>
                 </div>
             <?php else: ?>
                 <div class="sidebar-mobile-section">
-                    <span>Admin</span>
-                    <a class="<?= $profileActive ? 'active' : '' ?>" href="artist_profile.php">Artist Profile</a>
-                    <a class="<?= $accountActive ? 'active' : '' ?>" href="account.php">Account</a>
-                    <?php if ($sidebarCanUseWebsite): ?><a href="<?= htmlspecialchars($sidebarStoreUrl, ENT_QUOTES, 'UTF-8') ?>">Store</a><?php endif; ?>
+                    <span><?= h(t('Admin', 'Admin')) ?></span>
+                    <a class="<?= $profileActive ? 'active' : '' ?>" href="artist_profile.php"><?= h(t('Artist Profile', 'Perfil del Artista')) ?></a>
+                    <a class="<?= $accountActive ? 'active' : '' ?>" href="account.php"><?= h(t('Account', 'Cuenta')) ?></a>
+                    <?php if ($sidebarCanUseWebsite): ?><a href="<?= htmlspecialchars($sidebarStoreUrl, ENT_QUOTES, 'UTF-8') ?>"><?= h(t('Store', 'Tienda')) ?></a><?php endif; ?>
                     <?php if ($sidebarCanUseSocial): ?>
-                        <a class="<?= $connectionsActive ? 'active' : '' ?>" href="connections.php">Connections</a>
+                        <a class="<?= $connectionsActive ? 'active' : '' ?>" href="connections.php"><?= h(t('Connections', 'Conexiones')) ?></a>
                     <?php endif; ?>
-                    <a href="logout.php">Logout</a>
+                    <a href="logout.php"><?= h(t('Logout', 'Cerrar sesión')) ?></a>
                 </div>
             <?php endif; ?>
         </div>
     </details>
     <?php if ($sidebarIsLocalEnvironment): ?>
-        <div class="app-environment-badge" role="status" aria-label="Entorno local">
+        <div class="app-environment-badge" role="status" aria-label="<?= h(t('Local environment', 'Entorno local')) ?>">
             LOCAL · <?= htmlspecialchars($sidebarEnvironmentDatabase, ENT_QUOTES, 'UTF-8') ?>
         </div>
     <?php endif; ?>
@@ -1208,8 +1220,8 @@ if ($generatedResultsActive && $sidebarContextArtworkId > 0) {
 </style>
 <div class="global-generation-activity" data-global-generation-activity role="status" aria-live="polite" hidden>
     <span class="global-generation-spinner" aria-hidden="true"></span>
-    <span data-global-generation-active-text>Creating mockups in the background…</span>
-    <button class="global-generation-sound" type="button" data-global-generation-sound aria-pressed="false" aria-label="Mute completion sounds" title="Mute completion sounds">
+    <span data-global-generation-active-text><?= h(t('Creating mockups in the background…', 'Creando mockups en segundo plano…')) ?></span>
+    <button class="global-generation-sound" type="button" data-global-generation-sound aria-pressed="false" aria-label="<?= h(t('Mute completion sounds', 'Silenciar sonidos de finalización')) ?>" title="<?= h(t('Mute completion sounds', 'Silenciar sonidos de finalización')) ?>">
         <svg viewBox="0 0 24 24" aria-hidden="true">
             <path d="M4 10v4h3l4 3V7l-4 3H4Z"></path>
             <path data-sound-wave d="M15 9.5c1.3 1.3 1.3 3.7 0 5"></path>
@@ -1221,11 +1233,11 @@ if ($generatedResultsActive && $sidebarContextArtworkId > 0) {
 <div class="global-generation-ready" data-global-generation-ready role="status" aria-live="polite" hidden>
     <span class="global-generation-ready-mark" aria-hidden="true">✓</span>
     <div>
-        <strong data-global-generation-ready-title>Mockups ready</strong>
-        <span data-global-generation-ready-text>Your results are available.</span>
+        <strong data-global-generation-ready-title><?= h(t('Mockups ready', 'Mockups listos')) ?></strong>
+        <span data-global-generation-ready-text><?= h(t('Your results are available.', 'Tus resultados están disponibles.')) ?></span>
     </div>
-    <a href="mockups.php" data-global-generation-ready-link>View results</a>
-    <button class="global-generation-sound" type="button" data-global-generation-sound aria-pressed="false" aria-label="Mute completion sounds" title="Mute completion sounds">
+    <a href="mockups.php" data-global-generation-ready-link><?= h(t('View results', 'Ver resultados')) ?></a>
+    <button class="global-generation-sound" type="button" data-global-generation-sound aria-pressed="false" aria-label="<?= h(t('Mute completion sounds', 'Silenciar sonidos de finalización')) ?>" title="<?= h(t('Mute completion sounds', 'Silenciar sonidos de finalización')) ?>">
         <svg viewBox="0 0 24 24" aria-hidden="true">
             <path d="M4 10v4h3l4 3V7l-4 3H4Z"></path>
             <path data-sound-wave d="M15 9.5c1.3 1.3 1.3 3.7 0 5"></path>
@@ -1233,7 +1245,7 @@ if ($generatedResultsActive && $sidebarContextArtworkId > 0) {
             <path data-sound-slash d="M5 5l14 14"></path>
         </svg>
     </button>
-    <button type="button" data-global-generation-dismiss aria-label="Dismiss">×</button>
+    <button type="button" data-global-generation-dismiss aria-label="<?= h(t('Dismiss', 'Descartar')) ?>">×</button>
 </div>
 <script>
 (function () {
@@ -1255,6 +1267,25 @@ if ($generatedResultsActive && $sidebarContextArtworkId > 0) {
     let pollTimer = 0;
     let completionAudioContext = null;
     let soundMuted = false;
+    const sidebarGenerationI18n = {
+        muteSounds: <?= json_encode(t('Mute completion sounds', 'Silenciar sonidos de finalización')) ?>,
+        unmuteSounds: <?= json_encode(t('Turn on completion sounds', 'Activar sonidos de finalización')) ?>,
+        oneMockupActive: <?= json_encode(t('1 mockup is being created in the background', '1 mockup se está creando en segundo plano')) ?>,
+        manyMockupsActive: <?= json_encode(t(' mockups are being created in the background', ' mockups se están creando en segundo plano')) ?>,
+        newSceneReady: <?= json_encode(t('New scene ready', 'Nueva escena lista')) ?>,
+        newScenesReadySuffix: <?= json_encode(t(' new scenes ready', ' nuevas escenas listas')) ?>,
+        readyToReviewSuffix: <?= json_encode(t(' is ready to review.', ' está lista para revisar.')) ?>,
+        newScenesReadyToReview: <?= json_encode(t('Your new scenes are ready to review.', 'Tus nuevas escenas están listas para revisar.')) ?>,
+        viewNewScenes: <?= json_encode(t('View new scenes', 'Ver nuevas escenas')) ?>,
+        regenerationReady: <?= json_encode(t('Regeneration ready', 'Regeneración lista')) ?>,
+        mockupReady: <?= json_encode(t('Mockup ready', 'Mockup listo')) ?>,
+        mockupsReadySuffix: <?= json_encode(t(' mockups ready', ' mockups listos')) ?>,
+        taskFinished: <?= json_encode(t('The task finished without interrupting your work.', 'La tarea terminó sin interrumpir tu trabajo.')) ?>,
+        viewResults: <?= json_encode(t('View results', 'Ver resultados')) ?>,
+        generationCouldNotFinish: <?= json_encode(t('Generation could not finish', 'La generación no pudo terminar')) ?>,
+        someGenerationsCouldNotFinish: <?= json_encode(t('Some generations could not finish', 'Algunas generaciones no pudieron terminar')) ?>,
+        creditReturned: <?= json_encode(t('The credit was returned and the task can be retried.', 'El crédito fue devuelto y la tarea se puede reintentar.')) ?>,
+    };
 
     try {
         soundMuted = localStorage.getItem(soundMutedKey) === '1';
@@ -1263,8 +1294,8 @@ if ($generatedResultsActive && $sidebarContextArtworkId > 0) {
     function syncSoundToggles() {
         soundToggles.forEach(button => {
             button.setAttribute('aria-pressed', soundMuted ? 'true' : 'false');
-            button.setAttribute('aria-label', soundMuted ? 'Turn on completion sounds' : 'Mute completion sounds');
-            button.title = soundMuted ? 'Turn on completion sounds' : 'Mute completion sounds';
+            button.setAttribute('aria-label', soundMuted ? sidebarGenerationI18n.unmuteSounds : sidebarGenerationI18n.muteSounds);
+            button.title = soundMuted ? sidebarGenerationI18n.unmuteSounds : sidebarGenerationI18n.muteSounds;
         });
     }
 
@@ -1360,8 +1391,8 @@ if ($generatedResultsActive && $sidebarContextArtworkId > 0) {
         if (activity && activeText) {
             activity.hidden = active.length === 0;
             activeText.textContent = active.length === 1
-                ? '1 mockup is being created in the background'
-                : active.length + ' mockups are being created in the background';
+                ? sidebarGenerationI18n.oneMockupActive
+                : active.length + sidebarGenerationI18n.manyMockupsActive;
         }
 
         const activeIds = active.map(item => Number(item.id));
@@ -1406,23 +1437,23 @@ if ($generatedResultsActive && $sidebarContextArtworkId > 0) {
             const oneGenerationRun = new Set(visibleSuccessful.map(item => String(item.generation_run_id || '')).filter(Boolean)).size === 1;
             const sceneCategory = String(visibleSuccessful[0]?.scene_category || '').trim();
             if (newScenes === visibleSuccessful.length && oneGenerationRun) {
-                readyTitle.textContent = newScenes === 1 ? 'New scene ready' : newScenes + ' new scenes ready';
+                readyTitle.textContent = newScenes === 1 ? sidebarGenerationI18n.newSceneReady : newScenes + sidebarGenerationI18n.newScenesReadySuffix;
                 readyText.textContent = sceneCategory !== ''
-                    ? sceneCategory + ' is ready to review.'
-                    : 'Your new scenes are ready to review.';
-                readyLink.textContent = 'View new scenes';
+                    ? sceneCategory + sidebarGenerationI18n.readyToReviewSuffix
+                    : sidebarGenerationI18n.newScenesReadyToReview;
+                readyLink.textContent = sidebarGenerationI18n.viewNewScenes;
             } else {
                 readyTitle.textContent = visibleSuccessful.length === 1
-                    ? (regenerations ? 'Regeneration ready' : 'Mockup ready')
-                    : visibleSuccessful.length + ' mockups ready';
-                readyText.textContent = 'The task finished without interrupting your work.';
-                readyLink.textContent = 'View results';
+                    ? (regenerations ? sidebarGenerationI18n.regenerationReady : sidebarGenerationI18n.mockupReady)
+                    : visibleSuccessful.length + sidebarGenerationI18n.mockupsReadySuffix;
+                readyText.textContent = sidebarGenerationI18n.taskFinished;
+                readyLink.textContent = sidebarGenerationI18n.viewResults;
             }
             readyLink.hidden = false;
             readyLink.href = visibleSuccessful[0].results_url || 'mockups.php';
         } else {
-            readyTitle.textContent = visibleFailed.length === 1 ? 'Generation could not finish' : 'Some generations could not finish';
-            readyText.textContent = visibleFailed[0]?.error || 'The credit was returned and the task can be retried.';
+            readyTitle.textContent = visibleFailed.length === 1 ? sidebarGenerationI18n.generationCouldNotFinish : sidebarGenerationI18n.someGenerationsCouldNotFinish;
+            readyText.textContent = visibleFailed[0]?.error || sidebarGenerationI18n.creditReturned;
             readyLink.hidden = true;
         }
     }
@@ -1562,6 +1593,10 @@ if ($generatedResultsActive && $sidebarContextArtworkId > 0) {
 <script>
 (function () {
     const storageKey = 'sidebarFlowMode';
+    const sidebarFlowModeI18n = {
+        admin: <?= json_encode(t('Admin', 'Admin')) ?>,
+        user: <?= json_encode(t('User', 'Usuario')) ?>,
+    };
     const toggle = document.getElementById('sidebar-flow-mode-toggle');
     const label = document.getElementById('sidebar-flow-mode-label');
     const brand = document.querySelector('.brand[data-admin-href][data-normal-href]');
@@ -1581,7 +1616,7 @@ if ($generatedResultsActive && $sidebarContextArtworkId > 0) {
             toggle.checked = normalized === 'admin';
         }
         if (label) {
-            label.textContent = normalized === 'admin' ? 'Admin' : 'Usuario';
+            label.textContent = normalized === 'admin' ? sidebarFlowModeI18n.admin : sidebarFlowModeI18n.user;
         }
         if (brand) {
             brand.href = normalized === 'admin' ? brand.dataset.adminHref : brand.dataset.normalHref;

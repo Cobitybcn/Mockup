@@ -34,7 +34,7 @@ function scene_preview_urls(array $images, int $limit = 3): array
         }
         $urls[] = [
             'url' => 'world_mother_media.php?file=' . rawurlencode($path) . '&thumb=1&w=640',
-            'title' => (string)($image['title'] ?? 'Scene reference'),
+            'title' => (string)($image['title'] ?? t('Scene reference', 'Referencia de escena')),
         ];
     }
     return $urls;
@@ -53,10 +53,10 @@ $defaultSceneName = (string)($sceneCategories[0]['category_name'] ?? $defaultSce
 $defaultScenePreviews = scene_preview_urls($library->imagesForCategory($defaultScene), 24);
 ?>
 <!doctype html>
-<html lang="en">
+<html lang="<?= h(Translator::locale($user)) ?>">
 <head>
     <meta charset="utf-8">
-    <title>Create Scenes - Artwork Mockups</title>
+    <title><?= h(t('Create Scenes - Artwork Mockups', 'Crear Escenas - Artwork Mockups')) ?></title>
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <link rel="stylesheet" href="style.css">
     <style>
@@ -609,6 +609,33 @@ $defaultScenePreviews = scene_preview_urls($library->imagesForCategory($defaultS
         .desktop-dimension-controls {
             display: none;
         }
+        .artwork-title-field {
+            width: min(620px, 100%);
+            margin: 12px auto 0;
+            display: grid;
+            gap: 5px;
+            color: var(--muted);
+            font-size: 10px;
+            font-weight: 700;
+            letter-spacing: .1em;
+            text-transform: uppercase;
+        }
+        .artwork-title-field input {
+            min-height: 42px;
+            padding: 0 12px;
+            border: 1px solid var(--line);
+            border-radius: 6px;
+            background: var(--surface-soft);
+            color: var(--ink);
+            font: inherit;
+            font-size: 14px;
+            font-weight: 400;
+            letter-spacing: normal;
+            text-transform: none;
+        }
+        .artwork-title-field input::placeholder {
+            color: var(--muted);
+        }
         .scene-card {
             min-height: 190px;
             padding: 12px;
@@ -1080,7 +1107,7 @@ $defaultScenePreviews = scene_preview_urls($library->imagesForCategory($defaultS
     <header class="app-header create-scenes-desktop-header">
         <a class="user-chip" href="account.php"><?= h($user['email'] ?? '') ?></a>
     </header>
-    <div class="alert-strip create-scenes-alert">Prepare your artwork image before choosing a scene style.</div>
+    <div class="alert-strip create-scenes-alert"><?= h(t('Prepare your artwork image before choosing a scene style.', 'Preparé la imagen de la obra antes de elegir un estilo de escena.')) ?></div>
     <div class="scene-flow-shell">
     <form class="scene-flow" action="start_generate.php" method="post" enctype="multipart/form-data" id="createScenesForm">
         <input type="hidden" name="user_scene_flow" value="1">
@@ -1092,18 +1119,18 @@ $defaultScenePreviews = scene_preview_urls($library->imagesForCategory($defaultS
         <?php if ($createSeriesId > 0): ?><input type="hidden" name="series_id" value="<?= $createSeriesId ?>"><?php endif; ?>
 
         <header class="scene-flow-header">
-            <h1>Create Art</h1>
+            <h1><?= h(t('Create Art', 'Crear Obra')) ?></h1>
             <p class="desktop-header-copy">
-                <span class="desc-kicker">Create realistic scene mockups from a clear photograph or image file.</span>
-                <span class="desc-instructions">Upload the artwork, confirm its orientation and approximate dimensions, then choose the visual environment for the first mockups.</span>
-                <?php if ($createSeries): ?><span class="creation-series-context">New artwork will be added to <?= h($createSeries['title']) ?>.</span><?php endif; ?>
+                <span class="desc-kicker"><?= h(t('Create realistic scene mockups from a clear photograph or image file.', 'Creá mockups de escena realistas a partir de una fotografía o archivo de imagen claro.')) ?></span>
+                <span class="desc-instructions"><?= h(t('Upload the artwork, confirm its orientation and approximate dimensions, then choose the visual environment for the first mockups.', 'Subí la obra, confirmá su orientación y dimensiones aproximadas, y luego elegí el entorno visual para los primeros mockups.')) ?></span>
+                <?php if ($createSeries): ?><span class="creation-series-context"><?= h(t('New artwork will be added to', 'La nueva obra se agregará a')) ?> <?= h($createSeries['title']) ?>.</span><?php endif; ?>
             </p>
-            <p class="mobile-header-copy">Adjust the artwork width and height on the photo. They do not need to be exact—an approximate size helps create more realistic mockups.</p>
+            <p class="mobile-header-copy"><?= h(t('Adjust the artwork width and height on the photo. They do not need to be exact—an approximate size helps create more realistic mockups.', 'Ajustá el ancho y alto de la obra sobre la foto. No hace falta que sean exactos: un tamaño aproximado ayuda a crear mockups más realistas.')) ?></p>
         </header>
 
         <div class="flow-stage" id="artworkStage">
             <section class="scene-panel">
-                <p class="step-label">Artwork image</p>
+                <p class="step-label"><?= h(t('Artwork image', 'Imagen de la obra')) ?></p>
                 <div class="capture-grid">
                     <div class="capture-image-column">
                         <div class="capture-card" id="captureCard">
@@ -1112,28 +1139,28 @@ $defaultScenePreviews = scene_preview_urls($library->imagesForCategory($defaultS
                                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M4 7h3l1.4-2h7.2L17 7h3v12H4V7Z"/>
                                 <circle cx="12" cy="13" r="4" stroke-width="1.5"/>
                             </svg>
-                            <strong><span class="desktop-copy">Upload artwork image</span><span class="mobile-copy">Take a photo of the artwork</span></strong>
-                            <span>Use a clear, well-lit image. You can confirm it before choosing a scene.</span>
+                            <strong><span class="desktop-copy"><?= h(t('Upload artwork image', 'Subí la imagen de la obra')) ?></span><span class="mobile-copy"><?= h(t('Take a photo of the artwork', 'Sacá una foto de la obra')) ?></span></strong>
+                            <span><?= h(t('Use a clear, well-lit image. You can confirm it before choosing a scene.', 'Usá una imagen clara y bien iluminada. Podés confirmarla antes de elegir una escena.')) ?></span>
                         </div>
-                        <img class="capture-preview" id="capturePreview" alt="Selected artwork preview">
+                        <img class="capture-preview" id="capturePreview" alt="<?= h(t('Selected artwork preview', 'Vista previa de la obra seleccionada')) ?>">
                         <div class="capture-orientation-picker" id="orientationPicker">
                             <button type="button" class="capture-shape-pill" id="shapePill" aria-haspopup="menu" aria-expanded="false" aria-controls="orientationMenu">
-                                <span id="shapePillText">Vertical</span>
+                                <span id="shapePillText"><?= h(t('Vertical', 'Vertical')) ?></span>
                                 <span class="capture-shape-chevron" aria-hidden="true"></span>
                             </button>
                             <div class="capture-orientation-menu" id="orientationMenu" role="menu" hidden>
-                                <button type="button" class="capture-orientation-option" data-orientation="vertical" role="menuitemradio">Vertical</button>
-                                <button type="button" class="capture-orientation-option" data-orientation="horizontal" role="menuitemradio">Horizontal</button>
-                                <button type="button" class="capture-orientation-option" data-orientation="square" role="menuitemradio">Square</button>
+                                <button type="button" class="capture-orientation-option" data-orientation="vertical" role="menuitemradio"><?= h(t('Vertical', 'Vertical')) ?></button>
+                                <button type="button" class="capture-orientation-option" data-orientation="horizontal" role="menuitemradio"><?= h(t('Horizontal', 'Horizontal')) ?></button>
+                                <button type="button" class="capture-orientation-option" data-orientation="square" role="menuitemradio"><?= h(t('Square', 'Cuadrado')) ?></button>
                             </div>
                         </div>
-                        <button type="button" class="capture-measure-scrubber capture-measure-height" data-measure-target="height" role="slider" aria-label="Artwork height in centimeters. Swipe up to increase and down to decrease." aria-valuemin="1" aria-valuemax="300" aria-valuenow="120">
+                        <button type="button" class="capture-measure-scrubber capture-measure-height" data-measure-target="height" role="slider" aria-label="<?= h(t('Artwork height in centimeters. Swipe up to increase and down to decrease.', 'Alto de la obra en centímetros. Deslizá hacia arriba para aumentar y hacia abajo para disminuir.')) ?>" aria-valuemin="1" aria-valuemax="300" aria-valuenow="120">
                             <span class="capture-measure-axis">H</span>
                             <strong class="capture-measure-number" data-measure-output="height">120</strong>
                             <span data-measure-unit>cm</span>
                         </button>
                         <input type="hidden" name="height" id="realHeightInput" value="120">
-                        <button type="button" class="capture-measure-scrubber capture-measure-width" data-measure-target="width" role="slider" aria-label="Artwork width in centimeters. Swipe up to increase and down to decrease." aria-valuemin="1" aria-valuemax="300" aria-valuenow="80">
+                        <button type="button" class="capture-measure-scrubber capture-measure-width" data-measure-target="width" role="slider" aria-label="<?= h(t('Artwork width in centimeters. Swipe up to increase and down to decrease.', 'Ancho de la obra en centímetros. Deslizá hacia arriba para aumentar y hacia abajo para disminuir.')) ?>" aria-valuemin="1" aria-valuemax="300" aria-valuenow="80">
                             <span class="capture-measure-axis">W</span>
                             <strong class="capture-measure-number" data-measure-output="width">80</strong>
                             <span data-measure-unit>cm</span>
@@ -1141,36 +1168,40 @@ $defaultScenePreviews = scene_preview_urls($library->imagesForCategory($defaultS
                         <input type="hidden" name="width" id="realWidthInput" value="80">
                             <input id="cameraInput" type="file" name="main_artwork" accept="image/*" capture="environment" required>
                         </div>
-                        <div class="desktop-dimension-controls" aria-label="Artwork dimensions">
+                        <label class="artwork-title-field" for="artworkTitleInput">
+                            <span><?= h(t('Title (optional)', 'Título (opcional)')) ?></span>
+                            <input type="text" id="artworkTitleInput" name="artwork_title" maxlength="160" placeholder="<?= h(t('Name your artwork', 'Nombrá tu obra')) ?>" autocomplete="off">
+                        </label>
+                        <div class="desktop-dimension-controls" aria-label="<?= h(t('Artwork dimensions', 'Dimensiones de la obra')) ?>">
                             <label class="desktop-dimension-field" for="desktopWidthInput">
-                                <span>Width</span>
+                                <span><?= h(t('Width', 'Ancho')) ?></span>
                                 <span class="desktop-dimension-input">
                                     <input type="number" id="desktopWidthInput" value="80" min="1" max="300" step="1" inputmode="decimal">
                                     <span data-measure-unit>cm</span>
                                 </span>
                             </label>
-                            <button type="button" class="desktop-orientation-toggle" id="desktopOrientationToggle" aria-label="Switch to horizontal orientation" title="Switch to horizontal orientation">
+                            <button type="button" class="desktop-orientation-toggle" id="desktopOrientationToggle" aria-label="<?= h(t('Switch to horizontal orientation', 'Cambiar a orientación horizontal')) ?>" title="<?= h(t('Switch to horizontal orientation', 'Cambiar a orientación horizontal')) ?>">
                                 <svg fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
                                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.7" d="M7 7h11m0 0-3-3m3 3-3 3M17 17H6m0 0 3 3m-3-3 3-3"/>
                                 </svg>
                             </button>
                             <label class="desktop-dimension-field" for="desktopHeightInput">
-                                <span>Height</span>
+                                <span><?= h(t('Height', 'Alto')) ?></span>
                                 <span class="desktop-dimension-input">
                                     <input type="number" id="desktopHeightInput" value="120" min="1" max="300" step="1" inputmode="decimal">
                                     <span data-measure-unit>cm</span>
                                 </span>
                             </label>
                             <label class="desktop-dimension-field" for="desktopDepthInput">
-                                <span>Depth (optional)</span>
+                                <span><?= h(t('Depth (optional)', 'Profundidad (opcional)')) ?></span>
                                 <span class="desktop-dimension-input">
-                                    <input type="number" id="desktopDepthInput" name="depth" value="3" min="0" max="300" step="1" inputmode="decimal" placeholder="Optional" disabled>
+                                    <input type="number" id="desktopDepthInput" name="depth" value="3" min="0" max="300" step="1" inputmode="decimal" placeholder="<?= h(t('Optional', 'Opcional')) ?>" disabled>
                                     <span data-measure-unit>cm</span>
                                 </span>
                             </label>
                         </div>
-                        <button type="button" class="artwork-confirm-button" id="continueToSceneBtn" hidden disabled>Use this artwork</button>
-                        <span id="sizeHint" hidden>Swipe up or down on H and W to adjust the real artwork size.</span>
+                        <button type="button" class="artwork-confirm-button" id="continueToSceneBtn" hidden disabled><?= h(t('Use this artwork', 'Usar esta obra')) ?></button>
+                        <span id="sizeHint" hidden><?= h(t('Swipe up or down on H and W to adjust the real artwork size.', 'Deslizá hacia arriba o abajo sobre A y H para ajustar el tamaño real de la obra.')) ?></span>
                     </div>
                     <div class="capture-actions">
                         <button type="button" class="primary-capture" id="primaryCaptureBtn">
@@ -1178,12 +1209,12 @@ $defaultScenePreviews = scene_preview_urls($library->imagesForCategory($defaultS
                                 <path stroke-linecap="round" stroke-linejoin="round" d="M4 7h3l1.4-2h7.2L17 7h3v12H4V7Z"/>
                                 <circle cx="12" cy="13" r="4"/>
                             </svg>
-                            <span class="desktop-copy">Upload image</span>
-                            <span class="mobile-copy">Take photo</span>
+                            <span class="desktop-copy"><?= h(t('Upload image', 'Subir imagen')) ?></span>
+                            <span class="mobile-copy"><?= h(t('Take photo', 'Sacar foto')) ?></span>
                         </button>
                         <button type="button" class="secondary-capture" id="galleryBtn">
-                            <span class="gallery-alternative">or</span>
-                            <span>Choose from gallery</span>
+                            <span class="gallery-alternative"><?= h(t('or', 'o')) ?></span>
+                            <span><?= h(t('Choose from gallery', 'Elegir de la galería')) ?></span>
                         </button>
                     </div>
                 </div>
@@ -1193,16 +1224,16 @@ $defaultScenePreviews = scene_preview_urls($library->imagesForCategory($defaultS
         <div class="flow-stage" id="sceneStage" hidden>
             <section class="scene-panel">
                 <div class="scene-stage-toolbar">
-                    <p class="step-label">Scene style<span class="mobile-selected-scene">: <span id="selectedSceneTitle"><?= h($defaultSceneName) ?></span></span><span class="scene-style-count"> - <?= count($sceneCategories) ?> styles</span></p>
+                    <p class="step-label"><?= h(t('Scene style', 'Estilo de escena')) ?><span class="mobile-selected-scene">: <span id="selectedSceneTitle"><?= h($defaultSceneName) ?></span></span><span class="scene-style-count"> - <?= count($sceneCategories) ?> <?= h(t('styles', 'estilos')) ?></span></p>
                     <label class="scene-order-control" for="sceneOrder">
-                        <span>Order</span>
+                        <span><?= h(t('Order', 'Orden')) ?></span>
                         <select id="sceneOrder">
-                            <option value="recommended">Recommended</option>
-                            <option value="featured">Featured</option>
-                            <option value="popular">Popular</option>
-                            <option value="versatile">Most versatile</option>
-                            <option value="newest">Newest</option>
-                            <option value="alpha">A–Z</option>
+                            <option value="recommended"><?= h(t('Recommended', 'Recomendado')) ?></option>
+                            <option value="featured"><?= h(t('Featured', 'Destacado')) ?></option>
+                            <option value="popular"><?= h(t('Popular', 'Popular')) ?></option>
+                            <option value="versatile"><?= h(t('Most versatile', 'Más versátil')) ?></option>
+                            <option value="newest"><?= h(t('Newest', 'Más nuevo')) ?></option>
+                            <option value="alpha"><?= h(t('A–Z', 'A–Z')) ?></option>
                         </select>
                     </label>
                 </div>
@@ -1212,7 +1243,7 @@ $defaultScenePreviews = scene_preview_urls($library->imagesForCategory($defaultS
                             <img src="<?= h($preview['url']) ?>" alt="<?= h($preview['title']) ?>" loading="<?= $previewIndex === 0 ? 'eager' : 'lazy' ?>" decoding="async">
                         <?php endforeach; ?>
                     </div>
-                    <button type="submit" class="mobile-scene-submit">Create Mockups</button>
+                    <button type="submit" class="mobile-scene-submit"><?= h(t('Create Mockups', 'Crear Mockups')) ?></button>
                 </div>
                 <div class="scene-grid">
                     <?php foreach ($sceneCategories as $index => $category): ?>
@@ -1240,18 +1271,18 @@ $defaultScenePreviews = scene_preview_urls($library->imagesForCategory($defaultS
                                         <img src="<?= h($mainPreview['url']) ?>" alt="<?= h($mainPreview['title']) ?>" loading="lazy" decoding="async">
                                     </span>
                                     <?php if (count($previews) > 1): ?>
-                                    <span class="scene-card-nested" aria-label="<?= h((string)($category['category_name'] ?? $slug)) ?> references">
+                                    <span class="scene-card-nested" aria-label="<?= h((string)($category['category_name'] ?? $slug) . ' ' . t('references', 'referencias')) ?>">
                                         <?php foreach ($previews as $preview): ?>
                                             <img data-src="<?= h($preview['url']) ?>" alt="<?= h($preview['title']) ?>" decoding="async">
                                         <?php endforeach; ?>
                                     </span>
                                     <?php endif; ?>
                                 <?php else: ?>
-                                    <span class="scene-card-empty">No references yet</span>
+                                    <span class="scene-card-empty"><?= h(t('No references yet', 'Todavía no hay referencias')) ?></span>
                                 <?php endif; ?>
                                 <span class="scene-card-body">
                                     <strong><?= h((string)($category['category_name'] ?? $slug)) ?></strong>
-                                    <span class="scene-card-meta"><?= $imageCount ?> references<?= !empty($category['featured_active']) ? ' · Featured' : '' ?></span>
+                                    <span class="scene-card-meta"><?= $imageCount ?> <?= h(t('references', 'referencias')) ?><?= !empty($category['featured_active']) ? ' · ' . h(t('Featured', 'Destacado')) : '' ?></span>
                                 </span>
                             </label>
                         </div>
@@ -1260,8 +1291,8 @@ $defaultScenePreviews = scene_preview_urls($library->imagesForCategory($defaultS
             </section>
             <section class="scene-panel desktop-scene-submit-panel">
                 <div class="submit-row">
-                    <button type="button" class="secondary-capture" id="backToArtworkBtn">Change artwork</button>
-                    <button type="submit" class="button">Create 4 scenes</button>
+                    <button type="button" class="secondary-capture" id="backToArtworkBtn"><?= h(t('Change artwork', 'Cambiar obra')) ?></button>
+                    <button type="submit" class="button"><?= h(t('Create 4 scenes', 'Crear 4 escenas')) ?></button>
                 </div>
             </section>
         </div>
@@ -1272,6 +1303,24 @@ $defaultScenePreviews = scene_preview_urls($library->imagesForCategory($defaultS
 <?php include __DIR__ . '/compact_scene_progress_layer.php'; ?>
 
 <script>
+const createScenesI18n = {
+    orientationLabels: {
+        horizontal: <?= json_encode(t('Horizontal', 'Horizontal')) ?>,
+        vertical: <?= json_encode(t('Vertical', 'Vertical')) ?>,
+        square: <?= json_encode(t('Square', 'Cuadrado')) ?>,
+    },
+    switchToOrientation: <?= json_encode(t('Switch to {0} orientation', 'Cambiar a orientación {0}')) ?>,
+    dimensionInUnitLabel: <?= json_encode(t('Artwork {0} in {1}. Swipe up to increase and down to decrease.', 'Obra: {0} en {1}. Deslizá hacia arriba para aumentar y hacia abajo para disminuir.')) ?>,
+    dimensionNames: {
+        width: <?= json_encode(t('width', 'ancho')) ?>,
+        height: <?= json_encode(t('height', 'alto')) ?>,
+    },
+    currentSize: <?= json_encode(t('Current size: {0} × {1} {2}. Swipe up or down on H and W to adjust.', 'Tamaño actual: {0} × {1} {2}. Deslizá hacia arriba o abajo sobre A y H para ajustar.')) ?>,
+    sceneReference: <?= json_encode(t('Scene reference', 'Referencia de escena')) ?>,
+};
+function formatI18n(template, ...values) {
+    return template.replace(/\{(\d+)\}/g, (match, index) => values[index] ?? match);
+}
 const createScenesForm = document.getElementById('createScenesForm');
 const cameraInput = document.getElementById('cameraInput');
 const captureCard = document.getElementById('captureCard');
@@ -1491,7 +1540,7 @@ function renderMobileSceneViewer(selectedCard) {
     const fragment = document.createDocumentFragment();
     const images = usableReferences.map((reference, index) => {
         const image = document.createElement('img');
-        image.alt = reference.alt || 'Scene reference';
+        image.alt = reference.alt || createScenesI18n.sceneReference;
         image.decoding = 'async';
         image.loading = index === 0 ? 'eager' : 'lazy';
         fragment.appendChild(image);
@@ -1754,10 +1803,10 @@ function updateSizeHint() {
     } else if (height > width) {
         orientation = 'vertical';
     }
-    shapePillText.textContent = orientation.charAt(0).toUpperCase() + orientation.slice(1);
+    shapePillText.textContent = createScenesI18n.orientationLabels[orientation] || orientation;
     if (desktopOrientationToggle) {
         const nextOrientation = orientation === 'horizontal' ? 'vertical' : 'horizontal';
-        const toggleLabel = `Switch to ${nextOrientation} orientation`;
+        const toggleLabel = formatI18n(createScenesI18n.switchToOrientation, createScenesI18n.orientationLabels[nextOrientation] || nextOrientation);
         desktopOrientationToggle.setAttribute('aria-label', toggleLabel);
         desktopOrientationToggle.title = toggleLabel;
     }
@@ -1796,9 +1845,9 @@ function updateSizeHint() {
         scrubber.setAttribute('aria-valuenow', formatMeasure(value));
         scrubber.setAttribute('aria-valuemax', measureMaximum(unit));
         scrubber.setAttribute('aria-valuetext', `${formatMeasure(value)} ${unit}`);
-        scrubber.setAttribute('aria-label', `Artwork ${target} in ${unit}. Swipe up to increase and down to decrease.`);
+        scrubber.setAttribute('aria-label', formatI18n(createScenesI18n.dimensionInUnitLabel, createScenesI18n.dimensionNames[target] || target, unit));
     });
-    sizeHint.textContent = `Current size: ${formatMeasure(width)} × ${formatMeasure(height)} ${unit}. Swipe up or down on H and W to adjust.`;
+    sizeHint.textContent = formatI18n(createScenesI18n.currentSize, formatMeasure(width), formatMeasure(height), unit);
 }
 </script>
 </body>

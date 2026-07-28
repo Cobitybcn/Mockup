@@ -37,12 +37,20 @@ final class BilingualEditorialJobService
             return $active;
         }
 
+        // Los idiomas del trabajo encolado salen de la politica del artista:
+        // el master se genera en su idioma de trabajo y la adaptacion apunta a
+        // su idioma de publicacion adicional, si existe.
+        $policy = LanguagePolicy::forUser($userId, $this->pdo);
+        $sourceLocale = $policy['working_locale'];
+        $targets = LanguagePolicy::adaptationTargets($policy);
+        $targetLocale = $targets[0] ?? $sourceLocale;
+
         $now = date(DATE_ATOM);
         $this->pdo->prepare(
             "INSERT INTO bilingual_editorial_jobs
              (user_id,entity_type,entity_id,action,status,source_locale,target_locale,payload_json,result_json,error,task_name,attempts,started_at,completed_at,created_at,updated_at)
-             VALUES (?,?,?,?,?,'es','en',?,'{}','','',0,NULL,NULL,?,?)"
-        )->execute([$userId, $entityType, $entityId, $action, 'queued', $encoded, $now, $now]);
+             VALUES (?,?,?,?,?,?,?,?,'{}','','',0,NULL,NULL,?,?)"
+        )->execute([$userId, $entityType, $entityId, $action, 'queued', $sourceLocale, $targetLocale, $encoded, $now, $now]);
         return $this->job((int)$this->pdo->lastInsertId(), $userId);
     }
 

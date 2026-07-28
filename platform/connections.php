@@ -22,7 +22,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     $network = preg_replace('/[^a-z]/', '', (string)($_POST['network'] ?? ''));
     try {
         if (!hash_equals((string)($_SESSION['connections_csrf'] ?? ''), (string)($_POST['csrf'] ?? ''))) {
-            throw new RuntimeException('Your session expired. Reload Connections and try again.');
+            throw new RuntimeException(t('Your session expired. Reload Connections and try again.', 'Tu sesión expiró. Recargá Conexiones e intentá de nuevo.'));
         }
 
         $action = (string)($_POST['action'] ?? '');
@@ -32,16 +32,16 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         }
         if ($action === 'select_facebook_page') {
             $metaService->selectPage($userId, 'artist', (string)($_POST['page_id'] ?? ''));
-            $_SESSION['connections_notice'] = 'Facebook was connected to the selected Page.';
+            $_SESSION['connections_notice'] = t('Facebook was connected to the selected Page.', 'Facebook se conectó a la Página seleccionada.');
         } elseif ($action === 'disconnect_facebook') {
             $metaService->disconnect($userId, 'artist');
-            $_SESSION['connections_notice'] = 'Facebook fue desconectado.';
+            $_SESSION['connections_notice'] = t('Facebook was disconnected.', 'Facebook fue desconectado.');
         } elseif ($action === 'connect_instagram') {
             header('Location: ' . $instagramService->authorizationUrl($userId, 'artist'));
             exit;
         } elseif ($action === 'disconnect_instagram') {
             $instagramService->disconnect($userId, 'artist');
-            $_SESSION['connections_notice'] = 'Instagram fue desconectado.';
+            $_SESSION['connections_notice'] = t('Instagram was disconnected.', 'Instagram fue desconectado.');
         } elseif ($action === 'connect_pinterest') {
             header('Location: ' . $pinterestService->authorizationUrl($userId, 'artist'));
             exit;
@@ -55,21 +55,21 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                 (string)($_POST['pinterest_app_secret'] ?? ''),
                 (string)($_POST['api_environment'] ?? 'production')
             );
-            $_SESSION['connections_notice'] = 'Pinterest app ' . (string)($savedApp['app_id'] ?? '') . ' was saved securely for this artist.';
+            $_SESSION['connections_notice'] = t('Pinterest app ', 'La app de Pinterest ') . (string)($savedApp['app_id'] ?? '') . t(' was saved securely for this artist.', ' se guardó de forma segura para este artista.');
         } elseif ($action === 'create_pinterest_sandbox_board') {
             $board = $pinterestService->createSandboxDemoBoard($userId, 'artist');
-            $_SESSION['connections_notice'] = 'Pinterest Sandbox board “' . (string)($board['name'] ?? 'Artwork Mockups Sandbox Demo') . '” is ready.';
+            $_SESSION['connections_notice'] = t('Pinterest Sandbox board “', 'El tablero Sandbox de Pinterest “') . (string)($board['name'] ?? 'Artwork Mockups Sandbox Demo') . t('” is ready.', '” está listo.');
         } elseif ($action === 'create_pinterest_platform_sandbox_board') {
             $board = $pinterestService->createSandboxDemoBoard($userId, 'platform');
-            $_SESSION['connections_notice'] = 'Pinterest Sandbox board “' . (string)($board['name'] ?? 'Artwork Mockups Sandbox Demo') . '” is ready for the platform account.';
+            $_SESSION['connections_notice'] = t('Pinterest Sandbox board “', 'El tablero Sandbox de Pinterest “') . (string)($board['name'] ?? 'Artwork Mockups Sandbox Demo') . t('” is ready for the platform account.', '” está listo para la cuenta de la plataforma.');
         } elseif ($action === 'disconnect_pinterest') {
             $pinterestService->disconnect($userId, 'artist');
-            $_SESSION['connections_notice'] = 'Pinterest fue desconectado.';
+            $_SESSION['connections_notice'] = t('Pinterest was disconnected.', 'Pinterest fue desconectado.');
         } elseif ($action === 'disconnect_pinterest_platform') {
             $pinterestService->disconnect($userId, 'platform');
-            $_SESSION['connections_notice'] = 'The Artwork Mockups Pinterest account was disconnected.';
+            $_SESSION['connections_notice'] = t('The Artwork Mockups Pinterest account was disconnected.', 'La cuenta de Pinterest de Artwork Mockups fue desconectada.');
         } else {
-            throw new RuntimeException('The connection action is not valid.');
+            throw new RuntimeException(t('The connection action is not valid.', 'La acción de conexión no es válida.'));
         }
 
         $_SESSION['connections_open'] = $network;
@@ -113,11 +113,11 @@ function connections_status(?array $connection): array
 {
     $status = strtolower(trim((string)($connection['status'] ?? '')));
     return match ($status) {
-        'connected' => ['label' => 'Connected', 'class' => 'is-connected'],
-        'awaiting_page' => ['label' => 'Choose a Page', 'class' => 'is-pending'],
-        'pending' => ['label' => 'Pending', 'class' => 'is-pending'],
-        'failed', 'needs_verification' => ['label' => 'Needs attention', 'class' => 'is-error'],
-        default => ['label' => 'Not connected', 'class' => 'is-offline'],
+        'connected' => ['label' => t('Connected', 'Conectado'), 'class' => 'is-connected'],
+        'awaiting_page' => ['label' => t('Choose a Page', 'Elegir una Página'), 'class' => 'is-pending'],
+        'pending' => ['label' => t('Pending', 'Pendiente'), 'class' => 'is-pending'],
+        'failed', 'needs_verification' => ['label' => t('Needs attention', 'Necesita atención'), 'class' => 'is-error'],
+        default => ['label' => t('Not connected', 'No conectado'), 'class' => 'is-offline'],
     };
 }
 
@@ -125,48 +125,48 @@ $artistConnections = [
     [
         'id' => 'pinterest',
         'name' => 'Pinterest',
-        'eyebrow' => 'Artist account',
-        'description' => 'Boards and Pins published as the artist.',
+        'eyebrow' => t('Artist account', 'Cuenta del artista'),
+        'description' => t('Boards and Pins published as the artist.', 'Tableros y Pins publicados como el artista.'),
         'detail' => $pinterestReady
-            ? 'Ready for Pinterest publishing.'
-            : 'Authorize the Pinterest account owned by this artist.',
+            ? t('Ready for Pinterest publishing.', 'Listo para publicar en Pinterest.')
+            : t('Authorize the Pinterest account owned by this artist.', 'Autorizá la cuenta de Pinterest de este artista.'),
         'connection' => $pinterestReady ? $pinterestArtist : null,
         'href' => 'integrations/pinterest/',
-        'action' => $pinterestReady ? 'Manage Pinterest' : (($pinterestArtist['status'] ?? '') === 'connected' ? 'Update Pinterest' : 'Connect Pinterest'),
+        'action' => $pinterestReady ? t('Manage Pinterest', 'Gestionar Pinterest') : (($pinterestArtist['status'] ?? '') === 'connected' ? t('Update Pinterest', 'Actualizar Pinterest') : t('Connect Pinterest', 'Conectar Pinterest')),
     ],
     [
         'id' => 'facebook',
         'name' => 'Facebook',
-        'eyebrow' => 'Artist Page',
-        'description' => 'Posts published on the selected Facebook Page.',
+        'eyebrow' => t('Artist Page', 'Página del artista'),
+        'description' => t('Posts published on the selected Facebook Page.', 'Publicaciones en la Página de Facebook seleccionada.'),
         'detail' => ($facebookArtist['status'] ?? '') === 'connected'
-            ? (string)($facebookArtist['page_name'] ?? 'Facebook Page')
+            ? (string)($facebookArtist['page_name'] ?? t('Facebook Page', 'Página de Facebook'))
             : (($facebookArtist['status'] ?? '') === 'awaiting_page'
-                ? 'Meta is authorized. Select the artist Page.'
-                : 'Connect a Facebook Page managed by this artist.'),
+                ? t('Meta is authorized. Select the artist Page.', 'Meta está autorizado. Elegí la Página del artista.')
+                : t('Connect a Facebook Page managed by this artist.', 'Conectá una Página de Facebook administrada por este artista.')),
         'connection' => $facebookArtist,
         'href' => 'integrations/meta/',
-        'action' => ($facebookArtist['status'] ?? '') === 'connected' ? 'Manage Facebook' : 'Connect Facebook',
+        'action' => ($facebookArtist['status'] ?? '') === 'connected' ? t('Manage Facebook', 'Gestionar Facebook') : t('Connect Facebook', 'Conectar Facebook'),
     ],
     [
         'id' => 'instagram',
         'name' => 'Instagram',
-        'eyebrow' => 'Professional artist account',
-        'description' => 'Posts and carousels published as the artist.',
+        'eyebrow' => t('Professional artist account', 'Cuenta profesional del artista'),
+        'description' => t('Posts and carousels published as the artist.', 'Publicaciones y carruseles publicados como el artista.'),
         'detail' => ($instagramArtist['status'] ?? '') === 'connected'
             ? '@' . ltrim((string)($instagramArtist['username'] ?? ''), '@')
-            : 'Connect the professional Instagram account owned by this artist.',
+            : t('Connect the professional Instagram account owned by this artist.', 'Conectá la cuenta profesional de Instagram de este artista.'),
         'connection' => $instagramArtist,
         'href' => 'integrations/instagram/',
-        'action' => ($instagramArtist['status'] ?? '') === 'connected' ? 'Manage Instagram' : 'Connect Instagram',
+        'action' => ($instagramArtist['status'] ?? '') === 'connected' ? t('Manage Instagram', 'Gestionar Instagram') : t('Connect Instagram', 'Conectar Instagram'),
     ],
 ];
 ?>
 <!doctype html>
-<html lang="en">
+<html lang="<?= connections_h(Translator::locale($user)) ?>">
 <head>
     <meta charset="utf-8">
-    <title>Connections - Artwork Mockups</title>
+    <title><?= connections_h(t('Connections - Artwork Mockups', 'Conexiones - Artwork Mockups')) ?></title>
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <link rel="stylesheet" href="style.css">
     <style>
@@ -226,10 +226,10 @@ $artistConnections = [
         <div class="workspace">
             <div class="workspace-header">
                 <div>
-                    <h1>Connections</h1>
-                    <p class="connections-intro">One place for every publishing account owned by this artist. Each network keeps its own credentials and identity.</p>
+                    <h1><?= connections_h(t('Connections', 'Conexiones')) ?></h1>
+                    <p class="connections-intro"><?= connections_h(t('One place for every publishing account owned by this artist. Each network keeps its own credentials and identity.', 'Un solo lugar para todas las cuentas de publicación de este artista. Cada red mantiene sus propias credenciales e identidad.')) ?></p>
                 </div>
-                <div class="topbar-actions"><a class="button-link secondary" href="social_media_board.php">Social Media Board</a></div>
+                <div class="topbar-actions"><a class="button-link secondary" href="social_media_board.php"><?= connections_h(t('Social Media Board', 'Tablero de Redes Sociales')) ?></a></div>
             </div>
 
             <?php if ($connectionNotice !== ''): ?><div class="connections-message"><?= connections_h($connectionNotice) ?></div><?php endif; ?>
@@ -237,8 +237,8 @@ $artistConnections = [
 
             <section class="connections-section" aria-labelledby="artist-connections-title">
                 <div class="connections-section-head">
-                    <h2 id="artist-connections-title">Artist connections</h2>
-                    <p>These accounts publish artwork as <?= connections_h((string)($user['email'] ?? 'the current artist')) ?>.</p>
+                    <h2 id="artist-connections-title"><?= connections_h(t('Artist connections', 'Conexiones del artista')) ?></h2>
+                    <p><?= connections_h(t('These accounts publish artwork as ', 'Estas cuentas publican obras como ')) ?><?= connections_h((string)($user['email'] ?? t('the current artist', 'el artista actual'))) ?>.</p>
                 </div>
                 <div class="connections-grid">
                     <?php foreach ($artistConnections as $item): $status = connections_status($item['connection']); ?>
@@ -258,8 +258,8 @@ $artistConnections = [
             <?php if ($isAdmin): ?>
                 <section class="connections-section connections-platform" aria-labelledby="platform-connections-title">
                     <div class="connections-section-head">
-                        <h2 id="platform-connections-title">Artwork Mockups platform</h2>
-                        <p>Administrative identity for promoting the application. It never uses an artist's credentials.</p>
+                        <h2 id="platform-connections-title"><?= connections_h(t('Artwork Mockups platform', 'Plataforma Artwork Mockups')) ?></h2>
+                        <p><?= connections_h(t("Administrative identity for promoting the application. It never uses an artist's credentials.", 'Identidad administrativa para promocionar la aplicación. Nunca usa las credenciales de un artista.')) ?></p>
                     </div>
                     <div class="connections-platform-grid">
                         <?php foreach ([
@@ -269,9 +269,9 @@ $artistConnections = [
                             <div class="connections-platform-item">
                                 <div><strong><?= connections_h($name) ?></strong><small><?= connections_h($status['label']) ?></small></div>
                                 <?php if ($dialog !== ''): ?>
-                                    <button class="button-link secondary" type="button" data-connection-open="<?= connections_h($dialog) ?>">Manage</button>
+                                    <button class="button-link secondary" type="button" data-connection-open="<?= connections_h($dialog) ?>"><?= connections_h(t('Manage', 'Gestionar')) ?></button>
                                 <?php else: ?>
-                                    <a class="button-link secondary" href="<?= connections_h($href) ?>">Manage</a>
+                                    <a class="button-link secondary" href="<?= connections_h($href) ?>"><?= connections_h(t('Manage', 'Gestionar')) ?></a>
                                 <?php endif; ?>
                             </div>
                         <?php endforeach; ?>
@@ -281,56 +281,56 @@ $artistConnections = [
 
             <dialog class="connection-dialog" id="connection-pinterest" aria-labelledby="connection-pinterest-title">
                 <div class="connection-dialog__head">
-                    <div><span>Artist account</span><h2 id="connection-pinterest-title">Pinterest</h2></div>
-                    <button class="connection-dialog__close" type="button" data-connection-close aria-label="Close">&times;</button>
+                    <div><span><?= connections_h(t('Artist account', 'Cuenta del artista')) ?></span><h2 id="connection-pinterest-title">Pinterest</h2></div>
+                    <button class="connection-dialog__close" type="button" data-connection-close aria-label="<?= connections_h(t('Close', 'Cerrar')) ?>">&times;</button>
                 </div>
                 <div class="connection-dialog__body">
                     <?php if ($pinterestReady): ?>
                         <div class="connection-summary">
-                            <p><strong>Connected account</strong></p>
+                            <p><strong><?= connections_h(t('Connected account', 'Cuenta conectada')) ?></strong></p>
                             <p><?= connections_h((string)($pinterestArtist['pinterest_account_id'] ?? 'Pinterest')) ?></p>
                         </div>
-                        <p>This is the identity used when you publish as the artist.</p>
+                        <p><?= connections_h(t('This is the identity used when you publish as the artist.', 'Esta es la identidad usada cuando publicás como el artista.')) ?></p>
                         <form class="connection-form" method="post">
                             <input type="hidden" name="csrf" value="<?= connections_h($_SESSION['connections_csrf']) ?>">
                             <input type="hidden" name="network" value="pinterest">
                             <div class="connection-form__actions">
-                                <?php if (($pinterestApp['has_secret'] ?? false) === true): ?><button class="button-link primary" name="action" value="connect_pinterest">Reconnect with app <?= connections_h((string)$pinterestApp['app_id']) ?></button><?php endif; ?>
-                                <?php if (($pinterestApp['api_environment'] ?? 'production') === 'sandbox'): ?><button class="button-link secondary" name="action" value="create_pinterest_sandbox_board">Create Sandbox demo board</button><?php endif; ?>
-                                <button class="button-link secondary" name="action" value="disconnect_pinterest">Desconectar Pinterest</button>
+                                <?php if (($pinterestApp['has_secret'] ?? false) === true): ?><button class="button-link primary" name="action" value="connect_pinterest"><?= connections_h(t('Reconnect with app', 'Reconectar con la app')) ?> <?= connections_h((string)$pinterestApp['app_id']) ?></button><?php endif; ?>
+                                <?php if (($pinterestApp['api_environment'] ?? 'production') === 'sandbox'): ?><button class="button-link secondary" name="action" value="create_pinterest_sandbox_board"><?= connections_h(t('Create Sandbox demo board', 'Crear tablero de demo Sandbox')) ?></button><?php endif; ?>
+                                <button class="button-link secondary" name="action" value="disconnect_pinterest"><?= connections_h(t('Disconnect Pinterest', 'Desconectar Pinterest')) ?></button>
                             </div>
                         </form>
                     <?php else: ?>
-                        <p><?=($pinterestArtist['status']??'')==='connected'?'Pinterest needs a new authorization that allows publishing.':'Sign in to Pinterest and authorize Artwork Mockups.'?> You will not need to copy codes or tokens.</p>
+                        <p><?= connections_h(($pinterestArtist['status']??'')==='connected' ? t('Pinterest needs a new authorization that allows publishing.', 'Pinterest necesita una nueva autorización que permita publicar.') : t('Sign in to Pinterest and authorize Artwork Mockups.', 'Iniciá sesión en Pinterest y autorizá Artwork Mockups.')) ?> <?= connections_h(t('You will not need to copy codes or tokens.', 'No vas a necesitar copiar códigos ni tokens.')) ?></p>
                         <form class="connection-form" method="post">
                             <input type="hidden" name="csrf" value="<?= connections_h($_SESSION['connections_csrf']) ?>">
                             <input type="hidden" name="network" value="pinterest">
-                            <?php if (($pinterestApp['has_secret'] ?? false) === true): ?><div class="connection-form__actions"><button class="button-link primary" name="action" value="connect_pinterest"><?=($pinterestArtist['status']??'')==='connected'?'Actualizar Pinterest':'Conectar Pinterest'?></button></div><?php endif; ?>
+                            <?php if (($pinterestApp['has_secret'] ?? false) === true): ?><div class="connection-form__actions"><button class="button-link primary" name="action" value="connect_pinterest"><?= connections_h(($pinterestArtist['status']??'')==='connected' ? t('Update Pinterest', 'Actualizar Pinterest') : t('Connect Pinterest', 'Conectar Pinterest')) ?></button></div><?php endif; ?>
                         </form>
                     <?php endif; ?>
                     <details class="connection-advanced">
-                        <summary>Developer app<?= $pinterestApp ? ' · ' . connections_h((string)$pinterestApp['app_id']) : '' ?></summary>
+                        <summary><?= connections_h(t('Developer app', 'App de desarrollador')) ?><?= $pinterestApp ? ' · ' . connections_h((string)$pinterestApp['app_id']) : '' ?></summary>
                         <div class="connection-advanced__body">
-                            <p>Use a dedicated Pinterest developer app for this artist. Its secret is encrypted and never displayed again.</p>
+                            <p><?= connections_h(t('Use a dedicated Pinterest developer app for this artist. Its secret is encrypted and never displayed again.', 'Usá una app de desarrollador de Pinterest dedicada para este artista. Su secreto se encripta y nunca vuelve a mostrarse.')) ?></p>
                             <form class="connection-form" method="post" autocomplete="off">
                                 <input type="hidden" name="csrf" value="<?= connections_h($_SESSION['connections_csrf']) ?>">
                                 <input type="hidden" name="network" value="pinterest">
-                                <label>App ID
+                                <label><?= connections_h(t('App ID', 'ID de la app')) ?>
                                     <input name="app_id" inputmode="numeric" pattern="[0-9]{5,30}" autocomplete="off" data-1p-ignore data-lpignore="true" required value="<?= connections_h((string)($pinterestApp['app_id'] ?? '')) ?>">
                                 </label>
-                                <label>App Secret
-                                    <input type="password" name="pinterest_app_secret" autocomplete="new-password" data-1p-ignore data-lpignore="true" <?=($pinterestApp['has_secret']??false)?'':'required'?> placeholder="<?=($pinterestApp['has_secret']??false)?'Leave blank to keep the saved secret':'Paste the app secret'?>">
-                                    <small><?=($pinterestApp['has_secret']??false)?'A secret is already stored securely.':'The secret is sent only to Artwork Mockups over HTTPS.'?></small>
+                                <label><?= connections_h(t('App Secret', 'Secreto de la app')) ?>
+                                    <input type="password" name="pinterest_app_secret" autocomplete="new-password" data-1p-ignore data-lpignore="true" <?=($pinterestApp['has_secret']??false)?'':'required'?> placeholder="<?= connections_h(($pinterestApp['has_secret']??false) ? t('Leave blank to keep the saved secret', 'Dejalo en blanco para mantener el secreto guardado') : t('Paste the app secret', 'Pegá el secreto de la app')) ?>">
+                                    <small><?= connections_h(($pinterestApp['has_secret']??false) ? t('A secret is already stored securely.', 'Ya hay un secreto guardado de forma segura.') : t('The secret is sent only to Artwork Mockups over HTTPS.', 'El secreto se envía solo a Artwork Mockups por HTTPS.')) ?></small>
                                 </label>
-                                <label>API environment
+                                <label><?= connections_h(t('API environment', 'Entorno de la API')) ?>
                                     <select name="api_environment">
-                                        <option value="production" <?=($pinterestApp['api_environment']??'production')==='production'?'selected':''?>>Production</option>
-                                        <option value="sandbox" <?=($pinterestApp['api_environment']??'production')==='sandbox'?'selected':''?>>Sandbox (Trial demo)</option>
+                                        <option value="production" <?=($pinterestApp['api_environment']??'production')==='production'?'selected':''?>><?= connections_h(t('Production', 'Producción')) ?></option>
+                                        <option value="sandbox" <?=($pinterestApp['api_environment']??'production')==='sandbox'?'selected':''?>><?= connections_h(t('Sandbox (Trial demo)', 'Sandbox (demo de prueba)')) ?></option>
                                     </select>
-                                    <small>Use Sandbox while Pinterest is reviewing a Trial app. Switch back to Production after Standard access is approved.</small>
+                                    <small><?= connections_h(t('Use Sandbox while Pinterest is reviewing a Trial app. Switch back to Production after Standard access is approved.', 'Usá Sandbox mientras Pinterest revisa una app de prueba. Volvé a Producción cuando se apruebe el acceso Standard.')) ?></small>
                                 </label>
-                                <p class="connection-callback"><strong>OAuth callback</strong><br><?= connections_h((string)($pinterestApp['redirect_uri'] ?? PublicPage::url('integrations/pinterest/callback'))) ?></p>
-                                <div class="connection-form__actions"><button class="button-link secondary" name="action" value="save_pinterest_app">Save developer app</button></div>
+                                <p class="connection-callback"><strong><?= connections_h(t('OAuth callback', 'Callback de OAuth')) ?></strong><br><?= connections_h((string)($pinterestApp['redirect_uri'] ?? PublicPage::url('integrations/pinterest/callback'))) ?></p>
+                                <div class="connection-form__actions"><button class="button-link secondary" name="action" value="save_pinterest_app"><?= connections_h(t('Save developer app', 'Guardar app de desarrollador')) ?></button></div>
                             </form>
                         </div>
                     </details>
@@ -340,30 +340,30 @@ $artistConnections = [
             <?php if ($isAdmin): ?>
                 <dialog class="connection-dialog" id="connection-pinterestplatform" aria-labelledby="connection-pinterestplatform-title">
                     <div class="connection-dialog__head">
-                        <div><span>Artwork Mockups platform</span><h2 id="connection-pinterestplatform-title">Pinterest</h2></div>
-                        <button class="connection-dialog__close" type="button" data-connection-close aria-label="Close">&times;</button>
+                        <div><span><?= connections_h(t('Artwork Mockups platform', 'Plataforma Artwork Mockups')) ?></span><h2 id="connection-pinterestplatform-title">Pinterest</h2></div>
+                        <button class="connection-dialog__close" type="button" data-connection-close aria-label="<?= connections_h(t('Close', 'Cerrar')) ?>">&times;</button>
                     </div>
                     <div class="connection-dialog__body">
                         <div class="connection-summary">
-                            <p><strong><?= $pinterestPlatformReady ? 'Connected account' : 'Connection status' ?></strong></p>
-                            <p><?= connections_h($pinterestPlatformReady ? (string)($pinterestPlatform['pinterest_account_id'] ?? 'Pinterest') : 'Authorization required') ?></p>
+                            <p><strong><?= connections_h($pinterestPlatformReady ? t('Connected account', 'Cuenta conectada') : t('Connection status', 'Estado de la conexión')) ?></strong></p>
+                            <p><?= connections_h($pinterestPlatformReady ? (string)($pinterestPlatform['pinterest_account_id'] ?? 'Pinterest') : t('Authorization required', 'Se requiere autorización')) ?></p>
                         </div>
-                        <p>This administrative identity publishes only as Artwork Mockups and remains isolated from artist accounts.</p>
+                        <p><?= connections_h(t('This administrative identity publishes only as Artwork Mockups and remains isolated from artist accounts.', 'Esta identidad administrativa publica solo como Artwork Mockups y permanece aislada de las cuentas de los artistas.')) ?></p>
                         <form class="connection-form" method="post">
                             <input type="hidden" name="csrf" value="<?= connections_h($_SESSION['connections_csrf']) ?>">
                             <input type="hidden" name="network" value="pinterestplatform">
                             <div class="connection-form__actions">
-                                <button class="button-link primary" name="action" value="connect_pinterest_platform"><?= $pinterestPlatformReady ? 'Reconnect' : 'Connect' ?> with app <?= connections_h((string)($pinterestPlatformApp['app_id'] ?? '')) ?></button>
-                                <?php if (($pinterestPlatformApp['api_environment'] ?? 'production') === 'sandbox'): ?><button class="button-link secondary" name="action" value="create_pinterest_platform_sandbox_board">Create Sandbox demo board</button><?php endif; ?>
-                                <?php if ($pinterestPlatformReady): ?><button class="button-link secondary" name="action" value="disconnect_pinterest_platform">Disconnect Pinterest</button><?php endif; ?>
+                                <button class="button-link primary" name="action" value="connect_pinterest_platform"><?= connections_h($pinterestPlatformReady ? t('Reconnect', 'Reconectar') : t('Connect', 'Conectar')) ?> <?= connections_h(t('with app', 'con la app')) ?> <?= connections_h((string)($pinterestPlatformApp['app_id'] ?? '')) ?></button>
+                                <?php if (($pinterestPlatformApp['api_environment'] ?? 'production') === 'sandbox'): ?><button class="button-link secondary" name="action" value="create_pinterest_platform_sandbox_board"><?= connections_h(t('Create Sandbox demo board', 'Crear tablero de demo Sandbox')) ?></button><?php endif; ?>
+                                <?php if ($pinterestPlatformReady): ?><button class="button-link secondary" name="action" value="disconnect_pinterest_platform"><?= connections_h(t('Disconnect Pinterest', 'Desconectar Pinterest')) ?></button><?php endif; ?>
                             </div>
                         </form>
                         <details class="connection-advanced">
-                            <summary>Developer app · <?= connections_h((string)($pinterestPlatformApp['app_id'] ?? '')) ?></summary>
+                            <summary><?= connections_h(t('Developer app', 'App de desarrollador')) ?> · <?= connections_h((string)($pinterestPlatformApp['app_id'] ?? '')) ?></summary>
                             <div class="connection-advanced__body">
-                                <p>The platform app secret stays on the server and is never displayed.</p>
-                                <p><strong>API environment</strong><br><?= connections_h(ucfirst((string)($pinterestPlatformApp['api_environment'] ?? 'production'))) ?></p>
-                                <p class="connection-callback"><strong>OAuth callback</strong><br><?= connections_h((string)($pinterestPlatformApp['redirect_uri'] ?? PublicPage::url('integrations/pinterest/callback'))) ?></p>
+                                <p><?= connections_h(t('The platform app secret stays on the server and is never displayed.', 'El secreto de la app de la plataforma permanece en el servidor y nunca se muestra.')) ?></p>
+                                <p><strong><?= connections_h(t('API environment', 'Entorno de la API')) ?></strong><br><?= connections_h(ucfirst((string)($pinterestPlatformApp['api_environment'] ?? 'production'))) ?></p>
+                                <p class="connection-callback"><strong><?= connections_h(t('OAuth callback', 'Callback de OAuth')) ?></strong><br><?= connections_h((string)($pinterestPlatformApp['redirect_uri'] ?? PublicPage::url('integrations/pinterest/callback'))) ?></p>
                             </div>
                         </details>
                     </div>
@@ -372,31 +372,31 @@ $artistConnections = [
 
             <dialog class="connection-dialog" id="connection-facebook" aria-labelledby="connection-facebook-title">
                 <div class="connection-dialog__head">
-                    <div><span>Artist Page</span><h2 id="connection-facebook-title">Facebook</h2></div>
-                    <button class="connection-dialog__close" type="button" data-connection-close aria-label="Close">&times;</button>
+                    <div><span><?= connections_h(t('Artist Page', 'Página del artista')) ?></span><h2 id="connection-facebook-title">Facebook</h2></div>
+                    <button class="connection-dialog__close" type="button" data-connection-close aria-label="<?= connections_h(t('Close', 'Cerrar')) ?>">&times;</button>
                 </div>
                 <div class="connection-dialog__body">
                     <?php if (($facebookArtist['status'] ?? '') === 'connected'): ?>
-                        <div class="connection-summary"><p><strong>Connected Page</strong></p><p><?= connections_h((string)($facebookArtist['page_name'] ?? 'Facebook Page')) ?></p></div>
-                        <p>Facebook publications will be posted to this Page only.</p>
+                        <div class="connection-summary"><p><strong><?= connections_h(t('Connected Page', 'Página conectada')) ?></strong></p><p><?= connections_h((string)($facebookArtist['page_name'] ?? t('Facebook Page', 'Página de Facebook'))) ?></p></div>
+                        <p><?= connections_h(t('Facebook publications will be posted to this Page only.', 'Las publicaciones de Facebook se publicarán solo en esta Página.')) ?></p>
                         <form class="connection-form" method="post">
                             <input type="hidden" name="csrf" value="<?= connections_h($_SESSION['connections_csrf']) ?>"><input type="hidden" name="network" value="facebook">
-                            <div class="connection-form__actions"><button class="button-link secondary" name="action" value="disconnect_facebook">Desconectar Facebook</button></div>
+                            <div class="connection-form__actions"><button class="button-link secondary" name="action" value="disconnect_facebook"><?= connections_h(t('Disconnect Facebook', 'Desconectar Facebook')) ?></button></div>
                         </form>
                     <?php elseif (($facebookArtist['status'] ?? '') === 'awaiting_page'): ?>
-                        <p>Facebook has authorized the account. Now choose the artist Page.</p>
+                        <p><?= connections_h(t('Facebook has authorized the account. Now choose the artist Page.', 'Facebook autorizó la cuenta. Ahora elegí la Página del artista.')) ?></p>
                         <?php if ($facebookPages): ?>
                             <form class="connection-form" method="post">
                                 <input type="hidden" name="csrf" value="<?= connections_h($_SESSION['connections_csrf']) ?>"><input type="hidden" name="network" value="facebook">
-                                <?php foreach ($facebookPages as $page): ?><label class="connection-choice"><input type="radio" name="page_id" value="<?= connections_h((string)$page['id']) ?>" required><span><?= connections_h((string)($page['name'] ?? 'Facebook Page')) ?></span></label><?php endforeach; ?>
-                                <div class="connection-form__actions"><button class="button-link primary" name="action" value="select_facebook_page">Use this Page</button></div>
+                                <?php foreach ($facebookPages as $page): ?><label class="connection-choice"><input type="radio" name="page_id" value="<?= connections_h((string)$page['id']) ?>" required><span><?= connections_h((string)($page['name'] ?? t('Facebook Page', 'Página de Facebook'))) ?></span></label><?php endforeach; ?>
+                                <div class="connection-form__actions"><button class="button-link primary" name="action" value="select_facebook_page"><?= connections_h(t('Use this Page', 'Usar esta Página')) ?></button></div>
                             </form>
-                        <?php else: ?><p>No Pages managed by this account were found.</p><?php endif; ?>
+                        <?php else: ?><p><?= connections_h(t('No Pages managed by this account were found.', 'No se encontraron Páginas administradas por esta cuenta.')) ?></p><?php endif; ?>
                     <?php else: ?>
-                        <p>Connect Maurizio’s professional Page. Facebook will request permission, then return here so you can choose it.</p>
+                        <p><?= connections_h(t("Connect the artist's professional Page. Facebook will request permission, then return here so you can choose it.", 'Conectá la Página profesional del artista. Facebook pedirá permiso y después volverá acá para que la elijas.')) ?></p>
                         <form class="connection-form" method="post">
                             <input type="hidden" name="csrf" value="<?= connections_h($_SESSION['connections_csrf']) ?>"><input type="hidden" name="network" value="facebook">
-                            <div class="connection-form__actions"><button class="button-link primary" name="action" value="connect_facebook">Conectar Facebook</button></div>
+                            <div class="connection-form__actions"><button class="button-link primary" name="action" value="connect_facebook"><?= connections_h(t('Connect Facebook', 'Conectar Facebook')) ?></button></div>
                         </form>
                     <?php endif; ?>
                 </div>
@@ -404,26 +404,26 @@ $artistConnections = [
 
             <dialog class="connection-dialog" id="connection-instagram" aria-labelledby="connection-instagram-title">
                 <div class="connection-dialog__head">
-                    <div><span>Professional artist account</span><h2 id="connection-instagram-title">Instagram</h2></div>
-                    <button class="connection-dialog__close" type="button" data-connection-close aria-label="Close">&times;</button>
+                    <div><span><?= connections_h(t('Professional artist account', 'Cuenta profesional del artista')) ?></span><h2 id="connection-instagram-title">Instagram</h2></div>
+                    <button class="connection-dialog__close" type="button" data-connection-close aria-label="<?= connections_h(t('Close', 'Cerrar')) ?>">&times;</button>
                 </div>
                 <div class="connection-dialog__body">
                     <?php if (($instagramArtist['status'] ?? '') === 'connected'): ?>
-                        <div class="connection-summary"><p><strong>Connected account</strong></p><p>@<?= connections_h(ltrim((string)($instagramArtist['username'] ?? ''), '@')) ?></p></div>
-                        <p>Instagram publications will use this professional account.</p>
+                        <div class="connection-summary"><p><strong><?= connections_h(t('Connected account', 'Cuenta conectada')) ?></strong></p><p>@<?= connections_h(ltrim((string)($instagramArtist['username'] ?? ''), '@')) ?></p></div>
+                        <p><?= connections_h(t('Instagram publications will use this professional account.', 'Las publicaciones de Instagram usarán esta cuenta profesional.')) ?></p>
                         <form class="connection-form" method="post">
                             <input type="hidden" name="csrf" value="<?= connections_h($_SESSION['connections_csrf']) ?>"><input type="hidden" name="network" value="instagram">
-                            <div class="connection-form__actions"><button class="button-link secondary" name="action" value="disconnect_instagram">Desconectar Instagram</button></div>
+                            <div class="connection-form__actions"><button class="button-link secondary" name="action" value="disconnect_instagram"><?= connections_h(t('Disconnect Instagram', 'Desconectar Instagram')) ?></button></div>
                         </form>
                     <?php else: ?>
                         <?php if ($instagramService->oauthEnabled()): ?>
-                            <p>Connect the artist’s professional Instagram account directly. Nothing will be published during connection.</p>
+                            <p><?= connections_h(t("Connect the artist's professional Instagram account directly. Nothing will be published during connection.", 'Conectá directamente la cuenta profesional de Instagram del artista. No se publicará nada durante la conexión.')) ?></p>
                             <form class="connection-form" method="post">
                                 <input type="hidden" name="csrf" value="<?= connections_h($_SESSION['connections_csrf']) ?>"><input type="hidden" name="network" value="instagram">
-                                <div class="connection-form__actions"><button class="button-link primary" name="action" value="connect_instagram">Conectar Instagram</button></div>
+                                <div class="connection-form__actions"><button class="button-link primary" name="action" value="connect_instagram"><?= connections_h(t('Connect Instagram', 'Conectar Instagram')) ?></button></div>
                             </form>
                         <?php else: ?>
-                            <p><strong>Instagram will be connected on the published site.</strong> Localhost does not contain Instagram’s private credentials and will not modify Maurizio’s live connection.</p>
+                            <p><strong><?= connections_h(t('Instagram will be connected on the published site.', 'Instagram se conectará en el sitio publicado.')) ?></strong> <?= connections_h(t("Localhost does not contain Instagram's private credentials and will not modify the artist's live connection.", 'Localhost no contiene las credenciales privadas de Instagram y no modificará la conexión en producción del artista.')) ?></p>
                         <?php endif; ?>
                     <?php endif; ?>
                 </div>

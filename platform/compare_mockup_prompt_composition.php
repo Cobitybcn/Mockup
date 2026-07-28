@@ -125,10 +125,10 @@ if ($mockupId > 0) {
 // HTML Web page rendering
 ?>
 <!doctype html>
-<html lang="en">
+<html lang="<?= htmlspecialchars(Translator::locale()) ?>">
 <head>
     <meta charset="utf-8">
-    <title>Prompt Composition Audit &mdash; Mockups</title>
+    <title><?= t('Prompt Composition Audit &mdash; Mockups', 'Auditoría de Composición de Prompt &mdash; Mockups') ?></title>
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -536,11 +536,11 @@ if ($mockupId > 0) {
 <div class="container">
     <header>
         <div>
-            <h1>Prompt Composition Comparison and Diagnostics</h1>
-            <div class="subtitle">Detailed analysis tool for the composer and text origins</div>
+            <h1><?= htmlspecialchars(t('Prompt Composition Comparison and Diagnostics', 'Comparación y Diagnóstico de Composición de Prompt')) ?></h1>
+            <div class="subtitle"><?= htmlspecialchars(t('Detailed analysis tool for the composer and text origins', 'Herramienta de análisis detallado del compositor y el origen de los textos')) ?></div>
         </div>
         <div>
-            <span class="tag-read-only">Read Only &mdash; Diagnostics</span>
+            <span class="tag-read-only"><?= t('Read Only &mdash; Diagnostics', 'Solo Lectura &mdash; Diagnóstico') ?></span>
         </div>
     </header>
 
@@ -548,22 +548,22 @@ if ($mockupId > 0) {
     <div class="selector-panel">
         <form class="selector-form" method="GET" action="compare_mockup_prompt_composition.php">
             <div class="form-group">
-                <label for="artwork_id">Select Artwork</label>
+                <label for="artwork_id"><?= htmlspecialchars(t('Select Artwork', 'Seleccionar Obra')) ?></label>
                 <select name="artwork_id" id="artwork_id" onchange="this.form.submit()">
-                    <option value="0">-- Select an Artwork --</option>
+                    <option value="0">-- <?= htmlspecialchars(t('Select an Artwork', 'Seleccionar una Obra')) ?> --</option>
                     <?php foreach ($artworks as $art): ?>
                         <option value="<?= $art['id'] ?>" <?= $art['id'] === $artworkId ? 'selected' : '' ?>>
-                            [ID: <?= $art['id'] ?>] <?= htmlspecialchars($art['final_title'] ?: 'Untitled') ?> (<?= htmlspecialchars(basename((string)($art['root_file'] ?? ''))) ?>)
+                            [ID: <?= $art['id'] ?>] <?= htmlspecialchars($art['final_title'] ?: t('Untitled', 'Sin título')) ?> (<?= htmlspecialchars(basename((string)($art['root_file'] ?? ''))) ?>)
                         </option>
                     <?php endforeach; ?>
                 </select>
             </div>
 
             <div class="form-group">
-                <label for="context_id">Select Context (Proposal)</label>
+                <label for="context_id"><?= htmlspecialchars(t('Select Context (Proposal)', 'Seleccionar Contexto (Propuesta)')) ?></label>
                 <select name="context_id" id="context_id" onchange="this.form.submit()" <?= empty($contexts) ? 'disabled' : '' ?>>
                     <?php if (empty($contexts)): ?>
-                        <option value="0">-- No contexts available --</option>
+                        <option value="0">-- <?= htmlspecialchars(t('No contexts available', 'No hay contextos disponibles')) ?> --</option>
                     <?php else: ?>
                         <?php foreach ($contexts as $ctx): ?>
                             <option value="<?= $ctx['id'] ?>" <?= $ctx['id'] === $contextId ? 'selected' : '' ?>>
@@ -575,28 +575,28 @@ if ($mockupId > 0) {
             </div>
 
             <div class="form-group">
-                <label for="mockup_id">Mockup Generado (Historial Opcional)</label>
+                <label for="mockup_id"><?= htmlspecialchars(t('Generated Mockup (Optional History)', 'Mockup Generado (Historial Opcional)')) ?></label>
                 <select name="mockup_id" id="mockup_id" onchange="this.form.submit()" <?= empty($mockupsList) ? 'disabled' : '' ?>>
-                    <option value="0">-- Load from context or select --</option>
+                    <option value="0">-- <?= htmlspecialchars(t('Load from context or select', 'Cargar desde contexto o seleccionar')) ?> --</option>
                     <?php foreach ($mockupsList as $m): ?>
                         <option value="<?= $m['id'] ?>" <?= $m['id'] === $mockupId ? 'selected' : '' ?>>
-                            [ID: <?= $m['id'] ?>] <?= htmlspecialchars($m['mockup_file']) ?> (Contexto: <?= $m['context_id'] ?>)
+                            [ID: <?= $m['id'] ?>] <?= htmlspecialchars($m['mockup_file']) ?> (<?= htmlspecialchars(t('Context', 'Contexto')) ?>: <?= $m['context_id'] ?>)
                         </option>
                     <?php endforeach; ?>
                 </select>
             </div>
 
             <div>
-                <button type="submit" class="btn-submit">Analizar</button>
+                <button type="submit" class="btn-submit"><?= htmlspecialchars(t('Analyze', 'Analizar')) ?></button>
             </div>
         </form>
     </div>
 
     <?php if (!$selectedArtwork || !$selectedContext): ?>
         <div class="no-data-alert">
-            <p>Select an Artwork and Context above to start the Composer audit.</p>
+            <p><?= htmlspecialchars(t('Select an Artwork and Context above to start the Composer audit.', 'Seleccioná una Obra y un Contexto arriba para iniciar la auditoría del compositor.')) ?></p>
         </div>
-    <?php else: 
+    <?php else:
         // ----------------------------------------------------
         // LOGICA DE RECONSTRUCCIÓN Y AUDITORÍA
         // ----------------------------------------------------
@@ -921,15 +921,15 @@ if ($mockupId > 0) {
                         <span class="card-badge">Template</span>
                     </h2>
                     <p style="font-size: 13px; color: var(--muted); margin-bottom: 8px;">
-                        Origen: <code><?= htmlspecialchars($adminPromptOrigin) ?></code>
+                        <?= htmlspecialchars(t('Origin:', 'Origen:')) ?> <code><?= htmlspecialchars($adminPromptOrigin) ?></code>
                     </p>
                     <textarea class="prompt-textarea" readonly><?= htmlspecialchars($adminPrompt) ?></textarea>
                 </div>
 
                 <div>
                     <h2 class="card-title">
-                        2. RESOLVED VARIABLES (Physical Scale)
-                        <span class="card-badge">Dynamic Context</span>
+                        2. <?= htmlspecialchars(t('RESOLVED VARIABLES (Physical Scale)', 'VARIABLES RESUELTAS (Escala Física)')) ?>
+                        <span class="card-badge"><?= htmlspecialchars(t('Dynamic Context', 'Contexto Dinámico')) ?></span>
                     </h2>
                     <table class="kv-table">
                         <tr>
@@ -937,33 +937,33 @@ if ($mockupId > 0) {
                             <td class="kv-value highlight-val"><?= $artworkId ?></td>
                         </tr>
                         <tr>
-                            <td class="kv-label">Core JSON Usado</td>
+                            <td class="kv-label"><?= htmlspecialchars(t('Core JSON Used', 'Core JSON Usado')) ?></td>
                             <td class="kv-value">
                                 <?php if ($coreJsonUsed): ?>
-                                    <span style="color:var(--success)">SÍ</span> (<code><?= htmlspecialchars(basename($coreJsonPath)) ?></code>)
+                                    <span style="color:var(--success)"><?= htmlspecialchars(t('YES', 'SÍ')) ?></span> (<code><?= htmlspecialchars(basename($coreJsonPath)) ?></code>)
                                 <?php else: ?>
-                                    <span style="color:var(--danger)">NO (No encontrado / No legible)</span>
+                                    <span style="color:var(--danger)"><?= htmlspecialchars(t('NO (Not found / Not readable)', 'NO (No encontrado / No legible)')) ?></span>
                                 <?php endif; ?>
                             </td>
                         </tr>
                         <tr>
-                            <td class="kv-label">Ancho Resuelto (width_cm)</td>
+                            <td class="kv-label"><?= htmlspecialchars(t('Resolved Width (width_cm)', 'Ancho Resuelto (width_cm)')) ?></td>
                             <td class="kv-value highlight-val"><?= $width ?> cm</td>
                         </tr>
                         <tr>
-                            <td class="kv-label">Alto Resuelto (height_cm)</td>
+                            <td class="kv-label"><?= htmlspecialchars(t('Resolved Height (height_cm)', 'Alto Resuelto (height_cm)')) ?></td>
                             <td class="kv-value highlight-val"><?= $height ?> cm</td>
                         </tr>
                         <tr>
-                            <td class="kv-label">Grosor Bastidor (depth_cm)</td>
+                            <td class="kv-label"><?= htmlspecialchars(t('Stretcher Depth (depth_cm)', 'Grosor Bastidor (depth_cm)')) ?></td>
                             <td class="kv-value highlight-val"><?= $depth ?> cm</td>
                         </tr>
                         <tr>
-                            <td class="kv-label">Orientation (Resolution)</td>
+                            <td class="kv-label"><?= htmlspecialchars(t('Orientation (Resolution)', 'Orientación (Resolución)')) ?></td>
                             <td class="kv-value"><?= htmlspecialchars($orientation) ?></td>
                         </tr>
                         <tr>
-                            <td class="kv-label">Reference Artwork (File)</td>
+                            <td class="kv-label"><?= htmlspecialchars(t('Reference Artwork (File)', 'Obra de Referencia (Archivo)')) ?></td>
                             <td class="kv-value"><code><?= htmlspecialchars($selectedArtwork['root_file'] ?? '') ?></code></td>
                         </tr>
                     </table>
@@ -971,48 +971,48 @@ if ($mockupId > 0) {
 
                 <div>
                     <h2 class="card-title">
-                        3. DETALLES ORIGINALES (mockup_contexts)
-                        <span class="card-badge">Proposal Proposal</span>
+                        3. <?= htmlspecialchars(t('ORIGINAL DETAILS (mockup_contexts)', 'DETALLES ORIGINALES (mockup_contexts)')) ?>
+                        <span class="card-badge"><?= htmlspecialchars(t('Proposal', 'Propuesta')) ?></span>
                     </h2>
                     <table class="kv-table">
                         <tr>
-                            <td class="kv-label">Nombre del Contexto</td>
+                            <td class="kv-label"><?= htmlspecialchars(t('Context Name', 'Nombre del Contexto')) ?></td>
                             <td class="kv-value highlight-val"><?= htmlspecialchars($selectedContext['context_name'] ?? 'N/A') ?></td>
                         </tr>
                         <tr>
-                            <td class="kv-label">Tipo de Espacio</td>
+                            <td class="kv-label"><?= htmlspecialchars(t('Space Type', 'Tipo de Espacio')) ?></td>
                             <td class="kv-value"><?= htmlspecialchars($contextJson['space_type'] ?? 'N/A') ?></td>
                         </tr>
                         <tr>
-                            <td class="kv-label">Atmosphere</td>
+                            <td class="kv-label"><?= htmlspecialchars(t('Atmosphere', 'Atmósfera')) ?></td>
                             <td class="kv-value"><?= htmlspecialchars($contextJson['atmosphere'] ?? 'N/A') ?></td>
                         </tr>
                         <tr>
-                            <td class="kv-label">Camera Produced (Gemini)</td>
+                            <td class="kv-label"><?= htmlspecialchars(t('Camera Produced (Gemini)', 'Cámara Producida (Gemini)')) ?></td>
                             <td class="kv-value"><?= htmlspecialchars($contextJson['camera_view_original'] ?? $contextJson['camera_view'] ?? $contextJson['camera_angle'] ?? 'N/A') ?></td>
                         </tr>
                         <tr>
-                            <td class="kv-label">Final Assigned Camera</td>
+                            <td class="kv-label"><?= htmlspecialchars(t('Final Assigned Camera', 'Cámara Final Asignada')) ?></td>
                             <td class="kv-value highlight-val"><?= htmlspecialchars($fields['camera_view']) ?></td>
                         </tr>
                         <tr>
-                            <td class="kv-label">Camera Distance</td>
+                            <td class="kv-label"><?= htmlspecialchars(t('Camera Distance', 'Distancia de Cámara')) ?></td>
                             <td class="kv-value"><?= htmlspecialchars($fields['camera_distance']) ?></td>
                         </tr>
                         <tr>
-                            <td class="kv-label">Notas de Ángulo</td>
+                            <td class="kv-label"><?= htmlspecialchars(t('Angle Notes', 'Notas de Ángulo')) ?></td>
                             <td class="kv-value"><?= htmlspecialchars($fields['camera_angle_notes']) ?></td>
                         </tr>
                         <tr>
-                            <td class="kv-label">Presencia Humana</td>
+                            <td class="kv-label"><?= htmlspecialchars(t('Human Presence', 'Presencia Humana')) ?></td>
                             <td class="kv-value"><?= htmlspecialchars($contextJson['human_presence'] ?? 'N/A') ?></td>
                         </tr>
                         <tr>
-                            <td class="kv-label">Curatorial Rationale</td>
+                            <td class="kv-label"><?= htmlspecialchars(t('Curatorial Rationale', 'Justificación Curatorial')) ?></td>
                             <td class="kv-value" style="font-size:12.5px; font-family:var(--font-sans);"><?= htmlspecialchars($contextJson['curatorial_reason'] ?? 'N/A') ?></td>
                         </tr>
                         <tr>
-                            <td class="kv-label">Commercial Rationale</td>
+                            <td class="kv-label"><?= htmlspecialchars(t('Commercial Rationale', 'Justificación Comercial')) ?></td>
                             <td class="kv-value" style="font-size:12.5px; font-family:var(--font-sans);"><?= htmlspecialchars($contextJson['commercial_reason'] ?? 'N/A') ?></td>
                         </tr>
                     </table>
@@ -1023,30 +1023,30 @@ if ($mockupId > 0) {
             <div class="audit-card">
                 <div>
                     <h2 class="card-title">
-                        4. PROMPT COMPUESTO &mdash; MAPA DE ORÍGENES
-                        <span class="card-badge">Composer View</span>
+                        4. <?= htmlspecialchars(t('COMPOSED PROMPT &mdash; ORIGIN MAP', 'PROMPT COMPUESTO &mdash; MAPA DE ORÍGENES')) ?>
+                        <span class="card-badge"><?= htmlspecialchars(t('Composer View', 'Vista del Compositor')) ?></span>
                     </h2>
-                    
+
                     <div class="legend-bar">
                         <div class="legend-item">
                             <span class="legend-color color-admin"></span>
-                            <span>ADMIN Master (Purple)</span>
+                            <span><?= htmlspecialchars(t('ADMIN Master (Purple)', 'ADMIN Master (Morado)')) ?></span>
                         </div>
                         <div class="legend-item">
                             <span class="legend-color color-contexts"></span>
-                            <span>mockup_contexts (Green)</span>
+                            <span><?= htmlspecialchars(t('mockup_contexts (Green)', 'mockup_contexts (Verde)')) ?></span>
                         </div>
                         <div class="legend-item">
                             <span class="legend-color color-core"></span>
-                            <span>Core JSON / DB Size (Blue)</span>
+                            <span><?= htmlspecialchars(t('Core JSON / DB Size (Blue)', 'Core JSON / Tamaño DB (Azul)')) ?></span>
                         </div>
                         <div class="legend-item">
                             <span class="legend-color color-composer"></span>
-                            <span>Composer Injected (Red)</span>
+                            <span><?= htmlspecialchars(t('Composer Injected (Red)', 'Inyectado por el Compositor (Rojo)')) ?></span>
                         </div>
                         <div class="legend-item">
                             <span class="legend-color color-legacy"></span>
-                            <span>Legacy Rule (Orange)</span>
+                            <span><?= htmlspecialchars(t('Legacy Rule (Orange)', 'Regla Legacy (Naranja)')) ?></span>
                         </div>
                     </div>
 
@@ -1055,10 +1055,10 @@ if ($mockupId > 0) {
 
                 <!-- ALERTS PANEL -->
                 <div class="alerts-card">
-                    <h2 class="alerts-title">5. ALERTS AND FINDINGS (Invariant Audit)</h2>
+                    <h2 class="alerts-title">5. <?= htmlspecialchars(t('ALERTS AND FINDINGS (Invariant Audit)', 'ALERTAS Y HALLAZGOS (Auditoría de Invariantes)')) ?></h2>
                     <?php if (empty($alerts)): ?>
                         <div class="alert-item" style="border-left-color: var(--success); color: var(--success);">
-                            <strong>All clear:</strong> No anomalies or critical alerts detected.
+                            <strong><?= htmlspecialchars(t('All clear:', 'Todo en orden:')) ?></strong> <?= htmlspecialchars(t('No anomalies or critical alerts detected.', 'No se detectaron anomalías ni alertas críticas.')) ?>
                         </div>
                     <?php else: ?>
                         <?php foreach ($alerts as $a): ?>
@@ -1071,7 +1071,7 @@ if ($mockupId > 0) {
                                 </div>
                                 <div class="alert-desc"><?= htmlspecialchars($a['desc']) ?></div>
                                 <div style="margin-top: 6px;">
-                                    <span class="alert-code">Target: <?= htmlspecialchars($a['code']) ?></span>
+                                    <span class="alert-code"><?= htmlspecialchars(t('Target:', 'Objetivo:')) ?> <?= htmlspecialchars($a['code']) ?></span>
                                 </div>
                             </div>
                         <?php endforeach; ?>
@@ -1080,10 +1080,10 @@ if ($mockupId > 0) {
 
                 <!-- PAYLOAD HACIA VERTEX -->
                 <div class="audit-card payload-card">
-                    <h2 class="card-title payload-title">6. PAYLOAD Y CONFIGURACIÓN DE VERTEX BRIDGE</h2>
+                    <h2 class="card-title payload-title">6. <?= htmlspecialchars(t('VERTEX BRIDGE PAYLOAD AND CONFIGURATION', 'PAYLOAD Y CONFIGURACIÓN DE VERTEX BRIDGE')) ?></h2>
                     <table class="kv-table">
                         <tr>
-                            <td class="kv-label">Modelo Activo (gemini_image_model)</td>
+                            <td class="kv-label"><?= htmlspecialchars(t('Active Model (gemini_image_model)', 'Modelo Activo (gemini_image_model)')) ?></td>
                             <td class="kv-value highlight-val"><?= htmlspecialchars($envVars['GEMINI_IMAGE_MODEL']) ?></td>
                         </tr>
                         <tr>
@@ -1094,7 +1094,7 @@ if ($mockupId > 0) {
                             <td class="kv-label">MOCKUP_PROMPT_FIRST_MODE</td>
                             <td class="kv-value">
                                 <span class="tag-read-only" style="background: <?= $envVars['MOCKUP_PROMPT_FIRST_MODE'] ? 'var(--danger-soft); color: var(--danger); border-color: var(--danger);' : 'var(--line); color: var(--muted); border-color: var(--line);' ?>">
-                                    <?= $envVars['MOCKUP_PROMPT_FIRST_MODE'] ? 'ACTIVE (Disables Precomposition)' : 'INACTIVE' ?>
+                                    <?= $envVars['MOCKUP_PROMPT_FIRST_MODE'] ? htmlspecialchars(t('ACTIVE (Disables Precomposition)', 'ACTIVO (Deshabilita Precomposición)')) : htmlspecialchars(t('INACTIVE', 'INACTIVO')) ?>
                                 </span>
                             </td>
                         </tr>
@@ -1102,7 +1102,7 @@ if ($mockupId > 0) {
                             <td class="kv-label">MOCKUP_PROMPT_FIRST_NO_MASK_MODE</td>
                             <td class="kv-value">
                                 <span class="tag-read-only" style="background: <?= $envVars['MOCKUP_PROMPT_FIRST_NO_MASK_MODE'] ? 'var(--danger-soft); color: var(--danger); border-color: var(--danger);' : 'var(--line); color: var(--muted); border-color: var(--line);' ?>">
-                                    <?= $envVars['MOCKUP_PROMPT_FIRST_NO_MASK_MODE'] ? 'ACTIVE (Disables Inpainting and Mask)' : 'INACTIVE' ?>
+                                    <?= $envVars['MOCKUP_PROMPT_FIRST_NO_MASK_MODE'] ? htmlspecialchars(t('ACTIVE (Disables Inpainting and Mask)', 'ACTIVO (Deshabilita Inpainting y Máscara)')) : htmlspecialchars(t('INACTIVE', 'INACTIVO')) ?>
                                 </span>
                             </td>
                         </tr>
@@ -1110,7 +1110,7 @@ if ($mockupId > 0) {
                             <td class="kv-label">MOCKUP_USE_PRECOMPOSITION</td>
                             <td class="kv-value">
                                 <span class="tag-read-only" style="background: <?= $envVars['MOCKUP_USE_PRECOMPOSITION'] && !$envVars['MOCKUP_PROMPT_FIRST_MODE'] ? 'var(--success-soft); color: var(--success); border-color: var(--success);' : 'var(--danger-soft); color: var(--danger); border-color: var(--danger);' ?>">
-                                    <?= $envVars['MOCKUP_USE_PRECOMPOSITION'] && !$envVars['MOCKUP_PROMPT_FIRST_MODE'] ? 'ACTIVE (Applies warping and physical scale)' : 'DISABLED OR OVERRIDDEN' ?>
+                                    <?= $envVars['MOCKUP_USE_PRECOMPOSITION'] && !$envVars['MOCKUP_PROMPT_FIRST_MODE'] ? htmlspecialchars(t('ACTIVE (Applies warping and physical scale)', 'ACTIVO (Aplica deformación y escala física)')) : htmlspecialchars(t('DISABLED OR OVERRIDDEN', 'DESHABILITADO O ANULADO')) ?>
                                 </span>
                             </td>
                         </tr>
@@ -1118,24 +1118,24 @@ if ($mockupId > 0) {
                             <td class="kv-label">MOCKUP_USE_BACKGROUND_EDIT</td>
                             <td class="kv-value">
                                 <span class="tag-read-only" style="background: <?= $envVars['MOCKUP_USE_BACKGROUND_EDIT'] && !$envVars['MOCKUP_PROMPT_FIRST_NO_MASK_MODE'] ? 'var(--success-soft); color: var(--success); border-color: var(--success);' : 'var(--danger-soft); color: var(--danger); border-color: var(--danger);' ?>">
-                                    <?= $envVars['MOCKUP_USE_BACKGROUND_EDIT'] && !$envVars['MOCKUP_PROMPT_FIRST_NO_MASK_MODE'] ? 'ACTIVE (Protects the artwork with a mask)' : 'DISABLED OR OVERRIDDEN' ?>
+                                    <?= $envVars['MOCKUP_USE_BACKGROUND_EDIT'] && !$envVars['MOCKUP_PROMPT_FIRST_NO_MASK_MODE'] ? htmlspecialchars(t('ACTIVE (Protects the artwork with a mask)', 'ACTIVO (Protege la obra con una máscara)')) : htmlspecialchars(t('DISABLED OR OVERRIDDEN', 'DESHABILITADO O ANULADO')) ?>
                                 </span>
                             </td>
                         </tr>
                         <tr>
-                            <td class="kv-label">Reference Image Used</td>
+                            <td class="kv-label"><?= htmlspecialchars(t('Reference Image Used', 'Imagen de Referencia Usada')) ?></td>
                             <td class="kv-value">
                                 <code>results/<?= htmlspecialchars(basename($selectedArtwork['root_file'] ?? '')) ?></code>
                             </td>
                         </tr>
                         <tr>
-                            <td class="kv-label">Vertex Execution Mode</td>
+                            <td class="kv-label"><?= htmlspecialchars(t('Vertex Execution Mode', 'Modo de Ejecución de Vertex')) ?></td>
                             <td class="kv-value highlight-val">
                                 <?php
                                 if ($envVars['MOCKUP_PROMPT_FIRST_NO_MASK_MODE'] && $envVars['MOCKUP_PROMPT_FIRST_MODE']) {
-                                    echo "multimodal generate_content (SubjectReferenceImage - NO INPAINTING)";
+                                    echo htmlspecialchars(t('multimodal generate_content (SubjectReferenceImage - NO INPAINTING)', 'generate_content multimodal (SubjectReferenceImage - SIN INPAINTING)'));
                                 } else {
-                                    echo "edit_image (Image 3 - INPAINTING / INSERTION MASK)";
+                                    echo htmlspecialchars(t('edit_image (Image 3 - INPAINTING / INSERTION MASK)', 'edit_image (Image 3 - INPAINTING / MÁSCARA DE INSERCIÓN)'));
                                 }
                                 ?>
                             </td>

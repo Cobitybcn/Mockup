@@ -9,6 +9,7 @@ final class FeatureAccess
     public const ARTWORKS_MANAGE = 'artworks.manage';
     public const MOCKUPS_GENERATE = 'mockups.generate';
     public const MOCKUPS_LAB = 'mockups.lab';
+    public const EDITORIAL_MANAGE = 'editorial.manage';
     public const WEBSITE_MANAGE = 'website.manage';
     public const SOCIAL_MANAGE = 'social.manage';
     public const VIDEO_MANAGE = 'video.manage';
@@ -33,6 +34,7 @@ final class FeatureAccess
     public static function overridableFeatures(): array
     {
         return [
+            self::EDITORIAL_MANAGE => 'Contenido editorial',
             self::WEBSITE_MANAGE => 'Studio Notes & Store',
             self::SOCIAL_MANAGE => 'Social Media Board',
             self::VIDEO_MANAGE => 'Video Lab',
@@ -79,6 +81,7 @@ final class FeatureAccess
         if ($plan === self::PLAN_ARTIST_PRO) {
             return in_array($feature, [
                 ...$studioFeatures,
+                self::EDITORIAL_MANAGE,
                 self::WEBSITE_MANAGE,
                 self::SOCIAL_MANAGE,
                 self::VIDEO_MANAGE,
@@ -111,6 +114,23 @@ final class FeatureAccess
         }
 
         return self::planAllows(self::planForUser($user), $feature);
+    }
+
+    /**
+     * Igual que allows(), pero resolviendo la cuenta desde su identificador.
+     * Lo usan los recorridos en segundo plano, donde no hay sesion activa.
+     */
+    public static function allowsUserId(int $userId, string $feature, ?PDO $pdo = null): bool
+    {
+        if ($userId <= 0) {
+            return false;
+        }
+
+        $stmt = ($pdo ?? Database::connection())->prepare('SELECT * FROM users WHERE id = :id LIMIT 1');
+        $stmt->execute(['id' => $userId]);
+        $owner = $stmt->fetch();
+
+        return is_array($owner) && self::allows($owner, $feature);
     }
 
     public static function requirePage(array $user, string $feature, string $label): void
@@ -300,6 +320,7 @@ final class FeatureAccess
     private static function globallyEnabled(string $feature): bool
     {
         $flag = match ($feature) {
+            self::EDITORIAL_MANAGE => 'FEATURE_EDITORIAL_ENABLED',
             self::WEBSITE_MANAGE => 'FEATURE_WEBSITE_ENABLED',
             self::SOCIAL_MANAGE => 'FEATURE_SOCIAL_ENABLED',
             self::VIDEO_MANAGE => 'FEATURE_VIDEO_ENABLED',
@@ -316,6 +337,7 @@ final class FeatureAccess
             self::ARTWORKS_MANAGE,
             self::MOCKUPS_GENERATE,
             self::MOCKUPS_LAB,
+            self::EDITORIAL_MANAGE,
             self::WEBSITE_MANAGE,
             self::SOCIAL_MANAGE,
             self::VIDEO_MANAGE,

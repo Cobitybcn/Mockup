@@ -12,6 +12,46 @@ final class BilingualEditorialAdapterService
         $this->editorial = new BilingualEditorialService($pdo);
     }
 
+    private function workingLocale(int $userId): string
+    {
+        return $this->editorial->sourceLocale($userId);
+    }
+
+    private function adaptationTarget(int $userId): string
+    {
+        return $this->editorial->primaryAdaptationTarget($userId);
+    }
+
+    /** Nombre corto del idioma para los prompts ("Spanish", "English"). */
+    private function languageShortName(string $locale): string
+    {
+        return $locale === 'en' ? 'English' : 'Spanish';
+    }
+
+    /**
+     * Estilo del master en los prompts de generacion. Para espanol conserva el
+     * texto historico exacto para no alterar el recorrido probado.
+     */
+    private function masterStyleName(string $locale): string
+    {
+        return $locale === 'en' ? 'natural international English' : 'natural Spanish';
+    }
+
+    /**
+     * Estilo de la adaptacion en los prompts. Los estilos de adaptacion
+     * comienzan con "international"; los de master no. Esa distincion es la que
+     * usan los reparadores para elegir su modo.
+     */
+    private function adaptationStyleName(string $locale): string
+    {
+        return $locale === 'es' ? 'international Spanish' : 'international English';
+    }
+
+    private function isAdaptationStyle(string $language): bool
+    {
+        return str_starts_with($language, 'international ');
+    }
+
     /**
      * Rebuilds the complete international-English draft from the Spanish
      * master and stores it as the current website content.
@@ -28,24 +68,27 @@ final class BilingualEditorialAdapterService
         if (!$this->editorial->isEnabled($userId)) {
             throw new RuntimeException('El espacio editorial no está habilitado para esta cuenta.');
         }
-        if ($sourceLocale !== 'es' || $targetLocale !== 'en') {
-            throw new InvalidArgumentException('La adaptación permitida es español a inglés internacional.');
+        if ($sourceLocale !== $this->workingLocale($userId)
+            || !in_array($targetLocale, $this->editorial->adaptationTargets($userId), true)) {
+            throw new InvalidArgumentException('La adaptación editorial va del idioma de trabajo del artista a uno de sus idiomas de publicación.');
         }
-        $source = $this->editorial->get($userId, $entityType, $entityId, 'es');
-        $target = $this->editorial->get($userId, $entityType, $entityId, 'en');
+        $source = $this->editorial->get($userId, $entityType, $entityId, $sourceLocale);
+        $target = $this->editorial->get($userId, $entityType, $entityId, $targetLocale);
         $adapted = $this->adaptContent(
             $userId,
             $entityType,
             $entityId,
             (array)$source['content'],
-            (array)$target['content']
+            (array)$target['content'],
+            $sourceLocale,
+            $targetLocale
         );
-        $saved = $this->editorial->save($userId, $entityType, $entityId, 'en', $adapted);
+        $saved = $this->editorial->save($userId, $entityType, $entityId, $targetLocale, $adapted);
         return $saved + [
             'content' => $adapted,
             'english_status' => (string)($saved['english_status'] ?? $saved['status'] ?? 'stale'),
-            'source_locale' => 'es',
-            'target_locale' => 'en',
+            'source_locale' => $sourceLocale,
+            'target_locale' => $targetLocale,
         ];
     }
 
@@ -63,8 +106,9 @@ final class BilingualEditorialAdapterService
         ?string $privateMemoOverride = null,
         bool $publishSpanish = true
     ): array {
-        $currentSpanish = $this->editorial->get($userId, 'series', $entityId, 'es');
-        $currentEnglish = $this->editorial->get($userId, 'series', $entityId, 'en');
+        $working = $this->workingLocale($userId);
+        $adaptationLocale = $this->adaptationTarget($userId);
+        $currentSpanish = $this->editorial->get($userId, 'series', $entityId, $working);
         $memo = $privateMemoOverride ?? (string)$currentSpanish['private_memo'];
         $spanishResult = $this->generateSpanishDraft(
             $userId,
@@ -74,19 +118,27 @@ final class BilingualEditorialAdapterService
             $memo
         );
         $spanishContent = (array)$spanishResult['content'];
-        $englishContent = $this->adaptContent(
-            $userId,
-            'series',
-            $entityId,
-            $spanishContent,
-            (array)$currentEnglish['content']
-        );
+        $englishContent = [];
+        if ($adaptationLocale !== '') {
+            $currentEnglish = $this->editorial->get($userId, 'series', $entityId, $adaptationLocale);
+            $englishContent = $this->adaptContent(
+                $userId,
+                'series',
+                $entityId,
+                $spanishContent,
+                (array)$currentEnglish['content'],
+                $working,
+                $adaptationLocale
+            );
+        }
 
         $ownsTransaction = !$this->pdo->inTransaction();
         if ($ownsTransaction) $this->pdo->beginTransaction();
         try {
-            $this->editorial->save($userId, 'series', $entityId, 'es', $spanishContent, $memo);
-            $this->editorial->save($userId, 'series', $entityId, 'en', $englishContent);
+            $this->editorial->save($userId, 'series', $entityId, $working, $spanishContent, $memo);
+            if ($adaptationLocale !== '') {
+                $this->editorial->save($userId, 'series', $entityId, $adaptationLocale, $englishContent);
+            }
             if ($publishSpanish) {
                 $this->editorial->setSpanishPublished($userId, 'series', $entityId, true);
             }
@@ -109,8 +161,13 @@ final class BilingualEditorialAdapterService
         string $entityType,
         int $entityId,
         array $sourceContent,
-        array $targetContent
+        array $targetContent,
+        string $sourceLocale = '',
+        string $targetLocale = ''
     ): array {
+        $sourceLocale = $sourceLocale !== '' ? $sourceLocale : $this->workingLocale($userId);
+        $targetLocale = $targetLocale !== '' ? $targetLocale : ($this->adaptationTarget($userId) ?: 'en');
+        $adaptationStyle = $this->adaptationStyleName($targetLocale);
         $promptSourceContent = $sourceContent;
         $promptTargetContent = $targetContent;
         $protectedImages = [];
@@ -131,8 +188,8 @@ final class BilingualEditorialAdapterService
             $userId,
             $entityType,
             $entityId,
-            'es',
-            'en',
+            $sourceLocale,
+            $targetLocale,
             $promptSourceContent,
             $promptTargetContent,
             false
@@ -148,19 +205,19 @@ final class BilingualEditorialAdapterService
         if ($entityType === 'series'
             && array_key_exists('tags', $sourceContent)
             && array_key_exists('search_terms', $sourceContent)) {
-            $adapted = $this->repairSeriesSeoIfNeeded($prompt, $sourceContent, $adapted, 'international English');
+            $adapted = $this->repairSeriesSeoIfNeeded($prompt, $sourceContent, $adapted, $adaptationStyle);
         } elseif ($entityType === 'mockup') {
             $sourceIssues = $this->mockupContentIssues($sourceContent, $sourceContent);
             if ($sourceIssues !== []) {
                 throw new RuntimeException(
-                    'El master español del mockup está incompleto: ' . implode('; ', $sourceIssues)
+                    'El master editorial del mockup está incompleto: ' . implode('; ', $sourceIssues)
                 );
             }
             $adapted = $this->repairMockupContentIfNeeded(
                 $prompt,
                 $sourceContent,
                 $adapted,
-                'international English',
+                $adaptationStyle,
                 $sourceContent
             );
             $adapted = $this->enforceCurrentMockupIdentity(
@@ -174,7 +231,7 @@ final class BilingualEditorialAdapterService
                 $sourceContent,
                 $adapted,
                 $entityType,
-                'international English'
+                $adaptationStyle
             );
         }
         if ($entityType === 'mockup') {
@@ -210,9 +267,11 @@ final class BilingualEditorialAdapterService
             throw new InvalidArgumentException('Spanish proposal generation is available only for supported editorial entities.');
         }
 
-        $spanish = $this->editorial->get($userId, $entityType, $entityId, 'es');
-        // Spanish proposals must originate in Spanish evidence. Legacy English
-        // copy is not a source for series meaning and cannot steer the draft.
+        $working = $this->workingLocale($userId);
+        $masterStyle = $this->masterStyleName($working);
+        $spanish = $this->editorial->get($userId, $entityType, $entityId, $working);
+        // El master se propone desde evidencia en el idioma de trabajo. La copia
+        // adaptada heredada no dirige el borrador.
         $englishContent = [];
         $context = $this->entityContext($userId, $entityType, $entityId);
         if ($context === []) {
@@ -228,7 +287,8 @@ final class BilingualEditorialAdapterService
             $shape,
             $currentSpanishOverride ?? (array)$spanish['content'],
             $englishContent,
-            $privateMemoOverride ?? (string)$spanish['private_memo']
+            $privateMemoOverride ?? (string)$spanish['private_memo'],
+            $working
         );
         $parts = [$this->client->textPart($prompt)];
         foreach ($this->entityImagePaths($userId, $entityType, $entityId) as $imagePath) {
@@ -239,13 +299,13 @@ final class BilingualEditorialAdapterService
         $decoded = $this->decodeJson($raw);
         $proposal = $this->projectToSourceShape($shape, $decoded);
         if ($entityType === 'series') {
-            $proposal = $this->repairSeriesSeoIfNeeded($prompt, $shape, $proposal, 'natural Spanish');
+            $proposal = $this->repairSeriesSeoIfNeeded($prompt, $shape, $proposal, $masterStyle);
         } elseif ($entityType === 'mockup') {
             $proposal = $this->repairMockupContentIfNeeded(
                 $prompt,
                 $shape,
                 $proposal,
-                'natural Spanish'
+                $masterStyle
             );
             $proposal = $this->enforceCurrentMockupIdentity($proposal, $context);
         }
@@ -255,17 +315,17 @@ final class BilingualEditorialAdapterService
                 $shape,
                 $proposal,
                 $entityType,
-                'natural Spanish'
+                $masterStyle
             );
         }
         if ($entityType === 'mockup') {
             $proposal = $this->enforceCurrentMockupIdentity($proposal, $context);
         }
         if (!$this->hasMeaningfulContent($proposal)) {
-            throw new RuntimeException('The editorial assistant did not produce a usable Spanish proposal.');
+            throw new RuntimeException('The editorial assistant did not produce a usable proposal.');
         }
 
-        return ['content' => $proposal, 'status' => 'proposal', 'target_locale' => 'es'];
+        return ['content' => $proposal, 'status' => 'proposal', 'target_locale' => $working];
     }
 
     /**
@@ -285,12 +345,13 @@ final class BilingualEditorialAdapterService
         if (!$this->editorial->isEnabled($userId)) {
             throw new RuntimeException('El espacio editorial no está habilitado para esta cuenta.');
         }
-        if ($sourceLocale !== 'es' || $targetLocale !== 'en') {
-            throw new InvalidArgumentException('La adaptación permitida es español a inglés internacional.');
+        if ($sourceLocale !== $this->workingLocale($userId)
+            || !in_array($targetLocale, $this->editorial->adaptationTargets($userId), true)) {
+            throw new InvalidArgumentException('La adaptación editorial va del idioma de trabajo del artista a uno de sus idiomas de publicación.');
         }
-        $source = $this->editorial->get($userId, $entityType, $entityId, 'es');
-        $target = $this->editorial->get($userId, $entityType, $entityId, 'en');
-        $prompt = $this->prompt($userId, $entityType, $entityId, 'es', 'en', (array)$source['content'], (array)$target['content'], false);
+        $source = $this->editorial->get($userId, $entityType, $entityId, $sourceLocale);
+        $target = $this->editorial->get($userId, $entityType, $entityId, $targetLocale);
+        $prompt = $this->prompt($userId, $entityType, $entityId, $sourceLocale, $targetLocale, (array)$source['content'], (array)$target['content'], false);
         $decoded = $this->decodeJson($this->client->generateText([$this->client->textPart($prompt)], 'gemini-2.5-flash'));
         $proposal = $this->projectToSourceShape((array)$source['content'], $decoded);
         if (in_array($entityType, ['artwork', 'mockup'], true)) {
@@ -299,7 +360,7 @@ final class BilingualEditorialAdapterService
                 (array)$source['content'],
                 $proposal,
                 $entityType,
-                'international English'
+                $this->adaptationStyleName($targetLocale)
             );
         }
         if ($entityType === 'mockup') {
@@ -309,7 +370,7 @@ final class BilingualEditorialAdapterService
             );
         }
         if (!$this->hasMeaningfulContent($proposal)) throw new RuntimeException('La adaptación no produjo contenido utilizable.');
-        return ['content' => $proposal, 'status' => 'proposal', 'source_locale' => 'es', 'target_locale' => 'en'];
+        return ['content' => $proposal, 'status' => 'proposal', 'source_locale' => $sourceLocale, 'target_locale' => $targetLocale];
     }
 
     /**
@@ -328,18 +389,22 @@ final class BilingualEditorialAdapterService
         if (!$this->editorial->isEnabled($userId)) {
             throw new RuntimeException('El espacio editorial no está habilitado para esta cuenta.');
         }
+        $sourceLocale = $this->workingLocale($userId);
+        $targetLocale = $this->adaptationTarget($userId) ?: 'en';
         $proposal = $this->adaptContent(
             $userId,
             $entityType,
             $entityId,
             $sourceContent,
-            $targetContent
+            $targetContent,
+            $sourceLocale,
+            $targetLocale
         );
         return [
             'content' => $proposal,
             'status' => 'proposal',
-            'source_locale' => 'es',
-            'target_locale' => 'en',
+            'source_locale' => $sourceLocale,
+            'target_locale' => $targetLocale,
         ];
     }
 
@@ -403,14 +468,17 @@ final class BilingualEditorialAdapterService
             'search_terms' => '',
             'image_metadata' => [],
         ];
-        $prompt = "You are the Spanish Meta Analyzer used by the artist's mockup-analysis.v2 editorial pipeline. "
+        $metaLocale = $this->workingLocale($userId);
+        $metaName = $this->languageShortName($metaLocale);
+        $metaStyle = $this->masterStyleName($metaLocale);
+        $prompt = "You are the {$metaName} Meta Analyzer used by the artist's mockup-analysis.v2 editorial pipeline. "
             . "Analyze the finished Studio Note; do not rewrite its title or body. Return strict JSON only.\n\n"
             . SearchIntentPrompt::forEntity('studio_note') . "\n\n"
             . EditorialIntegrityPolicy::promptRules('studio_note') . "\n\n"
             . "STUDIO NOTE META CONTRACT\n"
-            . "- Write every value directly in natural Spanish.\n"
+            . "- Write every value directly in {$metaStyle}.\n"
             . "- excerpt: one or two precise editorial sentences grounded in the article.\n"
-            . "- slug: concise lowercase Spanish words separated by hyphens, without accents.\n"
+            . "- slug: concise lowercase {$metaName} words separated by hyphens, without accents.\n"
             . "- seo_title and seo_description: page-specific, sober and supported by the article.\n"
             . "- tags: eight to twelve distinct, standardized informational topic filters; no poetic filler.\n"
             . "- search_terms: six to ten natural informational searches; no acquisition language or keyword stuffing.\n"
@@ -503,7 +571,8 @@ final class BilingualEditorialAdapterService
             throw new RuntimeException('The target language has no empty fields to complete.');
         }
 
-        $sourceName = $sourceLocale === 'es' ? 'Spanish' : 'English';
+        $sourceName = $this->languageShortName($sourceLocale);
+        $targetShortName = $this->languageShortName($targetLocale);
         $targetName = $targetLocale === 'es' ? 'natural international Spanish' : 'international English for the United States and Europe';
         $entityInstruction = match ($entityType) {
             'series' => 'Preserve the conceptual continuity of the series and use a sober curatorial register.',
@@ -541,7 +610,7 @@ EDITORIAL RULES
 - Do not translate the universal series title. When an SEO title contains it, keep that title unchanged and adapt only the descriptive search language around it.
 - Avoid calques, false friends, mechanical syntax and generic AI or marketplace language.
 - Adapt keywords, search phrases, captions, alt text and social copy according to their function; do not merely substitute words.
-- Preserve the Spanish source's chosen visual entry point, narrative order, tone and closing instead of homogenizing it into a standard English catalogue formula.
+- Preserve the {$sourceName} source's chosen visual entry point, narrative order, tone and closing instead of homogenizing it into a standard {$targetShortName} catalogue formula.
 - Descriptive diversity does not prohibit accurate SEO repetition. Keep canonical category, style, technique, material, support, color, format, artist and series terms stable when they remain relevant.
 - Never invent search volume, competition, ranking difficulty, buyer demand or regional performance.
 - Alt text remains visual and non-interpretive.
@@ -577,8 +646,16 @@ PROMPT;
         array $shape,
         array $currentSpanish,
         array $englishReference,
-        string $privateMemo
+        string $privateMemo,
+        string $masterLocale = 'es'
     ): string {
+        // Nombres de idioma del prompt. Para espanol reproducen exactamente el
+        // texto historico del recorrido probado.
+        $masterName = $this->languageShortName($masterLocale);
+        $masterStyle = $this->masterStyleName($masterLocale);
+        $counterpartName = $masterLocale === 'en' ? 'Spanish' : 'English';
+        $masterDraftLabel = 'CURRENT ' . strtoupper($masterName) . ' DRAFT';
+        $referenceLabel = 'EXISTING ' . strtoupper($counterpartName) . ' REFERENCE';
         $entityRules = match ($entityType) {
             'series' => <<<'RULES'
 - Write one coherent master description, not a collection of disconnected metadata sections.
@@ -598,7 +675,7 @@ PROMPT;
 - Rebuild short_description and description from the current evidence and the new search architecture. Do not preserve the previous sentence structure merely because its claims are supported, and do not patch an old curatorial draft by adding one sales sentence at the end.
 - Select three or four of the strongest plain-language phrases from search_terms and integrate their recognizable buyer vocabulary naturally across the public copy: at least one in short_description and at least three distinct phrases across short_description plus description. Grammatical inflection is allowed; do not force robotic exact-match syntax. Distribute them through the prose and never place all of them in one paragraph.
 - Choose only descriptive phrases for the public copy: category, recognized style, confirmed medium/process, surface, color or format. Keep transactional, collector and professional-context phrases exclusively in SEO metadata; never insert "comprar", "adquirir", "en venta", "buy", "acquire", "for sale", "coleccionistas" or "collectors" into short_description or description.
-- Every Spanish search phrase must be a grammatical phrase a person could say or type naturally. Use necessary articles, conjunctions and prepositions; never emit compressed noun stacks such as "pintura acrílico óleo lienzo" or "cuadro tonos tierra azul".
+- Every {MASTER_LANGUAGE} search phrase must be a grammatical phrase a person could say or type naturally. Use necessary articles, conjunctions and prepositions; never emit compressed noun stacks such as "pintura acrílico óleo lienzo" or "cuadro tonos tierra azul".
 - Keep the remaining search phrases only as SEO metadata. Never stuff the public text with the complete search set or end with a generic invitation to collectors.
 RULES
             ,
@@ -623,7 +700,7 @@ RULES
 - Preserve every existing image, image attribute and link URL exactly. Do not manufacture media, citations, quotations or external links.
 - seo_title must be concise, page-specific and naturally connect the artistic subject with an established informational search phrase.
 - seo_description must be a human summary of this exact article and must not begin with "Descubre" or "Explora".
-- slug must be a concise lowercase Spanish slug using hyphens and no accents.
+- slug must be a concise lowercase {MASTER_LANGUAGE} slug using hyphens and no accents.
 - alt_text must describe the lead image visually and non-commercially.
 - search_terms must contain six to ten natural informational searches supported by the article. Do not use keyword stuffing or acquisition language.
 - Do not turn the article into a sales page, catalogue description, academic paper or generic studio diary.
@@ -639,6 +716,7 @@ RULES
 - The mockup's SEO may describe the supported architectural placement, but the linked artwork remains the object being discovered.
 RULES
         };
+        $entityRules = str_replace('{MASTER_LANGUAGE}', $masterName, $entityRules);
         $contextJson = json_encode($context, JSON_PRETTY_PRINT | JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES);
         $shapeJson = json_encode($shape, JSON_PRETTY_PRINT | JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES);
         $spanishJson = json_encode($currentSpanish, JSON_PRETTY_PRINT | JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES);
@@ -666,11 +744,11 @@ RULES
                 : 'The exact image may be attached after this prompt. Use it only as visual evidence under the entity-specific rules.');
 
         return <<<PROMPT
-You are the Spanish-first editorial assistant for a contemporary artist's catalogue.
+You are the {$masterName}-first editorial assistant for a contemporary artist's catalogue.
 Return one valid JSON object only. Do not use markdown.
 
 TASK
-Generate a new editorial proposal directly in natural Spanish. Think and write in Spanish; do not draft in English and translate afterward.
+Generate a new editorial proposal directly in {$masterStyle}. Think and write in {$masterName}; do not draft in {$counterpartName} and translate afterward.
 This is a proposal only. It must not overwrite or publish existing content automatically.
 {$imageInstruction}
 
@@ -681,7 +759,7 @@ CORE RULES
 - Do not invent technique, pigments, intention, symbolism, biography, chronology, dimensions, market claims or connections that are not supported.
 - Use art-historical affinities such as minimalism or brutalism only when supported by the artist profile or artist-authored context.
 - When SERIES_DIRECTION is present in ENTITY CONTEXT, use its conceptual core as the artist's intended frame. Its interpretive limits are prohibitions: do not state excluded readings as facts or reduce the series to them.
-- CURRENT SPANISH DRAFT may be stale. Use it only as factual evidence. Rebuild the proposal from the current artist-authored context, profile, materials and search architecture instead of preserving its wording or paragraph structure.
+- {$masterDraftLabel} may be stale. Use it only as factual evidence. Rebuild the proposal from the current artist-authored context, profile, materials and search architecture instead of preserving its wording or paragraph structure.
 - Do not translate the universal title. It may appear unchanged inside seo_title.
 - Return exactly the keys and nesting in OUTPUT SHAPE. Return strings for every terminal value.
 {$integrityRules}
@@ -701,10 +779,10 @@ ENTITY CONTEXT
 PRIVATE MEMO
 {$memo}
 
-CURRENT SPANISH DRAFT
+{$masterDraftLabel}
 {$spanishJson}
 
-EXISTING ENGLISH REFERENCE
+{$referenceLabel}
 Use only as factual evidence. Do not translate it literally.
 {$englishJson}
 
@@ -814,14 +892,16 @@ RULES;
         string $entityType,
         int $entityId
     ): array {
+        // La diversidad descriptiva se evalua contra el material previo del
+        // mismo idioma de trabajo del artista.
         $stmt = $this->pdo->prepare(
             "SELECT content_json
              FROM bilingual_editorial_content
-             WHERE user_id=? AND entity_type=? AND locale='es' AND entity_id<>?
+             WHERE user_id=? AND entity_type=? AND locale=? AND entity_id<>?
              ORDER BY updated_at DESC,id DESC
              LIMIT 8"
         );
-        $stmt->execute([$userId, $entityType, $entityId]);
+        $stmt->execute([$userId, $entityType, $this->workingLocale($userId), $entityId]);
         $references = [];
         while ($row = $stmt->fetch(PDO::FETCH_ASSOC)) {
             $content = json_decode((string)($row['content_json'] ?? ''), true);
@@ -1266,7 +1346,10 @@ PROMPT;
 
     private function repairSeriesSeoIfNeeded(string $basePrompt, array $shape, array $content, string $language): array
     {
-        $reference = $language === 'international English' ? $shape : null;
+        $isAdaptation = $this->isAdaptationStyle($language);
+        $targetShort = str_contains($language, 'Spanish') ? 'Spanish' : 'English';
+        $sourceShort = $targetShort === 'English' ? 'Spanish' : 'English';
+        $reference = $isAdaptation ? $shape : null;
         $issues = $this->seriesSeoIssues($content, $reference);
         if ($issues === []) return $content;
 
@@ -1274,34 +1357,39 @@ PROMPT;
         for ($attempt = 1; $attempt <= 2; $attempt++) {
             $contentJson = json_encode($content, JSON_PRETTY_PRINT | JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES);
             $issuesJson = json_encode($issues, JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES);
-            if ($language === 'international English') {
+            if ($isAdaptation) {
+                $targetStyleLong = $targetShort === 'Spanish'
+                    ? 'natural international Spanish'
+                    : 'natural international English for the United States and Europe';
+                $sourceUpper = strtoupper($sourceShort);
+                $targetUpper = strtoupper($targetShort);
                 $repairPrompt = <<<PROMPT
-You are the international-English catalogue editor for a contemporary artist.
+You are the international-{$targetShort} catalogue editor for a contemporary artist.
 Return one valid JSON object only. Do not use markdown.
 
 TASK
-Adapt the complete Spanish source JSON into natural international English for the United States and Europe.
+Adapt the complete {$sourceShort} source JSON into {$targetStyleLong}.
 Return exactly the same keys and nesting. Return strings for every terminal value.
 Preserve the universal series title and proper names unchanged.
 Return plain text inside every JSON value. Do not use Markdown emphasis, asterisks, headings or code formatting.
 
 NON-NEGOTIABLE SEO PARITY
-- Adapt every Spanish catalogue tag one-to-one. Do not omit, merge or summarize tags.
-- Adapt every Spanish search phrase one-to-one and in the same order. Do not omit, merge or summarize searches or long tails.
-- The English tags count and search_terms count must equal the Spanish counts.
+- Adapt every {$sourceShort} catalogue tag one-to-one. Do not omit, merge or summarize tags.
+- Adapt every {$sourceShort} search phrase one-to-one and in the same order. Do not omit, merge or summarize searches or long tails.
+- The {$targetShort} tags count and search_terms count must equal the {$sourceShort} counts.
 - Preserve all confirmed techniques, materials and supports, including the exact relationship between acrylic and oil finishes.
-- Rewrite seo_title using exactly: UNIVERSAL SERIES TITLE | one established English descriptive category phrase | ARTIST NAME. Use exactly two spaced vertical separators; do not use colons, dashes, "by" or a sentence.
+- Rewrite seo_title using exactly: UNIVERSAL SERIES TITLE | one established {$targetShort} descriptive category phrase | ARTIST NAME. Use exactly two spaced vertical separators; do not use colons, dashes, "by" or a sentence.
 - Rewrite seo_description as a page-specific human summary. Do not begin with Discover or Explore.
 - Preserve factual and conceptual meaning in subtitle, short_description and description without literal syntax.
-- Rebuild the public copy rather than preserving the previous English wording. Integrate at least one recognizable English search_terms phrase in short_description and at least three distinct search_terms phrases across short_description plus description, distributed naturally through the prose. Grammatical inflection is allowed.
+- Rebuild the public copy rather than preserving the previous {$targetShort} wording. Integrate at least one recognizable {$targetShort} search_terms phrase in short_description and at least three distinct search_terms phrases across short_description plus description, distributed naturally through the prose. Grammatical inflection is allowed.
 - Use only descriptive search phrases in public copy. Keep transactional, collector and professional-context phrases exclusively in SEO metadata.
 - Do not append a generic sales sentence or invitation to collectors.
 - Do not invent facts, dimensions, availability, search volume or poetic keywords.
 
-SPANISH SOURCE JSON
+{$sourceUpper} SOURCE JSON
 {$shapeJson}
 
-PREVIOUS INCOMPLETE ENGLISH JSON
+PREVIOUS INCOMPLETE {$targetUpper} JSON
 {$contentJson}
 
 ISSUES TO CORRECT
@@ -1403,9 +1491,15 @@ PROMPT;
         for ($attempt = 1; $attempt <= 2; $attempt++) {
             $contentJson = json_encode($content, JSON_PRETTY_PRINT | JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES);
             $issuesJson = json_encode($issues, JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES);
-            $languageInstruction = $language === 'international English'
-                ? 'Adapt the complete Spanish source into natural international English for the United States and Europe.'
-                : 'Write the complete proposal directly in natural Spanish.';
+            $mockupIsAdaptation = $this->isAdaptationStyle($language);
+            $mockupTargetShort = str_contains($language, 'Spanish') ? 'Spanish' : 'English';
+            $mockupSourceShort = $mockupTargetShort === 'English' ? 'Spanish' : 'English';
+            $mockupTargetStyleLong = $mockupTargetShort === 'Spanish'
+                ? 'natural international Spanish'
+                : 'natural international English for the United States and Europe';
+            $languageInstruction = $mockupIsAdaptation
+                ? "Adapt the complete {$mockupSourceShort} source into {$mockupTargetStyleLong}."
+                : "Write the complete proposal directly in {$language}.";
             $repairPrompt = <<<PROMPT
 You are the catalogue quality editor for one contextual mockup image.
 Return one valid JSON object only. Do not use markdown.
@@ -1425,13 +1519,13 @@ NON-NEGOTIABLE MOCKUP COMPLETENESS
 - Keep alt text visual and non-commercial and keep the caption brief and editorial.
 - Do not duplicate one generic caption across every channel.
 PROMPT;
-            if ($language === 'international English') {
+            if ($mockupIsAdaptation) {
                 $repairPrompt .= <<<PROMPT
 
 SEO PARITY
-- Adapt every Spanish catalogue tag one-to-one.
-- Adapt every Spanish search phrase one-to-one and in the same order.
-- English tags and search_terms counts must equal the Spanish counts.
+- Adapt every {$mockupSourceShort} catalogue tag one-to-one.
+- Adapt every {$mockupSourceShort} search phrase one-to-one and in the same order.
+- {$mockupTargetShort} tags and search_terms counts must equal the {$mockupSourceShort} counts.
 PROMPT;
             }
             $repairPrompt .= <<<PROMPT

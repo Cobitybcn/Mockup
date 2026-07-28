@@ -45,6 +45,14 @@ function run_studio_note_markdown_import_tests(): void
         id INTEGER PRIMARY KEY AUTOINCREMENT,user_id INTEGER NOT NULL,entity_type TEXT NOT NULL,
         entity_id INTEGER NOT NULL,action TEXT NOT NULL
     )");
+    $pdo->exec("CREATE TABLE user_language_policy (
+        user_id INTEGER NOT NULL PRIMARY KEY,working_locale TEXT NOT NULL,publication_locales_json TEXT NOT NULL,
+        interface_locale TEXT NOT NULL DEFAULT '',created_at TEXT NOT NULL,updated_at TEXT NOT NULL
+    )");
+    // Este artista trabaja en espanol y publica en espanol+ingles (como Maurizio);
+    // sin una politica explicita el default ahora es ingles.
+    $pdo->exec("INSERT INTO user_language_policy (user_id,working_locale,publication_locales_json,created_at,updated_at)
+        VALUES (70,'es','[\"es\",\"en\"]','2026-07-01T10:00:00Z','2026-07-01T10:00:00Z')");
     $pdo->exec("INSERT INTO artwork_groups VALUES
         (10,70,101,'STRATA IV','active','2026-07-01T10:00:00Z','2026-07-01T10:00:00Z')");
     $pdo->exec("INSERT INTO artwork_series VALUES

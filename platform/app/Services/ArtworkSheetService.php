@@ -154,9 +154,10 @@ final class ArtworkSheetService
         $subtitle = $existingSubtitle !== '' ? $existingSubtitle : $suggestedSubtitle;
 
         $bilingual = new BilingualEditorialService($this->pdo);
+        // El analisis alimenta la edicion fuente solo cuando fue generado en el
+        // idioma de trabajo del artista.
         $spanishFirst = $bilingual->isEnabled($userId)
-            && $bilingual->sourceLocale($userId) === 'es'
-            && (string)($draft['analysis_language'] ?? '') === 'es';
+            && (string)($draft['analysis_language'] ?? '') === $bilingual->sourceLocale($userId);
         if ($spanishFirst) {
             $bilingual->fillSourceFromAnalysis($userId, 'artwork', $artworkId, ArtworkAnalysisV2::editorialContent($draft));
             $now = date('c');
@@ -634,9 +635,12 @@ final class ArtworkSheetService
         $generated = $fallback;
         $analysisGenerated = false;
         $bilingual = new BilingualEditorialService($this->pdo);
-        $spanishFirst = $bilingual->isEnabled($userId) && $bilingual->sourceLocale($userId) === 'es';
-        $analysisLocale = 'es';
-        $languageInstruction = 'Think, analyze and write directly in natural Spanish. Do not draft in English and translate afterward. Every user-facing string in the JSON must be Spanish.';
+        $spanishFirst = $bilingual->isEnabled($userId);
+        $analysisLocale = $bilingual->sourceLocale($userId);
+        $analysisLanguageName = $analysisLocale === 'en' ? 'English' : 'Spanish';
+        $analysisCounterpart = $analysisLocale === 'en' ? 'Spanish' : 'English';
+        $analysisStyle = $analysisLocale === 'en' ? 'natural international English' : 'natural Spanish';
+        $languageInstruction = "Think, analyze and write directly in {$analysisStyle}. Do not draft in {$analysisCounterpart} and translate afterward. Every user-facing string in the JSON must be {$analysisLanguageName}.";
 
         if (ProviderSettings::isRealMode() && ProviderSettings::allowRealApi() && ProviderSettings::imageProvider() === 'gemini' && $imagePath !== '') {
             $artworkIdentity = json_decode((string)($artworkSheet['generated_json'] ?? ''), true);
