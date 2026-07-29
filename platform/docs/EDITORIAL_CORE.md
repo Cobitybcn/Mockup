@@ -312,6 +312,15 @@ no genera contenido. **El estado de publicación es siempre visible y accionable
 explícitamente — incluida la advertencia en la sección Website — porque un estado invisible
 deja al artista sin saber por qué el sitio no muestra su contenido.
 
+**UNA sola decisión de publicación por obra** (enmienda 2026-07-29, opción A del artista):
+«Publicar Obra» es un único acto que publica la página del sitio, publica el texto aprobado
+y dispara la cascada de mockups; «Despublicar» retira página y texto juntos. No existen dos
+"publicar" con significados distintos en la misma ficha. Compuerta: sin contenido editorial
+generado, la obra no se publica (mensaje claro que señala «Generar contenido»). La ficha
+queda con dos decisiones del artista: *Generar contenido* (el sistema hace todo lo
+inteligente) y *Publicar/Despublicar* (su única aprobación). La configuración comercial
+(precio, Saatchi, portada) es configuración que se guarda, no una publicación.
+
 ### Cap. 2 — La lectura viva
 
 La interpretación es legítimamente mutable — crece con el artista, con miradas retrospectivas

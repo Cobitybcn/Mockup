@@ -12,6 +12,60 @@ final class BilingualEditorialJobService
 
     public function __construct(private readonly PDO $pdo) {}
 
+    /**
+     * EDITORIAL_CORE Libro VI Cap. 4: publicar la lectura de una obra
+     * regenera automaticamente el contenido de sus mockups, salteando los
+     * editados a mano (edicion soberana). Este helper solo CREA los jobs —
+     * el despacho (Cloud Tasks o worker inline) corre por cuenta del caller,
+     * para que quien publica dentro de una transaccion despache tras commit.
+     *
+     * @return array{queued:list<array{job_id:int,mockup_id:int,needs_dispatch:bool}>,skipped_manual:list<int>}
+     */
+    public function queueMockupCascadeForArtwork(int $userId, int $artworkId): array
+    {
+        $editorial = new BilingualEditorialService($this->pdo);
+        $skippedManual = $editorial->artistEditedMockupIds($userId, $artworkId);
+        $stmt = $this->pdo->prepare('SELECT id FROM mockups WHERE user_id=? AND source_artwork_id=? ORDER BY id');
+        $stmt->execute([$userId, $artworkId]);
+        $queued = [];
+        foreach (array_map('intval', $stmt->fetchAll(PDO::FETCH_COLUMN) ?: []) as $mockupId) {
+            if (in_array($mockupId, $skippedManual, true)) continue;
+            $job = $this->createOrReuse($userId, 'mockup', $mockupId, 'prepare', [
+                'publish_spanish' => true,
+                'cascade_from_artwork' => $artworkId,
+            ]);
+            $queued[] = [
+                'job_id' => (int)$job['id'],
+                'mockup_id' => $mockupId,
+                'needs_dispatch' => (string)$job['status'] === 'queued' && trim((string)$job['task_name']) === '',
+            ];
+        }
+        return ['queued' => $queued, 'skipped_manual' => $skippedManual];
+    }
+
+    /**
+     * Despacha los jobs de una cascada ya creada: Cloud Tasks cuando esta
+     * disponible, worker inline como respaldo local. Llamar SIEMPRE fuera de
+     * la transaccion que creo los jobs.
+     */
+    public function dispatchCascade(int $userId, array $cascade): void
+    {
+        foreach ((array)($cascade['queued'] ?? []) as $item) {
+            if (empty($item['needs_dispatch'])) continue;
+            $jobId = (int)($item['job_id'] ?? 0);
+            if ($jobId <= 0) continue;
+            try {
+                if (CloudTasksService::isAvailable()) {
+                    $this->attachTask($jobId, $userId, CloudTasksService::enqueueEditorialGeneration($jobId));
+                } else {
+                    (new BilingualEditorialGenerationWorker($this->pdo))->process($jobId);
+                }
+            } catch (Throwable $error) {
+                Logger::log('Mockup cascade dispatch failed for job ' . $jobId . ': ' . $error->getMessage(), 'warning');
+            }
+        }
+    }
+
     public function createOrReuse(
         int $userId,
         string $entityType,

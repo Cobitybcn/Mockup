@@ -854,6 +854,28 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && ($_POST['action'] ?? '') === 'save_
         $sheet = (new ArtworkSheetService($pdo))->sheetForArtwork($id, $artworkOwnerId);
         $intent = (string)($_POST['website_intent'] ?? 'save');
         if (!in_array($intent, ['save', 'publish', 'unpublish'], true)) $intent = 'save';
+        // EDITORIAL_CORE Libro VI Cap. 1 (opcion A, 2026-07-29): UNA sola
+        // decision de publicacion por obra. "Publicar Obra" publica la pagina
+        // Y la lectura editorial aprobada, y dispara la cascada de mockups;
+        // "Despublicar" retira ambas. La compuerta: sin contenido editorial
+        // generado no se publica.
+        $unifiedCascade = null;
+        if ($bilingualExperiment && in_array($intent, ['publish', 'unpublish'], true)) {
+            $unifiedSpanish = $bilingualEditorialService->get($artworkOwnerId, 'artwork', $id, $bilingualEditorialService->sourceLocale($artworkOwnerId));
+            $unifiedHasContent = (bool)array_filter(
+                (array)($unifiedSpanish['content'] ?? []),
+                static fn($value): bool => !is_array($value) && trim((string)$value) !== ''
+            );
+            if ($intent === 'publish') {
+                if (!$unifiedHasContent) {
+                    throw new RuntimeException(t('Generate the editorial content before publishing the artwork (Editorial workspace, "Generate content").', 'Generá el contenido editorial antes de publicar la obra (Espacio editorial, «Generar contenido»).'));
+                }
+                $bilingualEditorialService->setSpanishPublished($artworkOwnerId, 'artwork', $id, true);
+                $unifiedCascade = (new BilingualEditorialJobService($pdo))->queueMockupCascadeForArtwork($artworkOwnerId, $id);
+            } elseif ($unifiedHasContent) {
+                $bilingualEditorialService->setSpanishPublished($artworkOwnerId, 'artwork', $id, false);
+            }
+        }
         $savedWebsitePublication = $websitePublicationService->saveWebsiteSettings((int)$sheet['id'], $artworkOwnerId, $_POST, $intent);
         $headerFile = basename(trim((string)($_POST['header_file'] ?? '')));
         $allowedHeaders = array_filter([basename((string)($sheet['source_image_file'] ?? ''))]);
@@ -915,8 +937,16 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && ($_POST['action'] ?? '') === 'save_
             }
         }
         if ($websiteTransactionStarted) $pdo->commit();
+        // La cascada se despacha tras el commit: las tareas no deben correr
+        // contra jobs aun no confirmados.
+        if ($unifiedCascade !== null) {
+            (new BilingualEditorialJobService($pdo))->dispatchCascade($artworkOwnerId, $unifiedCascade);
+        }
         $message = $intent === 'publish' ? t('published', 'publicada') : ($intent === 'unpublish' ? t('unpublished', 'despublicada') : t('saved', 'guardada'));
-        header('Location: artwork.php?id=' . rawurlencode((string)$id) . '&website_saved=' . rawurlencode($message) . '#website-publication');
+        $cascadeSuffix = $unifiedCascade !== null && $unifiedCascade['queued'] !== []
+            ? '&cascade_count=' . count($unifiedCascade['queued'])
+            : '';
+        header('Location: artwork.php?id=' . rawurlencode((string)$id) . '&website_saved=' . rawurlencode($message) . $cascadeSuffix . '#website-publication');
         exit;
     } catch (Throwable $e) {
         if ($websiteTransactionStarted && $pdo->inTransaction()) $pdo->rollBack();
@@ -3301,7 +3331,7 @@ $editIconSvg = '<svg viewBox="0 0 24 24" width="18" height="18" stroke="currentC
                 <div class="notice"><?= h(t('Artwork sent to the Maurizio Valch catalogue. It remains hidden until you enable it in the website admin.', 'Obra enviada al catálogo de Maurizio Valch. Permanece oculta hasta que la habilités en la administración del sitio web.')) ?></div>
             <?php endif; ?>
             <?php if (isset($_GET['website_saved'])): ?>
-                <div class="notice"><?= h(t('Website entry', 'Entrada del sitio web')) ?> <?= h((string)$_GET['website_saved']) ?>.</div>
+                <div class="notice"><?= h(t('Website entry', 'Entrada del sitio web')) ?> <?= h((string)$_GET['website_saved']) ?>.<?php if ((int)($_GET['cascade_count'] ?? 0) > 0): ?> <?= h(t('Approved text published;', 'Texto aprobado publicado;')) ?> <?= (int)$_GET['cascade_count'] ?> <?= h(t('mockups refreshing in the background.', 'mockups actualizándose en segundo plano.')) ?><?php endif; ?></div>
             <?php endif; ?>
             <?php if (isset($_GET['website_error'])): ?>
                 <div class="notice error"><?= h((string)$_GET['website_error']) ?></div>
@@ -3381,9 +3411,7 @@ $editIconSvg = '<svg viewBox="0 0 24 24" width="18" height="18" stroke="currentC
                             : ($artworkSpanishDirty
                                 ? h(t('Unpublished changes — the site shows the previous version', 'Cambios sin publicar — el sitio muestra la versión anterior'))
                                 : h(t('Spanish published and up to date on the site', 'Español publicado y al día en el sitio'))) ?></span>
-                        <button type="button" data-spanish-publication data-action="<?= !$artworkSpanishPublished || $artworkSpanishDirty ? 'publish_spanish' : 'unpublish_spanish' ?>"><?= !$artworkSpanishPublished
-                            ? h(t('Publish Spanish', 'Publicar español'))
-                            : ($artworkSpanishDirty ? h(t('Update published Spanish', 'Actualizar español publicado')) : h(t('Unpublish Spanish', 'Retirar español'))) ?></button>
+                        <span><?= h(t('Publication is one single act: the "Publish Artwork" button in the Website section publishes the page, this approved text, and refreshes the mockups.', 'La publicación es un solo acto: el botón «Publicar Obra» de la sección Sitio Web publica la página, este texto aprobado y actualiza los mockups.')) ?></span>
                     </div>
                     <?php endif; ?>
                     <details class="bilingual-editorial-memo">
@@ -3737,9 +3765,13 @@ $editIconSvg = '<svg viewBox="0 0 24 24" width="18" height="18" stroke="currentC
                                                 </div>
                                             </details>
                                         </div>
-                                        <?php if ($bilingualExperiment && $artworkSpanishHasContent && !$artworkSpanishPublished): ?>
+                                        <?php if ($bilingualExperiment && !$artworkSpanishHasContent): ?>
                                             <div class="notice error" style="margin:0 0 12px;">
-                                                <?= h(t('The Spanish editorial content of this artwork is NOT published: the public site will not show it in Spanish, no matter what you save here. Publish it from the Editorial workspace above ("Publish Spanish").', 'El contenido editorial en español de esta obra NO está publicado: el sitio público no lo mostrará en español, sin importar lo que guardes acá. Publicalo desde el Espacio editorial de arriba («Publicar español»).')) ?>
+                                                <?= h(t('This artwork has no editorial content yet: generate it first (Editorial workspace, "Generate content") — publishing requires it.', 'Esta obra todavía no tiene contenido editorial: generalo primero (Espacio editorial, «Generar contenido») — publicar lo requiere.')) ?>
+                                            </div>
+                                        <?php elseif ($bilingualExperiment && $artworkSpanishHasContent && !$artworkSpanishPublished && $websiteStatus === 'published'): ?>
+                                            <div class="notice error" style="margin:0 0 12px;">
+                                                <?= h(t('The page is published but its approved Spanish text is not. Press "Publish Artwork" once to sync everything (page + text + mockups).', 'La página está publicada pero su texto español aprobado no. Apretá «Publicar Obra» una vez para sincronizar todo (página + texto + mockups).')) ?>
                                             </div>
                                         <?php endif; ?>
                                         <div class="artwork-website-actions">

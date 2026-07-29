@@ -34,31 +34,13 @@ try {
         // regenera automaticamente el contenido de sus mockups desde la
         // version nueva, salteando los editados a mano (edicion soberana).
         if ($action === 'publish_spanish' && $entityType === 'artwork') {
-            $skippedManual = $service->artistEditedMockupIds($userId, $entityId);
-            $mockupStmt = Database::connection()->prepare('SELECT id FROM mockups WHERE user_id=? AND source_artwork_id=? ORDER BY id');
-            $mockupStmt->execute([$userId, $entityId]);
-            $cascadeQueued = [];
             $jobs = new BilingualEditorialJobService(Database::connection());
-            foreach (array_map('intval', $mockupStmt->fetchAll(PDO::FETCH_COLUMN) ?: []) as $cascadeMockupId) {
-                if (in_array($cascadeMockupId, $skippedManual, true)) continue;
-                try {
-                    $cascadeJob = $jobs->createOrReuse($userId, 'mockup', $cascadeMockupId, 'prepare', [
-                        'publish_spanish' => true,
-                        'cascade_from_artwork' => $entityId,
-                    ]);
-                    if ((string)$cascadeJob['status'] === 'queued' && trim((string)$cascadeJob['task_name']) === '') {
-                        if (CloudTasksService::isAvailable()) {
-                            $jobs->attachTask((int)$cascadeJob['id'], $userId, CloudTasksService::enqueueEditorialGeneration((int)$cascadeJob['id']));
-                        } else {
-                            (new BilingualEditorialGenerationWorker(Database::connection()))->process((int)$cascadeJob['id']);
-                        }
-                    }
-                    $cascadeQueued[] = $cascadeMockupId;
-                } catch (Throwable $cascadeError) {
-                    Logger::log('Mockup cascade job failed for mockup ' . $cascadeMockupId . ': ' . $cascadeError->getMessage(), 'warning');
-                }
-            }
-            $result += ['cascade_queued' => $cascadeQueued, 'cascade_skipped_manual' => $skippedManual];
+            $cascade = $jobs->queueMockupCascadeForArtwork($userId, $entityId);
+            $jobs->dispatchCascade($userId, $cascade);
+            $result += [
+                'cascade_queued' => array_map(static fn(array $item): int => (int)$item['mockup_id'], $cascade['queued']),
+                'cascade_skipped_manual' => $cascade['skipped_manual'],
+            ];
         }
         echo json_encode(['ok' => true] + $result, JSON_UNESCAPED_UNICODE);
         exit;

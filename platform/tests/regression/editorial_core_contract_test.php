@@ -164,21 +164,44 @@ function run_editorial_core_contract_tests(): void
     TestHarness::assertTrue(!in_array(22, $edited, true), 'EDITORIAL_CORE Libro VI Cap. 4: el texto del sistema sigue siendo regenerable');
 
     $endpointSource = (string)file_get_contents($platformRoot . '/bilingual_editorial.php');
-    TestHarness::assertContains('cascade_from_artwork', $endpointSource, 'EDITORIAL_CORE Libro VI Cap. 4: re-publicar una obra encola la regeneracion de sus mockups');
-    TestHarness::assertContains('artistEditedMockupIds', $endpointSource, 'EDITORIAL_CORE Libro VI Cap. 4: la cascada saltea los mockups editados a mano');
+    TestHarness::assertContains('queueMockupCascadeForArtwork', $endpointSource, 'EDITORIAL_CORE Libro VI Cap. 4: re-publicar una obra encola la regeneracion de sus mockups');
+    $jobServiceSource = (string)file_get_contents($platformRoot . '/app/Services/BilingualEditorialJobService.php');
+    TestHarness::assertContains('cascade_from_artwork', $jobServiceSource, 'EDITORIAL_CORE Libro VI Cap. 4: la cascada marca su origen en cada job');
+    TestHarness::assertContains('artistEditedMockupIds', $jobServiceSource, 'EDITORIAL_CORE Libro VI Cap. 4: la cascada saltea los mockups editados a mano');
     TestHarness::assertContains('guardIdentityBeforePublish', (string)file_get_contents($platformRoot . '/app/Services/BilingualEditorialService.php'), 'EDITORIAL_CORE (compuerta): setPublished revalida identidad antes de congelar el snapshot');
 
     // ————— Libro VI Cap. 1: el estado publicar=aprobar es visible y accionable —————
     $artworkScreen = (string)file_get_contents($platformRoot . '/artwork.php');
     TestHarness::assertContains(
-        'data-spanish-publication',
+        'data-spanish-publication-state',
         $artworkScreen,
-        'EDITORIAL_CORE Libro VI Cap. 1: la ficha de obra expone el estado de publicación y su acción — publicar es el acto de aprobación del artista'
+        'EDITORIAL_CORE Libro VI Cap. 1: la ficha de obra expone el estado de publicación — publicar es el acto de aprobación del artista'
+    );
+
+    // ————— Libro VI Cap. 1 (enmienda opción A): UNA sola decisión de publicación —————
+    TestHarness::assertContains(
+        'setSpanishPublished($artworkOwnerId',
+        $artworkScreen,
+        'EDITORIAL_CORE Libro VI Cap. 1 (opción A): «Publicar Obra» publica también el texto aprobado — un solo acto, no dos publicar distintos'
     );
     TestHarness::assertContains(
-        'Espacio editorial de arriba',
+        'queueMockupCascadeForArtwork',
         $artworkScreen,
-        'EDITORIAL_CORE Libro VI Cap. 1: la sección Website avisa cuando el español no está publicado y señala dónde publicarlo'
+        'EDITORIAL_CORE Libro VI Cap. 4: publicar la obra dispara la cascada de mockups desde el mismo acto'
+    );
+    TestHarness::assertContains(
+        'Generá el contenido editorial antes de publicar la obra',
+        $artworkScreen,
+        'EDITORIAL_CORE Libro VI Cap. 1: sin contenido generado la obra no se publica (compuerta con mensaje claro)'
+    );
+    TestHarness::assertContains(
+        'dispatchCascade',
+        $artworkScreen,
+        'EDITORIAL_CORE: la cascada se despacha tras el commit, nunca contra jobs sin confirmar'
+    );
+    TestHarness::assertTrue(
+        !str_contains($artworkScreen, "data-spanish-publication data-action"),
+        'EDITORIAL_CORE Libro VI Cap. 1 (opción A): la ficha no ofrece un segundo botón de publicar separado — la barra editorial es solo estado'
     );
 
     // ————— Libro I Cap. 6: la IA jamas rellena titulos vacios —————
