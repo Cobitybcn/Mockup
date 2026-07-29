@@ -1307,9 +1307,20 @@ $artworkSpanishHasContent = (bool)array_filter(
     (array)($artworkSpanishEditorial['content'] ?? []),
     static fn($value): bool => !is_array($value) && trim((string)$value) !== ''
 );
-$artworkEditorialStateLabel = ($artworkEnglishEditorial['status'] ?? '') === 'stale'
-    ? t('English · update', 'English · actualizar')
-    : (($artworkEnglishEditorial['status'] ?? '') === 'unprepared' ? t('English · pending', 'English · pendiente') : 'ES + EN');
+// EDITORIAL_CORE Libro VI Cap. 1: publicar = aprobar. El estado de publicacion
+// del espanol es la puerta que decide si el sitio muestra la obra en espanol y
+// si sus mockups pueden generar contenido — tiene que ser siempre visible.
+$artworkSpanishPublished = (bool)($artworkSpanishEditorial['is_published'] ?? false);
+$artworkSpanishDirty = (bool)($artworkSpanishEditorial['has_unpublished_changes'] ?? false);
+if ($artworkSpanishHasContent && !$artworkSpanishPublished) {
+    $artworkEditorialStateLabel = t('NOT PUBLISHED · hidden on the site', 'SIN PUBLICAR · el sitio no lo muestra');
+} elseif ($artworkSpanishPublished && $artworkSpanishDirty) {
+    $artworkEditorialStateLabel = t('Unpublished changes', 'Cambios sin publicar');
+} else {
+    $artworkEditorialStateLabel = ($artworkEnglishEditorial['status'] ?? '') === 'stale'
+        ? t('English · update', 'English · actualizar')
+        : (($artworkEnglishEditorial['status'] ?? '') === 'unprepared' ? t('English · pending', 'English · pendiente') : 'ES + EN');
+}
 $publicationCopy = trim($selectedTitle . ($selectedSubtitle !== '' ? "\n" . $selectedSubtitle : '') . "\n\n" . $selectedPublicationDescription);
 
 $copyIconSvg = '<svg viewBox="0 0 24 24" width="14" height="14" stroke="currentColor" stroke-width="2" fill="none" stroke-linecap="round" stroke-linejoin="round" style="display: inline-block; vertical-align: middle;"><rect x="9" y="9" width="13" height="13" rx="2" ry="2"></rect><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"></path></svg>';
@@ -3363,6 +3374,18 @@ $editIconSvg = '<svg viewBox="0 0 24 24" width="18" height="18" stroke="currentC
                     <div class="bilingual-reanalysis-actions" style="margin:0 20px 14px;">
                         <button type="button" data-editorial-generate><?= $artworkSpanishHasContent ? h(t('Regenerate content', 'Regenerar contenido')) : h(t('Generate content', 'Generar contenido')) ?></button>
                     </div>
+                    <?php if ($artworkSpanishHasContent): ?>
+                    <div class="bilingual-publication-bar">
+                        <span data-spanish-publication-state><?= !$artworkSpanishPublished
+                            ? h(t('NOT PUBLISHED — the public site does not show this artwork in Spanish', 'SIN PUBLICAR — el sitio público no muestra el español de esta obra'))
+                            : ($artworkSpanishDirty
+                                ? h(t('Unpublished changes — the site shows the previous version', 'Cambios sin publicar — el sitio muestra la versión anterior'))
+                                : h(t('Spanish published and up to date on the site', 'Español publicado y al día en el sitio'))) ?></span>
+                        <button type="button" data-spanish-publication data-action="<?= !$artworkSpanishPublished || $artworkSpanishDirty ? 'publish_spanish' : 'unpublish_spanish' ?>"><?= !$artworkSpanishPublished
+                            ? h(t('Publish Spanish', 'Publicar español'))
+                            : ($artworkSpanishDirty ? h(t('Update published Spanish', 'Actualizar español publicado')) : h(t('Unpublish Spanish', 'Retirar español'))) ?></button>
+                    </div>
+                    <?php endif; ?>
                     <details class="bilingual-editorial-memo">
                         <summary><?= h(t('Private memo for this artwork', 'Memo privado de la obra')) ?></summary>
                         <div class="bilingual-editorial-copy" contenteditable="true" role="textbox" aria-multiline="true" data-private-memo data-editorial-locale="es" data-placeholder="<?= h(t('Ideas, decisions, and reminders that are not published…', 'Ideas, decisiones y recordatorios que no se publican…')) ?>"><?= h($artworkSpanishEditorial['private_memo'] ?? '') ?></div>
@@ -3714,6 +3737,11 @@ $editIconSvg = '<svg viewBox="0 0 24 24" width="18" height="18" stroke="currentC
                                                 </div>
                                             </details>
                                         </div>
+                                        <?php if ($bilingualExperiment && $artworkSpanishHasContent && !$artworkSpanishPublished): ?>
+                                            <div class="notice error" style="margin:0 0 12px;">
+                                                <?= h(t('The Spanish editorial content of this artwork is NOT published: the public site will not show it in Spanish, no matter what you save here. Publish it from the Editorial workspace above ("Publish Spanish").', 'El contenido editorial en español de esta obra NO está publicado: el sitio público no lo mostrará en español, sin importar lo que guardes acá. Publicalo desde el Espacio editorial de arriba («Publicar español»).')) ?>
+                                            </div>
+                                        <?php endif; ?>
                                         <div class="artwork-website-actions">
                                             <button class="website-decision website-save" type="submit" name="website_intent" value="save"><span><?= h(t('Save Website', 'Guardar Sitio Web')) ?><br><?= h(t('Settings', 'Configuración')) ?></span></button>
                                             <?php if ($websiteStatus === 'published'): ?>

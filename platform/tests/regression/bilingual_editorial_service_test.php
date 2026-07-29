@@ -638,7 +638,13 @@ function run_bilingual_editorial_service_tests(): void
     TestHarness::assertContains('updateMockupAnalysisDraft', $sheetServiceSource, 'el análisis español se persiste sin copiarse a columnas inglesas');
     TestHarness::assertContains("unset(\$generated['mockup_analysis_v2_en'])", $sheetServiceSource, 'un nuevo análisis elimina cualquier bloque inglés anterior');
     $artworkScreen = (string)file_get_contents($platformRoot . '/artwork.php');
-    TestHarness::assertTrue(strpos($artworkScreen, 'data-spanish-publication') === false, 'Artwork no exige publicar el español por separado');
+    // Enmienda EDITORIAL_CORE Libro VI Cap. 1 (publicar = aprobar): el estado
+    // de publicacion del espanol decide si el sitio muestra la obra y si sus
+    // mockups generan contenido — la ficha DEBE exponer ese estado y su
+    // accion. (Antes se afirmaba lo contrario; el contenido podia quedar sin
+    // publicar sin ningun camino visible para publicarlo.)
+    TestHarness::assertContains('data-spanish-publication', $artworkScreen, 'Artwork expone el estado y la acción de publicación del español (publicar = aprobar)');
+    TestHarness::assertContains('SIN PUBLICAR', $artworkScreen, 'la ficha avisa cuando el sitio no muestra el español de la obra');
     TestHarness::assertContains('website-decision website-save', $artworkScreen, 'Website usa un Decision Block verde pastel para guardar');
     TestHarness::assertContains('website-decision website-unpublish', $artworkScreen, 'Website usa un Decision Block rosa pastel para retirar la publicación');
     TestHarness::assertContains('website-decision website-publish', $artworkScreen, 'Website conserva un Decision Block amarillo pastel para publicar');

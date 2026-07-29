@@ -168,6 +168,19 @@ function run_editorial_core_contract_tests(): void
     TestHarness::assertContains('artistEditedMockupIds', $endpointSource, 'EDITORIAL_CORE Libro VI Cap. 4: la cascada saltea los mockups editados a mano');
     TestHarness::assertContains('guardIdentityBeforePublish', (string)file_get_contents($platformRoot . '/app/Services/BilingualEditorialService.php'), 'EDITORIAL_CORE (compuerta): setPublished revalida identidad antes de congelar el snapshot');
 
+    // ————— Libro VI Cap. 1: el estado publicar=aprobar es visible y accionable —————
+    $artworkScreen = (string)file_get_contents($platformRoot . '/artwork.php');
+    TestHarness::assertContains(
+        'data-spanish-publication',
+        $artworkScreen,
+        'EDITORIAL_CORE Libro VI Cap. 1: la ficha de obra expone el estado de publicación y su acción — publicar es el acto de aprobación del artista'
+    );
+    TestHarness::assertContains(
+        'Espacio editorial de arriba',
+        $artworkScreen,
+        'EDITORIAL_CORE Libro VI Cap. 1: la sección Website avisa cuando el español no está publicado y señala dónde publicarlo'
+    );
+
     // ————— Libro I Cap. 6: la IA jamas rellena titulos vacios —————
     TestHarness::assertTrue(
         !str_contains($sheetSource, '$suggestedTitle'),

@@ -597,7 +597,10 @@
             });
             button.dataset.action = !isPublished || hasUnpublishedChanges ? 'publish_spanish' : 'unpublish_spanish';
             button.textContent = !isPublished ? 'Publicar español' : (hasUnpublishedChanges ? 'Actualizar español publicado' : 'Retirar español');
-            setState(isPublished ? 'Español publicado' : 'Español retirado', 'saved');
+            const cascadeCount = Array.isArray(result.cascade_queued) ? result.cascade_queued.length : 0;
+            setState(isPublished
+                ? (cascadeCount > 0 ? `Español publicado · ${cascadeCount} mockups actualizándose en segundo plano` : 'Español publicado')
+                : 'Español retirado', 'saved');
         } catch (error) {
             setState(error.message || 'No se pudo actualizar la publicación.', 'error');
         } finally {

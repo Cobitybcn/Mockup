@@ -307,7 +307,10 @@ determina el espacio, no el espacio a la obra.**
 Gates operativos: sin título del artista + serie asignada + dirección de serie escrita, no
 se genera lectura de obra (bloqueo con mensaje claro). **Publicar = aprobar** — publicar la
 lectura de la obra es la aprobación que habilita sus mockups; sin obra publicada, el mockup
-no genera contenido.
+no genera contenido. **El estado de publicación es siempre visible y accionable en la ficha**
+(enmienda 2026-07-29): contenido sin publicar o con cambios sin publicar se señala
+explícitamente — incluida la advertencia en la sección Website — porque un estado invisible
+deja al artista sin saber por qué el sitio no muestra su contenido.
 
 ### Cap. 2 — La lectura viva
 
