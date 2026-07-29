@@ -52,6 +52,9 @@ RUN a2enconf artworkmockups-security && apache2ctl configtest
 
 # Keep the small public-site contract fixture beside the platform image so the
 # production regression suite validates both deployable surfaces before release.
+# La suite de contrato del CORE verifica que AGENTS.md obliga a leer la
+# constitucion editorial; el archivo debe existir en la imagen de tests.
+COPY AGENTS.md /var/www/AGENTS.md
 COPY artist-site/index.php /var/www/artist-site/index.php
 COPY artist-site/inc/header.php /var/www/artist-site/inc/header.php
 COPY artist-site/inc/functions.php /var/www/artist-site/inc/functions.php
