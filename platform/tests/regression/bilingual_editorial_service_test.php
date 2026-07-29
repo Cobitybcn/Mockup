@@ -266,7 +266,9 @@ function run_bilingual_editorial_service_tests(): void
     $analysisImage = tempnam(sys_get_temp_dir(), 'analysis_locale_');
     file_put_contents($analysisImage, 'test-image');
     try {
-        (new ArtworkAnalysisV2Service($analysisClient))->generateDraft(['id' => 11], [], $analysisImage, '', 'es');
+        // El gate de contexto integro (EDITORIAL_CORE Libro VI Cap. 1) exige
+        // titulo del artista y serie asignada antes de llegar al modelo.
+        (new ArtworkAnalysisV2Service($analysisClient))->generateDraft(['id' => 11, 'final_title' => 'STRATA IX — VESTIGIA', 'series_id' => 3], [], $analysisImage, '', 'es');
     } catch (RuntimeException) {
         // The fake response is intentionally not a full artwork analysis.
     } finally {
@@ -702,7 +704,7 @@ class ArtworkAnalysisFakeService extends ArtworkAnalysisV2Service
         parent::__construct(new BilingualEditorialFakeClient());
     }
 
-    public function generateDraft(array $artwork, array $artistProfile, string $imagePath, string $notes = '', string $analysisLocale = 'es'): array
+    public function generateDraft(array $artwork, array $artistProfile, string $imagePath, string $notes = '', string $analysisLocale = 'es', array $currentReading = [], string $privateMemo = ''): array
     {
         $this->calls++;
         $this->lastLocale = $analysisLocale;

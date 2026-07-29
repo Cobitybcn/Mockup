@@ -183,6 +183,12 @@ final class BilingualEditorialService
     {
         $this->assertIdentity($entityType, $entityId, $locale);
         $this->assertOwned($userId, $entityType, $entityId);
+        if ($published) {
+            // EDITORIAL_CORE — compuerta al publicar: la identidad confirmada
+            // se re-verifica y corrige ANTES de congelar el snapshot. Publicar
+            // contenido con un nombre divergente deja de ser posible.
+            $this->guardIdentityBeforePublish($userId, $entityType, $entityId, $locale);
+        }
         $localized = $this->get($userId, $entityType, $entityId, $locale);
         if ($published && !$this->hasMeaningfulContent($localized['content'])) {
             throw new RuntimeException('Add localized content before publishing it.');
@@ -260,7 +266,7 @@ final class BilingualEditorialService
         return [];
     }
 
-    public function save(int $userId, string $entityType, int $entityId, string $locale, array $content, string $privateMemo = ''): array
+    public function save(int $userId, string $entityType, int $entityId, string $locale, array $content, string $privateMemo = '', bool $editedByArtist = false): array
     {
         $this->assertIdentity($entityType, $entityId, $locale);
         $this->assertOwned($userId, $entityType, $entityId);
@@ -281,6 +287,7 @@ final class BilingualEditorialService
                     );
             }
             $this->upsertRow($userId, $entityType, $entityId, $working, $content, $privateMemo, 'source', $newHash);
+            $this->markEditOrigin($userId, $entityType, $entityId, $working, $editedByArtist);
             if ($semanticChanged) {
                 $this->markAdaptationsStale($userId, $entityType, $entityId);
             }
@@ -299,10 +306,105 @@ final class BilingualEditorialService
         $sourceHash = hash('sha256', json_encode($sourceRow['content'], JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES));
         $status = $this->hasMissingContent((array)$sourceRow['content'], $content) ? 'stale' : 'current';
         $this->upsertRow($userId, $entityType, $entityId, $locale, $content, $privateMemo, $status, $sourceHash);
+        $this->markEditOrigin($userId, $entityType, $entityId, $locale, $editedByArtist);
         if ($locale === $this->legacySyncLocale($userId)) {
             $this->syncPublicCopyToLegacy($userId, $entityType, $entityId, $content);
         }
         return ['status' => $status, 'english_status' => $status];
+    }
+
+    /**
+     * EDITORIAL_CORE Libro VI Cap. 4: registra si la version vigente de la
+     * fila la escribio el artista (soberana) o el sistema (regenerable).
+     */
+    private function markEditOrigin(int $userId, string $entityType, int $entityId, string $locale, bool $editedByArtist): void
+    {
+        try {
+            $this->pdo->prepare('UPDATE bilingual_editorial_content SET edited_by_artist=? WHERE user_id=? AND entity_type=? AND entity_id=? AND locale=?')
+                ->execute([$editedByArtist ? 1 : 0, $userId, $entityType, $entityId, $locale]);
+        } catch (Throwable) {
+            // Columna aun no migrada en una base vieja: el guardado del
+            // contenido no debe fallar por el flag.
+        }
+    }
+
+    /**
+     * Mockups de una obra cuya version vigente la escribio el artista a mano.
+     * La cascada de regeneracion los saltea (edicion soberana).
+     *
+     * @return list<int>
+     */
+    public function artistEditedMockupIds(int $userId, int $artworkId): array
+    {
+        try {
+            $stmt = $this->pdo->prepare(
+                "SELECT bec.entity_id FROM bilingual_editorial_content bec
+                 JOIN mockups m ON m.id = bec.entity_id AND m.user_id = bec.user_id
+                 WHERE bec.user_id=? AND bec.entity_type='mockup' AND m.source_artwork_id=? AND bec.edited_by_artist=1"
+            );
+            $stmt->execute([$userId, $artworkId]);
+            return array_map('intval', $stmt->fetchAll(PDO::FETCH_COLUMN) ?: []);
+        } catch (Throwable) {
+            return [];
+        }
+    }
+
+    /**
+     * Compuerta de identidad previa al snapshot publicado. La identidad
+     * vigente (titulo de obra y de serie) se lee EN VIVO de las tablas
+     * canonicas; el JSON viejo de analisis se consulta unicamente como lista
+     * de alias a NO usar (higiene de transicion), jamas como fuente.
+     */
+    private function guardIdentityBeforePublish(int $userId, string $entityType, int $entityId, string $locale): void
+    {
+        if (!in_array($entityType, ['artwork', 'mockup'], true)) return;
+        $artworkId = $entityType === 'artwork' ? $entityId : 0;
+        if ($entityType === 'mockup') {
+            $stmt = $this->pdo->prepare('SELECT source_artwork_id FROM mockups WHERE id=? AND user_id=? LIMIT 1');
+            $stmt->execute([$entityId, $userId]);
+            $artworkId = (int)$stmt->fetchColumn();
+        }
+        if ($artworkId <= 0) return;
+
+        $stmt = $this->pdo->prepare(
+            'SELECT a.final_title, s.title AS series_title
+             FROM artworks a LEFT JOIN artwork_series s ON s.id=a.series_id AND s.user_id=a.user_id
+             WHERE a.id=? AND a.user_id=? LIMIT 1'
+        );
+        $stmt->execute([$artworkId, $userId]);
+        $identity = $stmt->fetch(PDO::FETCH_ASSOC);
+        if (!is_array($identity)) return;
+        $realTitle = trim((string)($identity['final_title'] ?? ''));
+        $seriesTitle = trim((string)($identity['series_title'] ?? ''));
+        if ($realTitle === '') return;
+
+        $aliases = [];
+        try {
+            $stmt = $this->pdo->prepare("SELECT generated_json FROM artwork_sheets WHERE user_id=? AND canonical_artwork_id=? AND COALESCE(status,'')<>'merged' ORDER BY updated_at DESC LIMIT 1");
+            $stmt->execute([$userId, $artworkId]);
+            $blob = json_decode((string)$stmt->fetchColumn(), true);
+            $legacyTitle = trim((string)($blob['canonical_editorial']['title'] ?? ''));
+            if ($legacyTitle !== '' && strcasecmp($legacyTitle, $realTitle) !== 0) {
+                $aliases[] = $legacyTitle;
+            }
+        } catch (Throwable) {
+            // Sin blob viejo no hay alias que limpiar.
+        }
+        if ($aliases === []) return;
+
+        $stmt = $this->pdo->prepare('SELECT content_json FROM bilingual_editorial_content WHERE user_id=? AND entity_type=? AND entity_id=? AND locale=? LIMIT 1');
+        $stmt->execute([$userId, $entityType, $entityId, $locale]);
+        $content = json_decode((string)$stmt->fetchColumn(), true);
+        if (!is_array($content) || $content === []) return;
+        $cleaned = EditorialIdentityGuard::rewriteAliases($content, $realTitle, $aliases, $seriesTitle, []);
+        if ($cleaned !== $content) {
+            $this->pdo->prepare('UPDATE bilingual_editorial_content SET content_json=?,updated_at=? WHERE user_id=? AND entity_type=? AND entity_id=? AND locale=?')
+                ->execute([
+                    json_encode($cleaned, JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES),
+                    date(DATE_ATOM),
+                    $userId, $entityType, $entityId, $locale,
+                ]);
+        }
     }
 
     public function saveUniversalTitle(int $userId, string $entityType, int $entityId, string $title): string

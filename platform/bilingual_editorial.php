@@ -30,6 +30,36 @@ try {
     }
     if ($action === 'publish_spanish' || $action === 'unpublish_spanish') {
         $result = $service->setSpanishPublished($userId, $entityType, $entityId, $action === 'publish_spanish');
+        // EDITORIAL_CORE Libro VI Cap. 4: publicar la lectura de una obra
+        // regenera automaticamente el contenido de sus mockups desde la
+        // version nueva, salteando los editados a mano (edicion soberana).
+        if ($action === 'publish_spanish' && $entityType === 'artwork') {
+            $skippedManual = $service->artistEditedMockupIds($userId, $entityId);
+            $mockupStmt = Database::connection()->prepare('SELECT id FROM mockups WHERE user_id=? AND source_artwork_id=? ORDER BY id');
+            $mockupStmt->execute([$userId, $entityId]);
+            $cascadeQueued = [];
+            $jobs = new BilingualEditorialJobService(Database::connection());
+            foreach (array_map('intval', $mockupStmt->fetchAll(PDO::FETCH_COLUMN) ?: []) as $cascadeMockupId) {
+                if (in_array($cascadeMockupId, $skippedManual, true)) continue;
+                try {
+                    $cascadeJob = $jobs->createOrReuse($userId, 'mockup', $cascadeMockupId, 'prepare', [
+                        'publish_spanish' => true,
+                        'cascade_from_artwork' => $entityId,
+                    ]);
+                    if ((string)$cascadeJob['status'] === 'queued' && trim((string)$cascadeJob['task_name']) === '') {
+                        if (CloudTasksService::isAvailable()) {
+                            $jobs->attachTask((int)$cascadeJob['id'], $userId, CloudTasksService::enqueueEditorialGeneration((int)$cascadeJob['id']));
+                        } else {
+                            (new BilingualEditorialGenerationWorker(Database::connection()))->process((int)$cascadeJob['id']);
+                        }
+                    }
+                    $cascadeQueued[] = $cascadeMockupId;
+                } catch (Throwable $cascadeError) {
+                    Logger::log('Mockup cascade job failed for mockup ' . $cascadeMockupId . ': ' . $cascadeError->getMessage(), 'warning');
+                }
+            }
+            $result += ['cascade_queued' => $cascadeQueued, 'cascade_skipped_manual' => $skippedManual];
+        }
         echo json_encode(['ok' => true] + $result, JSON_UNESCAPED_UNICODE);
         exit;
     }
@@ -158,7 +188,10 @@ try {
     if (strlen($encoded) > 500000) throw new RuntimeException('Editorial content is too large.');
     $content = json_decode($encoded, true, 64, JSON_THROW_ON_ERROR);
     if (!is_array($content)) throw new RuntimeException('Invalid editorial content.');
-    $result = $service->save($userId, $entityType, $entityId, $locale, $content, (string)($_POST['private_memo'] ?? ''));
+    // EDITORIAL_CORE Libro VI Cap. 4: este es el guardado directo del artista
+    // desde la ficha — su edicion queda marcada como soberana y la cascada de
+    // regeneracion no la pisa.
+    $result = $service->save($userId, $entityType, $entityId, $locale, $content, (string)($_POST['private_memo'] ?? ''), true);
     echo json_encode(['ok' => true] + $result, JSON_UNESCAPED_UNICODE);
 } catch (Throwable $error) {
     http_response_code($error->getMessage() === 'Method not allowed.' ? 405 : 422);

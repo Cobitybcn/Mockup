@@ -17,6 +17,18 @@ Si la tarea afecta la interfaz de usuario, lee estos documentos **en este orden,
 
 No diseñes una interfaz nueva cuando ya exista una referencia o Master Pattern similar. Una nueva funcionalidad no justifica un nuevo diseño.
 
+## Contenido editorial: constitución obligatoria
+
+Si la tarea toca análisis o generación de contenido editorial (obra, serie, mockup, notas de
+estudio, SEO, social, títulos, adaptación de idioma), lee **completo** antes de tocar nada:
+
+- `platform/docs/EDITORIAL_CORE.md` — el contrato vigente del motor editorial.
+
+Reglas no negociables: los prompts se **derivan** de sus artículos (un prompt manuscrito jamás
+es autoridad); toda mejora se hace como enmienda (artículo → código → test), nunca como parche
+suelto; la suite `platform/tests/regression/editorial_core_contract_test.php` debe seguir en
+verde — el preflight rechaza cualquier cambio que la rompa.
+
 Si una pantalla está marcada `DO NOT TOUCH` o `PASS` en `design-system/audits/VISUAL_CONSISTENCY_MATRIX.md`, no la rediseñes salvo que la tarea lo pida explícitamente.
 
 Aplica siempre estas preferencias:

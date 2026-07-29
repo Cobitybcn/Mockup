@@ -313,13 +313,24 @@ final class BilingualEditorialGenerationWorker
         }
 
         $sheet = $sheetService->sheetForArtwork($artworkId, $userId);
+        // EDITORIAL_CORE.md Libro VI Cap. 2: regenerar = refinar sobre la
+        // lectura vigente con el memo del artista como direccion, nunca
+        // empezar de cero.
+        $currentState = $editorial->get($userId, 'artwork', $artworkId, $workingLocale);
+        $currentReading = array_filter(
+            (array)($currentState['content'] ?? []),
+            static fn($value): bool => is_string($value) && trim($value) !== ''
+        );
+        $privateMemo = (string)($currentState['private_memo'] ?? '');
         $analysis = $this->artworkAnalysis ?? new ArtworkAnalysisV2Service(new GeminiImageClient(), $this->pdo);
         $generated = $analysis->generateDraft(
             $artwork,
             ArtistProfile::findForUser($userId),
             $imagePath,
             (string)($sheet['user_notes'] ?? ''),
-            $workingLocale
+            $workingLocale,
+            $currentReading,
+            $privateMemo
         );
         $draft = (array)$generated['draft'];
         $sheetService->applyAnalysisV2Draft($artworkId, $userId, $draft);
@@ -331,7 +342,7 @@ final class BilingualEditorialGenerationWorker
             $artworkId,
             $workingLocale,
             $content,
-            (string)$editorial->get($userId, 'artwork', $artworkId, $workingLocale)['private_memo']
+            $privateMemo
         );
 
         return $content;

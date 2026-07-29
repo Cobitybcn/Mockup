@@ -1124,20 +1124,46 @@ RULES;
                 'review' => $analysis['mockup_analysis_v2']['review'] ?? [],
             ];
         }
-        if (is_array($artworkAnalysis)) {
-            $artworkAnalysis = $this->rewriteIdentityAliases(
-                $artworkAnalysis,
-                $currentArtworkTitle,
-                (array)$row['artwork_identity']['historical_title_aliases_do_not_use'],
-                $currentSeriesTitle,
-                (array)$row['artwork_identity']['historical_series_aliases_do_not_use']
-            );
-            $row['approved_artwork_analysis'] = array_filter([
-                'confirmed_facts' => $artworkAnalysis['confirmed_facts'] ?? null,
-                'visual_analysis' => $artworkAnalysis['visual_analysis'] ?? null,
-                'interpretation' => $artworkAnalysis['interpretation'] ?? null,
-                'canonical_editorial' => $artworkAnalysis['canonical_editorial'] ?? null,
-            ], static fn($value): bool => is_array($value) && $value !== []);
+        // EDITORIAL_CORE Libro VI Cap. 2: el JSON crudo del analisis es
+        // artefacto transitorio — arriba solo se uso como lista de alias a NO
+        // usar. La lectura de la obra que hereda el mockup se lee EN VIVO:
+        // la version PUBLICADA (aprobada) de su contenido editorial, mas la
+        // direccion de la serie del artista.
+        $sourceArtworkId = (int)($row['source_artwork_id'] ?? 0);
+        if ($sourceArtworkId > 0) {
+            try {
+                $editorial = new BilingualEditorialService($this->pdo);
+                $artworkState = $editorial->get($userId, 'artwork', $sourceArtworkId, $editorial->sourceLocale($userId));
+                $approvedReading = is_array($artworkState['published_content'] ?? null) ? $artworkState['published_content'] : [];
+                if ($approvedReading !== []) {
+                    $row['approved_artwork_reading'] = $this->rewriteIdentityAliases(
+                        $approvedReading,
+                        $currentArtworkTitle,
+                        (array)$row['artwork_identity']['historical_title_aliases_do_not_use'],
+                        $currentSeriesTitle,
+                        (array)$row['artwork_identity']['historical_series_aliases_do_not_use']
+                    );
+                }
+            } catch (Throwable) {
+                // Sin lectura publicada, el mockup se apoya en la identidad viva.
+            }
+            try {
+                $seriesStmt = $this->pdo->prepare(
+                    'SELECT s.conceptual_core, s.interpretive_limits FROM artwork_series s
+                     JOIN artworks a ON a.series_id = s.id AND a.user_id = s.user_id
+                     WHERE a.id=? AND a.user_id=? LIMIT 1'
+                );
+                $seriesStmt->execute([$sourceArtworkId, $userId]);
+                $direction = $seriesStmt->fetch(PDO::FETCH_ASSOC);
+                if (is_array($direction)) {
+                    $row['series_direction'] = array_filter([
+                        'artist_direction' => trim((string)($direction['conceptual_core'] ?? '')),
+                        'interpretive_limits' => trim((string)($direction['interpretive_limits'] ?? '')),
+                    ], static fn(string $value): bool => $value !== '');
+                }
+            } catch (Throwable) {
+                // Serie sin direccion: la identidad viva sigue siendo suficiente.
+            }
         }
         return $row;
     }
@@ -1238,58 +1264,15 @@ RULES;
         string $currentSeriesTitle,
         array $historicalSeriesTitles
     ): array {
-        $rewrite = function (mixed $value) use (
-            &$rewrite,
+        // EDITORIAL_CORE.md: una sola implementacion de identidad para todo
+        // el sistema. Este metodo queda como fachada del guardian compartido.
+        return EditorialIdentityGuard::rewriteAliases(
+            $content,
             $currentArtworkTitle,
             $historicalArtworkTitles,
             $currentSeriesTitle,
             $historicalSeriesTitles
-        ): mixed {
-            if (is_array($value)) {
-                foreach ($value as $key => $nested) {
-                    $value[$key] = $rewrite($nested);
-                }
-                return $value;
-            }
-            if (!is_string($value)) return $value;
-
-            if ($currentArtworkTitle !== '') {
-                foreach ($historicalArtworkTitles as $historicalTitle) {
-                    $historicalTitle = trim((string)$historicalTitle);
-                    if ($historicalTitle !== '' && strcasecmp($historicalTitle, $currentArtworkTitle) !== 0) {
-                        $value = str_ireplace($historicalTitle, $currentArtworkTitle, $value);
-                    }
-                }
-            }
-            if ($currentSeriesTitle !== '') {
-                foreach ($historicalSeriesTitles as $historicalSeries) {
-                    $historicalSeries = trim((string)$historicalSeries);
-                    if ($historicalSeries === '' || strcasecmp($historicalSeries, $currentSeriesTitle) === 0) continue;
-                    $value = str_ireplace(
-                        [
-                            $historicalSeries . ' Series',
-                            'Series ' . $historicalSeries,
-                            'Serie ' . $historicalSeries,
-                            'series ' . $historicalSeries,
-                            'serie ' . $historicalSeries,
-                            '#' . preg_replace('/\s+/u', '', $historicalSeries) . 'Series',
-                        ],
-                        [
-                            $currentSeriesTitle . ' series',
-                            $currentSeriesTitle . ' series',
-                            'serie ' . $currentSeriesTitle,
-                            $currentSeriesTitle . ' series',
-                            'serie ' . $currentSeriesTitle,
-                            '#' . preg_replace('/\s+/u', '', $currentSeriesTitle),
-                        ],
-                        $value
-                    );
-                }
-            }
-            return $value;
-        };
-
-        return $rewrite($content);
+        );
     }
 
     private function plainEditorialText(string $value): string

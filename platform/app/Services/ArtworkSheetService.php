@@ -146,11 +146,14 @@ final class ArtworkSheetService
         $search = (array)($draft['search_metadata'] ?? []);
         $keywords = array_values(array_unique(array_filter(array_map('trim', (array)($search['search_terms'] ?? [])))));
 
+        // EDITORIAL_CORE.md Libro I Cap. 6: el titulo lo decide el artista,
+        // siempre. La IA jamas rellena un titulo vacio — el gate de contexto
+        // integro impide llegar aca sin titulo. El subtitulo si es propuesta
+        // editorial editable.
         $existingTitle = trim((string)($artwork['final_title'] ?? ''));
         $existingSubtitle = trim((string)($artwork['subtitle'] ?? ''));
-        $suggestedTitle = trim((string)($editorial['title'] ?? ''));
         $suggestedSubtitle = trim((string)($editorial['subtitle'] ?? ''));
-        $title = $existingTitle !== '' ? $existingTitle : $suggestedTitle;
+        $title = $existingTitle;
         $subtitle = $existingSubtitle !== '' ? $existingSubtitle : $suggestedSubtitle;
 
         $bilingual = new BilingualEditorialService($this->pdo);
@@ -342,193 +345,6 @@ final class ArtworkSheetService
         return $this->sheet((int)$primarySheet['id'], $userId);
     }
 
-    /**
-     * @return array<string,mixed>
-     */
-    public function generateArtworkSheet(int $sheetId, int $userId): array
-    {
-        $sheet = $this->sheet($sheetId, $userId);
-        $artwork = $this->artwork((int)$sheet['canonical_artwork_id'], $userId);
-        $imagePath = $this->resolveImagePath((string)($sheet['source_image_file'] ?: ($artwork['root_file'] ?? $artwork['main_file'] ?? '')));
-        $notes = trim((string)($sheet['user_notes'] ?? ''));
-        $fallback = $this->fallbackArtworkCopy($artwork, $notes);
-
-        $generated = $fallback;
-        if (ProviderSettings::isRealMode() && ProviderSettings::allowRealApi() && ProviderSettings::imageProvider() === 'gemini' && $imagePath !== '') {
-            $artistProfile = ArtistProfile::findForUser($userId);
-            $prompt = $this->buildAdminArtworkAnalysisPrompt($artwork, $artistProfile, $notes);
-            try {
-                $text = $this->client->generateText([
-                    $this->client->textPart($prompt),
-                    $this->client->imagePart($imagePath),
-                ], 'gemini-2.5-flash');
-                $decoded = json_decode($this->extractJson($text), true);
-                if (is_array($decoded)) {
-                    $generated = $this->metadataFromAdminAnalysis($decoded, $fallback);
-                    $integrityIssues = EditorialIntegrityPolicy::issues($generated, 'artwork');
-                    if ($integrityIssues !== []) {
-                        throw new RuntimeException('Artwork editorial integrity failed: ' . implode('; ', $integrityIssues));
-                    }
-                    $this->saveArtworkAnalysisArtifacts((int)$artwork['id'], $imagePath, $decoded, $prompt, $text);
-                }
-            } catch (Throwable $e) {
-                $generated = $fallback;
-                $generated['_warning'] = $e->getMessage();
-            }
-        }
-
-        $this->applyGeneratedArtworkSheet($sheetId, $userId, $generated);
-        return $generated;
-    }
-
-    private function buildAdminArtworkAnalysisPrompt(array $artwork, array $artistProfile, string $notes): string
-    {
-        $width = trim((string)($artwork['width'] ?? ''));
-        $height = trim((string)($artwork['height'] ?? ''));
-        $orientation = 'Not specified';
-        if ((float)$width > 0 && (float)$height > 0) {
-            $orientation = (float)$width > (float)$height ? 'horizontal' : (((float)$height > (float)$width) ? 'vertical' : 'square');
-        }
-
-        $prompt = strtr(PromptSettings::artworkAnalysisPrompt(), [
-            '{artist_profile_prompt}' => ArtistProfile::hasContent($artistProfile) ? ArtistProfile::forPrompt($artistProfile) : '',
-            '{artist_statement}' => (string)($artistProfile['statement'] ?? ''),
-            '{visual_language}' => (string)($artistProfile['visual_language'] ?? ''),
-            '{recurring_symbols}' => (string)($artistProfile['recurring_themes'] ?? ''),
-            '{preferred_atmospheres}' => (string)($artistProfile['preferred_contexts'] ?? ''),
-            '{title}' => trim((string)($artwork['final_title'] ?? '')) ?: 'Untitled artwork',
-            '{width_cm}' => $width,
-            '{height_cm}' => $height,
-            '{depth_cm}' => trim((string)($artwork['depth'] ?? '')),
-            '{notes}' => $notes,
-            '{preferred_style}' => '',
-            '{target_market}' => trim((string)($artistProfile['target_audience'] ?? 'collectors')),
-            '{orientation}' => $orientation,
-            '{region}' => trim((string)($artistProfile['preferred_regions'] ?? '')),
-            '{scale_text}' => trim($width . ' x ' . $height . ' ' . (string)($artwork['unit'] ?? 'cm')),
-            '{context_count}' => (string)PromptSettings::mockupContextCount(),
-        ]);
-        return $prompt . "\n\n" . EditorialIntegrityPolicy::promptRules('artwork');
-    }
-
-    /**
-     * @param array<string,mixed> $analysis
-     * @param array<string,mixed> $fallback
-     * @return array<string,mixed>
-     */
-    private function metadataFromAdminAnalysis(array $analysis, array $fallback): array
-    {
-        $profile = is_array($analysis['artwork_analysis'] ?? null) ? $analysis['artwork_analysis'] : $analysis;
-        $publishing = is_array($profile['publishing_metadata'] ?? null) ? $profile['publishing_metadata'] : [];
-        $titles = is_array($analysis['suggested_titles'] ?? null)
-            ? $analysis['suggested_titles']
-            : (is_array($publishing['suggested_titles'] ?? null) ? $publishing['suggested_titles'] : []);
-        $firstTitle = is_array($titles[0] ?? null) ? $titles[0] : [];
-        $rootMeta = is_array($publishing['root_image_metadata'] ?? null) ? $publishing['root_image_metadata'] : [];
-
-        $keywords = $publishing['keywords'] ?? $this->keywordsFromAdminAnalysis($analysis);
-        $longTail = $publishing['long_tail_keywords'] ?? $this->longTailFromAdminAnalysis($analysis, $firstTitle);
-        $title = trim((string)($firstTitle['title'] ?? $fallback['title'] ?? ''));
-        $subtitle = trim((string)($firstTitle['subtitle'] ?? $fallback['subtitle'] ?? ''));
-        $description = trim((string)($firstTitle['description'] ?? $profile['one_line_curatorial_read'] ?? $fallback['description'] ?? ''));
-        $generated = [
-            'title' => $title,
-            'subtitle' => $subtitle,
-            'description' => $description,
-            'short_description' => trim((string)($profile['one_line_curatorial_read'] ?? $fallback['short_description'] ?? '')),
-            'keywords' => is_array($keywords) ? $keywords : $fallback['keywords'],
-            'tags' => is_array($keywords) ? $keywords : $fallback['tags'],
-            'alt_text' => trim((string)($rootMeta['alt_text'] ?? ($title !== '' ? 'Abstract artwork titled ' . $title . ', showing bold color fields, symbolic ladders, geometric forms, and a luminous circular motif.' : ($fallback['alt_text'] ?? '')))),
-            'caption' => trim((string)($rootMeta['caption'] ?? ($title . ($subtitle !== '' ? ' - ' . $subtitle : '')))),
-            'long_tail_terms' => is_array($longTail) ? $longTail : [],
-            '_admin_analysis' => $analysis,
-        ];
-
-        return array_merge($fallback, $generated);
-    }
-
-    /**
-     * @param array<string,mixed> $analysis
-     * @return array<int,string>
-     */
-    private function keywordsFromAdminAnalysis(array $analysis): array
-    {
-        $terms = [];
-        foreach ((array)($analysis['contextual_proposals'] ?? []) as $proposal) {
-            if (!is_array($proposal)) {
-                continue;
-            }
-            foreach (['space_type', 'atmosphere', 'lighting', 'camera_view'] as $key) {
-                $value = trim((string)($proposal[$key] ?? ''));
-                if ($value !== '') {
-                    $terms[] = $value;
-                }
-            }
-            foreach ((array)($proposal['materials'] ?? []) as $material) {
-                $terms[] = (string)$material;
-            }
-        }
-        $terms[] = 'contemporary abstract art';
-        $terms[] = 'original canvas artwork';
-        return array_slice(array_values(array_unique(array_filter(array_map('trim', $terms)))), 0, 15);
-    }
-
-    /**
-     * @param array<string,mixed> $analysis
-     * @param array<string,mixed> $firstTitle
-     * @return array<int,string>
-     */
-    private function longTailFromAdminAnalysis(array $analysis, array $firstTitle): array
-    {
-        $title = trim((string)($firstTitle['title'] ?? 'abstract artwork'));
-        $terms = [
-            $title . ' original contemporary artwork',
-            $title . ' abstract canvas painting',
-            'large contemporary abstract artwork for collectors',
-            'blue red and ochre abstract canvas painting',
-            'symbolic ladder abstract artwork',
-            'premium contemporary art for interiors',
-        ];
-        foreach ((array)($analysis['contextual_proposals'] ?? []) as $proposal) {
-            if (!is_array($proposal)) {
-                continue;
-            }
-            $contextName = trim((string)($proposal['context_name'] ?? ''));
-            if ($contextName !== '') {
-                $terms[] = $title . ' in ' . $contextName . ' context';
-            }
-        }
-        return array_slice(array_values(array_unique(array_filter($terms))), 0, 15);
-    }
-
-    /**
-     * @param array<string,mixed> $analysis
-     */
-    private function saveArtworkAnalysisArtifacts(int $artworkId, string $imagePath, array $analysis, string $prompt, string $rawText): void
-    {
-        $json = json_encode($analysis, JSON_PRETTY_PRINT | JSON_UNESCAPED_SLASHES | JSON_UNESCAPED_UNICODE);
-        if ($json === false) {
-            return;
-        }
-
-        if (!is_dir(ANALYSIS_DIR)) {
-            @mkdir(ANALYSIS_DIR, 0775, true);
-        }
-        $base = pathinfo(basename($imagePath), PATHINFO_FILENAME);
-        @file_put_contents(ANALYSIS_DIR . DIRECTORY_SEPARATOR . $base . '.analysis.json', $json);
-        @file_put_contents(ANALYSIS_DIR . DIRECTORY_SEPARATOR . $base . '.analysis-prompt.txt', $prompt);
-        @file_put_contents(ANALYSIS_DIR . DIRECTORY_SEPARATOR . $base . '.analysis-raw.txt', $rawText);
-
-        $this->pdo->prepare('
-            INSERT INTO artwork_analysis (artwork_id, provider, analysis_json, created_at)
-            VALUES (:artwork_id, :provider, :analysis_json, :created_at)
-        ')->execute([
-            'artwork_id' => $artworkId,
-            'provider' => 'gemini-admin-analysis',
-            'analysis_json' => $json,
-            'created_at' => date('c'),
-        ]);
-    }
 
     /**
      * @return array<int,array<string,mixed>>
@@ -642,23 +458,54 @@ final class ArtworkSheetService
         $analysisStyle = $analysisLocale === 'en' ? 'natural international English' : 'natural Spanish';
         $languageInstruction = "Think, analyze and write directly in {$analysisStyle}. Do not draft in {$analysisCounterpart} and translate afterward. Every user-facing string in the JSON must be {$analysisLanguageName}.";
 
-        if (ProviderSettings::isRealMode() && ProviderSettings::allowRealApi() && ProviderSettings::imageProvider() === 'gemini' && $imagePath !== '') {
-            $artworkIdentity = json_decode((string)($artworkSheet['generated_json'] ?? ''), true);
-            $artworkIdentity = is_array($artworkIdentity) ? $artworkIdentity : [];
-            // The analysis blob can carry its own working title under
-            // canonical_editorial (an internal draft from the artwork-level
-            // pass) which the model would otherwise read as the artwork's
-            // name. The artist's confirmed title/subtitle are always
-            // authoritative; force them at both the top level and inside
-            // canonical_editorial so no invented name reaches this prompt.
-            $artworkIdentity['title'] = $artworkSheet['title'];
-            $artworkIdentity['subtitle'] = $artworkSheet['subtitle'];
-            if (isset($artworkIdentity['canonical_editorial']) && is_array($artworkIdentity['canonical_editorial'])) {
-                $artworkIdentity['canonical_editorial']['title'] = $artworkSheet['title'];
-                $artworkIdentity['canonical_editorial']['subtitle'] = $artworkSheet['subtitle'];
+        // EDITORIAL_CORE Libro I Cap. 7 + Libro VI Cap. 1: el mockup hereda la
+        // identidad y la lectura APROBADA de su obra — la cadena se lee EN VIVO
+        // de las tablas canonicas, nunca del JSON viejo de un analisis. El blob
+        // se consulta unicamente como lista de alias a limpiar (transicion).
+        $artworkRow = $this->artwork($artworkId, $userId);
+        $realTitle = trim((string)($artworkRow['final_title'] ?? '')) ?: trim((string)($artworkSheet['title'] ?? ''));
+        $realSubtitle = trim((string)($artworkRow['subtitle'] ?? '')) ?: trim((string)($artworkSheet['subtitle'] ?? ''));
+        $artworkState = null;
+        if ($spanishFirst) {
+            $artworkState = $bilingual->get($userId, 'artwork', $artworkId, $analysisLocale);
+            // Publicar = aprobar: sin lectura de obra publicada, sus mockups no
+            // generan contenido todavia.
+            if (!($artworkState['is_published'] ?? false)) {
+                throw new DomainException('La obra necesita su contenido publicado antes de generar el contenido de sus mockups.');
             }
-            $prompt = "Analyze this exact mockup image. {$languageInstruction} The approved artwork identity is authoritative; analyze the scene without renaming, reinterpreting, or inventing facts about the artwork. Return strict JSON only.\n"
-                . "APPROVED ARTWORK IDENTITY:\n" . json_encode($artworkIdentity ?: ['title'=>$artworkSheet['title'],'subtitle'=>$artworkSheet['subtitle'],'description'=>$artworkSheet['description']], JSON_UNESCAPED_UNICODE|JSON_UNESCAPED_SLASHES) . "\n"
+        }
+        $staleAliases = [];
+        $legacyBlobTitle = trim((string)(json_decode((string)($artworkSheet['generated_json'] ?? ''), true)['canonical_editorial']['title'] ?? ''));
+        if ($legacyBlobTitle !== '' && $realTitle !== '' && strcasecmp($legacyBlobTitle, $realTitle) !== 0) {
+            $staleAliases[] = $legacyBlobTitle;
+        }
+        $seriesDirection = $this->seriesDirectionForArtwork($artworkRow, $userId);
+        $seriesTitle = trim((string)($seriesDirection['title'] ?? ''));
+        $approvedReading = is_array($artworkState['published_content'] ?? null) ? $artworkState['published_content'] : [];
+        if ($staleAliases !== [] && $approvedReading !== []) {
+            $approvedReading = EditorialIdentityGuard::rewriteAliases($approvedReading, $realTitle, $staleAliases, $seriesTitle, []);
+        }
+        $liveIdentity = array_filter([
+            'title' => $realTitle,
+            'subtitle' => $realSubtitle,
+            'medium' => trim((string)($artworkRow['medium'] ?? '')),
+            'year' => trim((string)($artworkRow['artwork_year'] ?? '')),
+            'width_cm' => trim((string)($artworkRow['width'] ?? '')),
+            'height_cm' => trim((string)($artworkRow['height'] ?? '')),
+            'depth_cm' => trim((string)($artworkRow['depth'] ?? '')),
+        ], static fn($value): bool => $value !== '');
+        $artistProfile = ArtistProfile::findForUser($userId);
+        $sceneMetadata = $this->mockupSceneMetadata($userId, $mockupFile);
+        $keywordResearchBlock = $this->mockupKeywordResearchBlock($userId, (int)($artworkRow['series_id'] ?? 0));
+
+        if (ProviderSettings::isRealMode() && ProviderSettings::allowRealApi() && ProviderSettings::imageProvider() === 'gemini' && $imagePath !== '') {
+            $prompt = "Analyze this exact mockup image. {$languageInstruction} The artwork identity and its approved reading below are authoritative; analyze the scene without renaming, reinterpreting, or inventing facts about the artwork. Return strict JSON only.\n"
+                . "ARTIST PROFILE (voice and context only, never public text):\n" . (ArtistProfile::hasContent($artistProfile) ? ArtistProfile::forPrompt($artistProfile) : '- No profile provided.') . "\n"
+                . "CONFIRMED ARTWORK IDENTITY (immutable input, set by the artist):\n" . json_encode($liveIdentity, JSON_UNESCAPED_UNICODE|JSON_UNESCAPED_SLASHES) . "\n"
+                . "ARTIST-AUTHORED SERIES DIRECTION (its interpretive limits are prohibitions):\n" . (string)$seriesDirection['prompt'] . "\n"
+                . ($approvedReading !== [] ? "APPROVED ARTWORK READING (the published editorial reading — inherit, never reinterpret):\n" . json_encode($approvedReading, JSON_UNESCAPED_UNICODE|JSON_UNESCAPED_SLASHES) . "\n" : '')
+                . ($sceneMetadata !== '' ? "MOCKUP SCENE METADATA (the requested scene for this exact mockup):\n" . $sceneMetadata . "\n" : '')
+                . $keywordResearchBlock
                 . "MOCKUP RULES: describe space type, architecture, materials, lighting, camera, scale perception, atmosphere, and artwork-space relationship. Keywords, long tails, tags, captions and channel copy must be justified by the visible image. Never use generic repeated copy. Never call the artwork framed unless a real frame is visible. Exclude home decor, wall art, perfect for any room, elevate your space, decor inspiration, and generic interior-marketing filler. Do not invent furniture, materials, colors, light, artwork facts, or destination links. Website is detailed and collector-facing; Pinterest is shorter and traffic-oriented; Instagram is visual/community-oriented; Facebook is conversational; TikTok is future preparation only.\n"
                 . EditorialIntegrityPolicy::promptRules('mockup') . "\n"
                 . SearchIntentPrompt::forEntity('mockup') . "\n"
@@ -673,6 +520,11 @@ final class ArtworkSheetService
                 $decoded = json_decode($this->extractJson($text), true);
                 if (is_array($decoded)) {
                     $decoded['analysis_language'] = $analysisLocale;
+                    // Red secundaria del guardian: el contexto ya entra limpio,
+                    // pero ninguna mencion divergente puede persistirse.
+                    if ($staleAliases !== [] && $realTitle !== '') {
+                        $decoded = EditorialIdentityGuard::rewriteAliases($decoded, $realTitle, $staleAliases, $seriesTitle, []);
+                    }
                     $neutral = is_array($decoded['neutral'] ?? null) ? $decoded['neutral'] : [];
                     $generated = array_merge($fallback, [
                         'title'=>(string)($neutral['context_title']??''),
@@ -699,6 +551,9 @@ final class ArtworkSheetService
         }
 
         if ($spanishFirst && $analysisGenerated) {
+            if ($staleAliases !== [] && $realTitle !== '') {
+                $generated = EditorialIdentityGuard::rewriteAliases($generated, $realTitle, $staleAliases, $seriesTitle, []);
+            }
             $this->updateMockupAnalysisDraft((int)$sheet['id'], $userId, $notes, $generated);
             $mockupId = $this->mockupIdForFile($userId, $mockupFile);
             if ($mockupId > 0) {
@@ -720,6 +575,87 @@ final class ArtworkSheetService
     }
 
     /**
+     * Direccion de la serie leida EN VIVO (EDITORIAL_CORE Libro I Cap. 4):
+     * titulo + nucleo conceptual + limites interpretativos del artista.
+     *
+     * @return array{title:string,prompt:string}
+     */
+    private function seriesDirectionForArtwork(array $artworkRow, int $userId): array
+    {
+        $seriesId = (int)($artworkRow['series_id'] ?? 0);
+        $fallbackTitle = trim((string)($artworkRow['series'] ?? ''));
+        if ($seriesId <= 0) {
+            return ['title' => $fallbackTitle, 'prompt' => $fallbackTitle !== '' ? "Series title: {$fallbackTitle}" : '- No series context available.'];
+        }
+        try {
+            $stmt = $this->pdo->prepare('SELECT title,subtitle,conceptual_core,interpretive_limits FROM artwork_series WHERE id=? AND user_id=? LIMIT 1');
+            $stmt->execute([$seriesId, $userId]);
+            $series = $stmt->fetch(PDO::FETCH_ASSOC);
+        } catch (Throwable) {
+            $series = false;
+        }
+        if (!is_array($series)) {
+            return ['title' => $fallbackTitle, 'prompt' => $fallbackTitle !== '' ? "Series title: {$fallbackTitle}" : '- No series context available.'];
+        }
+        $lines = [];
+        foreach (['title' => 'Series title', 'subtitle' => 'Series subtitle', 'conceptual_core' => 'Artist direction', 'interpretive_limits' => 'Interpretive limits'] as $field => $label) {
+            $value = trim((string)($series[$field] ?? ''));
+            if ($value !== '') $lines[] = "{$label}: {$value}";
+        }
+        return [
+            'title' => trim((string)($series['title'] ?? '')) ?: $fallbackTitle,
+            'prompt' => $lines !== [] ? implode("\n", $lines) : '- No series context available.',
+        ];
+    }
+
+    /**
+     * Metadata de escena ya generada del mockup (contexto y camara): evidencia
+     * estructural de la escena pedida, para que el modelo no la re-derive solo
+     * de los pixeles.
+     */
+    private function mockupSceneMetadata(int $userId, string $mockupFile): string
+    {
+        try {
+            $stmt = $this->pdo->prepare('SELECT context_id, selector_state_json FROM mockups WHERE user_id=? AND mockup_file=? ORDER BY id DESC LIMIT 1');
+            $stmt->execute([$userId, $mockupFile]);
+            $row = $stmt->fetch(PDO::FETCH_ASSOC);
+        } catch (Throwable) {
+            return '';
+        }
+        if (!is_array($row)) return '';
+        $state = json_decode((string)($row['selector_state_json'] ?? ''), true);
+        $combination = is_array($state['combination'] ?? null) ? $state['combination'] : [];
+        $meta = array_filter([
+            'context' => trim((string)($row['context_id'] ?? '')),
+            'context_title' => trim((string)($combination['context_title'] ?? '')),
+            'camera' => trim((string)($combination['camera_slot_name'] ?? '')),
+            'world_reference_mode' => trim((string)($combination['world_mother_reference_mode'] ?? '')),
+        ], static fn($value): bool => $value !== '');
+        return $meta !== [] ? (string)json_encode($meta, JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES) : '';
+    }
+
+    /**
+     * EDITORIAL_CORE Libro III Cap. 4: investigacion de keywords como refuerzo
+     * opcional automatico — jamas obligacion ni bloqueo.
+     */
+    private function mockupKeywordResearchBlock(int $userId, int $seriesId): string
+    {
+        if ($seriesId <= 0 || !class_exists('SeriesKeywordResearchService')) return '';
+        try {
+            $research = (new SeriesKeywordResearchService($this->pdo))->promptContext($userId, $seriesId);
+        } catch (Throwable) {
+            return '';
+        }
+        if (($research['status'] ?? '') === 'not_validated' && ($research['candidates'] ?? []) === []) return '';
+        return "KEYWORD RESEARCH EVIDENCE\n"
+            . (string)($research['instruction'] ?? '')
+            . "\n" . json_encode(
+                ['status' => $research['status'] ?? '', 'selected' => $research['selected'] ?? [], 'candidates' => array_slice((array)($research['candidates'] ?? []), 0, 40)],
+                JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES
+            ) . "\n";
+    }
+
+    /**
      * @return array<string,mixed>
      */
     public function sheet(int $sheetId, int $userId): array
@@ -731,40 +667,6 @@ final class ArtworkSheetService
             throw new RuntimeException('Ficha no encontrada.');
         }
         return $row;
-    }
-
-    /**
-     * @param array<string,mixed> $generated
-     */
-    private function applyGeneratedArtworkSheet(int $sheetId, int $userId, array $generated): void
-    {
-        $this->pdo->prepare('
-            UPDATE artwork_sheets
-            SET title = :title,
-                subtitle = :subtitle,
-                description = :description,
-                short_description = :short_description,
-                keywords = :keywords,
-                tags = :tags,
-                alt_text = :alt_text,
-                caption = :caption,
-                generated_json = :generated_json,
-                updated_at = :updated_at
-            WHERE id = :id AND user_id = :user_id
-        ')->execute([
-            'title' => trim((string)($generated['title'] ?? '')),
-            'subtitle' => trim((string)($generated['subtitle'] ?? '')),
-            'description' => trim((string)($generated['description'] ?? '')),
-            'short_description' => trim((string)($generated['short_description'] ?? '')),
-            'keywords' => $this->csv($generated['keywords'] ?? ''),
-            'tags' => $this->csv($generated['tags'] ?? ''),
-            'alt_text' => trim((string)($generated['alt_text'] ?? '')),
-            'caption' => trim((string)($generated['caption'] ?? '')),
-            'generated_json' => json_encode($generated, JSON_PRETTY_PRINT | JSON_UNESCAPED_SLASHES | JSON_UNESCAPED_UNICODE),
-            'updated_at' => date('c'),
-            'id' => $sheetId,
-            'user_id' => $userId,
-        ]);
     }
 
     /**
@@ -996,33 +898,6 @@ final class ArtworkSheetService
             }
         }
         return '';
-    }
-
-    /**
-     * @return array<string,mixed>
-     */
-    private function fallbackArtworkCopy(array $artwork, string $notes): array
-    {
-        $title = trim((string)($artwork['final_title'] ?? ''));
-        if ($title === '') {
-            $title = 'Obra sin título';
-        }
-        $subtitle = trim((string)($artwork['subtitle'] ?? ''));
-        $medium = trim((string)($artwork['medium'] ?? 'obra original'));
-        $dimensions = trim((string)($artwork['width'] ?? '') . ' x ' . (string)($artwork['height'] ?? '') . ' ' . (string)($artwork['unit'] ?? 'cm'));
-        $description = $notes !== ''
-            ? 'Borrador de la obra basado en las notas curatoriales. Revisar antes de publicar: ' . $notes
-            : 'Borrador editorial de una obra original. Revisar la imagen y afinar la lectura antes de publicar.';
-        return [
-            'title' => $title,
-            'subtitle' => $subtitle,
-            'description' => $description,
-            'short_description' => substr($description, 0, 180),
-            'keywords' => array_values(array_filter([$medium, 'arte contemporáneo', 'obra original'])),
-            'tags' => ['obra', 'catálogo', 'arte-contemporáneo'],
-            'alt_text' => 'Imagen de la obra ' . $title . ($dimensions !== ' x  cm' ? ', ' . $dimensions : '') . '.',
-            'caption' => $title . ($subtitle !== '' ? ' — ' . $subtitle : ''),
-        ];
     }
 
     /**

@@ -11,7 +11,7 @@ final class ArtworkAnalysisV2
 Analyze one artwork and return only one valid JSON object. Do not use markdown.
 
 GOAL
-Create one canonical, evidence-based artwork analysis. Produce one title, one subtitle and one master description. Do not generate alternatives, mockup scenes, Pinterest copy or marketplace-specific copy.
+Create one canonical, evidence-based artwork analysis. The artwork title is fixed by the artist and supplied below as immutable input — never produce, propose or vary a title. Produce one subtitle and one master description. Do not generate alternatives, mockup scenes, Pinterest copy or marketplace-specific copy.
 
 LANGUAGE OF ANALYSIS
 {analysis_language_instruction}
@@ -25,7 +25,7 @@ ARTIST-AUTHORED SERIES CONTEXT
 
 CONFIRMED ARTWORK DATA
 - Artwork ID: {artwork_id}
-- Working title: {title}
+- Confirmed artwork title (set by the artist — immutable input, never an output): {title}
 - Artist: {artist}
 - Year: {year}
 - Series: {series}
@@ -34,10 +34,7 @@ CONFIRMED ARTWORK DATA
 - Dimensions: {width_cm} x {height_cm} x {depth_cm} cm
 - Orientation: {orientation}
 - Artist notes: {notes}
-
-EXISTING CATALOGUE TITLES
-{catalogue_title_constraints}
-
+{current_reading_block}{keyword_research_block}
 DESCRIPTION DIVERSITY STRATEGY
 - Required opening type: {description_opening_type}
 - Required sentence rhythm: {description_opening_rhythm}
@@ -60,9 +57,8 @@ RULES
 4c. Never collapse a mixed process to its first medium. If the artist states acrylic with oil finishes, retain both acrylic and oil and preserve that relationship; do not relabel it as only acrylic or as pure oil painting.
 5. Unknown confirmed facts must be null, not inferred.
 6. Use the artist profile only as context. Never copy it into public text.
-7. The title must be unique in intention, sober, evocative, memorable and no longer than 65 characters.
-   Compare it against EXISTING CATALOGUE TITLES. Do not reuse their central noun pair, reverse their word order, or make a minimal synonym variation.
-8. Avoid generic titles, repeated artist vocabulary, marketplace filler, decorative claims, grandiloquence and closed interpretations.
+7. The confirmed artwork title is the artist's decision. Never propose, rewrite, translate or vary it. Wherever a title is referenced (caption, seo_title), reuse the confirmed title verbatim.
+8. Avoid repeated artist vocabulary, marketplace filler, decorative claims, grandiloquence and closed interpretations.
 9. The master description must focus on this exact artwork. Synthesize relationships between visual elements instead of inventorying the image band by band. Every paragraph must add information.
 10. The master description is channel-neutral. Do not mention Saatchi, Pinterest, SEO, rooms, publishing or mockups.
 11. Alt text must describe what is visible without interpretation or promotional language.
@@ -149,7 +145,6 @@ Return exactly this structure:
     "claims_to_avoid": []
   },
   "canonical_editorial": {
-    "title": "",
     "subtitle": "",
     "short_description": "",
     "master_description": "",
@@ -190,10 +185,12 @@ PROMPT;
             if (!is_array($data[$key] ?? null)) $errors[] = "Missing object: {$key}.";
         }
         $editorial = is_array($data['canonical_editorial'] ?? null) ? $data['canonical_editorial'] : [];
-        foreach (['title', 'subtitle', 'short_description', 'master_description', 'alt_text', 'caption'] as $key) {
+        // EDITORIAL_CORE.md Libro I Cap. 6: el titulo no es un entregable del
+        // modelo — lo fija el artista y lo escribe la aplicacion. Por eso no
+        // se exige ni se mide aqui.
+        foreach (['subtitle', 'short_description', 'master_description', 'alt_text', 'caption'] as $key) {
             if (!array_key_exists($key, $editorial) || is_array($editorial[$key])) $errors[] = "canonical_editorial.{$key} must be a singular value.";
         }
-        if (mb_strlen(trim((string)($editorial['title'] ?? ''))) > 65) $errors[] = 'Canonical title exceeds 65 characters.';
         $genericOpening = '/^(this (painting|artwork|work|composition|piece)|in this (painting|artwork|work|piece)|the (artist|painting)\b|an? (abstract|original abstract) (painting|artwork|work|composition))\b/i';
         foreach (['short_description', 'master_description'] as $field) {
             if (preg_match($genericOpening, trim((string)($editorial[$field] ?? '')))) $errors[] = "Generic AI opening detected in canonical_editorial.{$field}.";

@@ -786,8 +786,15 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && ($_POST['action'] ?? '') === 'gener
         if ($imagePath === '' || !is_file($imagePath)) throw new RuntimeException(t('Selected root artwork image was not found.', 'No se encontró la imagen de la obra raíz seleccionada.'));
         $profileForV2 = ArtistProfile::findForUser($artworkOwnerId);
         $sheetForNotes = (new ArtworkSheetService($pdo))->sheetForArtwork($id, $artworkOwnerId);
+        // EDITORIAL_CORE.md Libro VI Cap. 2: regenerar refina la lectura
+        // vigente con el memo del artista como direccion.
+        $currentReadingState = $bilingualEditorialService->get($artworkOwnerId, 'artwork', $id, $artworkAnalysisLocale);
+        $currentReading = array_filter(
+            (array)($currentReadingState['content'] ?? []),
+            static fn($value): bool => is_string($value) && trim($value) !== ''
+        );
         $v2Service = new ArtworkAnalysisV2Service(new GeminiImageClient(), $pdo);
-        $generated=$v2Service->generateDraft($artwork, $profileForV2, $imagePath, (string)($sheetForNotes['user_notes']??''), $artworkAnalysisLocale);
+        $generated=$v2Service->generateDraft($artwork, $profileForV2, $imagePath, (string)($sheetForNotes['user_notes']??''), $artworkAnalysisLocale, $currentReading, (string)($currentReadingState['private_memo'] ?? ''));
         artwork_apply_v2_metadata($pdo,$id,$artworkOwnerId,(array)$generated['draft']);
         // Una sola accion deja el idioma de trabajo y su adaptacion listos. El
         // analisis ya dejo escrito el master; adaptar es solo texto y barato.

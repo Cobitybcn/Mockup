@@ -36,7 +36,9 @@ function run_editorial_integrity_policy_tests(): void
     TestHarness::assertContains("EditorialIntegrityPolicy::promptRules(\$entityType)", $serviceSource, 'Spanish generation and English adaptation share the policy');
     TestHarness::assertContains('repairEditorialIntegrityIfNeeded', $serviceSource, 'bilingual generation repairs policy violations before returning content');
 
+    // EDITORIAL_CORE: el flujo legacy de analisis de obra fue eliminado; el
+    // analisis canonico (ArtworkAnalysisV2) recibe la politica via su
+    // placeholder, verificado arriba.
     $sheetSource = (string)file_get_contents(__DIR__ . '/../../app/Services/ArtworkSheetService.php');
-    TestHarness::assertContains("EditorialIntegrityPolicy::promptRules('artwork')", $sheetSource, 'legacy artwork analysis also receives the policy');
     TestHarness::assertContains("EditorialIntegrityPolicy::promptRules('mockup')", $sheetSource, 'direct mockup analysis also receives the policy');
 }
