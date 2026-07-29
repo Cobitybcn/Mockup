@@ -17,6 +17,19 @@ final class BilingualEditorialService
         return (int)$stmt->fetchColumn() === 1;
     }
 
+    /**
+     * La ficha editorial de un mockup es una capacidad Pro, no un piloto manual.
+     * La bandera legacy de `bilingual_editorial_settings` se mantiene para no
+     * cambiar el comportamiento de quien ya la tiene encendida, pero un artista
+     * Pro que nunca la tocó también debe poder ver la ficha de sus mockups.
+     */
+    public function canUseMockupFicha(int $ownerId, bool $viewerIsAdmin = false): bool
+    {
+        return $viewerIsAdmin
+            || $this->isEnabled($ownerId)
+            || FeatureAccess::allowsUserId($ownerId, FeatureAccess::EDITORIAL_MANAGE, $this->pdo);
+    }
+
     public function setEnabled(int $userId, bool $enabled): void
     {
         $now = date(DATE_ATOM);

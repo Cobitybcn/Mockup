@@ -301,7 +301,9 @@ try {
         'message' => 'Variation generated.',
         'output_file' => $outputFile,
         'output_url' => 'media.php?file=' . rawurlencode($registeredMockupFile),
-        'viewer_url' => 'viewer.php?id=' . rawurlencode((string)$registeredMockupId) . '&back=' . rawurlencode('mockup_variation_lab.php?mockup_id=' . $mockupId),
+        'viewer_url' => (new BilingualEditorialService($pdo))->canUseMockupFicha((int)$user['id'], $isAdmin)
+            ? 'mockup_bilingual_experiment.php?id=' . rawurlencode((string)$registeredMockupId)
+            : 'viewer.php?id=' . rawurlencode((string)$registeredMockupId) . '&back=' . rawurlencode('mockup_variation_lab.php?mockup_id=' . $mockupId),
         'prompt_url' => 'mockup_variation_lab_file.php?file=' . rawurlencode($promptFile),
         'audit_url' => 'mockup_variation_lab_file.php?file=' . rawurlencode($auditFile),
         'registered_mockup_id' => $registeredMockupId,

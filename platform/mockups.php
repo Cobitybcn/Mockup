@@ -15,7 +15,7 @@ $pinterestBatchError=(string)($_SESSION['pinterest_batch_error']??'');unset($_SE
 $_SESSION['pinterest_batch_create_csrf']=bin2hex(random_bytes(24));
 
 $query = trim((string)($_GET['q'] ?? ''));
-$bilingualExperiment = $bilingualEditorialService->isEnabled((int)$user['id'])
+$bilingualExperiment = $bilingualEditorialService->canUseMockupFicha((int)$user['id'], $isAdmin)
     || ($isAdmin && (string)($_GET['bilingual_experiment'] ?? '') === '1');
 $page = max(1, (int)($_GET['page'] ?? 1));
 $perPage = 60;

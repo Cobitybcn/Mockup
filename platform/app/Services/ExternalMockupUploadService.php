@@ -129,7 +129,9 @@ final class ExternalMockupUploadService
             'height' => (int)$image['height'],
             'size' => (int)$image['size'],
             'media_url' => 'media.php?file=' . rawurlencode($storedName) . '&thumb=1&w=720',
-            'viewer_url' => 'viewer.php?id=' . $mockupId,
+            'viewer_url' => (new BilingualEditorialService($this->pdo))->canUseMockupFicha($userId)
+                ? 'mockup_bilingual_experiment.php?id=' . $mockupId
+                : 'viewer.php?id=' . $mockupId,
         ];
     }
 

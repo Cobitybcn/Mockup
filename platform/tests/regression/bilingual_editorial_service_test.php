@@ -802,3 +802,44 @@ function run_artwork_single_generator_tests(): void
         @unlink($imagePath);
     }
 }
+
+/**
+ * La ficha de mockup se rompio dos veces: primero porque casi ningun punto de
+ * entrada la enlazaba, despues porque su unica bandera de acceso era un piloto
+ * manual por usuario que un artista Pro nuevo nunca enciende. Esta prueba fija
+ * ambos: el metodo unico de decision, y que cada punto de entrada lo use.
+ */
+function run_mockup_ficha_routing_tests(): void
+{
+    TestHarness::group('Ficha de mockup: un unico camino de acceso');
+
+    $pdo = bilingual_editorial_test_pdo();
+    $pdo->exec("INSERT INTO users (id,email,plan_code) VALUES (42,'pro-sin-piloto@example.com','artist_pro')");
+    $pdo->exec("INSERT INTO users (id,email,plan_code) VALUES (43,'standard@example.com','artist_studio')");
+    $service = new BilingualEditorialService($pdo);
+
+    TestHarness::assertSame(true, $service->canUseMockupFicha(7), 'un usuario con el piloto legacy encendido sigue viendo su ficha');
+    TestHarness::assertSame(true, $service->canUseMockupFicha(42), 'un artista Pro sin el piloto legacy encendido ahora tambien ve su ficha');
+    TestHarness::assertSame(false, $service->canUseMockupFicha(43), 'un artista Standard sin el piloto legacy no ve la ficha');
+    TestHarness::assertSame(true, $service->canUseMockupFicha(43, true), 'un administrador ve la ficha de cualquier obra sin importar el plan del dueño');
+    TestHarness::assertSame(false, $service->canUseMockupFicha(999999), 'un usuario inexistente no rompe la verificacion y no obtiene acceso');
+
+    $platformRoot = dirname(__DIR__, 2);
+    $touchedFiles = [
+        'mockup_bilingual_experiment.php' => 'la puerta de la ficha usa el mismo criterio que sus enlaces',
+        'mockups.php' => 'la grilla principal decide el enlace con el metodo unico',
+        'artwork.php' => 'la galeria de mockups relacionados de la obra decide con el metodo unico',
+        'mockup_variation_lab.php' => 'el laboratorio de variaciones decide con el metodo unico',
+        'mockup_combination_results.php' => 'los resultados de combinacion de escena deciden con el metodo unico',
+        'generate_mockup_variation_lab.php' => 'la respuesta AJAX de una variacion nueva decide con el metodo unico',
+        'pinterest_draft_review.php' => 'el enlace de vuelta al mockup desde un borrador de Pinterest decide con el metodo unico',
+        'meta_mockup_draft.php' => 'el redirect tras guardar un borrador de Meta decide con el metodo unico',
+        'pinterest_mockup_draft.php' => 'el redirect de error de un borrador de Pinterest decide con el metodo unico',
+        'mockup_batch_status.php' => 'el estado de lote por AJAX decide con el metodo unico',
+        'app/Services/ExternalMockupUploadService.php' => 'la respuesta de una subida externa decide con el metodo unico',
+    ];
+    foreach ($touchedFiles as $relativePath => $label) {
+        $contents = (string)file_get_contents($platformRoot . '/' . $relativePath);
+        TestHarness::assertContains('canUseMockupFicha', $contents, $label);
+    }
+}

@@ -36,6 +36,7 @@ if (!$artwork) {
 $jobs = MockupBatchQueue::rowsForArtwork((int)$artwork['id']);
 $counts = ['queued' => 0, 'processing' => 0, 'done' => 0, 'error' => 0];
 $payloadJobs = [];
+$canUseMockupFicha = (new BilingualEditorialService($pdo))->canUseMockupFicha((int)$artwork['user_id'], Auth::isAdmin($currentUser));
 
 foreach ($jobs as $job) {
     $status = (string)$job['status'];
@@ -54,7 +55,9 @@ foreach ($jobs as $job) {
         'error' => (string)($job['error'] ?? ''),
         'mockup_id' => $mockupId ?: null,
         'image_url' => $mockupFile !== '' ? 'media.php?file=' . rawurlencode($mockupFile) : '',
-        'viewer_url' => $mockupId > 0 ? 'viewer.php?id=' . rawurlencode((string)$mockupId) : ($mockupFile !== '' ? 'media.php?file=' . rawurlencode($mockupFile) : ''),
+        'viewer_url' => $mockupId > 0
+            ? ($canUseMockupFicha ? 'mockup_bilingual_experiment.php?id=' . rawurlencode((string)$mockupId) : 'viewer.php?id=' . rawurlencode((string)$mockupId))
+            : ($mockupFile !== '' ? 'media.php?file=' . rawurlencode($mockupFile) : ''),
         'download_url' => $mockupFile !== '' ? 'media.php?file=' . rawurlencode($mockupFile) . '&download=1' : '',
         'prompt_url' => $promptFile !== '' ? 'media.php?file=' . rawurlencode($promptFile) : '',
     ];

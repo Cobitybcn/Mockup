@@ -11,4 +11,7 @@ try{
     $id=(new MetaSocialDraftService(Database::connection()))->create($mockupId,$user,$channel,$destination,'artist');
     $_SESSION['meta_draft_notice']=ucfirst($channel).' draft #'.$id.' saved. Nothing was published.';
 }catch(Throwable $e){$_SESSION['meta_draft_error']=$e->getMessage();}
-header('Location: viewer.php?id='.$mockupId);exit;
+$mockupFichaTarget=(new BilingualEditorialService(Database::connection()))->canUseMockupFicha((int)$user['id'],Auth::isAdmin($user))
+    ?'mockup_bilingual_experiment.php?id='.$mockupId
+    :'viewer.php?id='.$mockupId;
+header('Location: '.$mockupFichaTarget);exit;

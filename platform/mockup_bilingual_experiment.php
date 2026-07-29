@@ -59,7 +59,7 @@ $artworkId = (int)($mockup['source_artwork_id'] ?? 0);
 $mockupFile = basename((string)$mockup['mockup_file']);
 $contextTitle = Display::contextTitle((string)($mockup['context_id'] ?? 'Mockup'));
 $bilingualEditorialService = new BilingualEditorialService($pdo);
-if (!$bilingualEditorialService->isEnabled($ownerId) && !$isAdmin) {
+if (!$bilingualEditorialService->canUseMockupFicha($ownerId, $isAdmin)) {
     header('Location: viewer.php?id=' . $mockupId);
     exit;
 }

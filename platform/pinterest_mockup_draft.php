@@ -7,4 +7,7 @@ try{
     $draft=(new MockupPinterestDraftService(Database::connection()))->create($mockupId,$user,(string)($_POST['purpose']??'artist'),trim((string)($_POST['destination_url']??'')));
     header('Location: pinterest_draft_review.php?id='.(int)$draft['id']);exit;
 }catch(Throwable $e){$_SESSION['pinterest_draft_error']=$e->getMessage();}
-header('Location: viewer.php?id='.$mockupId);exit;
+$mockupFichaTarget=(new BilingualEditorialService(Database::connection()))->canUseMockupFicha((int)$user['id'],Auth::isAdmin($user))
+    ?'mockup_bilingual_experiment.php?id='.$mockupId
+    :'viewer.php?id='.$mockupId;
+header('Location: '.$mockupFichaTarget);exit;

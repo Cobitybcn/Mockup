@@ -9,6 +9,8 @@ $isAdmin = Auth::isAdmin($user);
 $labFlowMode = (string)($_COOKIE['sidebar_flow_mode'] ?? '');
 $useSimpleLab = !$isAdmin || $labFlowMode === 'normal';
 $pdo = Database::connection();
+$bilingualEditorialService = new BilingualEditorialService($pdo);
+$canUseMockupFicha = $bilingualEditorialService->canUseMockupFicha((int)$user['id'], $isAdmin);
 
 if (!function_exists('h')) {
     function h($value): string
@@ -1794,7 +1796,9 @@ $lightingOptions = [
                                             class="lab-mockup-card <?= $isActiveMockup ? 'active' : '' ?>"
                                             href="mockup_variation_lab.php?<?= h($labContextQuery) ?>mockup_id=<?= $mockupId ?>"
                                             data-mockup-id="<?= $mockupId ?>"
-                                            data-viewer-url="viewer.php?id=<?= $mockupId ?>&back=<?= rawurlencode('mockup_variation_lab.php?' . $labContextQuery . 'mockup_id=' . $mockupId) ?>"
+                                            data-viewer-url="<?= h($canUseMockupFicha
+                                                ? 'mockup_bilingual_experiment.php?id=' . $mockupId
+                                                : 'viewer.php?id=' . $mockupId . '&back=' . rawurlencode('mockup_variation_lab.php?' . $labContextQuery . 'mockup_id=' . $mockupId)) ?>"
                                             title="<?= h($label . ' - ' . $meta) ?>"
                                             aria-label="<?= h(t('Select', 'Seleccionar') . ' ' . $label) ?>"
                                         >
@@ -1931,7 +1935,9 @@ $lightingOptions = [
                                             ? lab_thumb_url($latestRegisteredFile, 640)
                                             : 'mockup_variation_lab_file.php?file=' . rawurlencode($latestOutputFile);
                                         $latestViewerUrl = $latestRegisteredId > 0
-                                            ? 'viewer.php?id=' . rawurlencode((string)$latestRegisteredId) . '&back=' . rawurlencode('mockup_variation_lab.php?mockup_id=' . (int)$selectedMockupId)
+                                            ? ($canUseMockupFicha
+                                                ? 'mockup_bilingual_experiment.php?id=' . rawurlencode((string)$latestRegisteredId)
+                                                : 'viewer.php?id=' . rawurlencode((string)$latestRegisteredId) . '&back=' . rawurlencode('mockup_variation_lab.php?mockup_id=' . (int)$selectedMockupId))
                                             : 'mockup_variation_lab_viewer.php?mockup_id=' . (int)$selectedMockupId . '&file=' . rawurlencode($latestOutputFile);
                                         $latestIsFavorite = $latestRegisteredId > 0 && isset($favoriteLookup[$latestRegisteredId]);
                                         ?>
@@ -1968,7 +1974,9 @@ $lightingOptions = [
                                         ? lab_thumb_url($registeredFile, 640)
                                         : 'mockup_variation_lab_file.php?file=' . rawurlencode($outputFile);
                                     $runViewerUrl = $registeredId > 0
-                                        ? 'viewer.php?id=' . rawurlencode((string)$registeredId) . '&back=' . rawurlencode('mockup_variation_lab.php?mockup_id=' . (int)$selectedMockupId)
+                                        ? ($canUseMockupFicha
+                                            ? 'mockup_bilingual_experiment.php?id=' . rawurlencode((string)$registeredId)
+                                            : 'viewer.php?id=' . rawurlencode((string)$registeredId) . '&back=' . rawurlencode('mockup_variation_lab.php?mockup_id=' . (int)$selectedMockupId))
                                         : 'mockup_variation_lab_viewer.php?mockup_id=' . (int)$selectedMockupId . '&file=' . rawurlencode($outputFile);
                                     $isFavorite = $registeredId > 0 && isset($favoriteLookup[$registeredId]);
                                     ?>

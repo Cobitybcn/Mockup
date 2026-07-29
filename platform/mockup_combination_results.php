@@ -13,6 +13,7 @@ header('Expires: 0');
 $user = Auth::requireUser();
 $isAdmin = Auth::isAdmin($user);
 $pdo = Database::connection();
+$bilingualEditorialService = new BilingualEditorialService($pdo);
 AdminSceneEditor::handlePost($user);
 $id = max(0, (int)($_GET['id'] ?? 0));
 $selectedWorldMotherCategory = trim(str_replace(['\\', '/'], '', (string)($_GET['world_mother_category'] ?? '')));
@@ -1369,7 +1370,9 @@ if (is_file($evalPath)) {
                                     </button>
                                 </div>
                             </div>
-                            <a class="result-image-link" href="viewer.php?id=<?= $mockupId ?>&back=<?= rawurlencode('mockup_combination_results.php?id=' . (int)$id . $generationProviderQuery . ($selectedWorldMotherCategory !== '' ? '&world_mother_category=' . rawurlencode($selectedWorldMotherCategory) : '')) ?>" aria-label="<?= h(t('Open in Mockup Album', 'Abrir en Álbum de Mockups')) ?>">
+                            <a class="result-image-link" href="<?= h($bilingualEditorialService->canUseMockupFicha((int)$artwork['user_id'], $isAdmin)
+                                ? 'mockup_bilingual_experiment.php?id=' . $mockupId
+                                : 'viewer.php?id=' . $mockupId . '&back=' . rawurlencode('mockup_combination_results.php?id=' . (int)$id . $generationProviderQuery . ($selectedWorldMotherCategory !== '' ? '&world_mother_category=' . rawurlencode($selectedWorldMotherCategory) : ''))) ?>" aria-label="<?= h(t('Open in Mockup Album', 'Abrir en Álbum de Mockups')) ?>">
                                 <img src="media.php?file=<?= rawurlencode(basename((string)$row['mockup_file'])) ?>&thumb=1&w=640&v=<?= $mockupId ?>" alt="" loading="lazy" decoding="async">
                             </a>
                         </div>
