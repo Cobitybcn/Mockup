@@ -1488,6 +1488,27 @@ $editIconSvg = '<svg viewBox="0 0 24 24" width="18" height="18" stroke="currentC
         .bilingual-editorial-memo { margin:0 14px 14px; padding:14px 6px 2px; border-top:1px solid var(--line); }
         .bilingual-editorial-memo summary { cursor:pointer; color:var(--muted); font-size:9px; font-weight:700; letter-spacing:.08em; text-transform:uppercase; }
         .bilingual-editorial-memo .bilingual-editorial-copy { min-height:82px; }
+        .title-tool { margin:10px 0 0; }
+        .title-tool-panel { border:1px solid var(--line); border-radius:var(--radius); background:var(--surface); }
+        .title-tool-panel > summary { display:flex; align-items:center; justify-content:space-between; gap:14px; padding:10px 16px; cursor:pointer; list-style:none; color:var(--muted); font-size:11px; font-weight:700; letter-spacing:.06em; text-transform:uppercase; }
+        .title-tool-panel > summary::-webkit-details-marker { display:none; }
+        .title-tool-state { color:#9a7b56; font-size:9px; }
+        .title-tool-body { padding:0 16px 14px; }
+        .title-tool-actions { display:flex; align-items:center; gap:10px; flex-wrap:wrap; }
+        .title-tool-actions select { min-height:36px; padding:6px 10px; border:1px solid var(--line); border-radius:3px; background:var(--surface-soft); font-size:12px; }
+        .title-tool-actions button { min-height:36px; margin:0; padding:8px 14px; border:1px solid #d8c17e; border-radius:3px; background:#ead99f; color:#554a30; box-shadow:none; font-size:10px; font-weight:700; letter-spacing:.05em; text-transform:uppercase; }
+        .title-tool-actions button.secondary { background:var(--surface-soft); border-color:var(--line); color:var(--muted); }
+        .title-tool-status { color:var(--muted); font-size:12px; }
+        .title-tool-list { list-style:none; margin:12px 0 0; padding:0; display:grid; gap:10px; }
+        .title-tool-item { border:1px solid var(--line); border-radius:3px; background:var(--surface-soft); padding:10px 14px; }
+        .title-tool-item.is-shortlisted { border-color:#d8c17e; background:#fbf7e8; }
+        .title-tool-word strong { font:600 18px/1.2 var(--font-serif); letter-spacing:.04em; }
+        .title-tool-word small { margin-left:10px; color:var(--muted); font-size:11px; }
+        .title-tool-reason { margin:6px 0 8px; color:var(--muted); font-size:12px; }
+        .title-tool-item-actions { display:flex; gap:8px; flex-wrap:wrap; }
+        .title-tool-item-actions button { min-height:32px; margin:0; padding:6px 12px; border:1px solid #d8c17e; border-radius:3px; background:#ead99f; color:#554a30; box-shadow:none; font-size:9px; font-weight:700; letter-spacing:.05em; text-transform:uppercase; }
+        .title-tool-item-actions button.secondary { background:var(--surface-soft); border-color:var(--line); color:var(--muted); }
+        .title-tool-warning { margin:10px 0 0; font-size:12px; }
         .bilingual-publication-bar { display:flex; align-items:center; justify-content:space-between; gap:18px; margin:0 14px 14px; padding:14px 18px; border-top:1px solid var(--line); background:#fbf7e8; }
         .bilingual-publication-bar span { color:var(--muted); font-size:10px; font-weight:700; letter-spacing:.07em; text-transform:uppercase; }
         .bilingual-publication-bar button { min-height:38px; margin:0; padding:9px 16px; border:1px solid #d8c17e; border-radius:3px; background:#ead99f; color:#554a30; box-shadow:none; font-size:10px; font-weight:700; letter-spacing:.05em; text-transform:uppercase; }
@@ -3300,6 +3321,35 @@ $editIconSvg = '<svg viewBox="0 0 24 24" width="18" height="18" stroke="currentC
                         <button type="button" class="artwork-title-cancel" data-artwork-title-cancel><?= h(t('Cancel', 'Cancelar')) ?></button>
                     </form>
                     <?php if ($bilingualExperiment): ?><p class="artwork-title-universal-memo">STRATA X — LIMEN · STRATA XI — NUHRĀ (ܢܘܗܪܐ) · no traducir</p><?php endif; ?>
+                    <?php if ($bilingualExperiment): ?>
+                    <!-- EDITORIAL_CORE Libro I Cap. 6: sugerir sí, decidir jamás.
+                         El registro semántico avisa colisiones (no bloquea) y la
+                         herramienta propone 5-8 títulos bajo el ADN de la serie. -->
+                    <div class="title-tool" data-title-tool data-artwork-id="<?= (int)$id ?>" data-endpoint="title_suggestions.php" data-csrf="<?= h(Auth::csrfToken('bilingual_editorial')) ?>">
+                        <p class="title-tool-warning notice error" data-title-collisions hidden></p>
+                        <details class="title-tool-panel">
+                            <summary><span><?= h(t('Title suggestions', 'Sugerencias de título')) ?></span><span class="title-tool-state" data-title-lock-state></span></summary>
+                            <div class="title-tool-body">
+                                <div class="title-tool-actions">
+                                    <select data-title-direction aria-label="<?= h(t('Direction', 'Dirección')) ?>">
+                                        <option value=""><?= h(t('Suggest titles', 'Sugerir títulos')) ?></option>
+                                        <option value="más mínima"><?= h(t('More minimal', 'Más mínima')) ?></option>
+                                        <option value="más oscura"><?= h(t('Darker', 'Más oscura')) ?></option>
+                                        <option value="más material"><?= h(t('More material', 'Más material')) ?></option>
+                                        <option value="más formal"><?= h(t('More formal', 'Más formal')) ?></option>
+                                        <option value="menos literal"><?= h(t('Less literal', 'Menos literal')) ?></option>
+                                        <option value="más antigua"><?= h(t('More ancient', 'Más antigua')) ?></option>
+                                        <option value="más extraña"><?= h(t('Stranger', 'Más extraña')) ?></option>
+                                    </select>
+                                    <button type="button" data-title-suggest><?= h(t('Generate', 'Generar')) ?></button>
+                                    <button type="button" class="secondary" data-title-lock-toggle><?= h(t('Lock title', 'Bloquear título')) ?></button>
+                                    <span class="title-tool-status" data-title-status></span>
+                                </div>
+                                <ul class="title-tool-list" data-title-list></ul>
+                            </div>
+                        </details>
+                    </div>
+                    <?php endif; ?>
                 </div>
             </div>
 
@@ -4884,7 +4934,127 @@ document.querySelectorAll('[data-website-cover-picker]').forEach((picker) => {
     });
 });
 </script>
-<?php if ($bilingualExperiment): ?><script src="bilingual-editorial.js?v=20260724-1"></script><?php endif; ?>
+<?php if ($bilingualExperiment): ?><script src="bilingual-editorial.js?v=20260724-1"></script>
+<script>
+(() => {
+    const tool = document.querySelector('[data-title-tool]');
+    if (!tool) return;
+    const endpoint = tool.dataset.endpoint || 'title_suggestions.php';
+    const artworkId = tool.dataset.artworkId || '';
+    const csrf = tool.dataset.csrf || '';
+    const list = tool.querySelector('[data-title-list]');
+    const statusEl = tool.querySelector('[data-title-status]');
+    const collisionsEl = tool.querySelector('[data-title-collisions]');
+    const lockState = tool.querySelector('[data-title-lock-state]');
+    const lockToggle = tool.querySelector('[data-title-lock-toggle]');
+    let locked = false;
+
+    const call = async (action, extra = {}) => {
+        const body = new FormData();
+        body.append('csrf', csrf);
+        body.append('action', action);
+        body.append('artwork_id', artworkId);
+        Object.entries(extra).forEach(([k, v]) => body.append(k, String(v)));
+        const response = await fetch(endpoint, {method: 'POST', body, headers: {Accept: 'application/json'}});
+        const result = await response.json();
+        if (!response.ok || !result.ok) throw new Error(result.error || 'No se pudo completar la acción.');
+        return result;
+    };
+
+    const setStatus = (message) => { if (statusEl) statusEl.textContent = message; };
+    const renderLock = () => {
+        if (lockState) lockState.textContent = locked ? 'Título bloqueado' : '';
+        if (lockToggle) lockToggle.textContent = locked ? 'Desbloquear título' : 'Bloquear título';
+    };
+    const render = (items) => {
+        if (!list) return;
+        list.innerHTML = '';
+        (items || []).forEach((item) => {
+            const li = document.createElement('li');
+            li.className = 'title-tool-item' + (item.status === 'shortlisted' ? ' is-shortlisted' : '');
+            const meta = [item.language, item.meaning, item.tone].filter(Boolean).join(' · ');
+            li.innerHTML = '<div class="title-tool-word"><strong></strong><small></small></div>'
+                + '<p class="title-tool-reason"></p>'
+                + '<div class="title-tool-item-actions">'
+                + '<button type="button" data-act="confirm">Usar este título</button>'
+                + '<button type="button" class="secondary" data-act="confirm-lock">Usar y bloquear</button>'
+                + '<button type="button" class="secondary" data-act="shortlist">Favorita</button>'
+                + '<button type="button" class="secondary" data-act="reject">Descartar</button>'
+                + '</div>';
+            li.querySelector('strong').textContent = item.title || '';
+            li.querySelector('small').textContent = meta + (item.recommended ? ' · recomendada' : '');
+            li.querySelector('.title-tool-reason').textContent = item.reason || '';
+            li.dataset.suggestionId = String(item.id || '');
+            list.appendChild(li);
+        });
+    };
+
+    tool.addEventListener('click', async (event) => {
+        const suggestButton = event.target.closest('[data-title-suggest]');
+        if (suggestButton) {
+            suggestButton.disabled = true;
+            setStatus('Mirando la obra, la serie y el registro…');
+            try {
+                const direction = tool.querySelector('[data-title-direction]')?.value || '';
+                const result = await call('suggest', direction ? {direction} : {});
+                render(result.pending && result.pending.length ? result.pending : result.suggestions);
+                setStatus((result.suggestions || []).length + ' propuestas — el registro filtró las colisiones');
+            } catch (error) { setStatus(error.message); } finally { suggestButton.disabled = false; }
+            return;
+        }
+        if (event.target.closest('[data-title-lock-toggle]')) {
+            try {
+                const result = await call('set_lock', {locked: locked ? '0' : '1'});
+                locked = Boolean(result.locked);
+                renderLock();
+            } catch (error) { setStatus(error.message); }
+            return;
+        }
+        const actionButton = event.target.closest('[data-act]');
+        if (!actionButton) return;
+        const item = actionButton.closest('.title-tool-item');
+        const suggestionId = item?.dataset.suggestionId || '';
+        if (!suggestionId) return;
+        const act = actionButton.dataset.act;
+        try {
+            if (act === 'confirm' || act === 'confirm-lock') {
+                const result = await call('confirm', {suggestion_id: suggestionId, lock: act === 'confirm-lock' ? '1' : '0'});
+                setStatus('Título confirmado: ' + result.title + ' — recargando…');
+                window.location.reload();
+                return;
+            }
+            await call(act === 'shortlist' ? 'shortlist' : 'reject', {suggestion_id: suggestionId});
+            if (act === 'reject') item.remove();
+            else item.classList.add('is-shortlisted');
+        } catch (error) { setStatus(error.message); }
+    });
+
+    // Aviso NO bloqueante al titular a mano (registro semantico).
+    const titleInput = document.getElementById('artwork-title-input');
+    if (titleInput && collisionsEl) {
+        titleInput.addEventListener('blur', async () => {
+            const value = titleInput.value.trim();
+            if (value === '') { collisionsEl.hidden = true; return; }
+            try {
+                const result = await call('check', {title: value});
+                const hits = result.collisions || [];
+                if (!hits.length) { collisionsEl.hidden = true; return; }
+                collisionsEl.textContent = 'Atención — proximidad con títulos existentes: '
+                    + hits.map((h) => `${h.title} (${h.kind})`).join(' · ')
+                    + '. Titular sigue siendo tu decisión.';
+                collisionsEl.hidden = false;
+            } catch (_) { /* el aviso jamás bloquea el guardado */ }
+        });
+    }
+
+    call('list').then((result) => {
+        locked = Boolean(result.locked);
+        renderLock();
+        if (result.pending && result.pending.length) render(result.pending);
+    }).catch(() => {});
+})();
+</script>
+<?php endif; ?>
 <?php if ($editorialPackageEnabled): ?><script src="artwork-editorial-package.js?v=20260724-1"></script><?php endif; ?>
 </body>
 </html>

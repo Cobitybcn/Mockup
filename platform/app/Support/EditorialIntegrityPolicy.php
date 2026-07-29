@@ -82,6 +82,23 @@ TEXT;
             }
         }
 
+        // EDITORIAL_CORE Libro II Cap. 3 (enmienda 2026-07-29): las aperturas
+        // genericas y los verbos de accion comercial se vigilan en TODA ruta
+        // de generacion y adaptacion, en ambos idiomas — no solo en el
+        // analisis ingles.
+        $lowerPath = strtolower($path);
+        if (preg_match('/(?:^|\.)(?:short_)?description$|master_description$/', $lowerPath) === 1) {
+            $genericOpening = '/^(?:this|in\s+this|esta|en\s+esta|este|en\s+este)\s+(?:contemporary\s+|original\s+|abstract\s+|striking\s+|vibrante\s+)*(?:painting|artwork|work|composition|piece|pintura|obra|cuadro|composici[oó]n|pieza|lienzo)\b/iu';
+            if (preg_match($genericOpening, $text) === 1) {
+                $issues[] = "{$label}: generic opening — begin with concrete visible evidence, not an object label.";
+            }
+        }
+        if (str_ends_with($lowerPath, 'seo_description')) {
+            if (preg_match('/^(?:descubr[ae]|explor[ae]|discover|explore|adquier[ae]|adquiera|compr[eaá]|buy|acquire)\b/iu', $text) === 1) {
+                $issues[] = "{$label}: generic action-verb opening — identify the work, do not command the reader.";
+            }
+        }
+
         $limit = self::wordLimit($path, $entityType);
         if ($limit > 0 && self::wordCount($text) > $limit) {
             $issues[] = "{$label}: exceeds {$limit} words.";
@@ -116,6 +133,16 @@ TEXT;
             '/\b(?:aclamad[ao]\s+por\s+la\s+cr[ií]tica|reconocimiento\s+cr[ií]tico)\b/iu' => 'critical-recognition',
             '/\b(?:premiad[ao]|validaci[oó]n\s+institucional)\b/iu' => 'institutional-validation',
             '/\boportunidad\s+(?:rara|exclusiva)\s+de\s+(?:inversi[oó]n|adquisici[oó]n|coleccionismo)\b/iu' => 'rarity-or-exclusivity',
+            // EDITORIAL_CORE Libro II Cap. 3 (enmienda 2026-07-29): vocabulario
+            // decorativo/masivo prohibido en TODO texto generado o adaptado —
+            // antes solo lo vigilaba el analisis de obra y "wall art" se colo
+            // por la via de adaptacion.
+            '/\b(?:gallery\s+)?wall\s+art\b/iu' => 'decorative-mass-market',
+            '/\bhome\s+decor\b/iu' => 'decorative-mass-market',
+            '/\bstatement\s+decor\b/iu' => 'decorative-mass-market',
+            '/\bperfect\s+for\s+any\s+room\b/iu' => 'decorative-mass-market',
+            '/\belevate\s+your\s+space\b/iu' => 'decorative-mass-market',
+            '/\bdecor\s+inspiration\b/iu' => 'decorative-mass-market',
         ];
     }
 

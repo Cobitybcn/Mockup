@@ -209,6 +209,52 @@ function run_editorial_core_contract_tests(): void
         'EDITORIAL_CORE Libro VI Cap. 1 (opción A): la ficha no ofrece un segundo botón de publicar separado — la barra editorial es solo estado'
     );
 
+    // ————— Libro I Cap. 6: herramienta de titulos — sugerir si, decidir jamas —————
+    $titleService = (string)file_get_contents($platformRoot . '/app/Services/TitleSuggestionService.php');
+    TestHarness::assertContains(
+        'saveUniversalTitle',
+        $titleService,
+        'EDITORIAL_CORE Libro I Cap. 6: solo confirm() — la accion explicita del artista — escribe el titulo al catalogo'
+    );
+    TestHarness::assertContains(
+        'está bloqueado por el artista',
+        $titleService,
+        'EDITORIAL_CORE Libro VI Cap. 3: un titulo locked es inmutable — confirmar sobre el falla con mensaje claro'
+    );
+    TestHarness::assertContains(
+        'collisionsForTitle',
+        $titleService,
+        'EDITORIAL_CORE Libro I Cap. 6: control de repeticion exacta y semantica contra el registro antes de proponer'
+    );
+    TestHarness::assertTrue(
+        !str_contains($titleService, 'UPDATE artworks SET final_title'),
+        'EDITORIAL_CORE Libro I Cap. 6: el servicio de titulos jamas escribe final_title directo — pasa por saveUniversalTitle con la confirmacion del artista'
+    );
+    // Funcional: normalizacion y colision lexica INTERVALLA/INTERVALLUM.
+    TestHarness::assertSame('NUHRA', TitleSuggestionService::normalize('NUHRĀ'), 'la forma normalizada pierde diacriticos para comparar');
+    $titlePdo = new PDO('sqlite::memory:');
+    $titlePdo->setAttribute(PDO::ATTR_ERRMODE, PDO::ERRMODE_EXCEPTION);
+    $registryMigration = require $platformRoot . '/migrations/schema/20260729_000002_artwork_title_registry.php';
+    $titlePdo->exec("CREATE TABLE artwork_series (id INTEGER PRIMARY KEY, user_id INTEGER, title TEXT, updated_at TEXT)");
+    ($registryMigration['up'])($titlePdo);
+    $titleTool = new TitleSuggestionService($titlePdo);
+    $titleTool->registerCatalogTitle(7, 501, 3, 'INTERVALLUM', 'Latín', 'intervalo', 'intervalo');
+    $titleTool->registerCatalogTitle(7, 502, 3, 'LUX REMOTA', 'Latín', 'luz remota', 'luz');
+    $titleTool->registerCatalogTitle(7, 503, 3, 'SOL DIVISUS', 'Latín', 'sol dividido', 'luz');
+    $hits = $titleTool->collisionsForTitle(7, 'INTERVALLA');
+    TestHarness::assertTrue(
+        $hits !== [] && $hits[0]['title'] === 'INTERVALLUM',
+        'EDITORIAL_CORE Libro I Cap. 6: INTERVALLA colisiona con INTERVALLUM por raiz lexica — el aviso existe (y jamas bloquea)'
+    );
+    $solarMap = $titleTool->collisionMap(7);
+    TestHarness::assertTrue(
+        isset($solarMap['luz']) && count($solarMap['luz']) === 2,
+        'EDITORIAL_CORE Libro I Cap. 6: el mapa de colisiones agrupa raices saturadas (cluster solar) para decision del artista'
+    );
+    $titleEndpoint = (string)file_get_contents($platformRoot . '/title_suggestions.php');
+    TestHarness::assertContains('confirmacion explicita del artista', $titleEndpoint, 'el endpoint documenta que confirmar es la unica via al catalogo');
+    TestHarness::assertContains('data-title-tool', $artworkScreen, 'la ficha de obra ofrece la herramienta de titulos junto al titulo');
+
     // ————— Libro I Cap. 6: la IA jamas rellena titulos vacios —————
     TestHarness::assertTrue(
         !str_contains($sheetSource, '$suggestedTitle'),
