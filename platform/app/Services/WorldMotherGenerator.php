@@ -400,7 +400,7 @@ final class WorldMotherGenerator
         $text = $this->client->generateText([
             $this->client->textPart($prompt),
             $this->client->imagePart($imagePath),
-        ], 'gemini-2.5-flash');
+        ]);
 
         $json = $this->extractJson($text);
         $decoded = json_decode($json, true);
@@ -433,7 +433,7 @@ final class WorldMotherGenerator
             $parts[] = $this->client->imagePart($imagePath);
         }
 
-        $text = $this->client->generateText($parts, 'gemini-2.5-flash');
+        $text = $this->client->generateText($parts);
         $json = $this->extractJson($text);
         $decoded = json_decode($json, true);
         if (!is_array($decoded)) {

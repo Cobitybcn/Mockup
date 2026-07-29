@@ -3,8 +3,9 @@ declare(strict_types=1);
 
 class GeminiImageClient
 {
-    public function generateText(array $parts, string $model = 'gemini-2.5-flash'): string
+    public function generateText(array $parts, ?string $model = null): string
     {
+        $model = $model ?: ProviderSettings::geminiTextModel();
         $prompt = '';
         $imagePaths = [];
         foreach ($parts as $part) {

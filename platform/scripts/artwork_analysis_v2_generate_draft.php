@@ -63,7 +63,7 @@ $decodeResponse = static function (string $raw): ?array {
     return is_array($decoded) ? $decoded : null;
 };
 $client = new GeminiImageClient();
-$draft = $decodeResponse($client->generateText([$client->textPart($prompt), $client->imagePart($image)], 'gemini-2.5-flash'));
+$draft = $decodeResponse($client->generateText([$client->textPart($prompt), $client->imagePart($image)]));
 if (!is_array($draft)) { fwrite(STDERR, "The model did not return valid JSON. No draft was saved.\n"); exit(1); }
 
 $draft['schema_version'] = ArtworkAnalysisV2::SCHEMA_VERSION;
@@ -76,7 +76,7 @@ if (($draft['originality_check']['title_unique'] ?? false) !== true) {
     $closest = (string)($draft['originality_check']['closest_title'] ?? '');
     $rejected = (string)($draft['canonical_editorial']['title'] ?? '');
     $revisionPrompt = $prompt . "\n\nTITLE REVISION REQUIRED\nThe first title '{$rejected}' was rejected because it is too close to '{$closest}'. Generate the complete JSON again. Keep the evidence-based analysis, but create a genuinely different title from another visual or conceptual entry point. Do not merely reverse words or substitute synonyms.";
-    $retry = $decodeResponse($client->generateText([$client->textPart($revisionPrompt), $client->imagePart($image)], 'gemini-2.5-flash'));
+    $retry = $decodeResponse($client->generateText([$client->textPart($revisionPrompt), $client->imagePart($image)]));
     if (is_array($retry)) {
         $draft = $retry;
         $draft['originality_check'] = ArtworkOriginalityChecker::check($draft, __DIR__ . '/../analysis', $excludeBase);
@@ -103,7 +103,7 @@ $draft['review']['notes'] = trim((string)($draft['review']['notes'] ?? '') . " G
 $errors = ArtworkAnalysisV2::validate($draft, false);
 if ($errors && $attempts < 2) {
     $revisionPrompt = $prompt . "\n\nEDITORIAL VALIDATION REVISION REQUIRED\nThe previous JSON was rejected for these reasons:\n- " . implode("\n- ", $errors) . "\nGenerate the complete JSON again, preserving accurate analysis while correcting every listed issue.";
-    $retry = $decodeResponse($client->generateText([$client->textPart($revisionPrompt), $client->imagePart($image)], 'gemini-2.5-flash'));
+    $retry = $decodeResponse($client->generateText([$client->textPart($revisionPrompt), $client->imagePart($image)]));
     if (is_array($retry)) {
         $draft = $retry;
         $draft['schema_version'] = ArtworkAnalysisV2::SCHEMA_VERSION;

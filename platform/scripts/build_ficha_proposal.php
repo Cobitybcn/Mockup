@@ -274,7 +274,7 @@ while ($queue && $checked < MAX_GEMINI_CHECKS) {
     $prompts = [];
     foreach ($batch as $item) {
         $cmds[] = '"' . $python . '" ' . escapeshellarg($bridge)
-            . ' generate-text --model gemini-2.5-flash'
+            . ' generate-text --model ' . escapeshellarg(ProviderSettings::geminiTextModel())
             . ' --image ' . escapeshellarg($item['a'])
             . ' --image ' . escapeshellarg($item['b']);
         $prompts[] = $prompt;

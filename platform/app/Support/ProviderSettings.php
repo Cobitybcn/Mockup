@@ -147,6 +147,13 @@ class ProviderSettings
         );
     }
 
+    public static function geminiTextModel(): string
+    {
+        return self::normalizeGeminiTextModel(
+            self::value('gemini_text_model', defined('GEMINI_TEXT_MODEL') ? (string)GEMINI_TEXT_MODEL : 'gemini-3.5-flash')
+        );
+    }
+
     public static function openAIImageModel(): string
     {
         return self::value('openai_image_model', defined('OPENAI_IMAGE_MODEL') ? (string)OPENAI_IMAGE_MODEL : 'gpt-image-1');
@@ -304,6 +311,17 @@ class ProviderSettings
         }
 
         return 'gemini-3.1-flash-image';
+    }
+
+    private static function normalizeGeminiTextModel(string $model): string
+    {
+        $model = strtolower(trim($model));
+
+        if (str_starts_with($model, 'gemini-') && !str_ends_with($model, '-image')) {
+            return $model;
+        }
+
+        return 'gemini-3.5-flash';
     }
 
     private static function normalizeWorkerCount(string $value): int

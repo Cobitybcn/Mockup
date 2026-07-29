@@ -57,11 +57,14 @@ Return only one JSON object with exactly these fields:
 identity_score must be an integer from 0 to 100. Scores at or above {$minimumScore} mean the artwork identity is sufficiently preserved.
 PROMPT;
 
+        $reviewModel = defined('MOCKUP_FIDELITY_REVIEW_MODEL') && trim((string)MOCKUP_FIDELITY_REVIEW_MODEL) !== ''
+            ? (string)MOCKUP_FIDELITY_REVIEW_MODEL
+            : ProviderSettings::geminiTextModel();
         $raw = $this->client->generateText([
             $this->client->textPart($prompt),
             $this->client->imagePart($rootArtworkPath),
             $this->client->imagePart($candidatePath),
-        ], defined('MOCKUP_FIDELITY_REVIEW_MODEL') ? (string)MOCKUP_FIDELITY_REVIEW_MODEL : 'gemini-2.5-flash');
+        ], $reviewModel);
 
         $review = self::parseResponse($raw);
         $score = (float)($review['identity_score'] ?? 0);
@@ -78,9 +81,7 @@ PROMPT;
             && !$review['substitution_detected']
             && $review['artwork_visible_enough']
             && $review['identity_score'] >= $minimumScore;
-        $review['review_model'] = defined('MOCKUP_FIDELITY_REVIEW_MODEL')
-            ? (string)MOCKUP_FIDELITY_REVIEW_MODEL
-            : 'gemini-2.5-flash';
+        $review['review_model'] = $reviewModel;
 
         return $review;
     }

@@ -214,7 +214,7 @@ final class BilingualEditorialAdapterService
             $promptTargetContent,
             false
         );
-        $decoded = $this->decodeJson($this->client->generateText([$this->client->textPart($prompt)], 'gemini-2.5-flash'));
+        $decoded = $this->decodeJson($this->client->generateText([$this->client->textPart($prompt)]));
         $adapted = $this->projectToSourceShape($sourceContent, $decoded);
         if ($entityType === 'studio_note') {
             $adapted['body_html'] = StudioNoteMediaService::restoreImagesAfterAdaptation(
@@ -315,7 +315,7 @@ final class BilingualEditorialAdapterService
             $parts[] = $this->client->imagePart($imagePath);
         }
 
-        $raw = $this->client->generateText($parts, 'gemini-2.5-flash');
+        $raw = $this->client->generateText($parts);
         $decoded = $this->decodeJson($raw);
         $proposal = $this->projectToSourceShape($shape, $decoded);
         if ($entityType === 'series') {
@@ -372,7 +372,7 @@ final class BilingualEditorialAdapterService
         $source = $this->editorial->get($userId, $entityType, $entityId, $sourceLocale);
         $target = $this->editorial->get($userId, $entityType, $entityId, $targetLocale);
         $prompt = $this->prompt($userId, $entityType, $entityId, $sourceLocale, $targetLocale, (array)$source['content'], (array)$target['content'], false);
-        $decoded = $this->decodeJson($this->client->generateText([$this->client->textPart($prompt)], 'gemini-2.5-flash'));
+        $decoded = $this->decodeJson($this->client->generateText([$this->client->textPart($prompt)]));
         $proposal = $this->projectToSourceShape((array)$source['content'], $decoded);
         if (in_array($entityType, ['artwork', 'mockup'], true)) {
             $proposal = $this->repairEditorialIntegrityIfNeeded(
@@ -515,7 +515,7 @@ final class BilingualEditorialAdapterService
             . "OUTPUT SHAPE\n" . json_encode($shape, JSON_PRETTY_PRINT | JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES);
         $parts = [$this->client->textPart($prompt)];
         foreach ($analysisPaths as $imagePath) $parts[] = $this->client->imagePart($imagePath);
-        $analysis = $this->decodeJson($this->client->generateText($parts, 'gemini-2.5-flash'));
+        $analysis = $this->decodeJson($this->client->generateText($parts));
         $projected = $this->projectToSourceShape($shape, $analysis);
         $generatedImageMetadata = [];
         foreach ((array)($analysis['image_metadata'] ?? []) as $index => $metadata) {
@@ -1324,7 +1324,7 @@ ISSUES TO CORRECT
 {$issuesJson}
 PROMPT;
             $decoded = $this->decodeJson(
-                $this->client->generateText([$this->client->textPart($repairPrompt)], 'gemini-2.5-flash')
+                $this->client->generateText([$this->client->textPart($repairPrompt)])
             );
             $content = $this->projectToSourceShape($shape, $decoded);
             $issues = EditorialIntegrityPolicy::issues($content, $entityType);
@@ -1416,8 +1416,7 @@ PREVIOUS JSON
 PROMPT;
             }
             $decoded = $this->decodeJson($this->client->generateText(
-                [$this->client->textPart($repairPrompt)],
-                'gemini-2.5-flash'
+                [$this->client->textPart($repairPrompt)]
             ));
             $content = $this->projectToSourceShape($shape, $decoded);
             $issues = $this->seriesSeoIssues($content, $reference);
@@ -1543,8 +1542,7 @@ ISSUES TO CORRECT
 {$issuesJson}
 PROMPT;
             $decoded = $this->decodeJson($this->client->generateText(
-                [$this->client->textPart($repairPrompt)],
-                'gemini-2.5-flash'
+                [$this->client->textPart($repairPrompt)]
             ));
             $content = $this->projectToSourceShape($shape, $decoded);
             $content = $this->boundMockupListCounts($content, $reference);

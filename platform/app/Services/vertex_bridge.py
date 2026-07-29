@@ -347,7 +347,7 @@ def handle_assistant_chat(args):
             contents.append(types.Content(role=role, parts=parts))
 
     # 3. Build config
-    model = payload.get('model', 'gemini-2.5-flash')
+    model = payload.get('model', 'gemini-3.5-flash')
     max_output_tokens = payload.get('max_output_tokens', 1200)
     instructions = payload.get('instructions')
 
@@ -1471,7 +1471,7 @@ def main():
     text_parser.add_argument("--prompt", type=str, help="Text prompt")
     text_parser.add_argument("--prompt-file", type=str, help="Path to file containing the prompt")
     text_parser.add_argument("--image", type=str, action="append", help="Path to the input image(s)")
-    text_parser.add_argument("--model", type=str, default="gemini-2.5-flash", help="Gemini model name")
+    text_parser.add_argument("--model", type=str, default="gemini-3.5-flash", help="Gemini model name")
 
     # Subcommand: generate-image
     image_parser = subparsers.add_parser("generate-image", help="Generate/Edit images using Imagen or Gemini")

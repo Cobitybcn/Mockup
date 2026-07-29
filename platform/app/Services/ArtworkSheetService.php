@@ -516,7 +516,7 @@ final class ArtworkSheetService
                 $text = $this->client->generateText([
                     $this->client->textPart($prompt),
                     $this->client->imagePart($imagePath),
-                ], 'gemini-2.5-flash');
+                ]);
                 $decoded = json_decode($this->extractJson($text), true);
                 if (is_array($decoded)) {
                     $decoded['analysis_language'] = $analysisLocale;

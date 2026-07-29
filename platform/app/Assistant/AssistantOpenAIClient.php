@@ -42,9 +42,9 @@ final class AssistantOpenAIClient
         }
 
         // Adjust model if it looks like a placeholder
-        $model = $payload['model'] ?? 'gemini-2.5-flash';
+        $model = $payload['model'] ?? ProviderSettings::geminiTextModel();
         if (str_starts_with($model, 'gpt-') || $model === 'gpt-5.6-terra') {
-            $model = 'gemini-2.5-flash';
+            $model = ProviderSettings::geminiTextModel();
         }
         $payload['model'] = $model;
 

@@ -648,7 +648,7 @@ final class CameraSlotStudio
 
         $text = $this->client->generateText([
             $this->client->textPart($prompt),
-        ], 'gemini-2.5-flash');
+        ]);
 
         $decoded = json_decode($this->extractJson($text), true);
         if (!is_array($decoded)) {

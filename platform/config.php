@@ -57,6 +57,7 @@ define('OPENAI_IMAGE_SIZE', app_env('OPENAI_IMAGE_SIZE', '1024x1024'));
 define('IMAGE_PROVIDER', app_env('IMAGE_PROVIDER', 'openai'));
 define('GEMINI_API_KEY', app_env('GEMINI_API_KEY', ''));
 define('GEMINI_IMAGE_MODEL', app_env('GEMINI_IMAGE_MODEL', 'gemini-3.1-flash-image'));
+define('GEMINI_TEXT_MODEL', app_env('GEMINI_TEXT_MODEL', 'gemini-3.5-flash'));
 define('ADMIN_EMAILS', app_env('ADMIN_EMAILS', ''));
 define('DB_CONNECTION', app_env('DB_CONNECTION', 'sqlite'));
 define('DB_HOST', app_env('DB_HOST', '127.0.0.1'));
@@ -76,7 +77,7 @@ define('MOCKUP_FIDELITY_GATE_ENABLED', strtolower(app_env('MOCKUP_FIDELITY_GATE_
 define('MOCKUP_FIDELITY_FAIL_OPEN', strtolower(app_env('MOCKUP_FIDELITY_FAIL_OPEN', 'false')) === 'true');
 define('MOCKUP_FIDELITY_MAX_REGENERATIONS', max(0, min(2, (int)app_env('MOCKUP_FIDELITY_MAX_REGENERATIONS', '2'))));
 define('MOCKUP_FIDELITY_MIN_SCORE', max(0.0, min(100.0, (float)app_env('MOCKUP_FIDELITY_MIN_SCORE', '72'))));
-define('MOCKUP_FIDELITY_REVIEW_MODEL', app_env('MOCKUP_FIDELITY_REVIEW_MODEL', 'gemini-2.5-flash'));
+define('MOCKUP_FIDELITY_REVIEW_MODEL', app_env('MOCKUP_FIDELITY_REVIEW_MODEL', GEMINI_TEXT_MODEL));
 
 
 // Punto #2: ruta configurable al ejecutable PHP (evita rutas hardcodeadas a versiones específicas)

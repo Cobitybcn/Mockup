@@ -5,7 +5,7 @@ class BilingualEditorialFakeClient extends GeminiImageClient
 {
     public string $lastPrompt = '';
 
-    public function generateText(array $parts, string $model = 'gemini-2.5-flash'): string
+    public function generateText(array $parts, ?string $model = null): string
     {
         $this->lastPrompt = (string)($parts[0]['text'] ?? '');
         $isMockup = str_contains($this->lastPrompt, 'independent contextual image')
@@ -97,7 +97,7 @@ final class BilingualEditorialRepairingMockupClient extends BilingualEditorialFa
 {
     public int $calls = 0;
 
-    public function generateText(array $parts, string $model = 'gemini-2.5-flash'): string
+    public function generateText(array $parts, ?string $model = null): string
     {
         $this->calls++;
         if ($this->calls === 1) {
@@ -114,7 +114,7 @@ final class BilingualEditorialRepairingMockupClient extends BilingualEditorialFa
 
 final class BilingualEditorialStaleIdentityClient extends BilingualEditorialFakeClient
 {
-    public function generateText(array $parts, string $model = 'gemini-2.5-flash'): string
+    public function generateText(array $parts, ?string $model = null): string
     {
         $result = parent::generateText($parts, $model);
         if (!str_contains($this->lastPrompt, 'independent contextual image')) return $result;

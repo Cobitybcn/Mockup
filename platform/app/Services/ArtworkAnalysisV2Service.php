@@ -134,7 +134,7 @@ class ArtworkAnalysisV2Service
 
     private function request(string $prompt, string $imagePath): array
     {
-        $raw = $this->client->generateText([$this->client->textPart($prompt), $this->client->imagePart($imagePath)], 'gemini-2.5-flash');
+        $raw = $this->client->generateText([$this->client->textPart($prompt), $this->client->imagePart($imagePath)]);
         $clean = preg_replace('/^```(?:json)?\s*/i', '', trim($raw)) ?? trim($raw);
         $clean = preg_replace('/\s*```$/', '', $clean) ?? $clean;
         $start = strpos($clean, '{'); $end = strrpos($clean, '}');
