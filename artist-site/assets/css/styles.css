@@ -776,6 +776,10 @@ p {
     margin-top: 18px;
 }
 
+.prose + .prose {
+    margin-top: 22px;
+}
+
 .prose h2 {
     font-size: 24px;
 }
