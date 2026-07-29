@@ -540,7 +540,7 @@ function run_uploaded_root_regression_tests(): void
         'el visor de portada respeta automaticamente el formato horizontal o vertical de la imagen'
     );
     TestHarness::assertContains(
-        'ui-catalog.css?v=19',
+        'ui-catalog.css?v=20',
         $seriesSource,
         'Series invalida la cache al publicar cambios visuales del visor y sus bloques'
     );
@@ -644,6 +644,11 @@ function run_uploaded_root_regression_tests(): void
         'grid-auto-columns: clamp(190px, 16vw, 250px)',
         $catalogUiSource,
         'las fichas de Series reutilizan el tamano del catalogo horizontal'
+    );
+    TestHarness::assertContains(
+        ".series-artwork-row[hidden] {\n  display: none;\n}",
+        str_replace("\r\n", "\n", $catalogUiSource),
+        'el filtro por serie puede ocultar las fichas pese a su display flex'
     );
     TestHarness::assertContains(
         "' series-artwork-row--' . series_h(\$cardSeriesTone)",
@@ -812,6 +817,36 @@ function run_uploaded_root_regression_tests(): void
         !str_contains($sceneProgressLayerSource, 'inset: 0;')
             && !str_contains($sceneProgressLayerSource, 'body.compact-scene-progress-open'),
         'el progreso flotante no vuelve a cubrir ni bloquear toda la aplicacion'
+    );
+    TestHarness::assertContains(
+        'restoreFromServer',
+        $sceneProgressLayerSource,
+        'al cargar una pantalla se recuperan las escenas que siguen creandose en segundo plano'
+    );
+    TestHarness::assertContains(
+        "include __DIR__ . '/compact_scene_progress_layer.php';",
+        (string)file_get_contents(dirname(__DIR__, 2) . '/sidebar.php'),
+        'el panel de progreso viaja con el sidebar para restaurarse en cualquier pantalla'
+    );
+    TestHarness::assertContains(
+        "defined('COMPACT_SCENE_PROGRESS_LAYER_RENDERED')",
+        $sceneProgressLayerSource,
+        'incluir el panel dos veces en la misma pantalla no lo duplica'
+    );
+    TestHarness::assertTrue(
+        !str_contains($sceneProgressLayerSource, "auto_generate")
+            && str_contains($sceneProgressLayerSource, 'mockup_generation_activity.php'),
+        'la restauracion solo lee estado y nunca reabre el flujo que volveria a gastar creditos'
+    );
+    TestHarness::assertContains(
+        '.compact-scene-progress-frame[hidden]',
+        $sceneProgressLayerSource,
+        'el panel restaurado puede reemplazar al iframe pese a su display block'
+    );
+    TestHarness::assertContains(
+        'bindActivityPillEntry',
+        $sceneProgressLayerSource,
+        'la pildora de actividad del sidebar abre el detalle en vez de duplicar el indicador'
     );
     TestHarness::assertContains(
         'data-compact-scene-launch',

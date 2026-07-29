@@ -1,4 +1,12 @@
 <?php
+// The sidebar renders this layer on every authenticated page so background
+// scenes can be recovered anywhere. Pages that also include it directly must
+// not paint a second copy.
+if (defined('COMPACT_SCENE_PROGRESS_LAYER_RENDERED')) {
+    return;
+}
+define('COMPACT_SCENE_PROGRESS_LAYER_RENDERED', true);
+
 if (!function_exists('h')) {
     function h($value): string
     {
@@ -159,6 +167,100 @@ if (!function_exists('h')) {
         display: block;
         background: var(--bg, #faf9f6);
     }
+    .compact-scene-progress-frame[hidden],
+    .compact-scene-progress-restored[hidden],
+    .compact-scene-progress-foot[hidden] {
+        display: none !important;
+    }
+    .compact-scene-progress-restored {
+        min-height: 0;
+        display: flex;
+        flex-direction: column;
+        background: var(--bg, #faf9f6);
+    }
+    .compact-scene-progress-list {
+        flex: 1;
+        min-height: 0;
+        display: flex;
+        flex-direction: column;
+        gap: 8px;
+        margin: 0;
+        padding: 12px;
+        overflow-y: auto;
+        list-style: none;
+    }
+    .compact-scene-progress-item {
+        display: grid;
+        grid-template-columns: minmax(0, 1fr) auto;
+        align-items: center;
+        gap: 10px;
+        padding: 10px 12px;
+        border: 1px solid rgba(222, 216, 207, .9);
+        border-radius: 8px;
+        background: #fff;
+    }
+    .compact-scene-progress-item-name {
+        min-width: 0;
+        overflow: hidden;
+        color: var(--ink, #171714);
+        font-size: 12px;
+        font-weight: 700;
+        text-overflow: ellipsis;
+        white-space: nowrap;
+    }
+    .compact-scene-progress-item-scene {
+        display: block;
+        margin-top: 2px;
+        overflow: hidden;
+        color: #7a7069;
+        font-size: 11px;
+        font-weight: 400;
+        text-overflow: ellipsis;
+        white-space: nowrap;
+    }
+    .compact-scene-progress-item-scene:empty {
+        display: none;
+    }
+    .compact-scene-progress-item-state {
+        padding: 5px 9px;
+        border-radius: 999px;
+        background: #f0ece6;
+        color: #6f655d;
+        font-size: 10px;
+        font-weight: 700;
+        letter-spacing: .05em;
+        text-transform: uppercase;
+        white-space: nowrap;
+    }
+    .compact-scene-progress-item.is-creating .compact-scene-progress-item-state {
+        background: #f4e5e5;
+        color: #78535a;
+    }
+    .compact-scene-progress-item.is-ready .compact-scene-progress-item-state {
+        background: #e4f0df;
+        color: #486342;
+    }
+    .compact-scene-progress-item.is-failed .compact-scene-progress-item-state {
+        background: #f5ead3;
+        color: #725a2f;
+    }
+    .compact-scene-progress-foot {
+        padding: 0 12px 12px;
+    }
+    .compact-scene-progress-foot a {
+        display: block;
+        padding: 12px 15px;
+        border: 1px solid #a9bfa3;
+        border-radius: 6px;
+        background: #dcead8;
+        color: #3f593c;
+        font-size: 10px;
+        font-weight: 700;
+        letter-spacing: .06em;
+        text-align: center;
+        text-decoration: none;
+        text-transform: uppercase;
+    }
     .compact-scene-progress-layer.is-minimized .compact-scene-progress-frame {
         visibility: hidden;
         pointer-events: none;
@@ -180,6 +282,15 @@ if (!function_exists('h')) {
         box-shadow: 0 10px 28px rgba(40, 34, 28, .14);
         font: 700 11px/1 var(--font-sans, Arial, sans-serif);
         cursor: pointer;
+    }
+    /* The sidebar activity pill is the entry point to a restored panel, so no
+       second chip repeats the same state. The chip below is the fallback for
+       screens without that pill. */
+    .global-generation-activity.is-scene-progress-entry {
+        cursor: pointer;
+    }
+    .compact-scene-progress-reopen.is-restored {
+        bottom: 84px;
     }
     .compact-scene-progress-reopen:hover,
     .compact-scene-progress-reopen:focus-visible {
@@ -217,6 +328,9 @@ if (!function_exists('h')) {
             right: 10px;
             bottom: 10px;
         }
+        .compact-scene-progress-reopen.is-restored {
+            bottom: 132px;
+        }
     }
 </style>
 <section
@@ -248,6 +362,12 @@ if (!function_exists('h')) {
         title="<?= h(t('Scene creation progress', 'Progreso de creación de escenas')) ?>"
         src="about:blank"
     ></iframe>
+    <div class="compact-scene-progress-restored" data-compact-scene-progress-restored hidden>
+        <ul class="compact-scene-progress-list" data-compact-scene-progress-list></ul>
+        <div class="compact-scene-progress-foot" data-compact-scene-progress-foot hidden>
+            <a data-compact-scene-progress-results href="mockups.php"><?= h(t('View results', 'Ver resultados')) ?></a>
+        </div>
+    </div>
 </section>
 <button class="compact-scene-progress-reopen" type="button" data-compact-scene-progress-reopen hidden>
     <span class="compact-scene-progress-live" aria-hidden="true"></span>
@@ -268,6 +388,11 @@ if (!function_exists('h')) {
         scenesReadySuffix: <?= json_encode(t(' scenes are ready', ' escenas están listas')) ?>,
         scenesReadyFailedSuffix: <?= json_encode(t(' scenes ready · ', ' escenas listas · ')) ?>,
         failedSuffix: <?= json_encode(t(' failed', ' fallaron')) ?>,
+        stateQueued: <?= json_encode(t('In queue', 'En cola')) ?>,
+        stateCreating: <?= json_encode(t('Creating', 'Creando')) ?>,
+        stateReady: <?= json_encode(t('Ready', 'Lista')) ?>,
+        stateFailed: <?= json_encode(t('Failed', 'Falló')) ?>,
+        viewSceneDetail: <?= json_encode(t('View the detail of each scene', 'Ver el detalle de cada escena')) ?>,
     };
     const layer = document.querySelector('[data-compact-scene-progress-layer]');
     const frame = document.querySelector('[data-compact-scene-progress-frame]');
@@ -278,6 +403,24 @@ if (!function_exists('h')) {
     const reopenLabel = reopenButton?.querySelector('span:last-child');
     if (!layer || !frame || !minimizeButton || !hideButton || !reopenButton) return;
 
+    const restoredBody = document.querySelector('[data-compact-scene-progress-restored]');
+    const restoredList = document.querySelector('[data-compact-scene-progress-list]');
+    const restoredFoot = document.querySelector('[data-compact-scene-progress-foot]');
+    const restoredResults = document.querySelector('[data-compact-scene-progress-results]');
+    const brandLink = document.querySelector('.brand');
+    const activityEndpoint = new URL(
+        'mockup_generation_activity.php',
+        brandLink ? brandLink.href : window.location.href
+    ).href;
+    // The runner page drives its own progress, and the embedded frame is the
+    // live panel itself. Neither should grow a second restored panel on top.
+    const ownsItsOwnProgress = document.body.classList.contains('compact-scene-runner')
+        || (window.parent !== window && window.name === 'artwork-scene-progress-frame');
+    const activityPill = document.querySelector('[data-global-generation-activity]');
+    const restoredJobIds = new Set();
+    let restoredPollTimer = 0;
+    let restoredMode = false;
+
     let submittedForm = null;
 
     function setMinimized(minimized) {
@@ -286,7 +429,17 @@ if (!function_exists('h')) {
         minimizeButton.title = minimized ? compactSceneI18n.expandProgress : compactSceneI18n.minimizeProgress;
     }
 
+    function exitRestoredMode() {
+        restoredMode = false;
+        window.clearTimeout(restoredPollTimer);
+        restoredJobIds.clear();
+        if (restoredBody) restoredBody.hidden = true;
+        reopenButton.classList.remove('is-restored');
+        frame.hidden = false;
+    }
+
     function showProgress(label) {
+        exitRestoredMode();
         layer.classList.remove('is-complete', 'has-errors');
         reopenButton.classList.remove('is-complete', 'has-errors');
         if (reopenLabel) reopenLabel.textContent = compactSceneI18n.scenesInBackground;
@@ -298,10 +451,12 @@ if (!function_exists('h')) {
 
     function hideProgress() {
         layer.hidden = true;
-        reopenButton.hidden = false;
+        // While restoring, the sidebar activity pill already reopens the panel.
+        reopenButton.hidden = restoredMode && activityPill !== null;
     }
 
     function finishProgress() {
+        exitRestoredMode();
         layer.hidden = true;
         reopenButton.hidden = true;
         frame.src = 'about:blank';
@@ -357,7 +512,9 @@ if (!function_exists('h')) {
     reopenButton.addEventListener('click', () => {
         layer.hidden = false;
         reopenButton.hidden = true;
-        setMinimized(true);
+        // A restored panel is the only place the per-scene detail lives, so it
+        // opens at full height instead of the minimized live-run bar.
+        setMinimized(!restoredMode);
     });
 
     frame.addEventListener('load', () => {
@@ -380,5 +537,144 @@ if (!function_exists('h')) {
         }
         if (event.data?.type === 'artworkmockups:hide-scene-progress') finishProgress();
     });
+
+    function restoredStateFor(status) {
+        if (status === 'done') return { key: 'ready', label: compactSceneI18n.stateReady };
+        if (status === 'error' || status === 'failed_enqueue') return { key: 'failed', label: compactSceneI18n.stateFailed };
+        if (status === 'processing') return { key: 'creating', label: compactSceneI18n.stateCreating };
+        return { key: 'queued', label: compactSceneI18n.stateQueued };
+    }
+
+    function renderRestored(items) {
+        if (!restoredList) return;
+        restoredList.textContent = '';
+        let readyCount = 0;
+        let failedCount = 0;
+        let pendingCount = 0;
+        let resultsUrl = '';
+
+        items.forEach(item => {
+            const state = restoredStateFor(String(item.status || ''));
+            if (state.key === 'ready') {
+                readyCount++;
+                if (resultsUrl === '' && item.results_url) resultsUrl = String(item.results_url);
+            } else if (state.key === 'failed') {
+                failedCount++;
+            } else {
+                pendingCount++;
+            }
+
+            const row = document.createElement('li');
+            row.className = 'compact-scene-progress-item is-' + state.key;
+            const name = document.createElement('div');
+            name.className = 'compact-scene-progress-item-name';
+            name.textContent = String(item.artwork_title || '');
+            const scene = document.createElement('span');
+            scene.className = 'compact-scene-progress-item-scene';
+            scene.textContent = String(item.scene_category || '');
+            name.appendChild(scene);
+            const badge = document.createElement('span');
+            badge.className = 'compact-scene-progress-item-state';
+            badge.textContent = state.label;
+            row.appendChild(name);
+            row.appendChild(badge);
+            restoredList.appendChild(row);
+        });
+
+        if (restoredFoot && restoredResults) {
+            restoredFoot.hidden = resultsUrl === '';
+            if (resultsUrl !== '') restoredResults.href = resultsUrl;
+        }
+
+        if (pendingCount > 0) {
+            layer.classList.remove('is-complete', 'has-errors');
+            reopenButton.classList.remove('is-complete', 'has-errors');
+            if (title) title.textContent = compactSceneI18n.creatingScenesInBackground;
+            if (reopenLabel) reopenLabel.textContent = compactSceneI18n.scenesInBackground;
+            return;
+        }
+        completeProgress({ readyCount: readyCount, failedCount: failedCount });
+    }
+
+    async function pollRestored() {
+        if (!restoredMode) return;
+        try {
+            const requestUrl = new URL(activityEndpoint);
+            const requestedIds = Array.from(restoredJobIds);
+            if (requestedIds.length) requestUrl.searchParams.set('ids', requestedIds.join(','));
+            const response = await fetch(requestUrl.href, { headers: { Accept: 'application/json' }, cache: 'no-store' });
+            const data = await response.json();
+            if (data?.ok) {
+                (Array.isArray(data.active) ? data.active : [])
+                    .forEach(item => restoredJobIds.add(Number(item.id)));
+                const items = (Array.isArray(data.items) ? data.items : [])
+                    .filter(item => restoredJobIds.has(Number(item.id)));
+                renderRestored(items);
+                if (!items.some(item => item.active)) {
+                    window.clearTimeout(restoredPollTimer);
+                    return;
+                }
+            }
+        } catch (error) {
+        }
+        window.clearTimeout(restoredPollTimer);
+        restoredPollTimer = window.setTimeout(pollRestored, 3000);
+    }
+
+    function openRestoredPanel() {
+        layer.hidden = false;
+        reopenButton.hidden = true;
+        setMinimized(false);
+    }
+
+    function bindActivityPillEntry() {
+        if (!activityPill || activityPill.dataset.sceneProgressEntry === '1') return;
+        activityPill.dataset.sceneProgressEntry = '1';
+        activityPill.classList.add('is-scene-progress-entry');
+        activityPill.setAttribute('role', 'button');
+        activityPill.setAttribute('tabindex', '0');
+        activityPill.title = compactSceneI18n.viewSceneDetail;
+        activityPill.addEventListener('click', event => {
+            if (event.target.closest('[data-global-generation-sound]')) return;
+            openRestoredPanel();
+        });
+        activityPill.addEventListener('keydown', event => {
+            if (event.key !== 'Enter' && event.key !== ' ') return;
+            if (event.target.closest('[data-global-generation-sound]')) return;
+            event.preventDefault();
+            openRestoredPanel();
+        });
+    }
+
+    // Scenes keep being created after the page that launched them is gone. On
+    // every load we ask the server what is still running and offer the panel
+    // back. Restoring only reads status: it never reopens the generation flow,
+    // which would enqueue a second batch and spend credits again.
+    async function restoreFromServer() {
+        if (ownsItsOwnProgress || !restoredBody || !layer.hidden) return;
+        try {
+            const response = await fetch(activityEndpoint, { headers: { Accept: 'application/json' }, cache: 'no-store' });
+            const data = await response.json();
+            const active = (data?.ok && Array.isArray(data.active)) ? data.active : [];
+            if (!active.length || restoredMode || !layer.hidden) return;
+
+            active.forEach(item => restoredJobIds.add(Number(item.id)));
+            restoredMode = true;
+            frame.hidden = true;
+            restoredBody.hidden = false;
+            setMinimized(false);
+            renderRestored(active);
+            if (activityPill) {
+                bindActivityPillEntry();
+            } else {
+                reopenButton.classList.add('is-restored');
+                reopenButton.hidden = false;
+            }
+            pollRestored();
+        } catch (error) {
+        }
+    }
+
+    restoreFromServer();
 })();
 </script>

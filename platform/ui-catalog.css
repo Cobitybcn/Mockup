@@ -1794,6 +1794,11 @@
   background: #c8beb4;
 }
 
+.series-artwork-list[hidden],
+.series-artwork-row[hidden] {
+  display: none;
+}
+
 .series-artwork-row {
   --series-card-tone: #d7d1c9;
   position: relative;

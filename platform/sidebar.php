@@ -1507,6 +1507,7 @@ if ($generatedResultsActive && $sidebarContextArtworkId > 0) {
     refresh(300);
 })();
 </script>
+<?php include __DIR__ . '/compact_scene_progress_layer.php'; ?>
 <?php endif; ?>
 <script>
 (function () {

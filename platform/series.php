@@ -276,7 +276,7 @@ $seriesSearchFields = $selectedSeries ? [
     <meta name="viewport" content="width=device-width,initial-scale=1">
     <title><?= series_h(t('Series - Artwork Mockups', 'Series - Artwork Mockups')) ?></title>
     <link rel="stylesheet" href="style.css">
-    <link rel="stylesheet" href="ui-catalog.css?v=19">
+    <link rel="stylesheet" href="ui-catalog.css?v=20">
     <?php if ($selectedSeries && $seriesBilingualExperiment): ?><link rel="stylesheet" href="bilingual-editorial.css?v=20260723-8"><?php endif; ?>
     <?php if ($seriesPreviewActive): ?>
         <link rel="stylesheet" href="visual-consistency-preview.css?v=2">
