@@ -3,6 +3,11 @@ declare(strict_types=1);
 
 require_once __DIR__ . '/app/bootstrap.php';
 
+function h($v): string
+{
+    return htmlspecialchars((string)$v, ENT_QUOTES, 'UTF-8');
+}
+
 $currentUser = Auth::requireUser();
 FeatureAccess::requirePage($currentUser, FeatureAccess::WEBSITE_MANAGE, 'Site Metrics');
 
