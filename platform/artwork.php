@@ -525,9 +525,16 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && ($_POST['action'] ?? '') === 'selec
 }
 
 if ($_SERVER['REQUEST_METHOD'] === 'POST' && ($_POST['action'] ?? '') === 'assign_series') {
-    $rawSeriesId = trim((string)($_POST['series_id'] ?? ''));
-    ArtworkSeries::assignArtwork($pdo, $artworkOwnerId, $id, $rawSeriesId === '' ? null : (int)$rawSeriesId);
     $experimentQuery = (string)($_POST['bilingual_experiment'] ?? '') === '1' ? '&bilingual_experiment=1' : '';
+    try {
+        $rawSeriesId = trim((string)($_POST['series_id'] ?? ''));
+        ArtworkSeries::assignArtwork($pdo, $artworkOwnerId, $id, $rawSeriesId === '' ? null : (int)$rawSeriesId);
+    } catch (Throwable $seriesError) {
+        // Una regla de negocio (p.ej. "publica primero la serie de destino")
+        // se muestra como aviso en la ficha, jamas como error fatal crudo.
+        header('Location: artwork.php?id=' . rawurlencode((string)$id) . '&series_error=' . rawurlencode($seriesError->getMessage()) . $experimentQuery);
+        exit;
+    }
     header('Location: artwork.php?id=' . rawurlencode((string)$id) . '&series_updated=1' . $experimentQuery);
     exit;
 }
@@ -3355,6 +3362,9 @@ $editIconSvg = '<svg viewBox="0 0 24 24" width="18" height="18" stroke="currentC
 
             <?php if (isset($_GET['series_updated'])): ?>
                 <div class="notice"><?= h(t('Artwork series updated.', 'Serie de la obra actualizada.')) ?></div>
+            <?php endif; ?>
+            <?php if (isset($_GET['series_error'])): ?>
+                <div class="notice error"><?= h((string)$_GET['series_error']) ?></div>
             <?php endif; ?>
             <?php if (isset($_GET['saved'])): ?>
                 <div class="notice"><?= h(t('Artwork sheet saved.', 'Ficha de la obra guardada.')) ?></div>
