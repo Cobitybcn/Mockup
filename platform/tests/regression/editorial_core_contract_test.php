@@ -165,6 +165,11 @@ function run_editorial_core_contract_tests(): void
 
     $endpointSource = (string)file_get_contents($platformRoot . '/bilingual_editorial.php');
     TestHarness::assertContains('queueMockupCascadeForArtwork', $endpointSource, 'EDITORIAL_CORE Libro VI Cap. 4: re-publicar una obra encola la regeneracion de sus mockups');
+    TestHarness::assertContains(
+        'la generacion TERMINADA viaja con su',
+        $endpointSource,
+        'EDITORIAL_CORE Libro VI: una ficha abierta durante la generacion recibe el contenido al completarse — nunca "guardado" con campos vacios'
+    );
     $jobServiceSource = (string)file_get_contents($platformRoot . '/app/Services/BilingualEditorialJobService.php');
     TestHarness::assertContains('cascade_from_artwork', $jobServiceSource, 'EDITORIAL_CORE Libro VI Cap. 4: la cascada marca su origen en cada job');
     TestHarness::assertContains('artistEditedMockupIds', $jobServiceSource, 'EDITORIAL_CORE Libro VI Cap. 4: la cascada saltea los mockups editados a mano');

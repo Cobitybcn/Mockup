@@ -67,10 +67,25 @@ try {
                 $job = $jobs->job((int)$job['id'], $userId);
             }
         }
-        echo json_encode([
+        $statusResponse = [
             'ok' => true,
             'job' => $job ? $jobs->publicState($job) : null,
-        ], JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES);
+        ];
+        // El sondeo activo viaja liviano; la generacion TERMINADA viaja con su
+        // contenido, para que una ficha que quedo abierta durante la
+        // generacion llene sus campos en vez de decir "guardado" mostrando
+        // vacio (el estado invisible confunde — EDITORIAL_CORE Libro VI).
+        if ($job && (string)($statusResponse['job']['status'] ?? '') === 'completed' && $entityId > 0) {
+            $spanishState = $service->get($userId, $entityType, $entityId, 'es');
+            $englishState = $service->get($userId, $entityType, $entityId, 'en');
+            $statusResponse += [
+                'spanish_content' => (array)($spanishState['content'] ?? []),
+                'english_content' => (array)($englishState['content'] ?? []),
+                'english_status' => (string)($englishState['status'] ?? 'unprepared'),
+                'spanish_published' => (bool)($spanishState['is_published'] ?? false),
+            ];
+        }
+        echo json_encode($statusResponse, JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES);
         exit;
     }
     if ($action === 'enqueue_prepare' || $action === 'enqueue_adaptation') {
