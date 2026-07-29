@@ -309,6 +309,8 @@ final class StudioNoteMarkdownImportService
     public function parse(string $markdown): array
     {
         $markdown = preg_replace('/^\xEF\xBB\xBF/', '', $markdown) ?? $markdown;
+        // Los .md llegan escritos en cualquier sistema; CRLF/CR se normalizan antes de parsear.
+        $markdown = str_replace(["\r\n", "\r"], "\n", $markdown);
         if ($markdown === '' || str_contains($markdown, "\0")) {
             throw new RuntimeException('El archivo Markdown está vacío o dañado.');
         }

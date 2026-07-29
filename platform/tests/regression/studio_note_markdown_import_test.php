@@ -150,6 +150,9 @@ The surface preserves what has passed through it. [View the series](https://exam
 
 <script>alert("unsafe")</script>
 MD;
+    // El heredoc hereda los finales de línea del checkout (CRLF en Windows);
+    // se normaliza para que los str_replace de este test coincidan en cualquier sistema.
+    $markdown = str_replace("\r\n", "\n", $markdown);
 
     $service = new StudioNoteMarkdownImportService($pdo);
     $withoutCreatedAt = str_replace(
