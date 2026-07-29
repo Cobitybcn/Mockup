@@ -240,7 +240,7 @@ foreach ($mockups as $mockup) {
     <meta name="viewport" content="width=device-width,initial-scale=1">
     <title><?= smb_h(t('Social Media Board - Artwork Mockups', 'Tablero de Redes Sociales - Artwork Mockups')) ?></title>
     <link rel="stylesheet" href="style.css">
-    <link rel="stylesheet" href="social_media_board.css?v=25">
+    <link rel="stylesheet" href="social_media_board.css?v=32">
     <link rel="stylesheet" href="media-controls.css?v=2">
 </head>
 <body data-social-board-user="<?= $userId ?>">
@@ -319,6 +319,11 @@ foreach ($mockups as $mockup) {
                                     aria-pressed="<?= $mockup['favorite'] ? 'true' : 'false' ?>"
                                     aria-label="<?= $mockup['favorite'] ? smb_h(t('Remove from favorites', 'Quitar de favoritos')) : smb_h(t('Add to favorites', 'Agregar a favoritos')) ?>"
                                 ><svg class="media-action-icon" viewBox="0 0 24 24" aria-hidden="true"><path d="m12 3.7 2.55 5.17 5.71.83-4.13 4.03.97 5.69L12 16.73l-5.1 2.69.97-5.69L3.74 9.7l5.71-.83L12 3.7Z"/></svg></button>
+                                <div class="smb-quick-add" role="group" aria-label="<?= smb_h(t('Add to a board', 'Agregar a un tablero')) ?>">
+                                    <button type="button" class="smb-quick-add-btn smb-quick-add-btn--pinterest" data-quick-add="pinterest" aria-label="<?= smb_h(t('Add to Pinterest', 'Agregar a Pinterest')) ?>"></button>
+                                    <button type="button" class="smb-quick-add-btn smb-quick-add-btn--instagram" data-quick-add="instagram" aria-label="<?= smb_h(t('Add to Instagram', 'Agregar a Instagram')) ?>"></button>
+                                    <button type="button" class="smb-quick-add-btn smb-quick-add-btn--facebook" data-quick-add="facebook" aria-label="<?= smb_h(t('Add to Facebook', 'Agregar a Facebook')) ?>"></button>
+                                </div>
                                 <div class="smb-catalog-card-copy">
                                     <strong><?= smb_h((string)$mockup['editorialTitle']) ?></strong>
                                     <span><?= smb_h((string)$mockup['artworkTitle']) ?> · <?= smb_h((string)$mockup['contextTitle']) ?></span>
@@ -434,6 +439,6 @@ foreach ($mockups as $mockup) {
 <script type="application/json" id="social-board-mockups"><?= json_encode($mockupPayload, JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES | JSON_HEX_TAG) ?></script>
 <script type="application/json" id="social-board-config"><?= json_encode($socialBoardConfig, JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES | JSON_HEX_TAG) ?></script>
 <script src="assets/vendor/sortablejs/Sortable.min.js?v=1.15.7"></script>
-<script src="social_media_board.js?v=25"></script>
+<script src="social_media_board.js?v=34"></script>
 </body>
 </html>

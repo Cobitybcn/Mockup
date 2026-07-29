@@ -70,6 +70,7 @@
         pinterestPurpose: defaultPinterestPurpose,
         scheduled: { pinterest: {}, instagram: {}, facebook: {} },
         schedule: { mode: 'now', date: '', time: '', perPublication: false },
+        lastActiveGroup: { instagram: '', facebook: '' },
     });
 
     const normalizeGroup = (group, platform) => ({
@@ -852,6 +853,27 @@
         document.body.classList.remove('smb-inspector-open');
     };
 
+    const addGroupOptionsMarkup = (platform, id) => {
+        const groups = state.publications[platform];
+        const options = groups
+            .map((group, groupIndex) => ({ group, groupIndex }))
+            .filter(({ group }) => group.items.length < groupLimits[platform] || group.items.includes(id))
+            .map(({ group, groupIndex }) => {
+                const already = group.items.includes(id);
+                const label = `Publication ${groupIndex + 1} · ${group.items.length}/${groupLimits[platform]}`;
+                return `<button type="button" class="smb-inspector-add-group${already ? ' is-current' : ''}" data-add-to-group data-platform="${platform}" data-group-id="${escapeHtml(group.id)}" data-mockup-id="${escapeHtml(id)}">${already ? '✓ ' : ''}${escapeHtml(label)}</button>`;
+            })
+            .join('');
+        return `
+            <div class="smb-inspector-add-row">
+                <span>Add to ${escapeHtml(platformLabels[platform])}</span>
+                <div class="smb-inspector-add-options">
+                    ${options}
+                    <button type="button" class="smb-inspector-add-group smb-inspector-add-group--new" data-add-to-group data-platform="${platform}" data-group-id="" data-mockup-id="${escapeHtml(id)}">+ New publication</button>
+                </div>
+            </div>`;
+    };
+
     const openInspector = (id, platform = '', groupId = '') => {
         const mockup = mockupById.get(String(id));
         const backdrop = document.querySelector('[data-inspector-backdrop]');
@@ -933,6 +955,8 @@
                     <button type="button" class="smb-inspector-add-pinterest" data-add-to-pinterest data-mockup-id="${escapeHtml(id)}">
                         ${state.pinterest.includes(String(id)) ? 'Already on Pinterest board' : 'Add to Pinterest board'}
                     </button>
+                    ${addGroupOptionsMarkup('instagram', id)}
+                    ${addGroupOptionsMarkup('facebook', id)}
                </div>`
             : '';
 
@@ -988,11 +1012,25 @@
     const mediaMarkup = (platform, groupId, id, index) => {
         const mockup = mockupById.get(id);
         if (!mockup) return '';
+        const isCover = index === 0;
         return `
-            <article class="smb-media-tile smb-sortable-item" data-board-item data-platform="${platform}" data-group-id="${escapeHtml(groupId)}" data-mockup-id="${escapeHtml(id)}" data-id="${escapeHtml(id)}" data-index="${index}">
-                <span class="smb-media-position">${index + 1}</span>
+            <article class="smb-media-tile smb-sortable-item${isCover ? ' is-cover' : ''}" data-board-item data-platform="${platform}" data-group-id="${escapeHtml(groupId)}" data-mockup-id="${escapeHtml(id)}" data-id="${escapeHtml(id)}" data-index="${index}">
+                ${isCover
+                    ? `<span class="smb-media-cover-badge" title="Cover image" aria-hidden="true">★</span>`
+                    : `<button class="smb-media-cover" type="button" data-set-cover aria-label="Use as cover image">☆</button>`}
                 <button class="smb-remove-media" type="button" data-remove-media aria-label="Remove image">×</button>
                 <img src="${escapeHtml(mockup.image)}" alt="${escapeHtml(mockup.artworkTitle)}" data-drag-handle data-inspect-mockup draggable="false">
+            </article>`;
+    };
+
+    const heroMarkup = (platform, groupId, id) => {
+        const mockup = mockupById.get(id);
+        if (!mockup) return '';
+        return `
+            <article class="smb-group-hero" data-board-item data-platform="${platform}" data-group-id="${escapeHtml(groupId)}" data-mockup-id="${escapeHtml(id)}" data-id="${escapeHtml(id)}">
+                <span class="smb-group-hero-badge">Cover image</span>
+                <button class="smb-remove-media" type="button" data-remove-media aria-label="Remove image">×</button>
+                <img src="${escapeHtml(mockup.image)}" alt="${escapeHtml(mockup.artworkTitle)}" data-inspect-mockup draggable="false">
             </article>`;
     };
 
@@ -1011,21 +1049,23 @@
                 <input type="date" value="${escapeHtml(group.date || state.schedule.date)}" data-group-date aria-label="Publishing date">
                 <input type="time" value="${escapeHtml(group.time || state.schedule.time)}" data-group-time aria-label="Publishing time">
             </div>` : '';
-        const media = group.items.length
+        const hero = group.items.length ? heroMarkup(platform, group.id, group.items[0]) : '';
+        const filmstripItems = group.items.length
             ? group.items.map((id, itemIndex) => mediaMarkup(platform, group.id, id, itemIndex)).join('')
             : '<div class="smb-publication-empty">Drag mockups into this publication.</div>';
+        const isActiveTarget = group.id === state.lastActiveGroup[platform];
 
         return `
-            <article class="smb-publication-card${state.schedule.mode === 'scheduled' && state.schedule.perPublication ? ' has-schedule' : ''}" data-publication-group="${platform}" data-group-id="${escapeHtml(group.id)}">
+            <article class="smb-publication-card${state.schedule.mode === 'scheduled' && state.schedule.perPublication ? ' has-schedule' : ''}${isActiveTarget && state.publications[platform].length > 1 ? ' is-active-target' : ''}" data-publication-group="${platform}" data-group-id="${escapeHtml(group.id)}">
                 <header class="smb-publication-head">
                     <div class="smb-publication-label"><strong>Publication ${index + 1}</strong><span title="${escapeHtml(displayTitle)}">${escapeHtml(displayTitle)}</span><small>${plural(group.items.length, 'image', 'images')}</small></div>
                     ${firstMockup ? `<label class="smb-publication-language"><span class="sr-only">Idioma de esta publicación</span><select data-group-locale aria-label="Idioma de esta publicación">${localeOptions(firstMockup, locale)}</select></label>` : ''}
                     ${scheduledChip(scheduled)}
                     <button type="button" data-remove-publication aria-label="Remove publication">×</button>
                 </header>
-                <div class="smb-group-carousel-wrap">
-                    <div class="smb-group-carousel smb-group-carousel--${platform}" data-group-carousel data-sortable-platform="${platform}" data-sortable-group-id="${escapeHtml(group.id)}">${media}</div>
-                    ${isInstagram && group.items.length ? `<span class="smb-carousel-count" data-carousel-counter>1 / ${group.items.length}</span>` : ''}
+                <div class="smb-group-media${group.items.length ? '' : ' is-empty'}">
+                    ${hero}
+                    <div class="smb-group-filmstrip smb-group-filmstrip--${platform}" data-group-carousel data-sortable-platform="${platform}" data-sortable-group-id="${escapeHtml(group.id)}">${filmstripItems}</div>
                 </div>
                 <div class="smb-publication-details">
                     <label><span>${copyLabel}</span><textarea data-group-copy placeholder="Write the publication copy">${escapeHtml(group.copy || '')}</textarea></label>
@@ -1055,35 +1095,11 @@
         stack.innerHTML = groups.map((group, index) => publicationMarkup(platform, group, index)).join('');
     };
 
-    const initializeCarouselNavigation = () => {
-        document.querySelectorAll('[data-group-carousel]').forEach((carousel) => {
-            const updateCounter = () => {
-                const counter = carousel.parentElement?.querySelector('[data-carousel-counter]');
-                if (!counter) return;
-                const items = Array.from(carousel.querySelectorAll(':scope > .smb-sortable-item'));
-                if (!items.length) return;
-                const activeIndex = items.reduce((bestIndex, item, index) => {
-                    const currentDistance = Math.abs(item.offsetLeft - carousel.scrollLeft);
-                    const bestDistance = Math.abs(items[bestIndex].offsetLeft - carousel.scrollLeft);
-                    return currentDistance < bestDistance ? index : bestIndex;
-                }, 0);
-                counter.textContent = `${activeIndex + 1} / ${items.length}`;
-            };
-            carousel.addEventListener('scroll', updateCounter, { passive: true });
-            carousel.addEventListener('wheel', (event) => {
-                if (Math.abs(event.deltaY) <= Math.abs(event.deltaX) || carousel.scrollWidth <= carousel.clientWidth) return;
-                event.preventDefault();
-                carousel.scrollLeft += event.deltaY;
-            }, { passive: false });
-        });
-    };
-
     const renderAll = () => {
         boardSortables.forEach((sortable) => sortable.destroy());
         boardSortables = [];
         renderPinterest();
         publicationPlatforms.forEach(renderPublicationBoard);
-        initializeCarouselNavigation();
         const scheduleModeButton = document.querySelector('[data-schedule-by-network]');
         scheduleModeButton?.classList.toggle('is-active', Boolean(state.schedule.perPublication));
         scheduleModeButton?.setAttribute('aria-pressed', state.schedule.perPublication ? 'true' : 'false');
@@ -1175,8 +1191,17 @@
             targetGroup.copyByLocale[targetGroup.locale] = targetGroup.copy;
         }
         state.publications[platform] = state.publications[platform].filter((group) => group.items.length > 0);
+        state.lastActiveGroup[platform] = targetGroup.id;
         if (shouldRender) renderAll();
         return true;
+    };
+
+    const smartTargetGroupId = (platform) => {
+        const eligible = state.publications[platform].filter((group) => group.items.length < groupLimits[platform]);
+        if (!eligible.length) return '';
+        const remembered = state.lastActiveGroup[platform];
+        if (remembered && eligible.some((group) => group.id === remembered)) return remembered;
+        return eligible[eligible.length - 1].id;
     };
 
     const removeMedia = (platform, id, groupId = '') => {
@@ -1190,6 +1215,22 @@
                 group.items = group.items.filter((value) => value !== id);
             }
             state.publications[platform] = state.publications[platform].filter((publication) => publication.items.length > 0);
+        }
+        renderAll();
+    };
+
+    const promoteToCover = (platform, groupId, id) => {
+        const group = findGroup(platform, groupId);
+        if (!group) return;
+        const index = group.items.indexOf(id);
+        if (index <= 0) return;
+        group.items.splice(index, 1);
+        group.items.unshift(id);
+        clearScheduled(platform, group.id);
+        const customized = group.copyCustomizedByLocale[group.locale] === true;
+        if (!customized) {
+            group.copy = defaultGroupCopy(platform, id, group.locale);
+            group.copyByLocale[group.locale] = group.copy;
         }
         renderAll();
     };
@@ -1283,13 +1324,11 @@
     const sortableBaseOptions = () => ({
         group: { name: 'social-media-mockups', pull: true, put: true },
         draggable: '.smb-sortable-item',
-        animation: 140,
+        animation: 120,
         easing: 'cubic-bezier(.2,.7,.2,1)',
         forceFallback: false,
-        fallbackTolerance: 4,
-        swapThreshold: .62,
-        invertSwap: true,
-        invertedSwapThreshold: .48,
+        swapThreshold: .5,
+        invertSwap: false,
         emptyInsertThreshold: 48,
         scroll: true,
         scrollSensitivity: 72,
@@ -1460,6 +1499,13 @@
             return;
         }
 
+        const setCover = event.target.closest('[data-set-cover]');
+        if (setCover) {
+            const item = setCover.closest('[data-board-item]');
+            if (item) promoteToCover(item.dataset.platform, item.dataset.groupId || '', item.dataset.mockupId);
+            return;
+        }
+
         const removePublication = event.target.closest('[data-remove-publication]');
         if (removePublication) {
             const groupElement = removePublication.closest('[data-publication-group]');
@@ -1500,6 +1546,30 @@
             return;
         }
 
+        const quickAddButton = event.target.closest('[data-quick-add]');
+        if (quickAddButton) {
+            const card = quickAddButton.closest('[data-catalog-card]');
+            const id = String(card?.dataset.mockupId || '');
+            const platform = String(quickAddButton.dataset.quickAdd || '');
+            if (!mockupById.has(id)) return;
+            if (platform === 'pinterest') {
+                if (state.pinterest.includes(id)) {
+                    showToast('That mockup is already on the Pinterest board.');
+                    return;
+                }
+                addToPinterest(id);
+                showToast('Added to the Pinterest board.');
+                return;
+            }
+            if (!publicationPlatforms.includes(platform)) return;
+            const groupId = smartTargetGroupId(platform) || createPublication(platform, false).id;
+            const added = addToPublication(platform, id, groupId, null, '', false);
+            renderAll();
+            if (added === false) return;
+            showToast(`Added to ${platformLabels[platform]}.`);
+            return;
+        }
+
         const scrollButton = event.target.closest('[data-scroll-catalog]');
         if (scrollButton) {
             const rail = document.querySelector('[data-catalog-rail]');
@@ -1522,6 +1592,22 @@
             closeInspector();
             setFocusedNetwork('pinterest');
             showToast('The mockup was added to the Pinterest board.');
+            return;
+        }
+
+        const addToGroupButton = event.target.closest('[data-add-to-group]');
+        if (addToGroupButton) {
+            const platform = String(addToGroupButton.dataset.platform || '');
+            const id = String(addToGroupButton.dataset.mockupId || '');
+            const requestedGroupId = String(addToGroupButton.dataset.groupId || '');
+            if (!mockupById.has(id) || !publicationPlatforms.includes(platform)) return;
+            const groupId = requestedGroupId || createPublication(platform, false).id;
+            const added = addToPublication(platform, id, groupId, null, '', false);
+            renderAll();
+            if (added === false) return;
+            closeInspector();
+            setFocusedNetwork(platform);
+            showToast(`The mockup was added to ${platformLabels[platform]}.`);
             return;
         }
 
@@ -1558,6 +1644,19 @@
             }
             closeScheduleDialog();
             openPublishConfirmation(payload);
+            return;
+        }
+
+        const publicationCard = event.target.closest('[data-publication-group]');
+        if (publicationCard) {
+            const platform = publicationCard.dataset.publicationGroup;
+            const groupId = publicationCard.dataset.groupId;
+            if (publicationPlatforms.includes(platform) && groupId
+                && state.publications[platform].length > 1
+                && state.lastActiveGroup[platform] !== groupId) {
+                state.lastActiveGroup[platform] = groupId;
+                renderAll();
+            }
         }
     });
 
