@@ -515,22 +515,9 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && ($_POST['action'] ?? '') === 'selec
                     'user_id' => $artworkOwnerId,
                 ]);
         }, 12);
-        // Seleccionar la raiz es una decision grafica. El paquete editorial es de
-        // Artist Pro y se prepara a pedido, no como efecto de esta eleccion.
-        if (ProviderSettings::isRealMode()
-            && ProviderSettings::allowRealApi()
-            && ProviderSettings::imageProvider() === 'gemini'
-            && FeatureAccess::allowsUserId($artworkOwnerId, FeatureAccess::EDITORIAL_MANAGE)
-        ) {
-            try {
-                $artworkForV2=$artwork;$artworkForV2['root_file']=$candidateFile;
-                $generated=(new ArtworkAnalysisV2Service(new GeminiImageClient(), $pdo))->generateDraft($artworkForV2,ArtistProfile::findForUser($artworkOwnerId),RESULTS_DIR.DIRECTORY_SEPARATOR.$candidateFile,'Automatic v2 analysis after root selection.',$artworkAnalysisLocale);
-                artwork_apply_v2_metadata($pdo,$id,$artworkOwnerId,(array)$generated['draft']);
-                header('Location: artwork.php?id=' . rawurlencode((string)$id) . '&root_selected=1&v2_generated=1');exit;
-            } catch (Throwable $v2Error) {
-                header('Location: artwork.php?id=' . rawurlencode((string)$id) . '&root_selected=1&metadata_error=' . rawurlencode($v2Error->getMessage()));exit;
-            }
-        }
+        // Seleccionar la raiz es una decision grafica y nada mas. El contenido
+        // se genera desde su unico boton, no como efecto de cambiar la imagen:
+        // probar tres candidatas costaba antes tres analisis con imagen.
     }
 
     header('Location: artwork.php?id=' . rawurlencode((string)$id) . '&root_selected=1');
@@ -791,84 +778,6 @@ if (!function_exists('artwork_latest_root_view_job_candidates')) {
     }
 }
 
-if ($_SERVER['REQUEST_METHOD'] === 'POST' && ($_POST['action'] ?? '') === 'generate_spanish_reanalysis_comparison') {
-    try {
-        Auth::requireValidCsrf((string)($_POST['csrf'] ?? ''), 'bilingual_editorial');
-        if (!$bilingualExperiment) throw new RuntimeException(t('The bilingual editorial pilot is not enabled for this artwork.', 'El piloto editorial bilingüe no está habilitado para esta obra.'));
-        if (!ProviderSettings::isRealMode() || !ProviderSettings::allowRealApi() || ProviderSettings::imageProvider() !== 'gemini') {
-            throw new RuntimeException(t('Gemini real analysis is not enabled in this environment.', 'El análisis real de Gemini no está habilitado en este entorno.'));
-        }
-        $imageFile = basename((string)($artwork['root_file'] ?? ''));
-        $imagePath = $imageFile !== '' ? RESULTS_DIR . DIRECTORY_SEPARATOR . $imageFile : '';
-        if ($imageFile === '' || !artwork_result_file_available($imageFile) || !is_file($imagePath)) {
-            throw new RuntimeException(t('Selected root artwork image was not found.', 'No se encontró la imagen de la obra raíz seleccionada.'));
-        }
-        $profileForComparison = ArtistProfile::findForUser($artworkOwnerId);
-        $sheetForComparison = (new ArtworkSheetService($pdo))->sheetForArtwork($id, $artworkOwnerId);
-        $generated = (new ArtworkAnalysisV2Service(new GeminiImageClient(), $pdo))->generateDraft(
-            $artwork,
-            $profileForComparison,
-            $imagePath,
-            (string)($sheetForComparison['user_notes'] ?? ''),
-            'es'
-        );
-        $comparisonDraft = (array)$generated['draft'];
-        $comparisonDraft['review'] = is_array($comparisonDraft['review'] ?? null) ? $comparisonDraft['review'] : [];
-        $comparisonDraft['review']['comparison_only'] = true;
-        $comparisonDraft['review']['comparison_created_at'] = date(DATE_ATOM);
-        if (file_put_contents(
-            (string)$generated['file'],
-            json_encode($comparisonDraft, JSON_PRETTY_PRINT | JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES) . PHP_EOL
-        ) === false) {
-            throw new RuntimeException(t('The independent Spanish analysis could not be saved.', 'No se pudo guardar el análisis independiente en español.'));
-        }
-        header('Location: artwork.php?id=' . rawurlencode((string)$id) . '&spanish_reanalysis_ready=1#artwork-metadata');
-        exit;
-    } catch (Throwable $e) {
-        header('Location: artwork.php?id=' . rawurlencode((string)$id) . '&metadata_error=' . rawurlencode($e->getMessage()) . '#artwork-metadata');
-        exit;
-    }
-}
-
-if ($_SERVER['REQUEST_METHOD'] === 'POST' && ($_POST['action'] ?? '') === 'use_spanish_reanalysis_comparison') {
-    try {
-        Auth::requireValidCsrf((string)($_POST['csrf'] ?? ''), 'bilingual_editorial');
-        if (!$bilingualExperiment) throw new RuntimeException(t('The bilingual editorial pilot is not enabled for this artwork.', 'El piloto editorial bilingüe no está habilitado para esta obra.'));
-        $comparison = artwork_v2_draft_for_image((string)($artwork['root_file'] ?? ''));
-        $comparisonDraft = is_array($comparison['data'] ?? null) ? (array)$comparison['data'] : [];
-        if (($comparisonDraft['analysis_language'] ?? '') !== 'es' || empty($comparisonDraft['review']['comparison_only'])) {
-            throw new RuntimeException(t('No independent Spanish reanalysis is available.', 'No hay un reanálisis independiente en español disponible.'));
-        }
-        $spanishState = $bilingualEditorialService->get($artworkOwnerId, 'artwork', $id, 'es');
-        $bilingualEditorialService->save(
-            $artworkOwnerId,
-            'artwork',
-            $id,
-            'es',
-            ArtworkAnalysisV2::editorialContent($comparisonDraft),
-            (string)$spanishState['private_memo']
-        );
-        header('Location: artwork.php?id=' . rawurlencode((string)$id) . '&spanish_reanalysis_used=1#artwork-metadata');
-        exit;
-    } catch (Throwable $e) {
-        header('Location: artwork.php?id=' . rawurlencode((string)$id) . '&metadata_error=' . rawurlencode($e->getMessage()) . '#artwork-metadata');
-        exit;
-    }
-}
-
-if ($_SERVER['REQUEST_METHOD'] === 'POST' && ($_POST['action'] ?? '') === 'apply_v2_artwork_draft') {
-    try {
-        $draftMatch = artwork_v2_draft_for_image((string)($artwork['root_file'] ?? ''));
-        if (!$draftMatch) throw new RuntimeException(t('No valid v2 draft exists for the selected root artwork.', 'No existe un borrador v2 válido para la obra raíz seleccionada.'));
-        artwork_apply_v2_metadata($pdo, $id, $artworkOwnerId, (array)$draftMatch['data']);
-        header('Location: artwork.php?id=' . rawurlencode((string)$id) . '&v2_applied=1#artwork-metadata');
-        exit;
-    } catch (Throwable $e) {
-        header('Location: artwork.php?id=' . rawurlencode((string)$id) . '&metadata_error=' . rawurlencode($e->getMessage()) . '#artwork-metadata');
-        exit;
-    }
-}
-
 if ($_SERVER['REQUEST_METHOD'] === 'POST' && ($_POST['action'] ?? '') === 'generate_v2_artwork_draft') {
     try {
         if (!ProviderSettings::isRealMode() || !ProviderSettings::allowRealApi() || ProviderSettings::imageProvider() !== 'gemini') throw new RuntimeException(t('Gemini real analysis is not enabled in this environment.', 'El análisis real de Gemini no está habilitado en este entorno.'));
@@ -880,7 +789,31 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && ($_POST['action'] ?? '') === 'gener
         $v2Service = new ArtworkAnalysisV2Service(new GeminiImageClient(), $pdo);
         $generated=$v2Service->generateDraft($artwork, $profileForV2, $imagePath, (string)($sheetForNotes['user_notes']??''), $artworkAnalysisLocale);
         artwork_apply_v2_metadata($pdo,$id,$artworkOwnerId,(array)$generated['draft']);
-        header('Location: artwork.php?id=' . rawurlencode((string)$id) . '&v2_applied=1#artwork-metadata');
+        // Una sola accion deja el idioma de trabajo y su adaptacion listos. El
+        // analisis ya dejo escrito el master; adaptar es solo texto y barato.
+        $adaptationWarning = '';
+        $adaptationTarget = $bilingualEditorialService->isEnabled($artworkOwnerId)
+            && FeatureAccess::allowsUserId($artworkOwnerId, FeatureAccess::EDITORIAL_MANAGE)
+                ? $bilingualEditorialService->primaryAdaptationTarget($artworkOwnerId)
+                : '';
+        if ($adaptationTarget !== '') {
+            try {
+                (new BilingualEditorialAdapterService($pdo))->adaptMissing(
+                    $artworkOwnerId,
+                    'artwork',
+                    $id,
+                    $artworkAnalysisLocale,
+                    $adaptationTarget
+                );
+            } catch (Throwable $adaptationError) {
+                // El analisis vale por si mismo: una adaptacion fallida no debe
+                // descartarlo ni obligar a volver a pagar la llamada con imagen.
+                $adaptationWarning = $adaptationError->getMessage();
+            }
+        }
+        header('Location: artwork.php?id=' . rawurlencode((string)$id) . '&v2_applied=1'
+            . ($adaptationWarning !== '' ? '&adaptation_error=' . rawurlencode($adaptationWarning) : '')
+            . '#artwork-metadata');
         exit;
     } catch (Throwable $e) {
         header('Location: artwork.php?id=' . rawurlencode((string)$id) . '&metadata_error=' . rawurlencode($e->getMessage()) . '#artwork-metadata');
@@ -1288,12 +1221,7 @@ $v2DraftMatch = artwork_v2_draft_for_image($rootFile);
 $v2Draft = is_array($v2DraftMatch['data'] ?? null)
     ? $v2DraftMatch['data']
     : (($artworkSheetGenerated['schema_version'] ?? '') === ArtworkAnalysisV2::SCHEMA_VERSION ? $artworkSheetGenerated : null);
-$spanishComparisonDraft = $v2Draft
-    && (string)($v2Draft['analysis_language'] ?? '') === 'es'
-    && !empty($v2Draft['review']['comparison_only'])
-        ? $v2Draft
-        : null;
-if ($v2Draft && !$spanishComparisonDraft && !in_array((string)($artworkSheet['status'] ?? ''), ['validated', 'approved'], true)) {
+if ($v2Draft && !in_array((string)($artworkSheet['status'] ?? ''), ['validated', 'approved'], true)) {
     try {
         artwork_apply_v2_metadata($pdo, $id, $artworkOwnerId, $v2Draft);
         $artwork = $sheetService->artwork($id, $artworkOwnerId);
@@ -1515,21 +1443,6 @@ $editIconSvg = '<svg viewBox="0 0 24 24" width="18" height="18" stroke="currentC
         .bilingual-publication-bar { display:flex; align-items:center; justify-content:space-between; gap:18px; margin:0 14px 14px; padding:14px 18px; border-top:1px solid var(--line); background:#fbf7e8; }
         .bilingual-publication-bar span { color:var(--muted); font-size:10px; font-weight:700; letter-spacing:.07em; text-transform:uppercase; }
         .bilingual-publication-bar button { min-height:38px; margin:0; padding:9px 16px; border:1px solid #d8c17e; border-radius:3px; background:#ead99f; color:#554a30; box-shadow:none; font-size:10px; font-weight:700; letter-spacing:.05em; text-transform:uppercase; }
-        .bilingual-reanalysis { margin:0 14px 14px; border-top:1px solid var(--line); }
-        .bilingual-reanalysis > summary { display:flex; align-items:center; justify-content:space-between; gap:18px; padding:16px 6px; cursor:pointer; list-style:none; }
-        .bilingual-reanalysis > summary::-webkit-details-marker { display:none; }
-        .bilingual-reanalysis-title strong { display:block; color:var(--ink); font:500 19px/1.2 var(--font-serif); }
-        .bilingual-reanalysis-title span { display:block; margin-top:4px; color:var(--muted); font-size:11px; }
-        .bilingual-reanalysis-state { color:#9a7b56; font-size:9px; font-weight:700; letter-spacing:.08em; text-transform:uppercase; white-space:nowrap; }
-        .bilingual-reanalysis-state::after { content:'+'; margin-left:12px; font:500 18px/1 var(--font-serif); }
-        .bilingual-reanalysis[open] .bilingual-reanalysis-state::after { content:'−'; }
-        .bilingual-reanalysis-body { padding:0 6px 16px; }
-        .bilingual-reanalysis-intro { max-width:780px; margin:0 0 14px; color:var(--muted); font-size:13px; line-height:1.6; }
-        .bilingual-reanalysis-proposal { padding:18px; border:1px solid var(--line); border-top:3px solid #d8c17e; background:#fbf7e8; }
-        .bilingual-reanalysis-proposal > span { display:block; color:#8c7440; font-size:9px; font-weight:700; letter-spacing:.08em; text-transform:uppercase; }
-        .bilingual-reanalysis-field { margin-top:15px; padding-top:13px; border-top:1px solid rgba(140,116,64,.2); }
-        .bilingual-reanalysis-field label { display:block; color:var(--muted); font-size:9px; font-weight:700; letter-spacing:.07em; text-transform:uppercase; }
-        .bilingual-reanalysis-field div { margin-top:9px; color:var(--ink); font-size:14px; line-height:1.65; white-space:pre-wrap; }
         .bilingual-reanalysis-actions { display:flex; align-items:center; gap:10px; margin-top:14px; }
         .bilingual-reanalysis-actions form { margin:0; }
         .bilingual-reanalysis-actions button { min-height:38px; margin:0; padding:9px 16px; border:1px solid #d8c17e; border-radius:3px; background:#ead99f; color:#554a30; box-shadow:none; font-size:10px; font-weight:700; letter-spacing:.05em; text-transform:uppercase; }
@@ -3406,7 +3319,7 @@ $editIconSvg = '<svg viewBox="0 0 24 24" width="18" height="18" stroke="currentC
                     ['key' => 'caption', 'es' => 'Pie de imagen', 'en' => 'Caption', 'description' => false, 'es_placeholder' => 'Texto breve para publicación…', 'en_placeholder' => 'International publication caption…'],
                 ];
                 ?>
-                <details class="bilingual-editorial-panel" id="artwork-metadata"<?= isset($_GET['spanish_reanalysis_ready']) || isset($_GET['spanish_reanalysis_used']) || $metadataErrorMessage !== '' ? ' open' : '' ?>>
+                <details class="bilingual-editorial-panel" id="artwork-metadata"<?= isset($_GET['v2_applied']) || $metadataErrorMessage !== '' ? ' open' : '' ?>>
                     <summary>
                         <span class="bilingual-editorial-summary">
                             <strong><?= h(t('Editorial workspace', 'Espacio editorial')) ?></strong>
@@ -3441,57 +3354,8 @@ $editIconSvg = '<svg viewBox="0 0 24 24" width="18" height="18" stroke="currentC
                         </article>
                     </div>
                     <div class="bilingual-reanalysis-actions" style="margin:0 20px 14px;">
-                        <button type="button" data-editorial-generate><?= $artworkSpanishHasContent ? h(t('Update ES + EN content', 'Actualizar contenido ES + EN')) : h(t('Generate ES + EN content', 'Generar contenido ES + EN')) ?></button>
+                        <button type="button" data-editorial-generate><?= $artworkSpanishHasContent ? h(t('Regenerate content', 'Regenerar contenido')) : h(t('Generate content', 'Generar contenido')) ?></button>
                     </div>
-                    <?php $spanishComparisonContent = $spanishComparisonDraft ? ArtworkAnalysisV2::editorialContent($spanishComparisonDraft) : []; ?>
-                    <details class="bilingual-reanalysis"<?= isset($_GET['spanish_reanalysis_ready']) || $metadataErrorMessage !== '' ? ' open' : '' ?>>
-                        <summary>
-                            <span class="bilingual-reanalysis-title">
-                                <strong><?= h(t('Reanalyze artwork in Spanish', 'Reanalizar obra en español')) ?></strong>
-                                <span><?= h(t('A second reading created directly from the image.', 'Una segunda lectura creada directamente desde la imagen.')) ?></span>
-                            </span>
-                            <span class="bilingual-reanalysis-state"><?= $spanishComparisonDraft ? h(t('Proposal available', 'Propuesta disponible')) : h(t('Compare', 'Comparar')) ?></span>
-                        </summary>
-                        <div class="bilingual-reanalysis-body">
-                            <?php if ($metadataErrorMessage !== ''): ?><div class="notice error"><?= h($metadataErrorMessage) ?></div><?php endif; ?>
-                            <p class="bilingual-reanalysis-intro"><?= h(t('This option looks at the image again with your profile and the current direction of its series. It generates an independent Spanish proposal without modifying the fields above.', 'Esta opción vuelve a observar la imagen con tu perfil y la dirección actual de su serie. Genera una propuesta española independiente sin modificar los campos de arriba.')) ?></p>
-                            <?php if ($spanishComparisonDraft): ?>
-                                <article class="bilingual-reanalysis-proposal">
-                                    <span><?= h(t('New analysis from the image · Spanish', 'Análisis nuevo desde la imagen · español')) ?></span>
-                                    <?php foreach ($bilingualEditorialFields as $field): ?>
-                                        <?php $comparisonValue = trim((string)($spanishComparisonContent[$field['key']] ?? '')); ?>
-                                        <?php if ($comparisonValue !== ''): ?>
-                                            <section class="bilingual-reanalysis-field">
-                                                <label><?= h($field['es']) ?></label>
-                                                <div><?= h($comparisonValue) ?></div>
-                                            </section>
-                                        <?php endif; ?>
-                                    <?php endforeach; ?>
-                                </article>
-                                <p class="bilingual-reanalysis-intro" style="margin-top:12px;"><?= h(t('"Use this proposal" replaces the editable master Spanish. Afterward, "Prepare website" rebuilds the international English.', '“Usar esta propuesta” reemplaza el español maestro editable. Después, “Preparar website” reconstruye el inglés internacional.')) ?></p>
-                                <div class="bilingual-reanalysis-actions">
-                                    <form method="post">
-                                        <input type="hidden" name="action" value="use_spanish_reanalysis_comparison">
-                                        <input type="hidden" name="csrf" value="<?= h(Auth::csrfToken('bilingual_editorial')) ?>">
-                                        <button type="submit"><?= h(t('Use this proposal', 'Usar esta propuesta')) ?></button>
-                                    </form>
-                                    <form method="post" onsubmit="this.querySelector('button').disabled=true;this.querySelector('button').textContent=<?= h(json_encode(t('Analyzing…', 'Analizando…'))) ?>;">
-                                        <input type="hidden" name="action" value="generate_spanish_reanalysis_comparison">
-                                        <input type="hidden" name="csrf" value="<?= h(Auth::csrfToken('bilingual_editorial')) ?>">
-                                        <button type="submit" class="secondary"><?= h(t('Generate another', 'Generar otra')) ?></button>
-                                    </form>
-                                </div>
-                            <?php else: ?>
-                                <div class="bilingual-reanalysis-actions">
-                                    <form method="post" onsubmit="this.querySelector('button').disabled=true;this.querySelector('button').textContent=<?= h(json_encode(t('Analyzing…', 'Analizando…'))) ?>;">
-                                        <input type="hidden" name="action" value="generate_spanish_reanalysis_comparison">
-                                        <input type="hidden" name="csrf" value="<?= h(Auth::csrfToken('bilingual_editorial')) ?>">
-                                        <button type="submit"><?= h(t('Generate Spanish analysis', 'Generar análisis español')) ?></button>
-                                    </form>
-                                </div>
-                            <?php endif; ?>
-                        </div>
-                    </details>
                     <details class="bilingual-editorial-memo">
                         <summary><?= h(t('Private memo for this artwork', 'Memo privado de la obra')) ?></summary>
                         <div class="bilingual-editorial-copy" contenteditable="true" role="textbox" aria-multiline="true" data-private-memo data-editorial-locale="es" data-placeholder="<?= h(t('Ideas, decisions, and reminders that are not published…', 'Ideas, decisiones y recordatorios que no se publican…')) ?>"><?= h($artworkSpanishEditorial['private_memo'] ?? '') ?></div>

@@ -40,7 +40,7 @@
     const legacyStorageKey = `artwork-mockups-social-board-v1:${userId}`;
     const publicationPlatforms = ['instagram', 'facebook'];
     const networkPlatforms = ['pinterest', ...publicationPlatforms];
-    const groupLimits = { instagram: 10, facebook: 3 };
+    const groupLimits = { instagram: 10, facebook: 10 };
     const cards = Array.from(document.querySelectorAll('[data-catalog-card]'));
     const originalOrder = new Map(cards.map((card, index) => [card.dataset.mockupId, index]));
     let toastTimer = 0;
@@ -1149,9 +1149,7 @@
             ? insertAt - 1
             : insertAt;
         if (existingIndex < 0 && targetGroup.items.length >= groupLimits[platform]) {
-            showToast(platform === 'facebook'
-                ? 'This Facebook publication already has 3 images.'
-                : 'This Instagram carousel already has 10 images.');
+            showToast(`This ${platform === 'facebook' ? 'Facebook publication' : 'Instagram carousel'} already has ${groupLimits[platform]} images.`);
             return false;
         }
 

@@ -26,8 +26,8 @@ final class MetaPublisher
     {
         $drafts = array_values($drafts);
         $publicImageUrls = array_values(array_map('strval', $publicImageUrls));
-        if (!$drafts || count($drafts) !== count($publicImageUrls) || count($drafts) > 3) {
-            throw new InvalidArgumentException('Facebook publications require one to three reviewed images.');
+        if (!$drafts || count($drafts) !== count($publicImageUrls) || count($drafts) > 10) {
+            throw new InvalidArgumentException('Facebook publications require one to ten reviewed images.');
         }
         foreach ($publicImageUrls as $url) {
             if (!$this->isHttpsUrl($url)) throw new InvalidArgumentException('Facebook requires public HTTPS image URLs.');
@@ -101,8 +101,8 @@ final class MetaPublisher
     public static function facebookMultiPhotoPayload(array $draft, array $mediaIds): array
     {
         $mediaIds = array_values(array_filter(array_map(static fn ($id): string => trim((string)$id), $mediaIds)));
-        if (count($mediaIds) < 2 || count($mediaIds) > 3) {
-            throw new InvalidArgumentException('Facebook multi-photo publications require two or three uploaded photos.');
+        if (count($mediaIds) < 2 || count($mediaIds) > 10) {
+            throw new InvalidArgumentException('Facebook multi-photo publications require two to ten uploaded photos.');
         }
         return [
             'message' => self::facebookCaption($draft),

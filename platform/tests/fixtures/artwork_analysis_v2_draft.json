@@ -1,0 +1,381 @@
+{
+    "schema_version": "artwork-analysis.v2",
+    "artwork_id": 0,
+    "analysis_language": "es",
+    "source": {
+        "image_file": "fixture-artwork.jpg",
+        "artist_profile_version": "2024-05-15",
+        "analysis_prompt_version": "v2",
+        "analyzed_at": "2026-07-24T10:18:13+00:00"
+    },
+    "confirmed_facts": {
+        "working_title": "LUX REMOTA",
+        "artist": "Maurizio Valch",
+        "year": null,
+        "series": "MARE SOMNIORUM",
+        "medium": "Acrílico y óleo",
+        "materials": [
+            "Acrílico",
+            "Óleo",
+            "Lienzo"
+        ],
+        "width_cm": 120,
+        "height_cm": 80,
+        "depth_cm": 3,
+        "orientation": "horizontal",
+        "signature": null,
+        "certificate_of_authenticity": null,
+        "presentation": null,
+        "shipping_notes": null
+    },
+    "evidence_sources": {
+        "artist_or_record_facts": [
+            "CONFIRMED ARTWORK DATA (artwork_id, working_title, artist, series, dimensions, orientation)",
+            "Artist Profile (Medium and process: 'Trabajo principalmente con acrílico y óleo sobre lienzo')",
+            "Artist Profile (Core artistic language: 'campos cromáticos, superficies estratificadas, horizontes, divisiones espaciales, líneas incisas, bloques, formas monolíticas')",
+            "Artist Profile (Recurring symbols and motifs: 'Territorios divididos, horizontes, monolitos, bloques, incisiones, estratos, escaleras pequeñas o ascendentes, formas suspendidas')",
+            "Artist Profile (Emotional atmosphere: 'Silenciosas, sobrias, contenidas, contemplativas y ligeramente melancólicas')",
+            "Series Context (MARE SOMNIORUM: 'Horizons of memory and dream, built with light and form', 'territorio abierto, silencioso y luminoso', 'luz, vacío y la separación entre elementos producen una atmósfera de contemplación y extrañeza serena')"
+        ],
+        "visual_observations": [
+            "Composición de bandas horizontales de color",
+            "Gran campo de color azul oscuro en la parte superior",
+            "Bloque rectangular rojo intenso a la izquierda del campo azul",
+            "Marcas turquesas/azules en el bloque rojo",
+            "Franja horizontal ancha de color ocre claro debajo del azul y el rojo",
+            "Forma ovalada/circular blanca brillante suspendida en el campo azul a la derecha",
+            "Franja horizontal gris claro en la parte inferior, con salpicaduras turquesas",
+            "Bloque rectangular naranja vibrante en la esquina inferior derecha",
+            "Una escalera larga de color rojizo apoyada en la franja gris inferior",
+            "Una escalera más corta y delgada de color rojizo en el horizonte ocre, hacia la derecha",
+            "Pequeñas franjas de color verde en el horizonte y en la parte inferior",
+            "Tensión entre elementos sólidos y el espacio abierto",
+            "Pinceladas y texturas visibles en la superficie del lienzo"
+        ],
+        "interpretive_claims": [
+            "La obra articula una tensión entre la solidez de sus bloques y la levedad de un espacio onírico, característico de la serie MARE SOMNIORUM. (visual_observations, artist_or_record_facts)",
+            "La composición en planos superpuestos y el horizonte bajo crea una sensación de distancia y apertura espacial, coherente con la idea de un 'territorio abierto' de la serie. (visual_observations: amplios campos de color, horizonte bajo, distancia entre elementos; artist_or_record_facts: Series Context)",
+            "El monolito rojo y la forma luminosa blanca, junto con las escaleras, funcionan como presencias escultóricas o arquitectónicas dentro de este espacio, sugiriendo umbrales o puntos de transición sin un significado narrativo fijo. (visual_observations: bloque rojo, forma luminosa, escaleras; artist_or_record_facts: Recurring symbols and motifs, Series Context Interpretive limits)",
+            "La calidad matérica de la superficie, con sus raspados y veladuras, refuerza la noción de la pintura como 'superficie de origen, memoria y transformación' del artista. (visual_observations: raspados en el monolito, veladuras en el cielo, textura en franjas inferiores; artist_or_record_facts: Artist Profile: Materials and process, Preferred description tone)",
+            "La elección cromática y la luz suspendida contribuyen a una atmósfera de extrañeza serena y onírica, tal como describe el artista para la serie MARE SOMNIORUM. (visual_observations: azul profundo, rojo vibrante, luz blanca flotante; artist_or_record_facts: Series Context, Emotional atmosphere)"
+        ]
+    },
+    "editorial_strategy": {
+        "description_opening_type": "movement",
+        "description_opening_rhythm": "short_then_long",
+        "description_structure_type": "visual_material_conceptual_spatial",
+        "recent_opening_types_to_avoid": [
+            "material"
+        ],
+        "selection_basis": {
+            "history_window": 1,
+            "eligible_types": [
+                "movement",
+                "detail",
+                "viewer",
+                "negative_space",
+                "architecture",
+                "color",
+                "atmosphere",
+                "process",
+                "light",
+                "territory",
+                "contrast",
+                "composition",
+                "material"
+            ],
+            "eligible_structures": [
+                "visual_material_conceptual_spatial",
+                "contrast_tension_viewer",
+                "process_surface_depth_presence",
+                "color_rhythm_territory_contemplation",
+                "detail_expansion_interpretation"
+            ],
+            "type_usage": {
+                "composition": 0,
+                "color": 0,
+                "material": 1,
+                "atmosphere": 0,
+                "territory": 0,
+                "symbol": 0,
+                "movement": 0,
+                "light": 0,
+                "process": 0,
+                "viewer": 0,
+                "scale": 0,
+                "contrast": 0,
+                "detail": 0,
+                "negative_space": 0,
+                "architecture": 0
+            },
+            "rhythm_usage": {
+                "short_then_long": 0,
+                "one_long_sentence": 0,
+                "two_medium_sentences": 0,
+                "long_then_short": 1,
+                "direct_observation": 0
+            },
+            "structure_usage": {
+                "visual_material_conceptual_spatial": 0,
+                "atmosphere_composition_symbol_process": 0,
+                "detail_expansion_interpretation": 1,
+                "process_surface_depth_presence": 0,
+                "contrast_tension_viewer": 0,
+                "color_rhythm_territory_contemplation": 0
+            }
+        },
+        "paragraph_functions": [
+            "Introducción visual y compositiva que establece la escena y el movimiento inicial de la mirada.",
+            "Análisis material y formal que describe la superficie, el color y los elementos clave.",
+            "Interpretación conceptual y atmosférica que conecta la obra con la visión del artista y la serie MARE SOMNIORUM."
+        ],
+        "opening_paragraph": "La mirada se desplaza a través de \"Luz Remota\", una composición abstracta que invita a la contemplación. Un vasto campo de azul profundo se extiende sobre un horizonte bajo, donde un imponente bloque rojo emerge a la izquierda, equilibrado por una forma luminosa y etérea que flota en la lejanía."
+    },
+    "visual_analysis": {
+        "dominant_colors": [
+            "Azul",
+            "Rojo",
+            "Ocre",
+            "Gris"
+        ],
+        "secondary_colors": [
+            "Blanco",
+            "Turquesa",
+            "Naranja",
+            "Verde"
+        ],
+        "color_temperature": "Fría, con contrastes cálidos",
+        "contrast": "Alto contraste cromático y lumínico",
+        "composition": {
+            "type": "Abstracta geométrica",
+            "organization": "Estratificada horizontalmente con elementos focales",
+            "focal_areas": [
+                "Bloque rojo a la izquierda",
+                "Forma luminosa blanca a la derecha",
+                "Escalera en primer plano"
+            ],
+            "balance": "Asimétrico y dinámico",
+            "depth": "Sugerida por superposición de planos y distancia"
+        },
+        "rhythm_and_movement": "El ojo se mueve horizontalmente a través de los planos y deteniéndose en los elementos focales, creando un ritmo visual pausado.",
+        "surface_and_texture": "Superficies trabajadas con empastes, veladuras y raspados que confieren una calidad matérica y estratificada.",
+        "visible_elements": [
+            "Campo azul oscuro",
+            "Bloque rectangular rojo",
+            "Forma luminosa ovalada blanca",
+            "Horizonte de tonos ocres y verdes",
+            "Franja gris claro inferior",
+            "Bloque naranja en la parte inferior derecha",
+            "Escalera larga apoyada en la franja gris",
+            "Escalera corta en el horizonte ocre",
+            "Marcas turquesas sobre el bloque rojo y la franja gris"
+        ],
+        "visible_marks_or_process": [
+            "Pinceladas visibles",
+            "Veladuras",
+            "Empastes",
+            "Raspados",
+            "Incisiones (en el bloque rojo)"
+        ],
+        "spatial_presence": "Amplia, abierta, con una sensación de distancia y quietud que evoca un espacio ilimitado.",
+        "emotional_atmosphere": [
+            "Contemplativa",
+            "Contenida",
+            "Silenciosa",
+            "Serena",
+            "Misteriosa"
+        ],
+        "distinctive_features": [
+            "La tensión entre los colores vibrantes y el vasto campo de azul profundo",
+            "La presencia escultórica del bloque rojo y las escaleras",
+            "La luminosidad flotante que define un punto de atención en la lejanía",
+            "La estructura de horizontes y divisiones espaciales"
+        ]
+    },
+    "interpretation": {
+        "central_reading": "“Luz Remota” es una exploración pictórica de un territorio soñado, donde formas esenciales y horizontes expansivos se encuentran bajo una luz distante, evocando una atmósfera de espera y contemplación. La obra articula una tensión entre la solidez de sus bloques y la levedad de un espacio onírico, característico de la serie MARE SOMNIORUM de Maurizio Valch.",
+        "supporting_readings": [
+            {
+                "reading": "La composición en planos superpuestos y el horizonte bajo crea una sensación de distancia y apertura espacial, coherente con la idea de un 'territorio abierto' de la serie MARE SOMNIORUM.",
+                "visible_evidence": [
+                    "Amplios campos de color azul y ocre",
+                    "Horizonte bajo que divide el lienzo",
+                    "Distancia visual entre el bloque rojo y la forma luminosa"
+                ],
+                "confidence": "high"
+            },
+            {
+                "reading": "El monolito rojo y la forma luminosa blanca, junto con las escaleras, funcionan como presencias escultóricas o arquitectónicas dentro de este espacio, sugiriendo umbrales o puntos de transición sin un significado narrativo fijo.",
+                "visible_evidence": [
+                    "Gran bloque rectangular rojo intenso",
+                    "Forma ovalada blanca brillante suspendida",
+                    "Escalera larga en primer plano",
+                    "Escalera más corta en la distancia"
+                ],
+                "confidence": "high"
+            },
+            {
+                "reading": "La calidad matérica de la superficie, con sus raspados y veladuras, refuerza la noción de la pintura como 'superficie de origen, memoria y transformación' que Maurizio Valch describe en su práctica artística.",
+                "visible_evidence": [
+                    "Raspados e incisiones en el bloque rojo que revelan capas inferiores",
+                    "Veladuras en el campo azul superior",
+                    "Textura visible en las franjas inferiores"
+                ],
+                "confidence": "high"
+            },
+            {
+                "reading": "La elección cromática y la luz suspendida contribuyen a una atmósfera de extrañeza serena y onírica, un estado que el artista busca en la serie MARE SOMNIORUM.",
+                "visible_evidence": [
+                    "Azul profundo y saturado",
+                    "Rojo vibrante que contrasta fuertemente",
+                    "Luz blanca flotante en el espacio"
+                ],
+                "confidence": "high"
+            }
+        ],
+        "relationship_to_artist_profile": "La obra se alinea directamente con la visión de Maurizio Valch de la pintura como un territorio de origen, memoria y transformación. Emplea su lenguaje visual característico de campos de color, formas monolíticas, horizontes y divisiones espaciales, y exhibe su sensibilidad estructural y brutalista, aunque con la levedad distintiva de la serie MARE SOMNIORUM.",
+        "relationship_to_series": "“Luz Remota” es una obra central de la serie MARE SOMNIORUM, encarnando el 'momento del sueño' a través de un territorio luminoso, silencioso y abierto. Captura la esencia de la luz suspendida y la extrañeza serena, enfocándose en un espacio perceptivo donde las formas esenciales evocan memoria e imaginación sin recurrir a la representación literal de paisajes marinos.",
+        "open_questions": [
+            "¿La forma luminosa representa un sol, una luna o una fuente de luz interior?",
+            "¿Las escaleras sugieren un ascenso, un descenso o simplemente marcan un umbral espacial?"
+        ],
+        "claims_to_avoid": [
+            "Afirmar que la pintura es una representación literal del mar Mediterráneo, una costa o un paisaje geográfico específico.",
+            "Interpretar la obra como una narrativa psicológica cerrada o una experiencia onírica literal y anecdótica.",
+            "Atribuir un significado simbólico fijo y universal a las escaleras, al bloque rojo o a la forma luminosa sin evidencia visual explícita o confirmación del artista.",
+            "Describir la obra como puramente decorativa o exclusivamente amable, ignorando la tensión y distancia que también comunica."
+        ]
+    },
+    "canonical_editorial": {
+        "title": "Fixture Analysis Title",
+        "subtitle": "Horizontes del sueño y la memoria",
+        "short_description": "\"Luz Remota\" de Maurizio Valch es una pintura abstracta que explora un paisaje onírico, donde grandes campos de color azul intenso y rojo vibrante definen un horizonte silencioso. Con formas monolíticas y escaleras que sugieren umbrales, esta obra original de acrílico y óleo evoca una luz suspendida sobre un territorio de contemplación y distancia.",
+        "master_description": "La mirada se desplaza a través de \"Luz Remota\", una composición abstracta que invita a la contemplación. Un vasto campo de azul profundo se extiende sobre un horizonte bajo, donde un imponente bloque rojo emerge a la izquierda, equilibrado por una forma luminosa y etérea que flota en la lejanía.\n\nLa obra se organiza en planos horizontales superpuestos, construidos con acrílico y óleo sobre lienzo. El vibrante rojo del monolito muestra incisiones y raspados que revelan toques turquesas, aportando una materialidad trabajada que contrasta con la suavidad del horizonte ocre y la intensidad del azul. Dos escaleras, una extendida en el primer plano y otra más tenue en la distancia, articulan un tránsito silencioso entre las diferentes divisiones espaciales.\n\nIntegrada en la serie MARE SOMNIORUM, esta pintura explora un territorio onírico, un espacio de distancia y claridad donde la luz y la memoria se entrelazan. Maurizio Valch no busca una representación literal, sino la creación de un lugar suspendido donde las formas esenciales —monolitos, horizontes, luces— actúan como presencias que invitan a la introspección, tejiendo una atmósfera de extrañeza serena y espera.",
+        "artist_vocabulary": [
+            "territorios abstractos",
+            "superficies trabajadas",
+            "estructuras suspendidas",
+            "campos de color",
+            "incisiones",
+            "divisiones territoriales",
+            "formas monolíticas",
+            "horizontes contenidos",
+            "sueño mediterráneo",
+            "territorio originario",
+            "nacimiento de la forma",
+            "aparición del rostro",
+            "movimiento interior",
+            "profundidad estratificada",
+            "materia",
+            "memoria",
+            "transformación",
+            "estructural",
+            "brutalista",
+            "grandes campos cromáticos",
+            "superficies estratificadas",
+            "líneas incisas",
+            "bloques",
+            "elementos suspendidos",
+            "composiciones austeras",
+            "contrastes intensos",
+            "geometría elemental",
+            "quietud",
+            "profundidad",
+            "superficie",
+            "orden",
+            "fractura",
+            "territorio",
+            "cuerpo",
+            "lugar de aparición",
+            "veladuras",
+            "empastes",
+            "raspados",
+            "sedimentación",
+            "presión",
+            "corte",
+            "erosión",
+            "superposición",
+            "presencia geológica o corporal",
+            "espacios más silenciosos",
+            "oníricos o atmosféricos",
+            "estructura esencial",
+            "umbrales",
+            "portales",
+            "escaleras",
+            "líneas tectónicas",
+            "piel o cuero",
+            "rostros fragmentados",
+            "movimientos circulares o centrífugos",
+            "silenciosas",
+            "sobrias",
+            "contenidas",
+            "contemplativas",
+            "ligeramente melancólicas",
+            "aislamiento",
+            "espera"
+        ],
+        "alt_text": "Pintura abstracta horizontal con un gran campo superior azul oscuro y un horizonte bajo de tonos ocre y gris claro. A la izquierda, un bloque rectangular rojo con marcas turquesas. A la derecha, una forma blanca luminosa. En el primer plano, una escalera larga apoyada en la franja gris; otra escalera más pequeña se ve en la distancia, a la derecha.",
+        "caption": "Luz Remota, 2024. Maurizio Valch. Acrílico y óleo sobre lienzo, 120 x 80 x 3 cm."
+    },
+    "search_metadata": {
+        "catalogue_tags": [
+            "Pintura",
+            "Abstracción territorial",
+            "Arte abstracto minimalista",
+            "Brutalismo",
+            "Acrílico",
+            "Óleo",
+            "Lienzo",
+            "Texturizada",
+            "Azul",
+            "Rojo",
+            "Horizontal",
+            "Rectangular",
+            "Grande"
+        ],
+        "search_terms": [
+            "Pintura abstracta original",
+            "Cuadro abstracto moderno",
+            "Arte contemporáneo acrílico y óleo",
+            "Abstracción territorial en lienzo",
+            "Pintura brutalista minimalista",
+            "Obra de arte abstracta horizontal",
+            "Cuadro de Maurizio Valch",
+            "Pintura con azul y rojo",
+            "Arte para coleccionistas",
+            "Abstracción matérica con texturas",
+            "Comprar pintura abstracta grande",
+            "Arte abstracto para interiores modernos",
+            "Pintura de paisaje abstracto contemporáneo",
+            "Obras abstractas con formas geométricas",
+            "Cuadro con horizonte y monolitos",
+            "Pintura acrílica de paisaje onírico"
+        ],
+        "seo_title": "Luz Remota | Pintura abstracta contemporánea | Maurizio Valch",
+        "seo_description": "\"Luz Remota\" es una pintura abstracta contemporánea de Maurizio Valch, una obra original acrílico y óleo sobre lienzo que explora territorios oníricos con un estilo estructural y minimalista."
+    },
+    "originality_check": {
+        "catalogue_checked": true,
+        "title_unique": true,
+        "closest_title": null,
+        "title_similarity": 0,
+        "closest_title_source": null,
+        "closest_description_artwork_id": null,
+        "closest_description_source": null,
+        "description_similarity": 0,
+        "repeated_openings": [],
+        "repeated_phrases": [],
+        "structure_used": "artwork-analysis.v2",
+        "warnings": [],
+        "passed": true
+    },
+    "review": {
+        "analysis_status": "draft",
+        "editorial_status": "draft",
+        "reviewed_by": null,
+        "reviewed_at": null,
+        "notes": "Generation attempts: 1.",
+        "comparison_only": true,
+        "comparison_created_at": "2026-07-24T10:18:13+00:00"
+    }
+}

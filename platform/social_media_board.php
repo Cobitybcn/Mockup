@@ -368,7 +368,7 @@ foreach ($mockups as $mockup) {
                         <button class="smb-board-title" type="button" data-focus-network="facebook" aria-label="<?= smb_h(t('Open the Facebook board in focus mode', 'Abrir el tablero de Facebook en modo foco')) ?>"><span class="smb-network-icon smb-network-icon--facebook" aria-hidden="true"></span><h2>Facebook</h2></button>
                         <div class="smb-board-head-actions"><span class="smb-board-count" data-board-count="facebook">0 <?= smb_h(t('publications', 'publicaciones')) ?></span></div>
                     </header>
-                    <p><?= smb_h(t('Post with up to 3 images.', 'Publicación con hasta 3 imágenes.')) ?></p>
+                    <p><?= smb_h(t('Post with up to 10 images.', 'Publicación con hasta 10 imágenes.')) ?></p>
                     <div class="smb-publication-stack" data-publication-stack="facebook"></div>
                 </article>
             </section>

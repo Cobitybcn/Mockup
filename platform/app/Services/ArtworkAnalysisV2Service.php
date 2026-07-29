@@ -1,7 +1,12 @@
 <?php
 declare(strict_types=1);
 
-final class ArtworkAnalysisV2Service
+/**
+ * No es `final` a proposito: el worker editorial la recibe inyectada y las
+ * pruebas sustituyen `generateDraft` para cubrir la generacion de obra sin
+ * gastar una llamada real con imagen.
+ */
+class ArtworkAnalysisV2Service
 {
     public function __construct(
         private GeminiImageClient $client,

@@ -140,10 +140,12 @@ final class BilingualEditorialStaleIdentityClient extends BilingualEditorialFake
     }
 }
 
-function run_bilingual_editorial_service_tests(): void
+/**
+ * Montaje compartido: mismo esquema y mismos datos para las pruebas del
+ * servicio bilingue y para las del generador unico de obra.
+ */
+function bilingual_editorial_test_pdo(): PDO
 {
-    TestHarness::group('Contenido editorial bilingue');
-
     $pdo = new PDO('sqlite::memory:');
     $pdo->setAttribute(PDO::ATTR_ERRMODE, PDO::ERRMODE_EXCEPTION);
     $pdo->setAttribute(PDO::ATTR_DEFAULT_FETCH_MODE, PDO::FETCH_ASSOC);
@@ -159,7 +161,7 @@ function run_bilingual_editorial_service_tests(): void
         keywords TEXT NOT NULL DEFAULT '', seo_description TEXT NOT NULL DEFAULT '',
         year_start INTEGER NULL, year_end INTEGER NULL, updated_at TEXT NOT NULL DEFAULT ''
     )");
-    $pdo->exec("CREATE TABLE artworks (id INTEGER PRIMARY KEY, user_id INTEGER NOT NULL, artwork_group_id INTEGER, series_id INTEGER, series TEXT NOT NULL DEFAULT '', final_title TEXT NOT NULL DEFAULT '', subtitle TEXT NOT NULL DEFAULT '', updated_at TEXT NOT NULL DEFAULT '')");
+    $pdo->exec("CREATE TABLE artworks (id INTEGER PRIMARY KEY, user_id INTEGER NOT NULL, artwork_group_id INTEGER, series_id INTEGER, series TEXT NOT NULL DEFAULT '', final_title TEXT NOT NULL DEFAULT '', subtitle TEXT NOT NULL DEFAULT '', medium TEXT NOT NULL DEFAULT '', artwork_year TEXT NOT NULL DEFAULT '', width TEXT NOT NULL DEFAULT '', height TEXT NOT NULL DEFAULT '', depth TEXT NOT NULL DEFAULT '', root_file TEXT NOT NULL DEFAULT '', main_file TEXT NOT NULL DEFAULT '', updated_at TEXT NOT NULL DEFAULT '')");
     $pdo->exec("CREATE TABLE artwork_groups (
         id INTEGER PRIMARY KEY, user_id INTEGER NOT NULL, canonical_artwork_id INTEGER NOT NULL,
         title TEXT NOT NULL DEFAULT '', status TEXT NOT NULL DEFAULT 'active', updated_at TEXT NOT NULL DEFAULT ''
@@ -185,8 +187,17 @@ function run_bilingual_editorial_service_tests(): void
     ($publicationMigration['up'])($pdo);
     $jobMigration = require dirname(__DIR__, 2) . '/migrations/schema/20260724_000001_bilingual_editorial_jobs.php';
     ($jobMigration['up'])($pdo);
+    (new BilingualEditorialService($pdo))->setEnabled(7, true);
+
+    return $pdo;
+}
+
+function run_bilingual_editorial_service_tests(): void
+{
+    TestHarness::group('Contenido editorial bilingue');
+
+    $pdo = bilingual_editorial_test_pdo();
     $service = new BilingualEditorialService($pdo);
-    $service->setEnabled(7, true);
     $service->save(7, 'mockup', 22, 'es', [
         'description' => 'La luz lateral ordena la sala y conduce la mirada hacia la superficie de la pintura.',
         'caption' => 'SOL DIVISUS en una sala iluminada lateralmente.',
@@ -555,8 +566,28 @@ function run_bilingual_editorial_service_tests(): void
     TestHarness::assertContains('snapshot.english_content', $editorScript, 'la acción persistente recupera el inglés internacional validado');
     TestHarness::assertContains("assistantRequest('publish_spanish')", $editorScript, 'la preparación completa de obras y mockups publica el master español sin otro paso');
     $artworkScreen = (string)file_get_contents($platformRoot . '/artwork.php');
-    TestHarness::assertContains('data-editorial-generate', $artworkScreen, 'Artwork puede generar el contenido completo ES y EN desde una sola acción');
-    TestHarness::assertContains('Generar contenido ES + EN', $artworkScreen, 'Artwork presenta la acción completa cuando el español está vacío');
+    // Artwork genera desde el analisis: una sola accion deja ficha, master y
+    // adaptacion. No expone generadores paralelos ni propuestas intermedias.
+    TestHarness::assertContains('data-editorial-generate', $artworkScreen, 'Artwork encola su generación por la misma vía que Series y Mockups');
+    TestHarness::assertContains('Generar contenido', $artworkScreen, 'Artwork presenta la acción completa cuando el español está vacío');
+    TestHarness::assertTrue(
+        strpos($artworkScreen, 'reanalysis_comparison') === false,
+        'Artwork no ofrece un reanálisis que compita con el análisis aplicado'
+    );
+    // Un unico generador por entidad: la obra se escribe desde su analisis, que
+    // es lo que produce ficha y master a la vez. Generar el editorial aparte
+    // volveria a mandar la imagen al modelo para obtener lo mismo.
+    $workerSource = (string)file_get_contents($platformRoot . '/app/Services/BilingualEditorialGenerationWorker.php');
+    TestHarness::assertContains(
+        'generateArtworkFromAnalysis',
+        $workerSource,
+        'el worker genera la obra desde su análisis y no por un generador editorial paralelo'
+    );
+    TestHarness::assertContains(
+        "if (\$entityType === 'artwork')",
+        $workerSource,
+        'la preparación distingue la obra para no llamar al generador español genérico'
+    );
     $adapterSource = (string)file_get_contents($platformRoot . '/app/Services/BilingualEditorialAdapterService.php');
     TestHarness::assertContains("['series', 'artwork', 'mockup', 'studio_note']", $adapterSource, 'el generador español admite obras, mockups y Notas de estudio');
     TestHarness::assertContains("'short_description' => ''", $adapterSource, 'la propuesta de Artwork incluye la descripción breve');
@@ -609,9 +640,17 @@ function run_bilingual_editorial_service_tests(): void
     TestHarness::assertContains('website-decision website-save', $artworkScreen, 'Website usa un Decision Block verde pastel para guardar');
     TestHarness::assertContains('website-decision website-unpublish', $artworkScreen, 'Website usa un Decision Block rosa pastel para retirar la publicación');
     TestHarness::assertContains('website-decision website-publish', $artworkScreen, 'Website conserva un Decision Block amarillo pastel para publicar');
-    TestHarness::assertContains('generate_spanish_reanalysis_comparison', $artworkScreen, 'la obra puede generar una lectura española independiente desde la imagen');
-    TestHarness::assertContains('use_spanish_reanalysis_comparison', $artworkScreen, 'la propuesta española comparativa solo se aplica mediante una decisión explícita');
-    TestHarness::assertContains("['comparison_only'] = true", $artworkScreen, 'el reanálisis comparativo no se aplica automáticamente a los campos editoriales');
+    // El reanalisis comparativo se retiro: escribia sobre artwork-{id}.json, el
+    // mismo archivo del borrador aplicado, y lo destruia. Su unica salida util
+    // -volver a leer la imagen- es lo que hace el boton unico de generacion.
+    TestHarness::assertTrue(
+        strpos($artworkScreen, 'comparison_only') === false,
+        'la obra no mantiene un borrador comparativo que pise al analisis aplicado'
+    );
+    TestHarness::assertTrue(
+        strpos($artworkScreen, 'Automatic v2 analysis after root selection.') === false,
+        'elegir la imagen raiz no dispara un analisis con imagen por su cuenta'
+    );
     TestHarness::assertContains('data-editorial-adapt', $artworkScreen, 'Artwork muestra la flecha para adaptar el español al inglés internacional');
     TestHarness::assertContains('grid-template-rows:auto repeat(9,auto)', $artworkScreen, 'Artwork reserva una fila independiente para cada campo editorial');
     TestHarness::assertContains('grid-row:1 / span 10', $artworkScreen, 'los nueve campos y la cabecera no pueden superponerse');
@@ -647,4 +686,119 @@ function run_bilingual_editorial_service_tests(): void
     TestHarness::assertSame('Descripción desde imagen', $mappedAnalysis['description'], 'el reanálisis se proyecta al mismo esquema editorial español');
     TestHarness::assertSame('pintura abstracta original', $mappedAnalysis['search_terms'], 'el reanálisis conserva una sola selección de búsquedas reales');
     TestHarness::assertSame('Obra abstracta original | Maurizio Valch', $mappedAnalysis['seo_title'], 'el reanálisis entrega un título SEO específico');
+}
+
+/**
+ * Doble del analisis de obra: conserva toda la maquinaria real de la ficha y el
+ * guardado, y solo evita la llamada con imagen al modelo.
+ */
+class ArtworkAnalysisFakeService extends ArtworkAnalysisV2Service
+{
+    public int $calls = 0;
+    public string $lastLocale = '';
+
+    public function __construct(private readonly array $draft)
+    {
+        parent::__construct(new BilingualEditorialFakeClient());
+    }
+
+    public function generateDraft(array $artwork, array $artistProfile, string $imagePath, string $notes = '', string $analysisLocale = 'es'): array
+    {
+        $this->calls++;
+        $this->lastLocale = $analysisLocale;
+        $draft = $this->draft;
+        $draft['artwork_id'] = (int)($artwork['id'] ?? 0);
+        $draft['analysis_language'] = $analysisLocale;
+        return ['draft' => $draft, 'file' => ''];
+    }
+}
+
+/**
+ * La obra tiene un unico generador. Esta prueba recorre el camino real de punta
+ * a punta: encolar -> worker -> analisis -> ficha + master -> adaptacion.
+ */
+function run_artwork_single_generator_tests(): void
+{
+    TestHarness::group('Obra: un unico generador encolado');
+
+    $pdo = bilingual_editorial_test_pdo();
+    $draft = json_decode((string)file_get_contents(dirname(__DIR__) . '/fixtures/artwork_analysis_v2_draft.json'), true);
+    TestHarness::assertTrue(is_array($draft), 'el fixture de análisis v2 se puede leer');
+
+    // La obra necesita una imagen raiz existente: el generador la exige antes de
+    // gastar nada, igual que en produccion.
+    $imageFile = 'regression-single-generator.jpg';
+    $imagePath = RESULTS_DIR . DIRECTORY_SEPARATOR . $imageFile;
+    if (!is_dir(RESULTS_DIR)) {
+        mkdir(RESULTS_DIR, 0775, true);
+    }
+    file_put_contents($imagePath, 'not-a-real-jpeg');
+    $pdo->exec("UPDATE artworks SET root_file='{$imageFile}' WHERE id=11");
+
+    try {
+        $jobs = new BilingualEditorialJobService($pdo);
+        $job = $jobs->createOrReuse(7, 'artwork', 11, 'prepare', []);
+        $analysis = new ArtworkAnalysisFakeService($draft);
+        $worker = new BilingualEditorialGenerationWorker(
+            $pdo,
+            new BilingualEditorialAdapterService($pdo, new BilingualEditorialFakeClient()),
+            $analysis
+        );
+        $result = $worker->process((int)$job['id']);
+
+        TestHarness::assertTrue((bool)($result['ok'] ?? false), 'la preparación de la obra termina sin error');
+        TestHarness::assertSame(1, $analysis->calls, 'la obra se genera con una sola lectura de la imagen');
+        TestHarness::assertSame('es', $analysis->lastLocale, 'el análisis se redacta en el idioma de trabajo del artista');
+
+        $service = new BilingualEditorialService($pdo);
+        $spanish = $service->get(7, 'artwork', 11, 'es');
+        $english = $service->get(7, 'artwork', 11, 'en');
+        TestHarness::assertTrue(
+            trim((string)($spanish['content']['description'] ?? '')) !== '',
+            'el análisis deja escrito el master en el idioma de trabajo'
+        );
+        TestHarness::assertTrue(
+            trim((string)($english['content']['description'] ?? '')) !== '',
+            'la misma acción deja la adaptación inglesa sin un segundo paso del artista'
+        );
+
+        $sheet = (new ArtworkSheetService($pdo))->sheetForArtwork(11, 7);
+        $generated = json_decode((string)($sheet['generated_json'] ?? ''), true);
+        TestHarness::assertSame(
+            ArtworkAnalysisV2::SCHEMA_VERSION,
+            (string)($generated['schema_version'] ?? ''),
+            'la misma acción deja también la ficha de catálogo lista'
+        );
+
+        $adapter = new BilingualEditorialAdapterService($pdo, new BilingualEditorialFakeClient());
+
+        // Una adaptacion incompleta no se reutiliza: le faltan campos y hay que
+        // rehacerla. Es el caso que dejaba obras marcadas como desactualizadas.
+        TestHarness::assertSame('stale', (string)$english['status'], 'una adaptación con campos vacíos queda marcada para rehacer');
+        $retried = $adapter->adaptMissing(7, 'artwork', 11, 'es', 'en');
+        TestHarness::assertTrue(
+            empty($retried['reused']),
+            'una adaptación incompleta se rehace en vez de darse por buena'
+        );
+
+        // Con la adaptacion completa y el master intacto, repetirla no puede
+        // volver a pagar el modelo: el hash guardado ya dice que esta al dia.
+        $complete = (array)$spanish['content'];
+        foreach ($complete as $key => $value) {
+            $complete[$key] = is_string($value) && trim($value) !== '' ? 'English ' . $key : $value;
+        }
+        $service->save(7, 'artwork', 11, 'en', $complete);
+        TestHarness::assertSame(
+            'current',
+            (string)$service->get(7, 'artwork', 11, 'en')['status'],
+            'una adaptación sin huecos queda al día'
+        );
+        $reused = $adapter->adaptMissing(7, 'artwork', 11, 'es', 'en');
+        TestHarness::assertTrue(
+            (bool)($reused['reused'] ?? false),
+            'adaptar de nuevo sin cambios reutiliza lo guardado en vez de llamar al modelo'
+        );
+    } finally {
+        @unlink($imagePath);
+    }
 }

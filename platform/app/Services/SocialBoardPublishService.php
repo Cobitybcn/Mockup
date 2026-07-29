@@ -3,7 +3,7 @@ declare(strict_types=1);
 
 final class SocialBoardPublishService
 {
-    private const CHANNEL_LIMITS = ['pinterest' => 50, 'instagram' => 10, 'facebook' => 3];
+    private const CHANNEL_LIMITS = ['pinterest' => 50, 'instagram' => 10, 'facebook' => 10];
 
     public function __construct(
         private readonly PDO $pdo,

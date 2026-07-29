@@ -68,6 +68,7 @@ run_artist_site_metrics_tests();
 run_website_board_grouping_regression_tests();
 run_schema_migration_governance_tests();
 run_bilingual_editorial_service_tests();
+run_artwork_single_generator_tests();
 run_studio_note_bilingual_tests();
 run_studio_note_change_classifier_tests();
 run_studio_note_workspace_tests();

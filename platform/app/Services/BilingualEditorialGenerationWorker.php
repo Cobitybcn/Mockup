@@ -5,7 +5,8 @@ final class BilingualEditorialGenerationWorker
 {
     public function __construct(
         private readonly PDO $pdo,
-        private readonly ?BilingualEditorialAdapterService $adapter = null
+        private readonly ?BilingualEditorialAdapterService $adapter = null,
+        private readonly ?ArtworkAnalysisV2Service $artworkAnalysis = null
     ) {}
 
     public function process(int $jobId): array
@@ -65,14 +66,22 @@ final class BilingualEditorialGenerationWorker
                     'spanish_first' => true,
                 ];
             } elseif ($action === 'prepare') {
-                $spanish = $adapter->generateSpanishDraft(
-                    $userId,
-                    $entityType,
-                    $entityId,
-                    is_array($payload['current_spanish'] ?? null) ? $payload['current_spanish'] : null,
-                    array_key_exists('private_memo', $payload) ? (string)$payload['private_memo'] : null
-                );
-                $spanishContent = (array)($spanish['content'] ?? []);
+                if ($entityType === 'artwork') {
+                    // Una obra tiene un unico generador: su analisis. Es la sola
+                    // fuente que produce a la vez la ficha de catalogo y el
+                    // master del idioma de trabajo, asi que generar el editorial
+                    // por separado seria pagar dos veces la misma lectura.
+                    $spanishContent = $this->generateArtworkFromAnalysis($userId, $entityId, $workingLocale);
+                } else {
+                    $spanish = $adapter->generateSpanishDraft(
+                        $userId,
+                        $entityType,
+                        $entityId,
+                        is_array($payload['current_spanish'] ?? null) ? $payload['current_spanish'] : null,
+                        array_key_exists('private_memo', $payload) ? (string)$payload['private_memo'] : null
+                    );
+                    $spanishContent = (array)($spanish['content'] ?? []);
+                }
                 $editorial->save(
                     $userId,
                     $entityType,
@@ -269,6 +278,63 @@ final class BilingualEditorialGenerationWorker
             $this->refreshEditorialPackages($jobId);
             return ['ok' => false, 'job' => $jobs->publicState($jobs->job($jobId)), 'error' => $error->getMessage()];
         }
+    }
+
+    /**
+     * Ejecuta el analisis v2 de una obra y devuelve el master resultante en el
+     * idioma de trabajo. `applyAnalysisV2Draft` deja la ficha de catalogo; el
+     * guardado explicito posterior reemplaza el master, porque regenerar es una
+     * peticion del artista y no debe limitarse a rellenar huecos.
+     *
+     * @return array<string,mixed>
+     */
+    private function generateArtworkFromAnalysis(int $userId, int $artworkId, string $workingLocale): array
+    {
+        $editorial = new BilingualEditorialService($this->pdo);
+        $sheetService = new ArtworkSheetService($this->pdo);
+        $artwork = $sheetService->artwork($artworkId, $userId);
+        if (!is_array($artwork) || $artwork === []) {
+            throw new RuntimeException('The artwork no longer exists.');
+        }
+
+        $imageFile = basename(trim((string)($artwork['root_file'] ?? '')));
+        if ($imageFile === '') {
+            $imageFile = basename(trim((string)($artwork['main_file'] ?? '')));
+        }
+        if ($imageFile === '' || !defined('RESULTS_DIR')) {
+            throw new RuntimeException('Select the root artwork image before generating its content.');
+        }
+        $imagePath = RESULTS_DIR . DIRECTORY_SEPARATOR . $imageFile;
+        if (!is_file($imagePath) && class_exists('StorageService') && StorageService::isGcsActive()) {
+            StorageService::downloadFile('results/' . $imageFile, $imagePath);
+        }
+        if (!is_file($imagePath)) {
+            throw new RuntimeException('Selected root artwork image was not found.');
+        }
+
+        $sheet = $sheetService->sheetForArtwork($artworkId, $userId);
+        $analysis = $this->artworkAnalysis ?? new ArtworkAnalysisV2Service(new GeminiImageClient(), $this->pdo);
+        $generated = $analysis->generateDraft(
+            $artwork,
+            ArtistProfile::findForUser($userId),
+            $imagePath,
+            (string)($sheet['user_notes'] ?? ''),
+            $workingLocale
+        );
+        $draft = (array)$generated['draft'];
+        $sheetService->applyAnalysisV2Draft($artworkId, $userId, $draft);
+
+        $content = ArtworkAnalysisV2::editorialContent($draft);
+        $editorial->save(
+            $userId,
+            'artwork',
+            $artworkId,
+            $workingLocale,
+            $content,
+            (string)$editorial->get($userId, 'artwork', $artworkId, $workingLocale)['private_memo']
+        );
+
+        return $content;
     }
 
     private function refreshEditorialPackages(int $jobId): void

@@ -74,6 +74,26 @@ final class BilingualEditorialAdapterService
         }
         $source = $this->editorial->get($userId, $entityType, $entityId, $sourceLocale);
         $target = $this->editorial->get($userId, $entityType, $entityId, $targetLocale);
+        // La adaptacion guardada anota el hash del master del que salio. Si el
+        // master no cambio y no falta ningun campo, repetir la llamada al
+        // modelo devolveria lo mismo: se cobra y no aporta nada.
+        $sourceHash = hash(
+            'sha256',
+            (string)json_encode((array)$source['content'], JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES)
+        );
+        if ((string)($target['status'] ?? '') === 'current'
+            && (string)($target['source_hash'] ?? '') !== ''
+            && hash_equals((string)$target['source_hash'], $sourceHash)
+        ) {
+            return [
+                'content' => (array)$target['content'],
+                'status' => 'current',
+                'english_status' => 'current',
+                'source_locale' => $sourceLocale,
+                'target_locale' => $targetLocale,
+                'reused' => true,
+            ];
+        }
         $adapted = $this->adaptContent(
             $userId,
             $entityType,
