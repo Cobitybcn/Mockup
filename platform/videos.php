@@ -191,6 +191,14 @@ function videos_artist_site_url(string $slug): string
                                             <button type="submit" <?= $tiktokStatus === 'processing' || $tiktokStatus === 'queued' ? 'disabled' : '' ?>><?= $tiktokLabel ?></button>
                                             <small data-final-tiktok-error <?= $tiktokStatus === 'failed' && trim((string)($tiktokRow['error'] ?? '')) !== '' ? '' : 'hidden' ?>><?= videos_h((string)($tiktokRow['error'] ?? '')) ?></small>
                                         </form>
+                                        <?php if ($tiktokStatus === 'processing' || $tiktokStatus === 'queued'): ?>
+                                            <form class="videos-final-publish videos-final-tiktok-status" data-final-tiktok-status-form>
+                                                <input type="hidden" name="csrf" value="<?= videos_h($csrf) ?>">
+                                                <input type="hidden" name="exportId" value="<?= (int)$final['id'] ?>">
+                                                <button type="submit"><?= videos_h(t('CHECK TIKTOK STATUS', 'VER ESTADO EN TIKTOK')) ?></button>
+                                                <small data-final-tiktok-status-result hidden></small>
+                                            </form>
+                                        <?php endif; ?>
                                     <?php endif; ?>
                                 </div>
                             </article>

@@ -192,6 +192,44 @@
         });
     });
 
+    document.querySelectorAll('[data-final-tiktok-status-form]').forEach(form => {
+        form.addEventListener('submit', async event => {
+            event.preventDefault();
+            const submit = form.querySelector('[type="submit"]');
+            const result = form.querySelector('[data-final-tiktok-status-result]');
+            if (!submit || submit.disabled) return;
+            const originalLabel = submit.textContent;
+            submit.disabled = true;
+            submit.textContent = '…';
+            if (result) result.hidden = true;
+            try {
+                const response = await fetch('video_tiktok_status.php', {
+                    method: 'POST', body: new FormData(form), credentials: 'same-origin'
+                });
+                const payload = await response.json().catch(() => ({}));
+                if (!response.ok || !payload.ok) throw new Error(payload.error || 'Could not check the TikTok status.');
+                const status = payload.publication && payload.publication.status;
+                if (status === 'published' || status === 'failed') {
+                    window.location.reload();
+                    return;
+                }
+                submit.disabled = false;
+                submit.textContent = originalLabel;
+                if (result) {
+                    result.textContent = 'TikTok is still processing this video. Try again in a moment.';
+                    result.hidden = false;
+                }
+            } catch (cause) {
+                submit.disabled = false;
+                submit.textContent = originalLabel;
+                if (result) {
+                    result.textContent = cause instanceof Error ? cause.message : 'Could not check the TikTok status.';
+                    result.hidden = false;
+                }
+            }
+        });
+    });
+
     document.addEventListener('click', event => {
         if (event.target.closest('[data-open-final-upload]')) { event.preventDefault(); openFinalUpload(); return; }
         if (event.target.closest('[data-close-final-upload]')) { closeFinalUpload(); return; }
