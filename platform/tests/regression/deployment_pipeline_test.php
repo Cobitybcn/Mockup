@@ -58,6 +58,10 @@ function run_deployment_pipeline_regression_tests(): void
         'Site Manager Stripe dependencies support the production container layout'
     );
     TestHarness::assertTrue(
+        str_contains($webDockerfile, 'RewriteRule ^/?integrations/tiktok/callback$ /integrations/tiktok/callback/index.php [END]'),
+        'TikTok OAuth callback bypasses the Apache directory redirect that would expose Cloud Run port 8080'
+    );
+    TestHarness::assertTrue(
         str_contains($cloudBuild, 'production-artifact-smoke')
             && str_contains($cloudBuild, 'SiteManagerService.php')
             && str_contains($cloudBuild, 'StripeArtistCredentials.php')
