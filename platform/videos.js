@@ -192,6 +192,51 @@
         });
     });
 
+    document.querySelectorAll('[data-final-tiktok-caption]').forEach(textarea => {
+        const counter = textarea.closest('form')?.querySelector('[data-final-tiktok-counter]');
+        const updateCounter = () => { if (counter) counter.textContent = `${textarea.value.length}/2200`; };
+        textarea.addEventListener('input', updateCounter);
+        updateCounter();
+    });
+
+    document.querySelectorAll('[data-final-tiktok-suggest]').forEach(button => {
+        button.addEventListener('click', async () => {
+            const form = button.closest('form');
+            const textarea = form?.querySelector('[data-final-tiktok-caption]');
+            const error = form?.querySelector('[data-final-tiktok-suggest-error]');
+            if (!form || !textarea || button.disabled) return;
+            const originalLabel = button.textContent;
+            button.disabled = true;
+            button.textContent = '…';
+            if (error) error.hidden = true;
+            try {
+                const body = new FormData();
+                body.set('csrf', form.querySelector('[name="csrf"]')?.value || '');
+                body.set('exportId', form.querySelector('[name="exportId"]')?.value || '');
+                const response = await fetch('video_tiktok_suggest.php', {
+                    method: 'POST', body, credentials: 'same-origin'
+                });
+                const payload = await response.json().catch(() => ({}));
+                if (!response.ok || !payload.ok) throw new Error(payload.error || 'Could not suggest a caption.');
+                const copy = payload.copy || {};
+                const hashtags = Array.isArray(copy.hashtags) ? copy.hashtags.join(' ') : '';
+                const suggested = [copy.caption || '', hashtags].filter(Boolean).join('\n\n').slice(0, 2200);
+                if (suggested) {
+                    textarea.value = suggested;
+                    textarea.dispatchEvent(new Event('input'));
+                }
+            } catch (cause) {
+                if (error) {
+                    error.textContent = cause instanceof Error ? cause.message : 'Could not suggest a caption.';
+                    error.hidden = false;
+                }
+            } finally {
+                button.disabled = false;
+                button.textContent = originalLabel;
+            }
+        });
+    });
+
     document.querySelectorAll('[data-final-tiktok-status-form]').forEach(form => {
         form.addEventListener('submit', async event => {
             event.preventDefault();

@@ -184,14 +184,21 @@ function videos_artist_site_url(string $slug): string
                                     <?php if (!$tiktokConnected): ?>
                                         <p class="videos-final-tiktok-hint"><?= videos_h(t('Connect TikTok to publish this video.', 'Conectá TikTok para publicar este video.')) ?> <a href="connections.php?open=tiktok"><?= videos_h(t('Connect', 'Conectar')) ?></a></p>
                                     <?php else: ?>
+                                        <?php $tiktokLocked = $tiktokStatus === 'processing' || $tiktokStatus === 'queued'; ?>
                                         <form class="videos-final-publish videos-final-tiktok" data-final-tiktok-form>
                                             <input type="hidden" name="csrf" value="<?= videos_h($csrf) ?>">
                                             <input type="hidden" name="exportId" value="<?= (int)$final['id'] ?>">
-                                            <input type="text" name="caption" maxlength="2200" placeholder="<?= videos_h(t('Caption for TikTok', 'Copy para TikTok')) ?>" value="<?= videos_h($projectTitle) ?>" aria-label="<?= videos_h(t('TikTok caption', 'Copy de TikTok')) ?>" <?= $tiktokStatus === 'processing' || $tiktokStatus === 'queued' ? 'disabled' : '' ?>>
-                                            <button type="submit" <?= $tiktokStatus === 'processing' || $tiktokStatus === 'queued' ? 'disabled' : '' ?>><?= $tiktokLabel ?></button>
+                                            <div class="videos-final-tiktok-caption-row">
+                                                <textarea name="caption" maxlength="2200" rows="3" placeholder="<?= videos_h(t('Caption for TikTok', 'Copy para TikTok')) ?>" aria-label="<?= videos_h(t('TikTok caption', 'Copy de TikTok')) ?>" data-final-tiktok-caption <?= $tiktokLocked ? 'disabled' : '' ?>><?= videos_h($projectTitle) ?></textarea>
+                                                <button type="button" class="videos-final-tiktok-suggest" data-final-tiktok-suggest <?= $tiktokLocked ? 'disabled' : '' ?>><?= videos_h(t('Suggest caption & hashtags', 'Sugerir copy y hashtags')) ?></button>
+                                            </div>
+                                            <small class="videos-final-tiktok-counter" data-final-tiktok-counter></small>
+                                            <p class="videos-final-tiktok-hint videos-final-tiktok-privacy-hint"><?= videos_h(t('Posts privately (Only Me) until TikTok approves this app for public posting.', 'Se publica en privado (Solo yo) hasta que TikTok apruebe esta app para publicar en público.')) ?></p>
+                                            <button type="submit" <?= $tiktokLocked ? 'disabled' : '' ?>><?= $tiktokLabel ?></button>
+                                            <small data-final-tiktok-suggest-error hidden></small>
                                             <small data-final-tiktok-error <?= $tiktokStatus === 'failed' && trim((string)($tiktokRow['error'] ?? '')) !== '' ? '' : 'hidden' ?>><?= videos_h((string)($tiktokRow['error'] ?? '')) ?></small>
                                         </form>
-                                        <?php if ($tiktokStatus === 'processing' || $tiktokStatus === 'queued'): ?>
+                                        <?php if ($tiktokLocked): ?>
                                             <form class="videos-final-publish videos-final-tiktok-status" data-final-tiktok-status-form>
                                                 <input type="hidden" name="csrf" value="<?= videos_h($csrf) ?>">
                                                 <input type="hidden" name="exportId" value="<?= (int)$final['id'] ?>">

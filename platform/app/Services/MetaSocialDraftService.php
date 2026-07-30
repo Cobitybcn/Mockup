@@ -182,6 +182,49 @@ final class MetaSocialDraftService
         return (int)$this->pdo->lastInsertId();
     }
 
+    /**
+     * Reuses the same reviewed editorial content the Instagram/Facebook
+     * drafts pull from (per the artist's direction: no separate copy
+     * pipeline for video) so the artist gets a pre-filled TikTok caption
+     * instead of a blank field. Returns data only — does not persist a
+     * draft row, since TikTok publications are tracked separately.
+     *
+     * @return array{title:string,caption:string,hashtags:list<string>}
+     */
+    public function suggestedCopyForVideo(int $videoExportId, array $user, string $locale = 'en'): array
+    {
+        $userId = (int)($user['id'] ?? 0);
+        $locale = $locale === 'es' ? 'es' : 'en';
+
+        $export = $this->videoExport($videoExportId, $userId);
+        if ($export === null) {
+            throw new RuntimeException('Video no encontrado o todavía no terminó de procesarse.');
+        }
+        $candidates = $this->candidateMockupIdsForVideo(
+            $userId,
+            (int)($export['artwork_id'] ?? 0),
+            (int)($export['series_id'] ?? 0)
+        );
+        if (!$candidates) {
+            throw new RuntimeException('Este video no está vinculado a ninguna obra con mockups todavía.');
+        }
+
+        $resolved = null;
+        foreach ($candidates as $candidateId) {
+            try {
+                $resolved = $this->resolveMockupContent($userId, $candidateId, 'instagram', $locale);
+                break;
+            } catch (Throwable) {
+                continue;
+            }
+        }
+        if ($resolved === null) {
+            throw new RuntimeException('Todavía no hay contenido editorial revisado para esta obra. Revisá primero el contenido de un mockup de esta obra.');
+        }
+        $copy = $this->buildCopyFields($resolved['variant'], $resolved['neutral'], 'instagram', '');
+        return ['title' => $copy['title'], 'caption' => $copy['description'], 'hashtags' => $copy['hashtags']];
+    }
+
     public function draft(int $draftId, int $userId): array
     {
         // video_exports only exists once the Video Lab schema has been
