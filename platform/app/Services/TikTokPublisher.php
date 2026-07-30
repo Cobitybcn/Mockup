@@ -69,7 +69,15 @@ final class TikTokPublisher
                 'total_chunk_count' => $totalChunkCount,
             ],
         ];
-        $response = $this->requestJsonBody(self::PUBLISH_INIT_URL, $payload, $context['access_token']);
+        try {
+            $response = $this->requestJsonBody(self::PUBLISH_INIT_URL, $payload, $context['access_token']);
+        } catch (RuntimeException $e) {
+            throw new RuntimeException(
+                $e->getMessage()
+                . ' — sent privacy_level=' . $privacyLevel
+                . ', account offered [' . implode(',', $creator['privacyOptions']) . ']'
+            );
+        }
         $publishId = trim((string)($response['data']['publish_id'] ?? ''));
         $uploadUrl = trim((string)($response['data']['upload_url'] ?? ''));
         if ($publishId === '') {
