@@ -15,6 +15,7 @@ VideoHttp::handle(static function () use ($user): array {
     $time = (string)($_POST['time'] ?? '');
     $timezone = (string)($_POST['timezone'] ?? 'UTC');
     $caption = (string)($_POST['caption'] ?? '');
+    $tags = (string)($_POST['tags'] ?? '');
     $coverTimestampMs = max(0, (int)($_POST['coverSeconds'] ?? 0)) * 1000;
     $destinationUrl = (string)($_POST['destinationUrl'] ?? '');
 
@@ -23,7 +24,7 @@ VideoHttp::handle(static function () use ($user): array {
 
     $scheduler = new TikTokPublishScheduler($pdo, new SocialPublishJobService($pdo), new VideoTikTokPublicationService($pdo));
     $when = $scheduler->scheduledAt($date, $time, $timezone);
-    $job = $scheduler->schedule($user, $exportId, $caption, $when, (int)$board['id'], $coverTimestampMs, $destinationUrl);
+    $job = $scheduler->schedule($user, $exportId, $caption, $when, (int)$board['id'], $coverTimestampMs, $destinationUrl, $tags);
 
     return ['board' => $board, 'job' => $job];
 });

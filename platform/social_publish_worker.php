@@ -51,6 +51,7 @@ try {
         $videoExportId = (int)($jobPayload['video_export_id'] ?? 0);
         if ($videoExportId <= 0) throw new RuntimeException('The scheduled TikTok publication has no video.');
         $caption = (string)($jobPayload['caption'] ?? '');
+        $tags = (string)($jobPayload['tags'] ?? '');
         $coverMs = (int)($jobPayload['cover_timestamp_ms'] ?? 0);
         $destinationUrl = (string)($jobPayload['destination_url'] ?? '');
         $tiktokService = new VideoTikTokPublicationService($pdo);
@@ -60,7 +61,7 @@ try {
             echo json_encode(['ok' => true, 'job_id' => $jobId, 'status' => 'published', 'recovered' => true]);
             exit;
         }
-        $result = $tiktokService->publish($userId, $videoExportId, $caption, $coverMs, $destinationUrl);
+        $result = $tiktokService->publish($userId, $videoExportId, $caption, $coverMs, $destinationUrl, $tags);
         $jobService->markPublished($jobId, $attemptId, $result['publishId'], '');
         echo json_encode(['ok' => true, 'job_id' => $jobId, 'status' => 'published']);
         exit;

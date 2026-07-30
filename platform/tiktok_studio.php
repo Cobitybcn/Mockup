@@ -86,7 +86,7 @@ function tstudio_board_date_label(string $date): string
     <link rel="stylesheet" href="ui-catalog.css">
     <link rel="stylesheet" href="videos.css?v=15">
     <link rel="stylesheet" href="media-controls.css?v=2">
-    <link rel="stylesheet" href="tiktok_studio.css?v=1">
+    <link rel="stylesheet" href="tiktok_studio.css?v=2">
 </head>
 <body data-csrf="<?= tstudio_h($csrf) ?>">
 <div class="app-shell">
@@ -141,17 +141,38 @@ function tstudio_board_date_label(string $date): string
                 <?php else: ?>
                     <div class="tstudio-rail" data-tstudio-rail>
                         <?php foreach ($unassigned as $final): ?>
-                            <?php $title = trim((string)($final['displayTitle'] ?? '')) ?: t('Final video', 'Video final'); ?>
+                            <?php
+                            $exportId = (int)$final['id'];
+                            $title = trim((string)($final['displayTitle'] ?? '')) ?: t('Final video', 'Video final');
+                            $row = $tiktokRows[$exportId] ?? null;
+                            $draftCaption = trim((string)($row['caption'] ?? '')) ?: $title;
+                            $draftTags = trim((string)($row['tags'] ?? ''));
+                            ?>
                             <article class="tstudio-rail-card">
                                 <div class="tstudio-rail-thumb">
                                     <?php if (!empty($final['thumbnailUrl'])): ?><img src="<?= tstudio_h((string)$final['thumbnailUrl']) ?>" alt="<?= tstudio_h($title) ?>" loading="lazy"><?php endif; ?>
                                 </div>
                                 <h3><?= tstudio_h($title) ?></h3>
-                                <form class="tstudio-assign-form" data-tstudio-assign-form>
+                                <form class="tstudio-unassigned-form" data-tstudio-unassigned-form>
                                     <input type="hidden" name="csrf" value="<?= tstudio_h($csrf) ?>">
-                                    <input type="hidden" name="exportId" value="<?= (int)$final['id'] ?>">
-                                    <input type="date" name="date" required min="<?= tstudio_h(date('Y-m-d')) ?>">
-                                    <button type="submit"><?= tstudio_h(t('Add to date', 'Agregar a fecha')) ?></button>
+                                    <input type="hidden" name="exportId" value="<?= $exportId ?>">
+                                    <div class="tstudio-caption-row">
+                                        <textarea name="caption" maxlength="2200" rows="2" placeholder="<?= tstudio_h(t('Caption', 'Texto')) ?>" data-tstudio-caption><?= tstudio_h($draftCaption) ?></textarea>
+                                        <button type="button" class="tstudio-suggest-btn" data-tstudio-suggest data-export-id="<?= $exportId ?>"><?= tstudio_h(t('Suggest caption & tags', 'Sugerir copy y tags')) ?></button>
+                                    </div>
+                                    <label class="tstudio-field">
+                                        <span><?= tstudio_h(t('Tags', 'Tags')) ?></span>
+                                        <input type="text" name="tags" placeholder="#art #tiktokart" value="<?= tstudio_h($draftTags) ?>" data-tstudio-tags>
+                                    </label>
+                                    <div class="tstudio-when-row">
+                                        <label><span><?= tstudio_h(t('Date', 'Fecha')) ?></span><input type="date" name="date" min="<?= tstudio_h(date('Y-m-d')) ?>"></label>
+                                        <label><span><?= tstudio_h(t('Time', 'Hora')) ?></span><input type="time" name="time" value="12:00"></label>
+                                    </div>
+                                    <div class="tstudio-unassigned-actions">
+                                        <button type="submit" data-action="schedule"><?= tstudio_h(t('Schedule', 'Programar')) ?></button>
+                                        <button type="submit" data-action="publish_now" class="tstudio-manage-btn"><?= tstudio_h(t('Publish now', 'Publicar ahora')) ?></button>
+                                    </div>
+                                    <small data-tstudio-schedule-error hidden></small>
                                 </form>
                             </article>
                         <?php endforeach; ?>
@@ -159,8 +180,17 @@ function tstudio_board_date_label(string $date): string
                 <?php endif; ?>
             </section>
 
+            <div class="tstudio-add-board">
+                <form data-tstudio-create-board-form>
+                    <input type="hidden" name="csrf" value="<?= tstudio_h($csrf) ?>">
+                    <label><span><?= tstudio_h(t('New publish date', 'Nueva fecha de publicación')) ?></span><input type="date" name="date" required min="<?= tstudio_h(date('Y-m-d')) ?>"></label>
+                    <label><span><?= tstudio_h(t('Board name (optional)', 'Nombre del board (opcional)')) ?></span><input type="text" name="title" placeholder="<?= tstudio_h(t('e.g. Autumn series launch', 'ej. Lanzamiento serie otoño')) ?>"></label>
+                    <button type="submit"><?= tstudio_h(t('+ Create board', '+ Crear board')) ?></button>
+                </form>
+            </div>
+
             <?php if (!$boards): ?>
-                <p class="tstudio-empty tstudio-empty--boards"><?= tstudio_h(t('Assign a video to a date above to create your first board.', 'Asigná un video a una fecha arriba para crear tu primer board.')) ?></p>
+                <p class="tstudio-empty tstudio-empty--boards"><?= tstudio_h(t('No date boards yet — create one above.', 'Todavía no hay boards de fecha — creá uno arriba.')) ?></p>
             <?php endif; ?>
 
             <?php foreach ($boards as $board): ?>
@@ -187,6 +217,7 @@ function tstudio_board_date_label(string $date): string
                             $job = $jobsByVideo[$exportId] ?? null;
                             $status = (string)($row['status'] ?? '');
                             $caption = trim((string)($row['caption'] ?? '')) ?: trim((string)($final['displayTitle'] ?? ''));
+                            $tags = trim((string)($row['tags'] ?? ''));
                             $coverSeconds = (int)round((int)($row['cover_timestamp_ms'] ?? 0) / 1000);
                             $destinationUrl = (string)($row['destination_url'] ?? '');
                             $isLocked = in_array($status, ['queued', 'processing', 'published'], true);
@@ -218,6 +249,10 @@ function tstudio_board_date_label(string $date): string
                                         <button type="button" class="tstudio-suggest-btn" data-tstudio-suggest data-export-id="<?= $exportId ?>" <?= $isLocked ? 'disabled' : '' ?>><?= tstudio_h(t('Suggest caption & hashtags', 'Sugerir copy y hashtags')) ?></button>
                                     </div>
                                     <small class="tstudio-counter" data-tstudio-counter></small>
+                                    <label class="tstudio-field">
+                                        <span><?= tstudio_h(t('Tags', 'Tags')) ?></span>
+                                        <input type="text" name="tags" placeholder="#art #tiktokart" value="<?= tstudio_h($tags) ?>" data-tstudio-tags <?= $isLocked ? 'disabled' : '' ?>>
+                                    </label>
                                     <label class="tstudio-field">
                                         <span><?= tstudio_h(t('Cover frame (seconds in)', 'Portada (segundo del video)')) ?></span>
                                         <input type="number" name="coverSeconds" min="0" step="1" value="<?= $coverSeconds ?>" data-tstudio-cover <?= $isLocked ? 'disabled' : '' ?>>
@@ -266,6 +301,6 @@ function tstudio_board_date_label(string $date): string
         </div>
     </main>
 </div>
-<script src="tiktok_studio.js?v=1"></script>
+<script src="tiktok_studio.js?v=2"></script>
 </body>
 </html>

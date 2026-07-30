@@ -24,18 +24,20 @@ final class TikTokPublishScheduler
         DateTimeImmutable $when,
         int $boardId = 0,
         int $coverTimestampMs = 0,
-        string $destinationUrl = ''
+        string $destinationUrl = '',
+        string $tags = ''
     ): array {
         $userId = (int)($user['id'] ?? 0);
         if ($userId <= 0) {
             throw new RuntimeException('Sesión inválida.');
         }
         $caption = trim($caption);
+        $tags = trim($tags);
         if ($caption === '') {
             throw new InvalidArgumentException('El video necesita un texto para publicarse en TikTok.');
         }
-        if (mb_strlen($caption) > 2200) {
-            throw new InvalidArgumentException('TikTok acepta hasta 2200 caracteres.');
+        if (mb_strlen($caption . ' ' . $tags) > 2200) {
+            throw new InvalidArgumentException('TikTok acepta hasta 2200 caracteres entre el texto y los tags.');
         }
         $this->assertVideoExportOwned($userId, $videoExportId);
 
@@ -52,22 +54,24 @@ final class TikTokPublishScheduler
         $normalized = [
             'video_export_id' => $videoExportId,
             'caption' => $caption,
+            'tags' => $tags,
             'cover_timestamp_ms' => $coverTimestampMs,
             'destination_url' => $destinationUrl,
             'scheduled_at' => $when->setTimezone(new DateTimeZone('UTC'))->format(DateTimeInterface::ATOM),
         ];
         $key = hash('sha256', json_encode([$userId, 'tiktok', $normalized], JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES | JSON_THROW_ON_ERROR));
         $job = $this->jobs->findByKey($userId, $key) ?? $this->jobs->create($userId, 'tiktok', 'artist', $when, [
-            'schema_version' => 'tiktok-studio-job.v1',
+            'schema_version' => 'tiktok-studio-job.v2',
             'video_export_id' => $videoExportId,
             'caption' => $caption,
+            'tags' => $tags,
             'cover_timestamp_ms' => $coverTimestampMs,
             'destination_url' => $destinationUrl,
         ], $key);
 
         $summary = $this->enqueueIfNeeded($job, $when);
         if ($summary['status'] !== 'published') {
-            $this->publications->markScheduled($userId, $videoExportId, $boardId, $summary['id'], $caption, $coverTimestampMs, $destinationUrl);
+            $this->publications->markScheduled($userId, $videoExportId, $boardId, $summary['id'], $caption, $coverTimestampMs, $destinationUrl, $tags);
         }
         return $summary;
     }

@@ -11,9 +11,11 @@ final class VideoTikTokPublicationService
         int $videoExportId,
         string $caption,
         int $coverTimestampMs = 0,
-        string $destinationUrl = ''
+        string $destinationUrl = '',
+        string $tags = ''
     ): array {
         $caption = trim($caption);
+        $tags = trim($tags);
         if ($caption === '') {
             throw new InvalidArgumentException('El video necesita un texto para publicarse en TikTok.');
         }
@@ -36,6 +38,7 @@ final class VideoTikTokPublicationService
             'media_expires_at' => null,
             'error' => '',
             'caption' => $caption,
+            'tags' => $tags,
             'cover_timestamp_ms' => max(0, $coverTimestampMs),
             'is_aigc' => 1,
             'destination_url' => mb_substr(trim($destinationUrl), 0, 500),
@@ -51,9 +54,10 @@ final class VideoTikTokPublicationService
             throw new RuntimeException('No se pudo recuperar el video final para enviarlo a TikTok.');
         }
         $publisher = new TikTokPublisher(new TikTokIntegrationService($this->pdo));
+        $fullText = trim($caption . ($tags !== '' ? "\n\n" . $tags : ''));
 
         try {
-            $result = $publisher->publishVideoFile($userId, $videoPath, $caption, 'artist', max(0, $coverTimestampMs), true);
+            $result = $publisher->publishVideoFile($userId, $videoPath, $fullText, 'artist', max(0, $coverTimestampMs), true);
         } catch (Throwable $e) {
             $this->upsertRow($userId, $videoExportId, [
                 'status' => 'failed',
@@ -100,13 +104,15 @@ final class VideoTikTokPublicationService
         int $scheduleJobId,
         string $caption,
         int $coverTimestampMs,
-        string $destinationUrl
+        string $destinationUrl,
+        string $tags = ''
     ): void {
         $this->upsertRow($userId, $videoExportId, [
             'status' => 'scheduled',
             'board_id' => $boardId,
             'schedule_job_id' => $scheduleJobId,
             'caption' => trim($caption),
+            'tags' => trim($tags),
             'cover_timestamp_ms' => max(0, $coverTimestampMs),
             'is_aigc' => 1,
             'destination_url' => mb_substr(trim($destinationUrl), 0, 500),

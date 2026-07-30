@@ -21,6 +21,7 @@
         button.addEventListener('click', async () => {
             const form = button.closest('form');
             const textarea = form?.querySelector('[data-tstudio-caption]');
+            const tagsInput = form?.querySelector('[data-tstudio-tags]');
             if (!form || !textarea || button.disabled) return;
             const originalLabel = button.textContent;
             button.disabled = true;
@@ -31,11 +32,12 @@
                 body.set('exportId', button.dataset.exportId || '');
                 const payload = await postForm('video_tiktok_suggest.php', body);
                 const copy = payload.copy || {};
-                const hashtags = Array.isArray(copy.hashtags) ? copy.hashtags.join(' ') : '';
-                const suggested = [copy.caption || '', hashtags].filter(Boolean).join('\n\n').slice(0, 2200);
-                if (suggested) {
-                    textarea.value = suggested;
+                if (copy.caption) {
+                    textarea.value = copy.caption;
                     textarea.dispatchEvent(new Event('input'));
+                }
+                if (tagsInput && Array.isArray(copy.hashtags) && copy.hashtags.length) {
+                    tagsInput.value = copy.hashtags.join(' ');
                 }
             } catch (cause) {
                 window.alert(cause instanceof Error ? cause.message : 'Could not suggest a caption.');
@@ -46,14 +48,41 @@
         });
     });
 
-    document.querySelectorAll('[data-tstudio-assign-form]').forEach(form => {
+    document.querySelectorAll('[data-tstudio-unassigned-form]').forEach(form => {
+        form.addEventListener('submit', async event => {
+            event.preventDefault();
+            const action = event.submitter?.dataset.action || 'schedule';
+            const error = form.querySelector('[data-tstudio-schedule-error]');
+            if (error) error.hidden = true;
+            const body = new FormData(form);
+            body.set('timezone', Intl.DateTimeFormat().resolvedOptions().timeZone || 'UTC');
+            try {
+                if (action === 'publish_now') {
+                    await postForm('video_tiktok_publish.php', body);
+                } else {
+                    if (!body.get('date')) throw new Error('Choose a publish date, or use "Publish now" instead.');
+                    await postForm('tiktok_video_schedule.php', body);
+                }
+                window.location.reload();
+            } catch (cause) {
+                if (error) {
+                    error.textContent = cause instanceof Error ? cause.message : 'Could not complete that action.';
+                    error.hidden = false;
+                } else {
+                    window.alert(cause instanceof Error ? cause.message : 'Could not complete that action.');
+                }
+            }
+        });
+    });
+
+    document.querySelectorAll('[data-tstudio-create-board-form]').forEach(form => {
         form.addEventListener('submit', async event => {
             event.preventDefault();
             try {
-                await postForm('tiktok_board_assign.php', new FormData(form));
+                await postForm('tiktok_board_create.php', new FormData(form));
                 window.location.reload();
             } catch (cause) {
-                window.alert(cause instanceof Error ? cause.message : 'Could not add the video to that date.');
+                window.alert(cause instanceof Error ? cause.message : 'Could not create that board.');
             }
         });
     });

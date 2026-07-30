@@ -9,13 +9,10 @@ FeatureAccess::requireJson($user, FeatureAccess::VIDEO_MANAGE, 'Videos');
 
 VideoHttp::handle(static function () use ($user): array {
     VideoHttp::verifyCsrf(['csrf' => (string)($_POST['csrf'] ?? '')]);
-    $result = (new VideoTikTokPublicationService(Database::connection()))->publish(
+    $board = (new TikTokBoardService(Database::connection()))->boardForDate(
         (int)$user['id'],
-        (int)($_POST['exportId'] ?? 0),
-        (string)($_POST['caption'] ?? ''),
-        max(0, (int)($_POST['coverSeconds'] ?? 0)) * 1000,
-        (string)($_POST['destinationUrl'] ?? ''),
-        (string)($_POST['tags'] ?? '')
+        (string)($_POST['date'] ?? ''),
+        (string)($_POST['title'] ?? '')
     );
-    return ['publication' => $result];
+    return ['board' => $board];
 });
