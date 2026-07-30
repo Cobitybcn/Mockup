@@ -18,9 +18,16 @@ $pinterestEnvironments = [];
 foreach ($isAdmin ? ['platform', 'artist'] : ['artist'] as $purpose) {
     $connection = $pinterestIntegration->connection($userId, $purpose);
     $pinterestEnvironments[$purpose] = $pinterestIntegration->apiEnvironment($userId, $purpose);
+    $appConfiguration = $purpose === 'platform'
+        ? $pinterestIntegration->platformAppConfiguration($userId)
+        : ($pinterestIntegration->artistAppConfiguration($userId) ?? []);
+    $appId = trim((string)($appConfiguration['app_id'] ?? ''));
+    $environmentLabel = strtoupper($pinterestEnvironments[$purpose]);
     $pinterestPurposes[] = [
         'value' => $purpose,
-        'label' => $purpose === 'platform' ? 'Artwork Mockups · @artworkmockups' : t('Artist Pinterest account', 'Cuenta de Pinterest del artista'),
+        'label' => $purpose === 'platform'
+            ? 'ADMIN · @artworkmockups · App ' . $appId . ' · ' . $environmentLabel
+            : t('ARTIST', 'ARTISTA') . ' · App ' . $appId . ' · ' . $environmentLabel,
         'connected' => $pinterestIntegration->isPublishingReady($userId, $purpose),
     ];
 }
@@ -429,7 +436,7 @@ $catalogPayload = array_merge($mockupPayload, $videoPayload);
                         </div>
                     </header>
                     <p><?= smb_h(t('Each mockup becomes an individual Pin.', 'Cada mockup se convierte en un Pin individual.')) ?></p>
-                    <div class="smb-pinterest-runtime-note" data-pinterest-sandbox-note <?= $pinterestSandbox ? '' : 'hidden' ?>><strong><?= smb_h(t('Pinterest test mode', 'Modo de prueba de Pinterest')) ?></strong><span><?= smb_h(t('While the app has Trial access, Pins can only be published to the Sandbox board and remain visible as tests.', 'Mientras la app tenga acceso de prueba, los Pins solo se pueden publicar en el tablero Sandbox y quedan visibles como pruebas.')) ?></span></div>
+                    <div class="smb-pinterest-runtime-note" data-pinterest-sandbox-note <?= $pinterestSandbox ? '' : 'hidden' ?>><strong><?= smb_h(t('Pinterest Sandbox · selected identity shown above', 'Pinterest Sandbox · la identidad seleccionada figura arriba')) ?></strong><span><?= smb_h(t('Confirm the ADMIN/ARTIST label and App ID before publishing. Trial Pins remain visible only as tests.', 'Antes de publicar, confirmá la etiqueta ADMIN/ARTISTA y el App ID. Los Pins de prueba quedan visibles solo como tests.')) ?></span></div>
                     <div class="smb-pinterest-items" data-board-items="pinterest"></div>
                 </article>
 

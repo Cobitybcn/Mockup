@@ -19,19 +19,26 @@ if ($_SERVER['REQUEST_METHOD'] === 'GET'
         'csrf'=>bin2hex(random_bytes(24)),
         'expires_at'=>time()+600,
     ];
+    $oauthPurpose=(string)($_SESSION['pinterest_oauth']['purpose']??'artist');
+    $oauthAppId=(string)($_SESSION['pinterest_oauth']['app_id']??'');
+    $oauthIdentity=$oauthPurpose==='platform'
+        ? 'ADMINISTRATIVE · Artwork Mockups (@artworkmockups)'
+        : 'PERSONAL ARTIST IDENTITY';
     PublicPage::start('Pinterest OAuth callback | Artwork Mockups','Pinterest returned an authorization code to Artwork Mockups.','integrations/pinterest/callback');
     ?>
-    <span class="eyebrow">Sandbox OAuth</span>
-    <h1>Authorization code received</h1>
-    <p class="lede">Pinterest redirected to the registered Artwork Mockups callback. The authorization code is visible in the browser address bar and is ready for a secure server-side exchange.</p>
+    <span class="eyebrow">Pinterest Sandbox OAuth · App <?=htmlspecialchars($oauthAppId,ENT_QUOTES|ENT_SUBSTITUTE,'UTF-8')?></span>
+    <h1>Connecting <?=htmlspecialchars($oauthIdentity,ENT_QUOTES|ENT_SUBSTITUTE,'UTF-8')?></h1>
+    <p class="lede">Pinterest returned the authorization code for this exact identity and app. The next step exchanges it server-side for a Sandbox token; the app secret is never shown in the browser.</p>
     <div class="info-card">
-        <h2>Exchange authorization code</h2>
-        <p><strong>App:</strong> <?=htmlspecialchars((string)($_SESSION['pinterest_oauth']['app_id']??''),ENT_QUOTES|ENT_SUBSTITUTE,'UTF-8')?></p>
+        <h2>Connection being verified</h2>
+        <p><strong>Identity:</strong> <?=htmlspecialchars($oauthIdentity,ENT_QUOTES|ENT_SUBSTITUTE,'UTF-8')?></p>
+        <p><strong>OAuth app:</strong> App ID <?=htmlspecialchars($oauthAppId,ENT_QUOTES|ENT_SUBSTITUTE,'UTF-8')?></p>
+        <p><strong>API environment:</strong> SANDBOX</p>
         <p><strong>Code:</strong> <?=htmlspecialchars(substr($code,0,12).'…',ENT_QUOTES|ENT_SUBSTITUTE,'UTF-8')?></p>
         <p>The next request sends the code and registered redirect URI to <code>https://api-sandbox.pinterest.com/v5/oauth/token</code>. The app secret remains on the server.</p>
         <form method="post">
             <input type="hidden" name="csrf" value="<?=htmlspecialchars((string)$_SESSION['pinterest_callback_pending']['csrf'],ENT_QUOTES|ENT_SUBSTITUTE,'UTF-8')?>">
-            <button class="button-link primary" type="submit">Exchange code for access token</button>
+            <button class="button-link primary" type="submit">Exchange code for access token · App <?=htmlspecialchars($oauthAppId,ENT_QUOTES|ENT_SUBSTITUTE,'UTF-8')?> · SANDBOX</button>
         </form>
     </div>
     <?php

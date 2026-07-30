@@ -56,9 +56,18 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             header('Location: ' . $pinterestService->authorizationUrl($userId, 'platform'));
             exit;
         } elseif ($action === 'save_pinterest_app') {
+            $requestedPinterestAppId = trim((string)($_POST['app_id'] ?? ''));
+            $platformPinterestConfig = $isAdmin ? $pinterestService->platformAppConfiguration($userId) : [];
+            $platformPinterestAppId = trim((string)($platformPinterestConfig['app_id'] ?? ''));
+            if ($isAdmin && $platformPinterestAppId !== '' && hash_equals($platformPinterestAppId, $requestedPinterestAppId)) {
+                throw new RuntimeException(t(
+                    'App ' . $platformPinterestAppId . ' is the administrative Artwork Mockups app. Manage it from the “Artwork Mockups administrative accounts” section; do not save it as an artist app.',
+                    'La app ' . $platformPinterestAppId . ' es la app administrativa de Artwork Mockups. Gestionála desde “Cuentas administrativas de Artwork Mockups”; no la guardes como app del artista.'
+                ));
+            }
             $savedApp = $pinterestService->saveArtistAppConfiguration(
                 $userId,
-                (string)($_POST['app_id'] ?? ''),
+                $requestedPinterestAppId,
                 (string)($_POST['pinterest_app_secret'] ?? ''),
                 (string)($_POST['api_environment'] ?? 'production')
             );
@@ -110,6 +119,13 @@ $pinterestPlatform = $isAdmin ? $pinterestService->connection($userId, 'platform
 $pinterestPlatformReady = $isAdmin ? $pinterestService->isPublishingReady($userId, 'platform') : false;
 $pinterestPlatformApp = $isAdmin ? $pinterestService->platformAppConfiguration($userId) : null;
 $facebookPlatform = $isAdmin ? $metaService->connection($userId, 'platform') : null;
+$pinterestPlatformAppId = trim((string)($pinterestPlatformApp['app_id'] ?? ''));
+$pinterestArtistAppId = trim((string)($pinterestApp['app_id'] ?? ''));
+$pinterestArtistUsesPlatformApp = $isAdmin
+    && $pinterestPlatformAppId !== ''
+    && $pinterestArtistAppId !== ''
+    && hash_equals($pinterestPlatformAppId, $pinterestArtistAppId);
+$pinterestPlatformExpectedAccount = '@artworkmockups';
 
 function connections_h(mixed $value): string
 {
@@ -133,14 +149,21 @@ $artistConnections = [
     [
         'id' => 'pinterest',
         'name' => 'Pinterest',
-        'eyebrow' => t('Artist account', 'Cuenta del artista'),
+        'eyebrow' => t('Personal artist identity', 'Identidad personal del artista'),
         'description' => t('Boards and Pins published as the artist.', 'Tableros y Pins publicados como el artista.'),
-        'detail' => $pinterestReady
-            ? t('Ready for Pinterest publishing.', 'Listo para publicar en Pinterest.')
-            : t('Authorize the Pinterest account owned by this artist.', 'Autorizá la cuenta de Pinterest de este artista.'),
+        'detail' => $pinterestArtistUsesPlatformApp
+            ? t(
+                'Configuration conflict: app ' . $pinterestArtistAppId . ' is the administrative app. Use the administrative block above for the Pinterest review.',
+                'Configuración mezclada: la app ' . $pinterestArtistAppId . ' es administrativa. Para la revisión de Pinterest usá el bloque administrativo de arriba.'
+            )
+            : ($pinterestReady
+                ? t('Ready for Pinterest publishing.', 'Listo para publicar en Pinterest.')
+                : t('Authorize the Pinterest account owned by this artist.', 'Autorizá la cuenta de Pinterest de este artista.')),
         'connection' => $pinterestReady ? $pinterestArtist : null,
         'href' => 'integrations/pinterest/',
-        'action' => $pinterestReady ? t('Manage Pinterest', 'Gestionar Pinterest') : (($pinterestArtist['status'] ?? '') === 'connected' ? t('Update Pinterest', 'Actualizar Pinterest') : t('Connect Pinterest', 'Conectar Pinterest')),
+        'action' => $pinterestArtistUsesPlatformApp
+            ? t('Review mixed configuration', 'Revisar configuración mezclada')
+            : ($pinterestReady ? t('Manage artist Pinterest', 'Gestionar Pinterest del artista') : (($pinterestArtist['status'] ?? '') === 'connected' ? t('Update artist Pinterest', 'Actualizar Pinterest del artista') : t('Connect artist Pinterest', 'Conectar Pinterest del artista'))),
     ],
     [
         'id' => 'facebook',
@@ -209,7 +232,15 @@ $artistConnections = [
         .connection-card__action{margin-top:auto}.connection-card__action .button-link{width:100%;justify-content:center;min-height:48px;background:#eef3eb;border-color:#c9d6c5;color:#42513f}
         .connection-card__action .button-link:hover{background:#dfeadd;border-color:#b8cbb3}
         .connections-platform{padding:24px;border:1px solid var(--line);border-radius:var(--radius);background:var(--surface-soft)}
-        .connections-platform-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:14px;margin-top:16px}
+        .connections-platform-grid{display:grid;grid-template-columns:minmax(0,1.55fr) minmax(260px,.65fr);gap:14px;margin-top:16px}
+        .connection-card--platform{min-height:0;background:#f3f7f1;border-color:#c9d6c5;box-shadow:none}
+        .connection-card--platform .connection-network span{color:#496246}
+        .connection-card--platform .connection-card__description{margin-top:18px}
+        .connection-facts{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:10px 18px;margin:14px 0 22px;padding:16px;border:1px solid var(--line);border-radius:6px;background:var(--surface)}
+        .connection-facts div{min-width:0}.connection-facts dt{margin:0 0 4px;color:var(--muted);font-size:9px;font-weight:700;letter-spacing:.09em;text-transform:uppercase}
+        .connection-facts dd{margin:0;color:var(--ink);font-size:14px;font-weight:600;overflow-wrap:anywhere}
+        .connection-review-note{padding:15px 16px;border-left:3px solid #8aa184;background:#f3f7f1;color:#42513f!important}
+        .connection-review-note strong{display:block;margin-bottom:4px}
         .connections-platform-item{display:flex;justify-content:space-between;gap:20px;align-items:center;padding:18px;border:1px solid var(--line);border-radius:var(--radius);background:var(--surface)}
         .connections-platform-item strong{display:block}.connections-platform-item small{color:var(--muted)}
         .connections-message{margin:18px 0 0;padding:14px 16px;border:1px solid #c8d8c5;border-radius:var(--radius);background:#eef5ec;color:#496246}
@@ -235,7 +266,7 @@ $artistConnections = [
         .connection-advanced__body{display:grid;gap:16px;padding:0 16px 16px;border-top:1px solid var(--line)}
         .connection-advanced__body>p{padding-top:14px}.connection-callback{overflow-wrap:anywhere;color:var(--ink)!important;font-size:12px}
         @media(max-width:980px){.connections-grid{grid-template-columns:1fr}.connection-card{min-height:230px}.connections-platform-grid{grid-template-columns:1fr}}
-        @media(max-width:680px){.connections-section-head{display:block}.connections-section-head p{margin-top:6px;text-align:left}.connection-card__top,.connections-platform-item{align-items:flex-start;flex-direction:column}.connection-form__row{grid-template-columns:1fr}.connection-dialog__head,.connection-dialog__body{padding-left:20px;padding-right:20px}}
+        @media(max-width:680px){.connections-section-head{display:block}.connections-section-head p{margin-top:6px;text-align:left}.connection-card__top,.connections-platform-item{align-items:flex-start;flex-direction:column}.connection-form__row,.connection-facts{grid-template-columns:1fr}.connection-dialog__head,.connection-dialog__body{padding-left:20px;padding-right:20px}}
     </style>
 </head>
 <body>
@@ -255,10 +286,50 @@ $artistConnections = [
             <?php if ($connectionNotice !== ''): ?><div class="connections-message"><?= connections_h($connectionNotice) ?></div><?php endif; ?>
             <?php if ($connectionError !== ''): ?><div class="connections-message is-error"><?= connections_h($connectionError) ?></div><?php endif; ?>
 
+            <?php if ($isAdmin): ?>
+                <section class="connections-section connections-platform" aria-labelledby="platform-connections-title">
+                    <div class="connections-section-head">
+                        <h2 id="platform-connections-title"><?= connections_h(t('Artwork Mockups administrative accounts', 'Cuentas administrativas de Artwork Mockups')) ?></h2>
+                        <p><?= connections_h(t(
+                            'Use this Pinterest identity for the Standard-access review of the official Artwork Mockups app.',
+                            'Para la revisión de acceso Standard de la app oficial, usá esta identidad de Pinterest.'
+                        )) ?></p>
+                    </div>
+                    <div class="connections-platform-grid">
+                        <?php $platformPinterestStatus = connections_status($pinterestPlatform); ?>
+                        <article class="connection-card connection-card--platform">
+                            <div class="connection-card__top">
+                                <div class="connection-network">
+                                    <span><?= connections_h(t('Administrative account · @artworkmockups', 'Cuenta administrativa · @artworkmockups')) ?></span>
+                                    <h3>Pinterest</h3>
+                                </div>
+                                <span class="connection-status <?= connections_h($platformPinterestStatus['class']) ?>"><?= connections_h($platformPinterestStatus['label']) ?></span>
+                            </div>
+                            <p class="connection-card__description"><?= connections_h(t(
+                                'Official connection used to publish as Artwork Mockups and demonstrate the Pinterest integration.',
+                                'Conexión oficial para publicar como Artwork Mockups y demostrar la integración ante Pinterest.'
+                            )) ?></p>
+                            <dl class="connection-facts">
+                                <div><dt><?= connections_h(t('Pinterest account', 'Cuenta de Pinterest')) ?></dt><dd><?= connections_h($pinterestPlatformExpectedAccount) ?></dd></div>
+                                <div><dt><?= connections_h(t('OAuth app', 'App OAuth')) ?></dt><dd><?= connections_h(t('App ID ', 'App ID ') . ($pinterestPlatformAppId !== '' ? $pinterestPlatformAppId : t('not configured', 'sin configurar'))) ?></dd></div>
+                                <div><dt><?= connections_h(t('API environment', 'Entorno API')) ?></dt><dd><?= connections_h(strtoupper((string)($pinterestPlatformApp['api_environment'] ?? 'production'))) ?></dd></div>
+                                <div><dt><?= connections_h(t('Publishing identity', 'Identidad de publicación')) ?></dt><dd>Artwork Mockups</dd></div>
+                            </dl>
+                            <div class="connection-card__action"><button class="button-link secondary" type="button" data-connection-open="pinterestplatform"><?= connections_h(t('Open administrative Pinterest connection', 'Abrir conexión administrativa de Pinterest')) ?></button></div>
+                        </article>
+                        <div class="connections-platform-item">
+                            <?php $facebookPlatformStatus = connections_status($facebookPlatform); ?>
+                            <div><strong>Facebook</strong><small><?= connections_h(t('Administrative account · ', 'Cuenta administrativa · ') . $facebookPlatformStatus['label']) ?></small></div>
+                            <a class="button-link secondary" href="integrations/meta/"><?= connections_h(t('Manage administrative Facebook', 'Gestionar Facebook administrativo')) ?></a>
+                        </div>
+                    </div>
+                </section>
+            <?php endif; ?>
+
             <section class="connections-section" aria-labelledby="artist-connections-title">
                 <div class="connections-section-head">
-                    <h2 id="artist-connections-title"><?= connections_h(t('Artist connections', 'Conexiones del artista')) ?></h2>
-                    <p><?= connections_h(t('These accounts publish artwork as ', 'Estas cuentas publican obras como ')) ?><?= connections_h((string)($user['email'] ?? t('the current artist', 'el artista actual'))) ?>.</p>
+                    <h2 id="artist-connections-title"><?= connections_h($isAdmin ? t('Personal artist accounts', 'Cuentas personales del artista') : t('Artist connections', 'Conexiones del artista')) ?></h2>
+                    <p><?php if ($isAdmin): ?><?= connections_h(t('Optional personal identities. Do not use this section for the official Pinterest app review.', 'Identidades personales opcionales. No uses esta sección para revisar la app oficial de Pinterest.')) ?><?php else: ?><?= connections_h(t('These accounts publish artwork as ', 'Estas cuentas publican obras como ')) ?><?= connections_h((string)($user['email'] ?? t('the current artist', 'el artista actual'))) ?>.<?php endif; ?></p>
                 </div>
                 <div class="connections-grid">
                     <?php foreach ($artistConnections as $item): $status = connections_status($item['connection']); ?>
@@ -275,49 +346,32 @@ $artistConnections = [
                 </div>
             </section>
 
-            <?php if ($isAdmin): ?>
-                <section class="connections-section connections-platform" aria-labelledby="platform-connections-title">
-                    <div class="connections-section-head">
-                        <h2 id="platform-connections-title"><?= connections_h(t('Artwork Mockups platform', 'Plataforma Artwork Mockups')) ?></h2>
-                        <p><?= connections_h(t("Administrative identity for promoting the application. It never uses an artist's credentials.", 'Identidad administrativa para promocionar la aplicación. Nunca usa las credenciales de un artista.')) ?></p>
-                    </div>
-                    <div class="connections-platform-grid">
-                        <?php foreach ([
-                            ['Pinterest', $pinterestPlatform, 'pinterestplatform', ''],
-                            ['Facebook', $facebookPlatform, '', 'integrations/meta/'],
-                        ] as [$name, $connection, $dialog, $href]): $status = connections_status($connection); ?>
-                            <div class="connections-platform-item">
-                                <div><strong><?= connections_h($name) ?></strong><small><?= connections_h($status['label']) ?></small></div>
-                                <?php if ($dialog !== ''): ?>
-                                    <button class="button-link secondary" type="button" data-connection-open="<?= connections_h($dialog) ?>"><?= connections_h(t('Manage', 'Gestionar')) ?></button>
-                                <?php else: ?>
-                                    <a class="button-link secondary" href="<?= connections_h($href) ?>"><?= connections_h(t('Manage', 'Gestionar')) ?></a>
-                                <?php endif; ?>
-                            </div>
-                        <?php endforeach; ?>
-                    </div>
-                </section>
-            <?php endif; ?>
-
             <dialog class="connection-dialog" id="connection-pinterest" aria-labelledby="connection-pinterest-title">
                 <div class="connection-dialog__head">
-                    <div><span><?= connections_h(t('Artist account', 'Cuenta del artista')) ?></span><h2 id="connection-pinterest-title">Pinterest</h2></div>
+                    <div><span><?= connections_h(t('Personal artist identity', 'Identidad personal del artista')) ?></span><h2 id="connection-pinterest-title">Pinterest<?= $pinterestArtistAppId !== '' ? ' · App ' . connections_h($pinterestArtistAppId) : '' ?></h2></div>
                     <button class="connection-dialog__close" type="button" data-connection-close aria-label="<?= connections_h(t('Close', 'Cerrar')) ?>">&times;</button>
                 </div>
                 <div class="connection-dialog__body">
+                    <?php if ($pinterestArtistUsesPlatformApp): ?>
+                        <p class="connection-review-note"><strong><?= connections_h(t('This is not the administrative review connection.', 'Esta no es la conexión administrativa para la revisión.')) ?></strong><?= connections_h(t(
+                            'App ' . $pinterestArtistAppId . ' is configured here in the personal artist slot, but that ID belongs to the official Artwork Mockups app. Use “Administrative account · @artworkmockups” above.',
+                            'La app ' . $pinterestArtistAppId . ' quedó configurada en el espacio personal del artista, pero ese ID pertenece a la app oficial de Artwork Mockups. Usá “Cuenta administrativa · @artworkmockups” arriba.'
+                        )) ?></p>
+                    <?php endif; ?>
                     <?php if ($pinterestReady): ?>
-                        <div class="connection-summary">
-                            <p><strong><?= connections_h(t('Connected account', 'Cuenta conectada')) ?></strong></p>
-                            <p><?= connections_h((string)($pinterestArtist['pinterest_account_id'] ?? 'Pinterest')) ?></p>
-                        </div>
-                        <p><?= connections_h(t('This is the identity used when you publish as the artist.', 'Esta es la identidad usada cuando publicás como el artista.')) ?></p>
+                        <dl class="connection-facts">
+                            <div><dt><?= connections_h(t('Connection type', 'Tipo de conexión')) ?></dt><dd><?= connections_h(t('Personal artist', 'Personal del artista')) ?></dd></div>
+                            <div><dt><?= connections_h(t('Pinterest account ID', 'ID de cuenta Pinterest')) ?></dt><dd><?= connections_h((string)($pinterestArtist['pinterest_account_id'] ?? 'Pinterest')) ?></dd></div>
+                            <div><dt><?= connections_h(t('OAuth app', 'App OAuth')) ?></dt><dd><?= connections_h($pinterestArtistAppId !== '' ? 'App ID ' . $pinterestArtistAppId : t('Not configured', 'Sin configurar')) ?></dd></div>
+                            <div><dt><?= connections_h(t('API environment', 'Entorno API')) ?></dt><dd><?= connections_h(strtoupper((string)($pinterestApp['api_environment'] ?? 'production'))) ?></dd></div>
+                        </dl>
                         <form class="connection-form" method="post">
                             <input type="hidden" name="csrf" value="<?= connections_h($_SESSION['connections_csrf']) ?>">
                             <input type="hidden" name="network" value="pinterest">
                             <div class="connection-form__actions">
-                                <?php if (($pinterestApp['has_secret'] ?? false) === true): ?><button class="button-link primary" name="action" value="connect_pinterest"><?= connections_h(t('Reconnect with app', 'Reconectar con la app')) ?> <?= connections_h((string)$pinterestApp['app_id']) ?></button><?php endif; ?>
-                                <?php if (($pinterestApp['api_environment'] ?? 'production') === 'sandbox'): ?><button class="button-link secondary" name="action" value="create_pinterest_sandbox_board"><?= connections_h(t('Create Sandbox demo board', 'Crear tablero de demo Sandbox')) ?></button><?php endif; ?>
-                                <button class="button-link secondary" name="action" value="disconnect_pinterest"><?= connections_h(t('Disconnect Pinterest', 'Desconectar Pinterest')) ?></button>
+                                <?php if (($pinterestApp['has_secret'] ?? false) === true && !$pinterestArtistUsesPlatformApp): ?><button class="button-link primary" name="action" value="connect_pinterest"><?= connections_h(t('Reconnect artist account with app ', 'Reconectar cuenta del artista con app ')) ?><?= connections_h($pinterestArtistAppId) ?></button><?php endif; ?>
+                                <?php if (($pinterestApp['api_environment'] ?? 'production') === 'sandbox' && !$pinterestArtistUsesPlatformApp): ?><button class="button-link secondary" name="action" value="create_pinterest_sandbox_board"><?= connections_h(t('Prepare artist Sandbox board', 'Preparar tablero Sandbox del artista')) ?></button><?php endif; ?>
+                                <button class="button-link secondary" name="action" value="disconnect_pinterest"><?= connections_h(t('Disconnect personal artist identity', 'Desconectar identidad personal del artista')) ?></button>
                             </div>
                         </form>
                     <?php else: ?>
@@ -325,7 +379,7 @@ $artistConnections = [
                         <form class="connection-form" method="post">
                             <input type="hidden" name="csrf" value="<?= connections_h($_SESSION['connections_csrf']) ?>">
                             <input type="hidden" name="network" value="pinterest">
-                            <?php if (($pinterestApp['has_secret'] ?? false) === true): ?><div class="connection-form__actions"><button class="button-link primary" name="action" value="connect_pinterest"><?= connections_h(($pinterestArtist['status']??'')==='connected' ? t('Update Pinterest', 'Actualizar Pinterest') : t('Connect Pinterest', 'Conectar Pinterest')) ?></button></div><?php endif; ?>
+                            <?php if (($pinterestApp['has_secret'] ?? false) === true && !$pinterestArtistUsesPlatformApp): ?><div class="connection-form__actions"><button class="button-link primary" name="action" value="connect_pinterest"><?= connections_h(($pinterestArtist['status']??'')==='connected' ? t('Update artist Pinterest', 'Actualizar Pinterest del artista') : t('Connect artist Pinterest', 'Conectar Pinterest del artista')) ?> · App <?= connections_h($pinterestArtistAppId) ?></button></div><?php endif; ?>
                         </form>
                     <?php endif; ?>
                     <details class="connection-advanced">
@@ -360,26 +414,33 @@ $artistConnections = [
             <?php if ($isAdmin): ?>
                 <dialog class="connection-dialog" id="connection-pinterestplatform" aria-labelledby="connection-pinterestplatform-title">
                     <div class="connection-dialog__head">
-                        <div><span><?= connections_h(t('Artwork Mockups platform', 'Plataforma Artwork Mockups')) ?></span><h2 id="connection-pinterestplatform-title">Pinterest</h2></div>
+                        <div><span><?= connections_h(t('Administrative account · @artworkmockups', 'Cuenta administrativa · @artworkmockups')) ?></span><h2 id="connection-pinterestplatform-title">Pinterest · App <?= connections_h($pinterestPlatformAppId) ?></h2></div>
                         <button class="connection-dialog__close" type="button" data-connection-close aria-label="<?= connections_h(t('Close', 'Cerrar')) ?>">&times;</button>
                     </div>
                     <div class="connection-dialog__body">
-                        <div class="connection-summary">
-                            <p><strong><?= connections_h($pinterestPlatformReady ? t('Connected account', 'Cuenta conectada') : t('Connection status', 'Estado de la conexión')) ?></strong></p>
-                            <p><?= connections_h($pinterestPlatformReady ? (string)($pinterestPlatform['pinterest_account_id'] ?? 'Pinterest') : t('Authorization required', 'Se requiere autorización')) ?></p>
-                        </div>
-                        <p><?= connections_h(t('This administrative identity publishes only as Artwork Mockups and remains isolated from artist accounts.', 'Esta identidad administrativa publica solo como Artwork Mockups y permanece aislada de las cuentas de los artistas.')) ?></p>
+                        <p class="connection-review-note"><strong><?= connections_h(t('Use this connection in the Pinterest review video.', 'Usá esta conexión en el video de revisión de Pinterest.')) ?></strong><?= connections_h(t(
+                            'It demonstrates the official app, the administrative @artworkmockups account and the configured ' . strtoupper((string)($pinterestPlatformApp['api_environment'] ?? 'production')) . ' environment without mixing in the artist identity.',
+                            'Demuestra la app oficial, la cuenta administrativa @artworkmockups y el entorno configurado ' . strtoupper((string)($pinterestPlatformApp['api_environment'] ?? 'production')) . ' sin mezclar la identidad del artista.'
+                        )) ?></p>
+                        <dl class="connection-facts">
+                            <div><dt><?= connections_h(t('Connection type', 'Tipo de conexión')) ?></dt><dd><?= connections_h(t('Artwork Mockups administrative', 'Administrativa de Artwork Mockups')) ?></dd></div>
+                            <div><dt><?= connections_h(t('Account to authorize', 'Cuenta que debe autorizarse')) ?></dt><dd><?= connections_h($pinterestPlatformExpectedAccount) ?></dd></div>
+                            <div><dt><?= connections_h(t('OAuth app', 'App OAuth')) ?></dt><dd>App ID <?= connections_h($pinterestPlatformAppId) ?></dd></div>
+                            <div><dt><?= connections_h(t('API environment', 'Entorno API')) ?></dt><dd><?= connections_h(strtoupper((string)($pinterestPlatformApp['api_environment'] ?? 'production'))) ?></dd></div>
+                            <div><dt><?= connections_h(t('Connection status', 'Estado de conexión')) ?></dt><dd><?= connections_h($pinterestPlatformReady ? t('Connected and ready', 'Conectada y lista') : t('Authorization required', 'Requiere autorización')) ?></dd></div>
+                            <div><dt><?= connections_h(t('Pinterest account ID', 'ID de cuenta Pinterest')) ?></dt><dd><?= connections_h($pinterestPlatformReady ? (string)($pinterestPlatform['pinterest_account_id'] ?? 'Pinterest') : '—') ?></dd></div>
+                        </dl>
                         <form class="connection-form" method="post">
                             <input type="hidden" name="csrf" value="<?= connections_h($_SESSION['connections_csrf']) ?>">
                             <input type="hidden" name="network" value="pinterestplatform">
                             <div class="connection-form__actions">
-                                <button class="button-link primary" name="action" value="connect_pinterest_platform"><?= connections_h($pinterestPlatformReady ? t('Reconnect', 'Reconectar') : t('Connect', 'Conectar')) ?> <?= connections_h(t('with app', 'con la app')) ?> <?= connections_h((string)($pinterestPlatformApp['app_id'] ?? '')) ?></button>
-                                <?php if (($pinterestPlatformApp['api_environment'] ?? 'production') === 'sandbox'): ?><button class="button-link secondary" name="action" value="create_pinterest_platform_sandbox_board"><?= connections_h(t('Create Sandbox demo board', 'Crear tablero de demo Sandbox')) ?></button><?php endif; ?>
-                                <?php if ($pinterestPlatformReady): ?><button class="button-link secondary" name="action" value="disconnect_pinterest_platform"><?= connections_h(t('Disconnect Pinterest', 'Desconectar Pinterest')) ?></button><?php endif; ?>
+                                <button class="button-link primary" name="action" value="connect_pinterest_platform"><?= connections_h($pinterestPlatformReady ? t('Repeat OAuth for @artworkmockups · App ', 'Repetir OAuth de @artworkmockups · App ') : t('Connect @artworkmockups · App ', 'Conectar @artworkmockups · App ')) ?><?= connections_h($pinterestPlatformAppId) ?></button>
+                                <?php if (($pinterestPlatformApp['api_environment'] ?? 'production') === 'sandbox'): ?><button class="button-link secondary" name="action" value="create_pinterest_platform_sandbox_board"><?= connections_h(t('Prepare Sandbox board · App ', 'Preparar tablero Sandbox · App ')) ?><?= connections_h($pinterestPlatformAppId) ?></button><?php endif; ?>
+                                <?php if ($pinterestPlatformReady): ?><button class="button-link secondary" name="action" value="disconnect_pinterest_platform"><?= connections_h(t('Disconnect administrative @artworkmockups identity', 'Desconectar identidad administrativa @artworkmockups')) ?></button><?php endif; ?>
                             </div>
                         </form>
                         <details class="connection-advanced">
-                            <summary><?= connections_h(t('Developer app', 'App de desarrollador')) ?> · <?= connections_h((string)($pinterestPlatformApp['app_id'] ?? '')) ?></summary>
+                            <summary><?= connections_h(t('Technical details', 'Detalles técnicos')) ?> · App <?= connections_h($pinterestPlatformAppId) ?></summary>
                             <div class="connection-advanced__body">
                                 <p><?= connections_h(t('The platform app secret stays on the server and is never displayed.', 'El secreto de la app de la plataforma permanece en el servidor y nunca se muestra.')) ?></p>
                                 <p><strong><?= connections_h(t('API environment', 'Entorno de la API')) ?></strong><br><?= connections_h(ucfirst((string)($pinterestPlatformApp['api_environment'] ?? 'production'))) ?></p>

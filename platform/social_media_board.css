@@ -325,7 +325,7 @@
 
 .smb-board-head-actions { display: flex; align-items: center; gap: 9px; }
 .smb-pinterest-purpose select {
-    max-width: 210px;
+    max-width: 360px;
     min-height: 32px;
     padding: 0 28px 0 10px;
     border: 1px solid #e8c9c4;
