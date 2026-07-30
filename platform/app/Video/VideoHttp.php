@@ -59,6 +59,9 @@ final class VideoHttp
             self::respond(['ok' => false, 'error' => $e->getMessage()], 404);
         } catch (DomainException $e) {
             self::respond(['ok' => false, 'error' => $e->getMessage()], 409);
+        } catch (RuntimeException $e) {
+            Logger::log('Video Lab request failed: ' . $e->getMessage(), 'error');
+            self::respond(['ok' => false, 'error' => $e->getMessage()], 500);
         } catch (Throwable $e) {
             Logger::log('Video Lab request failed: ' . $e->getMessage(), 'error');
             self::respond(['ok' => false, 'error' => 'Video Lab could not complete the request. Check the server log for details.'], 500);
