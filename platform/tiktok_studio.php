@@ -86,7 +86,7 @@ function tstudio_board_date_label(string $date): string
     <link rel="stylesheet" href="ui-catalog.css">
     <link rel="stylesheet" href="videos.css?v=15">
     <link rel="stylesheet" href="media-controls.css?v=2">
-    <link rel="stylesheet" href="tiktok_studio.css?v=2">
+    <link rel="stylesheet" href="tiktok_studio.css?v=3">
 </head>
 <body data-csrf="<?= tstudio_h($csrf) ?>">
 <div class="app-shell">
@@ -139,7 +139,9 @@ function tstudio_board_date_label(string $date): string
                 <?php if (!$unassigned): ?>
                     <p class="tstudio-empty"><?= tstudio_h(t('Every finished video is already on a board.', 'Todos los videos terminados ya están en algún board.')) ?></p>
                 <?php else: ?>
-                    <div class="tstudio-rail" data-tstudio-rail>
+                    <div class="tstudio-rail-wrap">
+                        <button class="tstudio-rail-arrow tstudio-rail-arrow--left" type="button" data-tstudio-scroll="-1" aria-label="<?= tstudio_h(t('Previous', 'Anteriores')) ?>">‹</button>
+                        <div class="tstudio-rail" data-tstudio-rail>
                         <?php foreach ($unassigned as $final): ?>
                             <?php
                             $exportId = (int)$final['id'];
@@ -151,6 +153,7 @@ function tstudio_board_date_label(string $date): string
                             <article class="tstudio-rail-card">
                                 <div class="tstudio-rail-thumb">
                                     <?php if (!empty($final['thumbnailUrl'])): ?><img src="<?= tstudio_h((string)$final['thumbnailUrl']) ?>" alt="<?= tstudio_h($title) ?>" loading="lazy"><?php endif; ?>
+                                    <span class="tstudio-play" aria-hidden="true"><svg viewBox="0 0 24 24"><path d="M8 5.5v13l11-6.5-11-6.5Z"/></svg></span>
                                 </div>
                                 <h3><?= tstudio_h($title) ?></h3>
                                 <form class="tstudio-unassigned-form" data-tstudio-unassigned-form>
@@ -176,6 +179,8 @@ function tstudio_board_date_label(string $date): string
                                 </form>
                             </article>
                         <?php endforeach; ?>
+                        </div>
+                        <button class="tstudio-rail-arrow tstudio-rail-arrow--right" type="button" data-tstudio-scroll="1" aria-label="<?= tstudio_h(t('More', 'Más')) ?>">›</button>
                     </div>
                 <?php endif; ?>
             </section>
@@ -233,6 +238,7 @@ function tstudio_board_date_label(string $date): string
                             <article class="tstudio-card">
                                 <div class="tstudio-card-thumb">
                                     <?php if (!empty($final['thumbnailUrl'])): ?><img src="<?= tstudio_h((string)$final['thumbnailUrl']) ?>" alt="<?= tstudio_h($title) ?>" loading="lazy"><?php endif; ?>
+                                    <span class="tstudio-play" aria-hidden="true"><svg viewBox="0 0 24 24"><path d="M8 5.5v13l11-6.5-11-6.5Z"/></svg></span>
                                     <span class="tstudio-status-pill tstudio-status-pill--<?= tstudio_h($status ?: 'draft') ?>"><?= tstudio_h(tstudio_status_label($status)) ?></span>
                                 </div>
                                 <h3><?= tstudio_h($title) ?></h3>
@@ -301,6 +307,6 @@ function tstudio_board_date_label(string $date): string
         </div>
     </main>
 </div>
-<script src="tiktok_studio.js?v=2"></script>
+<script src="tiktok_studio.js?v=3"></script>
 </body>
 </html>

@@ -3,6 +3,15 @@
 
     const pageCsrf = document.body.dataset.csrf || '';
 
+    const rail = document.querySelector('[data-tstudio-rail]');
+    document.querySelectorAll('[data-tstudio-scroll]').forEach(button => {
+        button.addEventListener('click', () => {
+            if (!rail) return;
+            const direction = Number(button.dataset.tstudioScroll || '1');
+            rail.scrollBy({ left: direction * rail.clientWidth * 0.8, behavior: 'smooth' });
+        });
+    });
+
     async function postForm(url, body) {
         const response = await fetch(url, { method: 'POST', body, credentials: 'same-origin' });
         const payload = await response.json().catch(() => ({}));

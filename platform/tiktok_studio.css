@@ -40,35 +40,84 @@
 }
 .tstudio-empty--boards { padding: 32px 0; font-style: italic; font-family: var(--font-serif); font-size: 16px; }
 
-.tstudio-rail-panel { margin-bottom: 22px; }
+.tstudio-rail-panel { margin-bottom: 26px; }
+
+.tstudio-rail-wrap { position: relative; padding: 0 40px; }
 
 .tstudio-rail {
-    display: flex;
-    gap: 16px;
+    display: grid;
+    grid-auto-flow: column;
+    grid-auto-columns: clamp(240px, 22vw, 300px);
+    gap: 18px;
     overflow-x: auto;
-    padding: 4px 4px 10px;
+    overflow-y: hidden;
+    scroll-behavior: smooth;
+    padding: 4px 4px 12px;
 }
+.tstudio-rail::-webkit-scrollbar { height: 7px; }
+.tstudio-rail::-webkit-scrollbar-thumb { border-radius: 999px; background: var(--line-dark); }
+
+.tstudio-rail-arrow {
+    position: absolute;
+    z-index: 4;
+    top: 44%;
+    display: grid;
+    place-items: center;
+    width: 44px;
+    height: 44px;
+    padding: 0 0 4px;
+    border: 1px solid var(--line);
+    border-radius: 50%;
+    color: var(--ink);
+    background: rgba(255, 254, 253, .96);
+    box-shadow: var(--shadow);
+    font-size: 30px;
+    line-height: 1;
+    cursor: pointer;
+    transform: translateY(-50%);
+}
+.tstudio-rail-arrow--left { left: -6px; }
+.tstudio-rail-arrow--right { right: -6px; }
 
 .tstudio-rail-card {
-    flex: 0 0 220px;
     display: flex;
     flex-direction: column;
-    gap: 8px;
-    padding: 12px;
+    gap: 10px;
+    padding: 14px;
     border: 1px solid var(--line);
     border-radius: 12px;
     background: var(--surface);
     box-shadow: var(--shadow);
 }
 
-.tstudio-rail-thumb {
+.tstudio-rail-thumb,
+.tstudio-card-thumb {
+    position: relative;
     width: 100%;
     aspect-ratio: 4 / 5;
     overflow: hidden;
-    border-radius: 8px;
-    background: #191714;
+    border-radius: 9px;
+    background: #2b2622;
 }
-.tstudio-rail-thumb img { width: 100%; height: 100%; display: block; object-fit: cover; }
+.tstudio-rail-thumb img,
+.tstudio-card-thumb img { width: 100%; height: 100%; display: block; object-fit: cover; }
+
+.tstudio-play {
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    display: grid;
+    place-items: center;
+    width: 52px;
+    height: 52px;
+    padding: 0;
+    border-radius: 50%;
+    color: #2b2622;
+    background: rgba(255, 255, 255, .92);
+    transform: translate(-50%, -50%);
+    pointer-events: none;
+}
+.tstudio-play svg { width: 22px; height: 22px; fill: currentColor; }
 
 .tstudio-rail-card h3,
 .tstudio-card h3 {
@@ -121,10 +170,10 @@
 
 .tstudio-board-grid {
     display: grid;
-    grid-template-columns: repeat(auto-fill, minmax(280px, 340px));
+    grid-template-columns: repeat(auto-fill, minmax(320px, 400px));
     align-items: start;
     justify-content: start;
-    gap: 20px;
+    gap: 22px;
 }
 
 .tstudio-card {
@@ -138,16 +187,6 @@
     box-shadow: var(--shadow);
 }
 .tstudio-card:hover { box-shadow: var(--shadow-hover); }
-
-.tstudio-card-thumb {
-    position: relative;
-    width: 100%;
-    aspect-ratio: 3 / 4;
-    overflow: hidden;
-    border-radius: 8px;
-    background: #191714;
-}
-.tstudio-card-thumb img { width: 100%; height: 100%; display: block; object-fit: cover; }
 
 .tstudio-status-pill {
     position: absolute;
@@ -175,19 +214,26 @@
 .tstudio-schedule-form,
 .tstudio-unassigned-form { display: flex; flex-direction: column; gap: 8px; }
 
-.tstudio-caption-row { display: flex; flex-direction: column; gap: 5px; }
+.tstudio-caption-row { display: flex; flex-direction: column; gap: 6px; }
 .tstudio-caption-row textarea {
     width: 100%;
-    min-height: 62px;
-    padding: 8px 10px;
+    min-height: 130px;
+    padding: 12px 14px;
     border: 1px solid var(--line);
-    border-radius: 7px;
+    border-radius: 9px;
     resize: vertical;
     background: var(--surface-soft);
     color: var(--ink);
     font: inherit;
-    font-size: 12px;
-    line-height: 1.45;
+    font-size: 15px;
+    line-height: 1.55;
+}
+.tstudio-caption-row textarea:focus,
+.tstudio-field input:focus,
+.tstudio-when-row input:focus {
+    outline: none;
+    border-color: var(--accent);
+    background: var(--surface);
 }
 
 .tstudio-suggest-btn {
@@ -196,7 +242,7 @@
     border: 0;
     background: transparent;
     color: var(--accent);
-    font-size: 9px;
+    font-size: 11px;
     font-weight: 800;
     text-transform: uppercase;
     letter-spacing: .03em;
@@ -205,34 +251,34 @@
 
 .tstudio-counter {
     color: var(--muted);
-    font-size: 9px;
+    font-size: 10px;
     text-align: right;
 }
 
-.tstudio-field { display: flex; flex-direction: column; gap: 3px; }
-.tstudio-field span { color: var(--muted); font-size: 10px; }
+.tstudio-field { display: flex; flex-direction: column; gap: 4px; }
+.tstudio-field span { color: var(--muted); font-size: 11px; font-weight: 600; }
 .tstudio-field input {
-    padding: 6px 9px;
+    padding: 10px 12px;
     border: 1px solid var(--line);
-    border-radius: 6px;
+    border-radius: 7px;
     background: var(--surface-soft);
     color: var(--ink);
     font: inherit;
-    font-size: 11px;
+    font-size: 14px;
 }
 
 .tstudio-when-row { display: flex; gap: 10px; }
-.tstudio-when-row label { flex: 1; display: flex; flex-direction: column; gap: 3px; }
-.tstudio-when-row span { color: var(--muted); font-size: 10px; }
+.tstudio-when-row label { flex: 1; display: flex; flex-direction: column; gap: 4px; }
+.tstudio-when-row span { color: var(--muted); font-size: 11px; font-weight: 600; }
 .tstudio-when-row input {
     width: 100%;
-    padding: 6px 9px;
+    padding: 9px 10px;
     border: 1px solid var(--line);
-    border-radius: 6px;
+    border-radius: 7px;
     background: var(--surface-soft);
     color: var(--ink);
     font: inherit;
-    font-size: 11px;
+    font-size: 13px;
 }
 
 .tstudio-aigc-note {
