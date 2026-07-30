@@ -90,8 +90,6 @@ require_once __DIR__ . '/Services/SocialPublishJobService.php';
 require_once __DIR__ . '/Services/TikTokIntegrationService.php';
 require_once __DIR__ . '/Services/TikTokPublisher.php';
 require_once __DIR__ . '/Services/VideoTikTokPublicationService.php';
-require_once __DIR__ . '/Services/TikTokPublishScheduler.php';
-require_once __DIR__ . '/Services/TikTokBoardService.php';
 require_once __DIR__ . '/Services/SocialBoardPublishService.php';
 require_once __DIR__ . '/Services/SocialScheduledPublicationService.php';
 require_once __DIR__ . '/Services/ArtworkEmbeddingService.php';

@@ -100,7 +100,6 @@ function videos_artist_site_url(string $slug): string
                 <div class="videos-primary-actions">
                     <a class="videos-decision-block videos-decision-block--primary" href="video.php"><?= videos_h(t('Open Video Lab', 'Abrir Video Lab')) ?></a>
                     <a class="videos-decision-block videos-decision-block--secondary" href="#upload-final-video" role="button" data-open-final-upload><?= videos_h(t('Upload Final Video', 'Subir video final')) ?></a>
-                    <a class="videos-decision-block videos-decision-block--secondary" href="tiktok_studio.php"><?= videos_h(t('TikTok Studio →', 'TikTok Studio →')) ?></a>
                 </div>
             </header>
 
@@ -190,7 +189,7 @@ function videos_artist_site_url(string $slug): string
                                             <input type="hidden" name="csrf" value="<?= videos_h($csrf) ?>">
                                             <input type="hidden" name="exportId" value="<?= (int)$final['id'] ?>">
                                             <div class="videos-final-tiktok-caption-row">
-                                                <textarea name="caption" maxlength="2200" rows="3" placeholder="<?= videos_h(t('Caption for TikTok', 'Copy para TikTok')) ?>" aria-label="<?= videos_h(t('TikTok caption', 'Copy de TikTok')) ?>" data-final-tiktok-caption <?= $tiktokLocked ? 'disabled' : '' ?>><?= videos_h($projectTitle) ?></textarea>
+                                                <textarea name="caption" maxlength="2200" rows="3" placeholder="<?= videos_h(t('Caption for TikTok', 'Copy para TikTok')) ?>" aria-label="<?= videos_h(t('TikTok caption', 'Copy de TikTok')) ?>" data-final-tiktok-caption <?= $tiktokLocked ? 'disabled' : '' ?>><?= videos_h((string)($tiktokRow['caption'] ?? '') ?: $projectTitle) ?></textarea>
                                                 <button type="button" class="videos-final-tiktok-suggest" data-final-tiktok-suggest <?= $tiktokLocked ? 'disabled' : '' ?>><?= videos_h(t('Suggest caption & hashtags', 'Sugerir copy y hashtags')) ?></button>
                                             </div>
                                             <small class="videos-final-tiktok-counter" data-final-tiktok-counter></small>
