@@ -34,6 +34,11 @@ function run_deployment_pipeline_regression_tests(): void
             && str_contains($cloudBuild, 'Skipping worker deployment'),
         'web-only releases skip worker build and deployment work'
     );
+    TestHarness::assertTrue(
+        substr_count($cloudBuild, 'PINTEREST_API_ENVIRONMENT=sandbox') >= 2
+            && !str_contains($cloudBuild, 'PINTEREST_API_ENVIRONMENT=production'),
+        'production delivery preserves Pinterest Sandbox on web and worker during the access review'
+    );
     TestHarness::assertContains(
         '--max-instances=1',
         $cloudBuild,
