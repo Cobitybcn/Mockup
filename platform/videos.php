@@ -12,6 +12,9 @@ $videos = is_array($library['generatedClips'] ?? null) ? $library['generatedClip
 $finals = $repository->finalVideos($userId);
 $projects = $repository->listProjects($userId);
 $csrf = VideoHttp::csrfToken();
+$tiktokConnection = (new TikTokIntegrationService(Database::connection()))->connection($userId, 'artist');
+$tiktokConnected = ($tiktokConnection['status'] ?? '') === 'connected';
+$tiktokRows = (new VideoTikTokPublicationService(Database::connection()))->rowsForUser($userId);
 $artworkOptions = [];
 $finalArtworkOptions = [];
 $seriesOptions = [];
@@ -168,6 +171,27 @@ function videos_artist_site_url(string $slug): string
                                         <?php endif; ?>
                                         <small data-final-publish-error hidden></small>
                                     </form>
+                                    <?php
+                                    $tiktokRow = $tiktokRows[(int)$final['id']] ?? null;
+                                    $tiktokStatus = (string)($tiktokRow['status'] ?? '');
+                                    $tiktokLabel = match ($tiktokStatus) {
+                                        'published' => t('PUBLISHED ON TIKTOK', 'PUBLICADO EN TIKTOK'),
+                                        'processing', 'queued' => t('SENDING…', 'ENVIANDO…'),
+                                        'failed' => t('RETRY TIKTOK', 'REINTENTAR TIKTOK'),
+                                        default => t('PUBLISH TO TIKTOK', 'PUBLICAR EN TIKTOK'),
+                                    };
+                                    ?>
+                                    <?php if (!$tiktokConnected): ?>
+                                        <p class="videos-final-tiktok-hint"><?= videos_h(t('Connect TikTok to publish this video.', 'Conectá TikTok para publicar este video.')) ?> <a href="connections.php?open=tiktok"><?= videos_h(t('Connect', 'Conectar')) ?></a></p>
+                                    <?php else: ?>
+                                        <form class="videos-final-publish videos-final-tiktok" data-final-tiktok-form>
+                                            <input type="hidden" name="csrf" value="<?= videos_h($csrf) ?>">
+                                            <input type="hidden" name="exportId" value="<?= (int)$final['id'] ?>">
+                                            <input type="text" name="caption" maxlength="2200" placeholder="<?= videos_h(t('Caption for TikTok', 'Copy para TikTok')) ?>" value="<?= videos_h($projectTitle) ?>" aria-label="<?= videos_h(t('TikTok caption', 'Copy de TikTok')) ?>" <?= $tiktokStatus === 'processing' || $tiktokStatus === 'queued' ? 'disabled' : '' ?>>
+                                            <button type="submit" <?= $tiktokStatus === 'processing' || $tiktokStatus === 'queued' ? 'disabled' : '' ?>><?= $tiktokLabel ?></button>
+                                            <small data-final-tiktok-error <?= $tiktokStatus === 'failed' && trim((string)($tiktokRow['error'] ?? '')) !== '' ? '' : 'hidden' ?>><?= videos_h((string)($tiktokRow['error'] ?? '')) ?></small>
+                                        </form>
+                                    <?php endif; ?>
                                 </div>
                             </article>
                         <?php endforeach; ?>

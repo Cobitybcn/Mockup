@@ -12,6 +12,7 @@ $isAdmin = Auth::isAdmin($user);
 $pinterestService = new PinterestIntegrationService($pdo);
 $metaService = new MetaIntegrationService($pdo);
 $instagramService = new InstagramIntegrationService($pdo);
+$tiktokService = new TikTokIntegrationService($pdo);
 
 $connectionError = (string)($_SESSION['connections_error'] ?? '');
 $connectionNotice = (string)($_SESSION['connections_notice'] ?? '');
@@ -42,6 +43,12 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         } elseif ($action === 'disconnect_instagram') {
             $instagramService->disconnect($userId, 'artist');
             $_SESSION['connections_notice'] = t('Instagram was disconnected.', 'Instagram fue desconectado.');
+        } elseif ($action === 'connect_tiktok') {
+            header('Location: ' . $tiktokService->authorizationUrl($userId, 'artist'));
+            exit;
+        } elseif ($action === 'disconnect_tiktok') {
+            $tiktokService->disconnect($userId, 'artist');
+            $_SESSION['connections_notice'] = t('TikTok was disconnected.', 'TikTok fue desconectado.');
         } elseif ($action === 'connect_pinterest') {
             header('Location: ' . $pinterestService->authorizationUrl($userId, 'artist'));
             exit;
@@ -86,6 +93,7 @@ $pinterestReady = $pinterestService->isPublishingReady($userId, 'artist');
 $pinterestApp = $pinterestService->artistAppConfiguration($userId);
 $facebookArtist = $metaService->connection($userId, 'artist');
 $instagramArtist = $instagramService->connection($userId, 'artist');
+$tiktokArtist = $tiktokService->connection($userId, 'artist');
 $facebookPages = [];
 if (($facebookArtist['status'] ?? '') === 'awaiting_page') {
     try {
@@ -159,6 +167,18 @@ $artistConnections = [
         'connection' => $instagramArtist,
         'href' => 'integrations/instagram/',
         'action' => ($instagramArtist['status'] ?? '') === 'connected' ? t('Manage Instagram', 'Gestionar Instagram') : t('Connect Instagram', 'Conectar Instagram'),
+    ],
+    [
+        'id' => 'tiktok',
+        'name' => 'TikTok',
+        'eyebrow' => t('Artist account', 'Cuenta del artista'),
+        'description' => t('Finished videos published from the Video Lab.', 'Videos terminados publicados desde el Video Lab.'),
+        'detail' => ($tiktokArtist['status'] ?? '') === 'connected'
+            ? '@' . ltrim((string)($tiktokArtist['tiktok_username'] ?? ''), '@')
+            : t('Connect the TikTok account owned by this artist.', 'Conectá la cuenta de TikTok de este artista.'),
+        'connection' => $tiktokArtist,
+        'href' => 'integrations/tiktok/',
+        'action' => ($tiktokArtist['status'] ?? '') === 'connected' ? t('Manage TikTok', 'Gestionar TikTok') : t('Connect TikTok', 'Conectar TikTok'),
     ],
 ];
 ?>
@@ -428,6 +448,33 @@ $artistConnections = [
                     <?php endif; ?>
                 </div>
             </dialog>
+
+            <dialog class="connection-dialog" id="connection-tiktok" aria-labelledby="connection-tiktok-title">
+                <div class="connection-dialog__head">
+                    <div><span><?= connections_h(t('Artist account', 'Cuenta del artista')) ?></span><h2 id="connection-tiktok-title">TikTok</h2></div>
+                    <button class="connection-dialog__close" type="button" data-connection-close aria-label="<?= connections_h(t('Close', 'Cerrar')) ?>">&times;</button>
+                </div>
+                <div class="connection-dialog__body">
+                    <?php if (($tiktokArtist['status'] ?? '') === 'connected'): ?>
+                        <div class="connection-summary"><p><strong><?= connections_h(t('Connected account', 'Cuenta conectada')) ?></strong></p><p>@<?= connections_h(ltrim((string)($tiktokArtist['tiktok_username'] ?? ''), '@')) ?></p></div>
+                        <p><?= connections_h(t('Video publications will use this account. Posts start private until TikTok approves the app for public posting.', 'Las publicaciones de video usarán esta cuenta. Las publicaciones empiezan privadas hasta que TikTok apruebe la app para publicación pública.')) ?></p>
+                        <form class="connection-form" method="post">
+                            <input type="hidden" name="csrf" value="<?= connections_h($_SESSION['connections_csrf']) ?>"><input type="hidden" name="network" value="tiktok">
+                            <div class="connection-form__actions"><button class="button-link secondary" name="action" value="disconnect_tiktok"><?= connections_h(t('Disconnect TikTok', 'Desconectar TikTok')) ?></button></div>
+                        </form>
+                    <?php else: ?>
+                        <?php if ($tiktokService->oauthEnabled()): ?>
+                            <p><?= connections_h(t("Connect the artist's TikTok account directly. Nothing will be published during connection.", 'Conectá directamente la cuenta de TikTok del artista. No se publicará nada durante la conexión.')) ?></p>
+                            <form class="connection-form" method="post">
+                                <input type="hidden" name="csrf" value="<?= connections_h($_SESSION['connections_csrf']) ?>"><input type="hidden" name="network" value="tiktok">
+                                <div class="connection-form__actions"><button class="button-link primary" name="action" value="connect_tiktok"><?= connections_h(t('Connect TikTok', 'Conectar TikTok')) ?></button></div>
+                            </form>
+                        <?php else: ?>
+                            <p><strong><?= connections_h(t('TikTok is not connected yet.', 'TikTok todavía no está conectado.')) ?></strong> <?= connections_h(t('This needs a TikTok for Developers app with the Content Posting API scope approved before it can be enabled here.', 'Esto necesita una app de TikTok for Developers con el scope de Content Posting API aprobado antes de poder habilitarse acá.')) ?></p>
+                        <?php endif; ?>
+                    <?php endif; ?>
+                </div>
+            </dialog>
         </div>
     </main>
 </div>
@@ -442,7 +489,7 @@ $artistConnections = [
     document.querySelectorAll('.connection-dialog').forEach((dialog) => dialog.addEventListener('click', (event) => {
         if (event.target === dialog) dialog.close();
     }));
-    const initial = <?= json_encode(in_array($openConnection, ['pinterest', 'pinterestplatform', 'facebook', 'instagram'], true) ? $openConnection : '', JSON_UNESCAPED_SLASHES) ?>;
+    const initial = <?= json_encode(in_array($openConnection, ['pinterest', 'pinterestplatform', 'facebook', 'instagram', 'tiktok'], true) ? $openConnection : '', JSON_UNESCAPED_SLASHES) ?>;
     if (initial) openDialog(initial);
 })();
 </script>

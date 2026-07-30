@@ -285,6 +285,28 @@
     text-transform: none;
 }
 
+.videos-final-tiktok-hint {
+    grid-column: 1 / -1;
+    margin: 3px 0 0;
+    color: var(--muted);
+    font-size: 9px;
+}
+.videos-final-tiktok-hint a { color: var(--accent); }
+
+.videos-final-tiktok input[type="text"] {
+    display: block;
+    flex: 1 1 100%;
+    min-height: 26px;
+    padding: 0 8px;
+    border: 1px solid var(--line);
+    border-radius: 4px;
+    color: var(--ink);
+    background: var(--surface);
+    font: inherit;
+    font-size: 10px;
+    text-transform: none;
+}
+
 .videos-filters {
     display: flex;
     flex-wrap: wrap;
