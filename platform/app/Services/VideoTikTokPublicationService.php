@@ -25,20 +25,26 @@ final class VideoTikTokPublicationService
             throw new RuntimeException('La publicación en vivo de TikTok no está habilitada en este entorno.');
         }
 
-        $mediaToken = bin2hex(random_bytes(32));
-        $mediaExpiresAt = date('c', time() + 172800);
         $this->upsertRow($userId, $videoExportId, [
             'status' => 'queued',
-            'media_token' => $mediaToken,
-            'media_expires_at' => $mediaExpiresAt,
+            'media_token' => '',
+            'media_expires_at' => null,
             'error' => '',
         ]);
 
-        $publicVideoUrl = $base.'/tiktok_video_media.php?token='.rawurlencode($mediaToken);
+        $outputKey = trim((string)($export['output_path'] ?? ''));
+        $storage = new VideoMediaStorage();
+        $videoPath = $storage->localObjectPath($outputKey);
+        if (!is_file($videoPath)) {
+            StorageService::downloadFile($outputKey, $videoPath);
+        }
+        if (!is_file($videoPath)) {
+            throw new RuntimeException('No se pudo recuperar el video final para enviarlo a TikTok.');
+        }
         $publisher = new TikTokPublisher(new TikTokIntegrationService($this->pdo));
 
         try {
-            $result = $publisher->publishVideo($userId, $publicVideoUrl, $caption);
+            $result = $publisher->publishVideoFile($userId, $videoPath, $caption);
         } catch (Throwable $e) {
             $this->upsertRow($userId, $videoExportId, [
                 'status' => 'failed',

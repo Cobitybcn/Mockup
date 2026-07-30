@@ -1,5 +1,7 @@
 <?php
 declare(strict_types=1);
+require_once __DIR__ . '/../../app/Services/TikTokPublisher.php';
+
 function run_public_pages_regression_tests(): void {
     TestHarness::group('Public legal, Pinterest and Meta pages');
     $root=dirname(__DIR__,2);
@@ -11,8 +13,20 @@ function run_public_pages_regression_tests(): void {
     TestHarness::assertTrue(!str_contains($pin,'name="access_token"'),'the artist connection page does not request a manual token');
     $connections=(string)file_get_contents($root.'/connections.php');
     $tiktokService=(string)file_get_contents($root.'/app/Services/TikTokIntegrationService.php');
+    $tiktokPublisher=(string)file_get_contents($root.'/app/Services/TikTokPublisher.php');
     TestHarness::assertContains("'fields' => 'open_id,display_name'",$tiktokService,'TikTok identity lookup only requests fields covered by user.info.basic');
     TestHarness::assertTrue(!str_contains($tiktokService,'open_id,username,display_name'),'TikTok identity lookup does not require the separately authorized user.info.profile scope');
+    TestHarness::assertContains("self::CREATOR_INFO_URL, null, \$context['access_token']",$tiktokPublisher,'TikTok creator info query sends no JSON body as required by the API');
+    TestHarness::assertContains('if ($parameters !== null)',$tiktokPublisher,'TikTok request transport does not serialize an absent body as a JSON array');
+    TestHarness::assertContains("'source' => 'FILE_UPLOAD'",$tiktokPublisher,'TikTok video publishing does not depend on an unverified pull-from-URL domain');
+    TestHarness::assertContains("'Content-Range: bytes '",$tiktokPublisher,'TikTok video uploads send bounded byte ranges to the one-time upload URL');
+    $tiktokChunkPlanner=new ReflectionMethod(TikTokPublisher::class,'uploadChunks');
+    $tiktokChunks=$tiktokChunkPlanner->invoke(null,25*1024*1024,10*1024*1024);
+    TestHarness::assertSame(
+        [['start'=>0,'length'=>10*1024*1024],['start'=>10*1024*1024,'length'=>15*1024*1024]],
+        $tiktokChunks,
+        'TikTok upload chunk count follows the API floor rule and folds the remainder into the final chunk'
+    );
     TestHarness::assertContains('$tiktokAccountLabel',$connections,'connected TikTok accounts remain clearly identified when username is unavailable');
     TestHarness::assertContains("authorizationUrl(\$userId, 'artist')",$connections,'artist Pinterest connections use the official OAuth flow');
     TestHarness::assertContains("authorizationUrl(\$userId, 'platform')",$connections,'platform Pinterest connections can repeat the OAuth flow');
