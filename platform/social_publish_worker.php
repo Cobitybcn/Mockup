@@ -43,6 +43,29 @@ try {
     $channel = (string)$job['channel'];
     $jobPayload = json_decode((string)$job['payload_json'], true);
     $jobPayload = is_array($jobPayload) ? $jobPayload : [];
+
+    if ($channel === 'tiktok') {
+        if (app_env('TIKTOK_LIVE_PUBLISH_ENABLED', 'false') !== 'true') {
+            throw new RuntimeException('TikTok live publication is disabled.');
+        }
+        $videoExportId = (int)($jobPayload['video_export_id'] ?? 0);
+        if ($videoExportId <= 0) throw new RuntimeException('The scheduled TikTok publication has no video.');
+        $caption = (string)($jobPayload['caption'] ?? '');
+        $coverMs = (int)($jobPayload['cover_timestamp_ms'] ?? 0);
+        $destinationUrl = (string)($jobPayload['destination_url'] ?? '');
+        $tiktokService = new VideoTikTokPublicationService($pdo);
+        $existingRow = $tiktokService->row($userId, $videoExportId);
+        if (is_array($existingRow) && (string)$existingRow['status'] === 'published') {
+            $jobService->markPublished($jobId, $attemptId, (string)$existingRow['tiktok_publish_id'], '');
+            echo json_encode(['ok' => true, 'job_id' => $jobId, 'status' => 'published', 'recovered' => true]);
+            exit;
+        }
+        $result = $tiktokService->publish($userId, $videoExportId, $caption, $coverMs, $destinationUrl);
+        $jobService->markPublished($jobId, $attemptId, $result['publishId'], '');
+        echo json_encode(['ok' => true, 'job_id' => $jobId, 'status' => 'published']);
+        exit;
+    }
+
     $draftIds = array_values(array_unique(array_filter(array_map('intval', (array)($jobPayload['draft_ids'] ?? [])))));
     if (!$draftIds) throw new RuntimeException('The scheduled publication has no prepared media.');
 

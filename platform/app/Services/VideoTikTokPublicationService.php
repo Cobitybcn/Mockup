@@ -6,8 +6,13 @@ final class VideoTikTokPublicationService
     public function __construct(private readonly PDO $pdo) {}
 
     /** @return array{status:string,privacyLevel:string,publishId:string} */
-    public function publish(int $userId, int $videoExportId, string $caption): array
-    {
+    public function publish(
+        int $userId,
+        int $videoExportId,
+        string $caption,
+        int $coverTimestampMs = 0,
+        string $destinationUrl = ''
+    ): array {
         $caption = trim($caption);
         if ($caption === '') {
             throw new InvalidArgumentException('El video necesita un texto para publicarse en TikTok.');
@@ -30,6 +35,10 @@ final class VideoTikTokPublicationService
             'media_token' => '',
             'media_expires_at' => null,
             'error' => '',
+            'caption' => $caption,
+            'cover_timestamp_ms' => max(0, $coverTimestampMs),
+            'is_aigc' => 1,
+            'destination_url' => mb_substr(trim($destinationUrl), 0, 500),
         ]);
 
         $outputKey = trim((string)($export['output_path'] ?? ''));
@@ -44,7 +53,7 @@ final class VideoTikTokPublicationService
         $publisher = new TikTokPublisher(new TikTokIntegrationService($this->pdo));
 
         try {
-            $result = $publisher->publishVideoFile($userId, $videoPath, $caption);
+            $result = $publisher->publishVideoFile($userId, $videoPath, $caption, 'artist', max(0, $coverTimestampMs), true);
         } catch (Throwable $e) {
             $this->upsertRow($userId, $videoExportId, [
                 'status' => 'failed',
@@ -82,6 +91,40 @@ final class VideoTikTokPublicationService
             'error' => $mapped === 'failed' ? mb_substr($status['failReason'], 0, 1500) : '',
         ]);
         return ['status' => $mapped, 'raw' => $status['status']];
+    }
+
+    public function markScheduled(
+        int $userId,
+        int $videoExportId,
+        int $boardId,
+        int $scheduleJobId,
+        string $caption,
+        int $coverTimestampMs,
+        string $destinationUrl
+    ): void {
+        $this->upsertRow($userId, $videoExportId, [
+            'status' => 'scheduled',
+            'board_id' => $boardId,
+            'schedule_job_id' => $scheduleJobId,
+            'caption' => trim($caption),
+            'cover_timestamp_ms' => max(0, $coverTimestampMs),
+            'is_aigc' => 1,
+            'destination_url' => mb_substr(trim($destinationUrl), 0, 500),
+            'error' => '',
+        ]);
+    }
+
+    public function clearSchedule(int $userId, int $videoExportId): void
+    {
+        $row = $this->row($userId, $videoExportId);
+        if ($row === null || (string)$row['status'] !== 'scheduled') {
+            return;
+        }
+        $this->upsertRow($userId, $videoExportId, [
+            'status' => '',
+            'schedule_job_id' => null,
+            'error' => '',
+        ]);
     }
 
     public function row(int $userId, int $videoExportId): ?array

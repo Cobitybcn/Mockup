@@ -3,7 +3,7 @@ declare(strict_types=1);
 
 final class SocialPublishJobService
 {
-    private const CHANNELS = ['pinterest', 'instagram', 'facebook'];
+    private const CHANNELS = ['pinterest', 'instagram', 'facebook', 'tiktok'];
 
     public function __construct(private readonly PDO $pdo)
     {

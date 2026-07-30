@@ -146,6 +146,7 @@ final class SocialScheduledPublicationService
             'status' => $status,
             'scheduled_at' => (string)$job['scheduled_at'],
             'client_key' => (string)($payload['client_key'] ?? ''),
+            'video_export_id' => (int)($payload['video_export_id'] ?? 0),
             'item_count' => count($draftIds),
             'label' => $label !== '' ? $label : ucfirst($channel) . ' · publicación #' . (int)$job['id'],
             'error' => $error,

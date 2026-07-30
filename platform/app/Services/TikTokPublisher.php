@@ -34,8 +34,14 @@ final class TikTokPublisher
     }
 
     /** @return array{publishId:string,privacyLevel:string} */
-    public function publishVideoFile(int $userId, string $videoPath, string $caption, string $purpose = 'artist'): array
-    {
+    public function publishVideoFile(
+        int $userId,
+        string $videoPath,
+        string $caption,
+        string $purpose = 'artist',
+        int $coverTimestampMs = 0,
+        bool $isAigc = true
+    ): array {
         $videoSize = is_file($videoPath) ? filesize($videoPath) : false;
         if ($videoSize === false || $videoSize <= 0) {
             throw new InvalidArgumentException('El archivo de video para TikTok no está disponible.');
@@ -54,14 +60,19 @@ final class TikTokPublisher
         $chunkSize = min($videoSize, 10 * 1024 * 1024);
         $totalChunkCount = max(1, intdiv($videoSize, $chunkSize));
 
+        $postInfo = [
+            'title' => mb_substr(trim($caption), 0, 2200),
+            'privacy_level' => $privacyLevel,
+            'disable_duet' => $creator['duetDisabled'],
+            'disable_comment' => $creator['commentDisabled'],
+            'disable_stitch' => $creator['stitchDisabled'],
+            'is_aigc' => $isAigc,
+        ];
+        if ($coverTimestampMs > 0) {
+            $postInfo['video_cover_timestamp_ms'] = $coverTimestampMs;
+        }
         $payload = [
-            'post_info' => [
-                'title' => mb_substr(trim($caption), 0, 2200),
-                'privacy_level' => $privacyLevel,
-                'disable_duet' => $creator['duetDisabled'],
-                'disable_comment' => $creator['commentDisabled'],
-                'disable_stitch' => $creator['stitchDisabled'],
-            ],
+            'post_info' => $postInfo,
             'source_info' => [
                 'source' => 'FILE_UPLOAD',
                 'video_size' => $videoSize,

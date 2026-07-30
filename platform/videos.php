@@ -100,6 +100,7 @@ function videos_artist_site_url(string $slug): string
                 <div class="videos-primary-actions">
                     <a class="videos-decision-block videos-decision-block--primary" href="video.php"><?= videos_h(t('Open Video Lab', 'Abrir Video Lab')) ?></a>
                     <a class="videos-decision-block videos-decision-block--secondary" href="#upload-final-video" role="button" data-open-final-upload><?= videos_h(t('Upload Final Video', 'Subir video final')) ?></a>
+                    <a class="videos-decision-block videos-decision-block--secondary" href="tiktok_studio.php"><?= videos_h(t('TikTok Studio →', 'TikTok Studio →')) ?></a>
                 </div>
             </header>
 
