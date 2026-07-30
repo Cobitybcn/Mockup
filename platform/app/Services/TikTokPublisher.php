@@ -150,7 +150,14 @@ final class TikTokPublisher
         $apiError = is_array($data) ? (string)($data['error']['code'] ?? '') : '';
         if ($curlError !== '' || $status < 200 || $status >= 300 || !is_array($data) || ($apiError !== '' && $apiError !== 'ok')) {
             $message = is_array($data) ? trim((string)($data['error']['message'] ?? '')) : '';
-            throw new RuntimeException('TikTok API respondió con un error (HTTP '.$status.').'.($message !== '' ? ' '.mb_substr($message, 0, 240) : ''));
+            $code = is_array($data) ? trim((string)($data['error']['code'] ?? '')) : '';
+            $logId = is_array($data) ? trim((string)($data['error']['log_id'] ?? '')) : '';
+            $detail = trim(($code !== '' ? '['.$code.'] ' : '').$message);
+            throw new RuntimeException(
+                'TikTok API respondió con un error (HTTP '.$status.').'
+                .($detail !== '' ? ' '.mb_substr($detail, 0, 300) : '')
+                .($logId !== '' ? ' (log_id: '.$logId.')' : '')
+            );
         }
         return $data;
     }
