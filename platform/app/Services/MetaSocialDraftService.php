@@ -21,48 +21,8 @@ final class MetaSocialDraftService
         $locale = $locale === 'es' ? 'es' : 'en';
         $this->assertDestination($destinationUrl);
 
-        $stmt = $this->pdo->prepare(
-            'SELECT m.mockup_file,s.generated_json,s.alt_text sheet_alt_text
-             FROM mockups m
-             LEFT JOIN mockup_sheets s ON s.user_id=m.user_id AND s.mockup_file=m.mockup_file
-             WHERE m.id=? AND m.user_id=? ORDER BY s.id DESC LIMIT 1'
-        );
-        $stmt->execute([$mockupId, $userId]);
-        $row = $stmt->fetch(PDO::FETCH_ASSOC);
-        if (!is_array($row)) {
-            throw new RuntimeException('Mockup not found.');
-        }
-
-        $reviewed = (new MockupSocialContentService($this->pdo))->forMockup($userId, $mockupId, $locale);
-        $reviewedContent = (array)($reviewed['content'] ?? []);
-        $variant = (array)($reviewedContent['social'][$channel] ?? []);
-        $neutral = $reviewedContent;
-        if (!$variant) {
-            $generated = json_decode((string)($row['generated_json'] ?? ''), true);
-            $v2 = (array)($generated['mockup_analysis_v2'] ?? []);
-            if ((string)($v2['analysis_language'] ?? '') !== 'es') {
-                throw new RuntimeException('Generá y revisá primero el contenido bilingüe del mockup.');
-            }
-            $variant = (array)($v2['channels'][$channel] ?? []);
-            $neutral = (array)($v2['neutral'] ?? []);
-        }
-        if (!$variant) {
-            throw new RuntimeException('El contenido del mockup no contiene material para este canal de Meta.');
-        }
-
-        $title = trim((string)($variant['headline'] ?? $variant['hook'] ?? ''));
-        $copyParts = $channel === 'facebook'
-            ? [$variant['post_text'] ?? '', $variant['link_description'] ?? '', $variant['cta'] ?? '']
-            : [$variant['caption'] ?? '', $variant['cta'] ?? ''];
-        $description = implode("\n\n", array_values(array_filter(array_map(
-            static fn (mixed $part): string => trim((string)$part),
-            $copyParts
-        ))));
-        $hashtags = $this->normalizeHashtags(MockupSocialContentService::list($variant['hashtags'] ?? []));
-        $altText = trim((string)($neutral['alt_text'] ?? $row['sheet_alt_text'] ?? ''));
-        if ($description === '') {
-            throw new RuntimeException('The Meta analysis did not produce publication copy.');
-        }
+        $resolved = $this->resolveMockupContent($userId, $mockupId, $channel, $locale);
+        $copy = $this->buildCopyFields($resolved['variant'], $resolved['neutral'], $channel, (string)($resolved['row']['sheet_alt_text'] ?? ''));
 
         $payload = [
             'schema_version' => 'meta-draft.v1',
@@ -70,7 +30,7 @@ final class MetaSocialDraftService
             'channel' => $channel,
             'purpose' => $purpose,
             'locale' => $locale,
-            'source' => $variant,
+            'source' => $resolved['variant'],
         ];
         $now = date('c');
         $mediaToken = bin2hex(random_bytes(32));
@@ -82,17 +42,19 @@ final class MetaSocialDraftService
         try {
             $this->pdo->prepare(
                 'INSERT INTO social_channel_drafts
-                (user_id,mockup_id,channel,purpose,title,description,hashtags,alt_text,destination_url,status,payload_json,media_token,media_expires_at,variant_file,variant_width,variant_height,crop_x,crop_y,crop_zoom,publish_attempt_id,external_id,external_url,error,created_at,updated_at)
-                VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)'
+                (user_id,mockup_id,video_export_id,source_type,channel,purpose,title,description,hashtags,alt_text,destination_url,status,payload_json,media_token,media_expires_at,variant_file,variant_width,variant_height,crop_x,crop_y,crop_zoom,publish_attempt_id,external_id,external_url,error,created_at,updated_at)
+                VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)'
             )->execute([
                 $userId,
                 $mockupId,
+                null,
+                'mockup',
                 $channel,
                 $purpose,
-                mb_substr($title, 0, 255),
-                mb_substr($description, 0, 5000),
-                json_encode($hashtags, JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES),
-                mb_substr($altText, 0, 1000),
+                mb_substr($copy['title'], 0, 255),
+                mb_substr($copy['description'], 0, 5000),
+                json_encode($copy['hashtags'], JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES),
+                mb_substr($copy['altText'], 0, 1000),
                 trim($destinationUrl),
                 'draft',
                 json_encode($payload, JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES),
@@ -125,19 +87,236 @@ final class MetaSocialDraftService
         }
     }
 
+    /**
+     * Same publication flow as create(), sourced from a finished video export
+     * instead of a mockup. There is no editorial copy pipeline for video yet,
+     * so the caption/hashtags/alt text are reused from a reviewed mockup that
+     * belongs to the same artwork (or, failing that, the same series) as the
+     * video — per the artist's direction, not generated fresh for video.
+     */
+    public function createFromVideoExport(
+        int $videoExportId,
+        array $user,
+        string $channel,
+        string $destinationUrl = '',
+        string $purpose = 'artist',
+        string $locale = 'en'
+    ): int {
+        $userId = (int)($user['id'] ?? 0);
+        $channel = $this->channel($channel);
+        $purpose = $this->purpose($purpose, $user);
+        $locale = $locale === 'es' ? 'es' : 'en';
+        $this->assertDestination($destinationUrl);
+
+        $export = $this->videoExport($videoExportId, $userId);
+        if ($export === null) {
+            throw new RuntimeException('Video no encontrado o todavía no terminó de procesarse.');
+        }
+        $candidates = $this->candidateMockupIdsForVideo(
+            $userId,
+            (int)($export['artwork_id'] ?? 0),
+            (int)($export['series_id'] ?? 0)
+        );
+        if (!$candidates) {
+            throw new RuntimeException('Este video no está vinculado a ninguna obra con mockups todavía.');
+        }
+
+        $resolved = null;
+        foreach ($candidates as $candidateId) {
+            try {
+                $resolved = $this->resolveMockupContent($userId, $candidateId, $channel, $locale);
+                break;
+            } catch (Throwable) {
+                continue;
+            }
+        }
+        if ($resolved === null) {
+            throw new RuntimeException('Todavía no hay contenido editorial revisado para esta obra. Revisá primero el contenido de un mockup de esta obra.');
+        }
+        $copy = $this->buildCopyFields($resolved['variant'], $resolved['neutral'], $channel, '');
+
+        $payload = [
+            'schema_version' => 'meta-draft.v1',
+            'video_export_id' => $videoExportId,
+            'channel' => $channel,
+            'purpose' => $purpose,
+            'locale' => $locale,
+            'source' => $resolved['variant'],
+        ];
+        $now = date('c');
+        $mediaToken = bin2hex(random_bytes(32));
+
+        $this->pdo->prepare(
+            'INSERT INTO social_channel_drafts
+            (user_id,mockup_id,video_export_id,source_type,channel,purpose,title,description,hashtags,alt_text,destination_url,status,payload_json,media_token,media_expires_at,variant_file,variant_width,variant_height,crop_x,crop_y,crop_zoom,publish_attempt_id,external_id,external_url,error,created_at,updated_at)
+            VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)'
+        )->execute([
+            $userId,
+            null,
+            $videoExportId,
+            'video',
+            $channel,
+            $purpose,
+            mb_substr($copy['title'], 0, 255),
+            mb_substr($copy['description'], 0, 5000),
+            json_encode($copy['hashtags'], JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES),
+            mb_substr($copy['altText'], 0, 1000),
+            trim($destinationUrl),
+            'draft',
+            json_encode($payload, JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES),
+            $mediaToken,
+            date('c', time() + 172800),
+            '',
+            0,
+            0,
+            0.5,
+            0.5,
+            1,
+            '',
+            '',
+            '',
+            '',
+            $now,
+            $now,
+        ]);
+        return (int)$this->pdo->lastInsertId();
+    }
+
     public function draft(int $draftId, int $userId): array
     {
-        $stmt = $this->pdo->prepare(
-            'SELECT d.*,m.mockup_file FROM social_channel_drafts d
-             JOIN mockups m ON m.id=d.mockup_id
-             WHERE d.id=? AND d.user_id=? LIMIT 1'
-        );
+        // video_exports only exists once the Video Lab schema has been
+        // migrated (lazily, on first use of that feature) — an install that
+        // has never touched it must still be able to read mockup drafts.
+        $sql = $this->tableExists('video_exports')
+            ? 'SELECT d.*, m.mockup_file, ve.output_path AS video_output_path
+               FROM social_channel_drafts d
+               LEFT JOIN mockups m ON m.id=d.mockup_id
+               LEFT JOIN video_exports ve ON ve.id=d.video_export_id
+               WHERE d.id=? AND d.user_id=? LIMIT 1'
+            : "SELECT d.*, m.mockup_file, '' AS video_output_path
+               FROM social_channel_drafts d
+               LEFT JOIN mockups m ON m.id=d.mockup_id
+               WHERE d.id=? AND d.user_id=? LIMIT 1";
+        $stmt = $this->pdo->prepare($sql);
         $stmt->execute([$draftId, $userId]);
         $row = $stmt->fetch(PDO::FETCH_ASSOC);
         if (!is_array($row)) {
             throw new RuntimeException('Meta draft not found.');
         }
         return $row;
+    }
+
+    /** @return array{row:array,variant:array,neutral:array} */
+    private function resolveMockupContent(int $userId, int $mockupId, string $channel, string $locale): array
+    {
+        $stmt = $this->pdo->prepare(
+            'SELECT m.mockup_file,s.generated_json,s.alt_text sheet_alt_text
+             FROM mockups m
+             LEFT JOIN mockup_sheets s ON s.user_id=m.user_id AND s.mockup_file=m.mockup_file
+             WHERE m.id=? AND m.user_id=? ORDER BY s.id DESC LIMIT 1'
+        );
+        $stmt->execute([$mockupId, $userId]);
+        $row = $stmt->fetch(PDO::FETCH_ASSOC);
+        if (!is_array($row)) {
+            throw new RuntimeException('Mockup not found.');
+        }
+
+        $reviewed = (new MockupSocialContentService($this->pdo))->forMockup($userId, $mockupId, $locale);
+        $reviewedContent = (array)($reviewed['content'] ?? []);
+        $variant = (array)($reviewedContent['social'][$channel] ?? []);
+        $neutral = $reviewedContent;
+        if (!$variant) {
+            $generated = json_decode((string)($row['generated_json'] ?? ''), true);
+            $v2 = (array)($generated['mockup_analysis_v2'] ?? []);
+            if ((string)($v2['analysis_language'] ?? '') !== 'es') {
+                throw new RuntimeException('Generá y revisá primero el contenido bilingüe del mockup.');
+            }
+            $variant = (array)($v2['channels'][$channel] ?? []);
+            $neutral = (array)($v2['neutral'] ?? []);
+        }
+        if (!$variant) {
+            throw new RuntimeException('El contenido del mockup no contiene material para este canal de Meta.');
+        }
+        return ['row' => $row, 'variant' => $variant, 'neutral' => $neutral];
+    }
+
+    /** @return array{title:string,description:string,hashtags:array,altText:string} */
+    private function buildCopyFields(array $variant, array $neutral, string $channel, string $fallbackAltText): array
+    {
+        $title = trim((string)($variant['headline'] ?? $variant['hook'] ?? ''));
+        $copyParts = $channel === 'facebook'
+            ? [$variant['post_text'] ?? '', $variant['link_description'] ?? '', $variant['cta'] ?? '']
+            : [$variant['caption'] ?? '', $variant['cta'] ?? ''];
+        $description = implode("\n\n", array_values(array_filter(array_map(
+            static fn (mixed $part): string => trim((string)$part),
+            $copyParts
+        ))));
+        $hashtags = $this->normalizeHashtags(MockupSocialContentService::list($variant['hashtags'] ?? []));
+        $altText = trim((string)($neutral['alt_text'] ?? $fallbackAltText));
+        if ($description === '') {
+            throw new RuntimeException('The Meta analysis did not produce publication copy.');
+        }
+        return ['title' => $title, 'description' => $description, 'hashtags' => $hashtags, 'altText' => $altText];
+    }
+
+    private function tableExists(string $table): bool
+    {
+        if (strtolower((string)$this->pdo->getAttribute(PDO::ATTR_DRIVER_NAME)) === 'mysql') {
+            $stmt = $this->pdo->prepare('SELECT COUNT(*) FROM INFORMATION_SCHEMA.TABLES WHERE TABLE_SCHEMA=DATABASE() AND TABLE_NAME=?');
+            $stmt->execute([$table]);
+            return (int)$stmt->fetchColumn() > 0;
+        }
+        $stmt = $this->pdo->prepare("SELECT COUNT(*) FROM sqlite_master WHERE type='table' AND name=?");
+        $stmt->execute([$table]);
+        return (int)$stmt->fetchColumn() > 0;
+    }
+
+    private function videoExport(int $exportId, int $userId): ?array
+    {
+        $stmt = $this->pdo->prepare(
+            "SELECT e.id,e.output_path,e.status,e.timeline_snapshot_json,p.artwork_id,p.series_id
+             FROM video_exports e
+             INNER JOIN video_projects p ON p.id=e.video_project_id AND p.user_id=e.user_id
+             WHERE e.id=? AND e.user_id=? AND e.status='succeeded' LIMIT 1"
+        );
+        $stmt->execute([$exportId, $userId]);
+        $row = $stmt->fetch(PDO::FETCH_ASSOC);
+        if (!is_array($row)) {
+            return null;
+        }
+        // A finished video can later be assigned to a (possibly canonical/merged)
+        // artwork via the Video Lab's "assign final artwork" step, which only
+        // updates the export's snapshot JSON, not video_projects.artwork_id.
+        // Mirror VideoStudioRepository::finalVideos() and prefer that snapshot.
+        $snapshot = json_decode((string)($row['timeline_snapshot_json'] ?? ''), true);
+        $snapshotArtworkId = is_array($snapshot) ? (int)($snapshot['artworkId'] ?? 0) : 0;
+        if ($snapshotArtworkId > 0) {
+            $row['artwork_id'] = $snapshotArtworkId;
+        }
+        return $row;
+    }
+
+    /** @return list<int> */
+    private function candidateMockupIdsForVideo(int $userId, int $artworkId, int $seriesId): array
+    {
+        if ($artworkId > 0) {
+            $stmt = $this->pdo->prepare('SELECT id FROM mockups WHERE user_id=? AND source_artwork_id=? ORDER BY id DESC');
+            $stmt->execute([$userId, $artworkId]);
+            $ids = array_map('intval', array_column($stmt->fetchAll(PDO::FETCH_ASSOC), 'id'));
+            if ($ids) {
+                return $ids;
+            }
+        }
+        if ($seriesId > 0) {
+            $stmt = $this->pdo->prepare(
+                'SELECT m.id FROM mockups m
+                 INNER JOIN artworks a ON a.id=m.source_artwork_id AND a.user_id=m.user_id
+                 WHERE m.user_id=? AND a.series_id=? ORDER BY m.id DESC'
+            );
+            $stmt->execute([$userId, $seriesId]);
+            return array_map('intval', array_column($stmt->fetchAll(PDO::FETCH_ASSOC), 'id'));
+        }
+        return [];
     }
 
     public function updateContent(
@@ -184,6 +363,9 @@ final class MetaSocialDraftService
     public function saveCrop(int $draftId, int $userId, float $x, float $y, float $zoom): array
     {
         $draft = $this->draft($draftId, $userId);
+        if ((string)($draft['source_type'] ?? 'mockup') !== 'mockup') {
+            throw new RuntimeException('Video publications use the exported video file directly; there is no crop to save.');
+        }
         if (in_array((string)$draft['status'], ['publishing', 'published'], true)) {
             throw new RuntimeException('Meta media cannot be replaced while it is publishing or after publication.');
         }
@@ -376,7 +558,12 @@ final class MetaSocialDraftService
         if (trim((string)($draft['description'] ?? '')) === '') {
             $blockers[] = 'Publication copy is missing.';
         }
-        if (trim((string)($draft['variant_file'] ?? '')) === '') {
+        $isVideo = (string)($draft['source_type'] ?? 'mockup') === 'video';
+        if ($isVideo) {
+            if (trim((string)($draft['video_output_path'] ?? '')) === '') {
+                $blockers[] = 'The exported video file is missing.';
+            }
+        } elseif (trim((string)($draft['variant_file'] ?? '')) === '') {
             $blockers[] = 'The reviewed 4:5 image is missing.';
         }
         $destination = trim((string)($draft['destination_url'] ?? ''));

@@ -32,8 +32,11 @@ final class InstagramPublisher
             throw new RuntimeException('Instagram did not return a media container ID.');
         }
 
+        $isVideo = (string)($draft['source_type'] ?? 'mockup') === 'video';
+        $maxAttempts = $isVideo ? 40 : 10;
+        $sleepMicroseconds = $isVideo ? 3000000 : 750000;
         $finished = false;
-        for ($attempt = 0; $attempt < 10; $attempt++) {
+        for ($attempt = 0; $attempt < $maxAttempts; $attempt++) {
             $status = $graph->request(
                 'GET',
                 '/'.rawurlencode($containerId),
@@ -46,12 +49,12 @@ final class InstagramPublisher
                 break;
             }
             if (in_array($code, ['ERROR', 'EXPIRED'], true)) {
-                throw new RuntimeException('Instagram could not prepare the image container. '.mb_substr((string)($status['status'] ?? ''), 0, 240));
+                throw new RuntimeException('Instagram could not prepare the media container. '.mb_substr((string)($status['status'] ?? ''), 0, 240));
             }
-            usleep(750000);
+            usleep($sleepMicroseconds);
         }
         if (!$finished) {
-            throw new RuntimeException('Instagram did not finish preparing the image in time. Try this item again later.');
+            throw new RuntimeException('Instagram did not finish preparing the media in time. Try this item again later.');
         }
 
         $published = $graph->request(

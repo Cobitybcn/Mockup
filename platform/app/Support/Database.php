@@ -1052,7 +1052,9 @@ class Database
             $pdo->exec("CREATE TABLE IF NOT EXISTS social_channel_drafts (
                 id INT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
                 user_id INT UNSIGNED NOT NULL,
-                mockup_id INT UNSIGNED NOT NULL,
+                mockup_id INT UNSIGNED NULL,
+                video_export_id BIGINT UNSIGNED NULL,
+                source_type VARCHAR(10) NOT NULL DEFAULT 'mockup',
                 channel VARCHAR(24) NOT NULL,
                 purpose VARCHAR(20) NOT NULL DEFAULT 'artist',
                 title MEDIUMTEXT NOT NULL,
@@ -1076,7 +1078,8 @@ class Database
                 error MEDIUMTEXT NOT NULL,
                 created_at VARCHAR(40) NOT NULL,
                 updated_at VARCHAR(40) NOT NULL,
-                KEY idx_social_channel_drafts_user_status (user_id,channel,status)
+                KEY idx_social_channel_drafts_user_status (user_id,channel,status),
+                KEY idx_social_channel_drafts_video_export (video_export_id)
             ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci");
             $pdo->exec("CREATE TABLE IF NOT EXISTS meta_batches (
                 id INT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
@@ -1108,7 +1111,8 @@ class Database
                 FOREIGN KEY(user_id) REFERENCES users(id) ON DELETE CASCADE,UNIQUE(user_id,purpose)
             )");
             $pdo->exec("CREATE TABLE IF NOT EXISTS social_channel_drafts (
-                id INTEGER PRIMARY KEY AUTOINCREMENT,user_id INTEGER NOT NULL,mockup_id INTEGER NOT NULL,
+                id INTEGER PRIMARY KEY AUTOINCREMENT,user_id INTEGER NOT NULL,mockup_id INTEGER,
+                video_export_id INTEGER,source_type TEXT NOT NULL DEFAULT 'mockup',
                 channel TEXT NOT NULL,purpose TEXT NOT NULL DEFAULT 'artist',title TEXT NOT NULL,description TEXT NOT NULL,
                 hashtags TEXT NOT NULL,alt_text TEXT NOT NULL DEFAULT '',destination_url TEXT NOT NULL,status TEXT NOT NULL DEFAULT 'draft',
                 payload_json TEXT NOT NULL,media_token TEXT NOT NULL DEFAULT '',media_expires_at TEXT,variant_file TEXT NOT NULL DEFAULT '',
@@ -1150,6 +1154,18 @@ class Database
         self::addColumnIfMissing($pdo, 'social_channel_drafts', 'crop_y', $decimal);
         self::addColumnIfMissing($pdo, 'social_channel_drafts', 'crop_zoom', $zoom);
         self::addColumnIfMissing($pdo, 'social_channel_drafts', 'publish_attempt_id', $varchar64);
+        self::addColumnIfMissing($pdo, 'social_channel_drafts', 'video_export_id', self::isMysql() ? 'BIGINT UNSIGNED NULL' : 'INTEGER');
+        self::addColumnIfMissing($pdo, 'social_channel_drafts', 'source_type', self::isMysql() ? "VARCHAR(10) NOT NULL DEFAULT 'mockup'" : "TEXT NOT NULL DEFAULT 'mockup'");
+        if (self::isMysql()) {
+            self::makeMysqlColumnNullableIfNeeded($pdo, 'social_channel_drafts', 'mockup_id', 'INT UNSIGNED');
+            $stmt = $pdo->prepare("SELECT COUNT(*) FROM INFORMATION_SCHEMA.STATISTICS WHERE TABLE_SCHEMA=DATABASE() AND TABLE_NAME='social_channel_drafts' AND INDEX_NAME='idx_social_channel_drafts_video_export'");
+            $stmt->execute();
+            if ((int)$stmt->fetchColumn() === 0) {
+                $pdo->exec('ALTER TABLE `social_channel_drafts` ADD KEY `idx_social_channel_drafts_video_export` (`video_export_id`)');
+            }
+        } else {
+            $pdo->exec('CREATE INDEX IF NOT EXISTS idx_social_channel_drafts_video_export ON social_channel_drafts(video_export_id)');
+        }
     }
 
     private static function migrateInstagram(PDO $pdo): void

@@ -90,6 +90,15 @@ final class MetaPublisher
         return $payload;
     }
 
+    public static function facebookVideoPayload(array $draft, string $publicVideoUrl): array
+    {
+        return [
+            'file_url' => $publicVideoUrl,
+            'description' => self::facebookCaption($draft),
+            'published' => 'true',
+        ];
+    }
+
     public static function facebookUnpublishedPhotoPayload(array $draft, string $publicImageUrl): array
     {
         $payload = ['url' => $publicImageUrl, 'published' => 'false'];
@@ -113,14 +122,15 @@ final class MetaPublisher
         ];
     }
 
-    public static function instagramContainerPayload(array $draft, string $publicImageUrl): array
+    public static function instagramContainerPayload(array $draft, string $publicMediaUrl): array
     {
-        $payload = [
-            'image_url' => $publicImageUrl,
-            'caption' => self::instagramCaption($draft),
-        ];
+        $isVideo = (string)($draft['source_type'] ?? 'mockup') === 'video';
+        $payload = $isVideo
+            ? ['video_url' => $publicMediaUrl, 'media_type' => 'REELS']
+            : ['image_url' => $publicMediaUrl];
+        $payload['caption'] = self::instagramCaption($draft);
         $altText = trim((string)($draft['alt_text'] ?? ''));
-        if ($altText !== '') {
+        if ($altText !== '' && !$isVideo) {
             $payload['alt_text'] = mb_substr($altText, 0, 1000);
         }
         return $payload;
@@ -150,12 +160,13 @@ final class MetaPublisher
     }
 
     /** @return array{id:string,url:string,response:array} */
-    private function publishFacebook(MetaGraphClient $graph, array $context, array $draft, string $imageUrl): array
+    private function publishFacebook(MetaGraphClient $graph, array $context, array $draft, string $mediaUrl): array
     {
+        $isVideo = (string)($draft['source_type'] ?? 'mockup') === 'video';
         $response = $graph->request(
             'POST',
-            '/' . rawurlencode((string)$context['page_id']) . '/photos',
-            self::facebookPayload($draft, $imageUrl),
+            '/' . rawurlencode((string)$context['page_id']) . ($isVideo ? '/videos' : '/photos'),
+            $isVideo ? self::facebookVideoPayload($draft, $mediaUrl) : self::facebookPayload($draft, $mediaUrl),
             (string)$context['access_token'],
             (string)$context['app_secret']
         );

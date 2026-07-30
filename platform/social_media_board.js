@@ -41,10 +41,11 @@
     const publicationPlatforms = ['instagram', 'facebook'];
     const networkPlatforms = ['pinterest', ...publicationPlatforms];
     const groupLimits = { instagram: 10, facebook: 10 };
-    const cards = Array.from(document.querySelectorAll('[data-catalog-card]'));
+    const cards = Array.from(document.querySelectorAll('[data-catalog-rail] > [data-catalog-card]'));
     const originalOrder = new Map(cards.map((card, index) => [card.dataset.mockupId, index]));
     let toastTimer = 0;
     let catalogSortable = null;
+    let videoRailSortable = null;
     let boardSortables = [];
     let deferredRenderTimer = 0;
     let pinterestBoards = [];
@@ -551,7 +552,7 @@
             }) : [],
             instagram: include('instagram') ? state.publications.instagram.map((group, index) => ({
                 client_key: group.id,
-                mockup_ids: group.items.map(Number),
+                ...groupMediaFields(group),
                 locale: normalizedLocale(group.locale),
                 title: groupDisplayTitle('instagram', group),
                 copy: String(group.copy || ''),
@@ -561,7 +562,7 @@
             })) : [],
             facebook: include('facebook') ? state.publications.facebook.map((group, index) => ({
                 client_key: group.id,
-                mockup_ids: group.items.map(Number),
+                ...groupMediaFields(group),
                 locale: normalizedLocale(group.locale),
                 title: groupDisplayTitle('facebook', group),
                 copy: String(group.copy || ''),
@@ -570,6 +571,17 @@
                 position: index,
             })) : [],
         };
+    };
+
+    // A group is a video publication when its single item is a finished video
+    // (isVideo). Video posts are always solo — they never mix with mockups or
+    // carousel — so this only ever applies to a one-item group.
+    const groupMediaFields = (group) => {
+        const first = mockupById.get(String(group.items[0]));
+        if (group.items.length === 1 && first?.isVideo) {
+            return { mockup_ids: [], video_export_id: Number(first.videoExportId) || 0 };
+        }
+        return { mockup_ids: group.items.map(Number), video_export_id: 0 };
     };
 
     const isPublicHttpsUrl = (value) => {
@@ -608,7 +620,7 @@
         ['instagram', 'facebook'].forEach((platform) => {
             payload[platform].forEach((group, index) => {
                 const label = `${platformLabels[platform]} · publication ${index + 1}`;
-                if (!group.mockup_ids.length) errors.push(`${label}: it has no images.`);
+                if (!group.mockup_ids.length && !group.video_export_id) errors.push(`${label}: it has no images.`);
                 if (!group.copy.trim()) errors.push(`${label}: the copy is missing.`);
                 if (!isPublicHttpsUrl(group.destination_url)) errors.push(`${label}: check the HTTPS link.`);
                 checkSchedule(group.schedule, label);
@@ -716,12 +728,12 @@
         const rows = [];
         if (payload.pinterest.length) rows.push(`<li><strong>Pinterest</strong><span>${plural(payload.pinterest.length, 'Pin', 'Pines')}</span></li>`);
         if (payload.instagram.length) {
-            const images = payload.instagram.reduce((total, group) => total + group.mockup_ids.length, 0);
-            rows.push(`<li><strong>Instagram</strong><span>${plural(payload.instagram.length, 'carousel/publication', 'carousels/publications')} · ${plural(images, 'image', 'images')}</span></li>`);
+            const images = payload.instagram.reduce((total, group) => total + group.mockup_ids.length + (group.video_export_id ? 1 : 0), 0);
+            rows.push(`<li><strong>Instagram</strong><span>${plural(payload.instagram.length, 'carousel/publication', 'carousels/publications')} · ${plural(images, 'item', 'items')}</span></li>`);
         }
         if (payload.facebook.length) {
-            const images = payload.facebook.reduce((total, group) => total + group.mockup_ids.length, 0);
-            rows.push(`<li><strong>Facebook</strong><span>${plural(payload.facebook.length, 'publication', 'publications')} · ${plural(images, 'image', 'images')}</span></li>`);
+            const images = payload.facebook.reduce((total, group) => total + group.mockup_ids.length + (group.video_export_id ? 1 : 0), 0);
+            rows.push(`<li><strong>Facebook</strong><span>${plural(payload.facebook.length, 'publication', 'publications')} · ${plural(images, 'item', 'items')}</span></li>`);
         }
         const isNow = payload.schedule?.mode === 'now';
         let scheduleText = 'Timing: now, after confirmation';
@@ -949,12 +961,12 @@
                 ? instagramSection
                 : platform === 'facebook'
                     ? facebookSection
-                    : pinterestSection + instagramSection + facebookSection + metadataSection;
+                    : (mockup.isVideo ? '' : pinterestSection) + instagramSection + facebookSection + metadataSection;
         const catalogActions = !platform
             ? `<div class="smb-inspector-actions">
-                    <button type="button" class="smb-inspector-add-pinterest" data-add-to-pinterest data-mockup-id="${escapeHtml(id)}">
+                    ${mockup.isVideo ? '' : `<button type="button" class="smb-inspector-add-pinterest" data-add-to-pinterest data-mockup-id="${escapeHtml(id)}">
                         ${state.pinterest.includes(String(id)) ? 'Already on Pinterest board' : 'Add to Pinterest board'}
-                    </button>
+                    </button>`}
                     ${addGroupOptionsMarkup('instagram', id)}
                     ${addGroupOptionsMarkup('facebook', id)}
                </div>`
@@ -1058,7 +1070,7 @@
         return `
             <article class="smb-publication-card${state.schedule.mode === 'scheduled' && state.schedule.perPublication ? ' has-schedule' : ''}${isActiveTarget && state.publications[platform].length > 1 ? ' is-active-target' : ''}" data-publication-group="${platform}" data-group-id="${escapeHtml(group.id)}">
                 <header class="smb-publication-head">
-                    <div class="smb-publication-label"><strong>Publication ${index + 1}</strong><span title="${escapeHtml(displayTitle)}">${escapeHtml(displayTitle)}</span><small>${plural(group.items.length, 'image', 'images')}</small></div>
+                    <div class="smb-publication-label"><strong>Publication ${index + 1}</strong><span title="${escapeHtml(displayTitle)}">${escapeHtml(displayTitle)}</span><small>${group.items.length === 1 && isVideoItem(group.items[0]) ? 'video' : plural(group.items.length, 'image', 'images')}</small></div>
                     ${firstMockup ? `<label class="smb-publication-language"><span class="sr-only">Idioma de esta publicación</span><select data-group-locale aria-label="Idioma de esta publicación">${localeOptions(firstMockup, locale)}</select></label>` : ''}
                     ${scheduledChip(scheduled)}
                     <button type="button" data-remove-publication aria-label="Remove publication">×</button>
@@ -1153,9 +1165,22 @@
         if (shouldRender) renderAll();
     };
 
+    const isVideoItem = (id) => Boolean(mockupById.get(String(id))?.isVideo);
+
     const addToPublication = (platform, id, groupId = '', insertAt = null, sourceGroupId = '', shouldRender = true) => {
         let targetGroup = findGroup(platform, groupId);
         if (!targetGroup) targetGroup = state.publications[platform].at(-1) || createPublication(platform, false);
+
+        // Video posts are always solo — never mixed with mockups or with another
+        // video in the same publication. Redirect to a fresh group instead of
+        // merging when that would happen (quick-add has no drag-time onMove gate).
+        const incompatibleMix = targetGroup.items.length > 0
+            && !targetGroup.items.includes(id)
+            && (isVideoItem(id) || targetGroup.items.some(isVideoItem));
+        if (incompatibleMix) {
+            targetGroup = createPublication(platform, false);
+        }
+
         clearScheduled(platform, targetGroup.id);
         const targetWasEmpty = targetGroup.items.length === 0;
         const mockup = mockupById.get(String(id));
@@ -1254,10 +1279,12 @@
 
     const canMoveSortable = (event) => {
         const target = sortableListMeta(event.to);
+        const id = String(event.dragged?.dataset.mockupId || event.dragged?.dataset.id || '');
+        if (target.kind === 'pinterest') return !isVideoItem(id);
         if (target.kind !== 'publication') return true;
         const group = findGroup(target.platform, target.groupId);
-        const id = String(event.dragged?.dataset.mockupId || event.dragged?.dataset.id || '');
         if (!group || group.items.includes(id) || event.from === event.to) return true;
+        if (group.items.length > 0 && (isVideoItem(id) || group.items.some(isVideoItem))) return false;
         return group.items.length < groupLimits[target.platform];
     };
 
@@ -1387,6 +1414,21 @@
         }
         catalog.dataset.sortableCatalog = 'true';
         catalogSortable = window.Sortable.create(catalog, {
+            ...sortableBaseOptions(),
+            group: { name: 'social-media-mockups', pull: 'clone', put: false, revertClone: true },
+            sort: false,
+            direction: 'horizontal',
+            filter: 'button, input, select, textarea, a',
+            preventOnFilter: false,
+            removeCloneOnHide: true,
+        });
+    };
+
+    const initializeVideoRailSortable = () => {
+        const rail = document.querySelector('[data-video-rail]');
+        if (!rail || typeof window.Sortable !== 'function') return;
+        rail.dataset.sortableCatalog = 'true';
+        videoRailSortable = window.Sortable.create(rail, {
             ...sortableBaseOptions(),
             group: { name: 'social-media-mockups', pull: 'clone', put: false, revertClone: true },
             sort: false,
@@ -1961,6 +2003,7 @@
     sortCatalog();
     renderAll();
     initializeCatalogSortable();
+    initializeVideoRailSortable();
     loadPinterestBoards();
     loadScheduledJobs();
 })();

@@ -101,6 +101,11 @@ final class SocialBoardPublishService
 
     private function prepareMeta(array $user, string $channel, array $group, DateTimeImmutable $when, int $position): array
     {
+        $videoExportId = max(0, (int)($group['video_export_id'] ?? 0));
+        if ($videoExportId > 0) {
+            return $this->prepareMetaVideo($user, $channel, $group, $when, $position, $videoExportId);
+        }
+
         $userId = (int)$user['id'];
         $limit = self::CHANNEL_LIMITS[$channel];
         $mockupIds = array_values(array_unique(array_filter(array_map('intval', (array)($group['mockup_ids'] ?? [])))));
@@ -157,6 +162,72 @@ final class SocialBoardPublishService
             'client_key' => $normalized['client_key'],
             'locale' => $locale,
         ], $key);
+    }
+
+    private function prepareMetaVideo(array $user, string $channel, array $group, DateTimeImmutable $when, int $position, int $videoExportId): array
+    {
+        if (!in_array($channel, ['instagram', 'facebook'], true)) {
+            throw new InvalidArgumentException('Video publications are only supported on Instagram and Facebook for now.');
+        }
+        $userId = (int)$user['id'];
+        $copy = trim((string)($group['copy'] ?? ''));
+        $title = trim((string)($group['title'] ?? ''));
+        $locale = (string)($group['locale'] ?? 'en') === 'es' ? 'es' : 'en';
+        if ($copy === '') throw new InvalidArgumentException('Every ' . ucfirst($channel) . ' publication needs text.');
+        if ($channel === 'instagram' && mb_strlen($copy) > 2200) {
+            throw new InvalidArgumentException('Instagram captions accept at most 2200 characters.');
+        }
+        if ($channel === 'facebook' && mb_strlen($copy) > 5000) {
+            throw new InvalidArgumentException('Facebook publication text is too long.');
+        }
+        $destinationUrl = $this->httpsUrl((string)($group['destination_url'] ?? ''), ucfirst($channel) . ' destination');
+        $this->assertVideoExportOwned($userId, $videoExportId);
+
+        $normalized = [
+            'client_key' => trim((string)($group['client_key'] ?? $channel . '-video-' . $videoExportId . '-' . $position)),
+            'video_export_id' => $videoExportId,
+            'locale' => $locale,
+            'title' => $title,
+            'copy' => $copy,
+            'destination_url' => $destinationUrl,
+            'scheduled_at' => $when->setTimezone(new DateTimeZone('UTC'))->format(DateTimeInterface::ATOM),
+        ];
+        $key = $this->idempotencyKey($userId, $channel, $normalized);
+        $existing = $this->jobs->findByKey($userId, $key);
+        if ($existing) return $existing;
+
+        $drafts = new MetaSocialDraftService($this->pdo);
+        $draftId = $drafts->createFromVideoExport($videoExportId, $user, $channel, $destinationUrl, 'artist', $locale);
+        $draft = $drafts->draft($draftId, $userId);
+        $drafts->updateContent(
+            $draftId,
+            $userId,
+            $title !== '' ? $title : (string)($draft['title'] ?? ''),
+            $copy,
+            [],
+            (string)($draft['alt_text'] ?? ''),
+            $destinationUrl
+        );
+
+        return $this->jobs->create($userId, $channel, 'artist', $when, [
+            'schema_version' => 'social-board-job.v1',
+            'draft_ids' => [$draftId],
+            'client_key' => $normalized['client_key'],
+            'locale' => $locale,
+        ], $key);
+    }
+
+    private function assertVideoExportOwned(int $userId, int $videoExportId): void
+    {
+        $stmt = $this->pdo->prepare(
+            "SELECT e.id FROM video_exports e
+             INNER JOIN video_projects p ON p.id=e.video_project_id AND p.user_id=e.user_id
+             WHERE e.id=? AND e.user_id=? AND e.status='succeeded' LIMIT 1"
+        );
+        $stmt->execute([$videoExportId, $userId]);
+        if (!$stmt->fetchColumn()) {
+            throw new RuntimeException('The selected video is unavailable.');
+        }
     }
 
     private function enqueueIfNeeded(array $job, DateTimeImmutable $when, bool $publishDirectly = false): array

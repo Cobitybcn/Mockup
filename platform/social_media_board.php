@@ -2,6 +2,7 @@
 declare(strict_types=1);
 
 require_once __DIR__ . '/app/bootstrap.php';
+require_once __DIR__ . '/app/Video/bootstrap.php';
 
 $user = Auth::requireUser();
 $isAdmin = Auth::isAdmin($user);
@@ -232,6 +233,45 @@ foreach ($mockups as $mockup) {
         'facebook' => $defaultContent['facebook'],
     ];
 }
+
+$mockupPayloadByArtworkId = [];
+foreach ($mockupPayload as $entry) {
+    $artworkId = (int)$entry['artworkId'];
+    if ($artworkId > 0 && !isset($mockupPayloadByArtworkId[$artworkId])) {
+        $mockupPayloadByArtworkId[$artworkId] = $entry;
+    }
+}
+
+$emptyLocalePayload = ['available' => false, 'status' => 'unprepared', 'metadata' => [], 'pinterest' => [], 'instagram' => [], 'facebook' => []];
+$videoPayload = [];
+foreach ((new VideoStudioRepository($pdo))->finalVideos($userId) as $final) {
+    if (!empty($final['associationMissing'])) continue;
+    $artworkId = (int)($final['artworkId'] ?? 0);
+    $sourceMockup = $mockupPayloadByArtworkId[$artworkId] ?? null;
+    $displayTitle = (string)($final['displayTitle'] ?? '');
+    $videoPayload[] = [
+        'id' => 'v' . (int)$final['id'],
+        'videoExportId' => (int)$final['id'],
+        'isVideo' => true,
+        'image' => (string)($final['thumbnailUrl'] ?: ''),
+        'previewUrl' => (string)($final['previewUrl'] ?? ''),
+        'artworkId' => $artworkId,
+        'artworkTitle' => (string)($final['artworkTitle'] ?? ''),
+        'seriesId' => 0,
+        'seriesTitle' => '',
+        'contextTitle' => t('Video', 'Video'),
+        'editorialTitle' => $displayTitle !== '' ? $displayTitle : (string)($final['projectTitle'] ?? 'Video'),
+        'favorite' => false,
+        'defaultLocale' => $sourceMockup['defaultLocale'] ?? 'en',
+        'locales' => $sourceMockup['locales'] ?? ['es' => $emptyLocalePayload, 'en' => $emptyLocalePayload],
+        'editorialSource' => $sourceMockup['editorialSource'] ?? ['locale' => 'en', 'status' => 'unprepared'],
+        'metadata' => $sourceMockup['metadata'] ?? [],
+        'pinterest' => [],
+        'instagram' => $sourceMockup['instagram'] ?? [],
+        'facebook' => $sourceMockup['facebook'] ?? [],
+    ];
+}
+$catalogPayload = array_merge($mockupPayload, $videoPayload);
 ?>
 <!doctype html>
 <html lang="<?= smb_h(Translator::locale($user)) ?>">
@@ -240,7 +280,7 @@ foreach ($mockups as $mockup) {
     <meta name="viewport" content="width=device-width,initial-scale=1">
     <title><?= smb_h(t('Social Media Board - Artwork Mockups', 'Tablero de Redes Sociales - Artwork Mockups')) ?></title>
     <link rel="stylesheet" href="style.css">
-    <link rel="stylesheet" href="social_media_board.css?v=32">
+    <link rel="stylesheet" href="social_media_board.css?v=37">
     <link rel="stylesheet" href="media-controls.css?v=2">
 </head>
 <body data-social-board-user="<?= $userId ?>">
@@ -277,9 +317,11 @@ foreach ($mockups as $mockup) {
                         </div>
                     </div>
                     <div class="smb-publish-controls" aria-label="<?= smb_h(t('Publishing controls', 'Controles de publicación')) ?>">
+                        <div class="smb-publish-secondary">
+                            <button type="button" class="smb-icon-btn smb-schedule-open" data-open-schedule title="<?= smb_h(t('Schedule', 'Programar')) ?>"><svg viewBox="0 0 24 24" aria-hidden="true"><rect x="3.5" y="5" width="17" height="15.5" rx="2.4"/><path d="M3.5 9.5h17M8 3v4M16 3v4"/></svg><span class="sr-only"><?= smb_h(t('Schedule', 'Programar')) ?></span></button>
+                            <button type="button" class="smb-icon-btn smb-destinations-open" data-toggle-destinations aria-expanded="false" title="<?= smb_h(t('Default links', 'Enlaces predeterminados')) ?>"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M9.5 14.5 14.5 9.5"/><path d="M11.2 7.3 12.5 6a3.6 3.6 0 0 1 5.1 5.1l-1.3 1.3"/><path d="M12.8 16.7 11.5 18a3.6 3.6 0 0 1-5.1-5.1l1.3-1.3"/></svg><span class="sr-only"><?= smb_h(t('Default links', 'Enlaces predeterminados')) ?></span></button>
+                        </div>
                         <button type="button" class="smb-confirm" data-confirm-schedule data-publish-now data-delivery-mode="now"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="m21 3-7.6 18-3.2-7.2L3 10.6 21 3Z"/><path d="m10.2 13.8 4.2-4.2"/></svg><span><?= smb_h(t('Publish now', 'Publicar ahora')) ?></span></button>
-                        <button type="button" class="smb-schedule-open" data-open-schedule><?= smb_h(t('Schedule', 'Programar')) ?></button>
-                        <button type="button" class="smb-destinations-open" data-toggle-destinations aria-expanded="false"><?= smb_h(t('Default links', 'Enlaces predeterminados')) ?></button>
                     </div>
                     <button class="smb-focus-exit" type="button" data-exit-network-focus><?= smb_h(t('Overview', 'Resumen')) ?></button>
                 </div>
@@ -297,42 +339,74 @@ foreach ($mockups as $mockup) {
                     </div>
                 </section>
 
-                <div class="smb-catalog-rail-wrap">
-                    <button class="smb-rail-arrow smb-rail-arrow--left" type="button" data-scroll-catalog="-1" aria-label="<?= smb_h(t('Previous mockups', 'Mockups anteriores')) ?>">‹</button>
-                    <div class="smb-catalog-rail" data-catalog-rail>
-                        <?php foreach ($mockupPayload as $mockup): ?>
-                            <article
-                                class="smb-catalog-card smb-sortable-item <?= $mockup['favorite'] ? 'is-favorite' : '' ?>"
-                                data-catalog-card
-                                data-mockup-id="<?= (int)$mockup['id'] ?>"
-                                data-id="<?= (int)$mockup['id'] ?>"
-                                data-artwork-id="<?= (int)$mockup['artworkId'] ?>"
-                                data-series-id="<?= (int)$mockup['seriesId'] ?>"
-                                data-inspect-mockup
-                                tabindex="0"
-                            >
-                                <img src="<?= smb_h((string)$mockup['image']) ?>" alt="<?= smb_h((string)$mockup['artworkTitle']) ?>" loading="lazy" draggable="false">
-                                <button
-                                    class="smb-favorite media-icon-button media-icon-button--compact media-thumb-action media-thumb-action--right <?= $mockup['favorite'] ? 'active' : '' ?>"
-                                    type="button"
-                                    data-toggle-favorite
-                                    aria-pressed="<?= $mockup['favorite'] ? 'true' : 'false' ?>"
-                                    aria-label="<?= $mockup['favorite'] ? smb_h(t('Remove from favorites', 'Quitar de favoritos')) : smb_h(t('Add to favorites', 'Agregar a favoritos')) ?>"
-                                ><svg class="media-action-icon" viewBox="0 0 24 24" aria-hidden="true"><path d="m12 3.7 2.55 5.17 5.71.83-4.13 4.03.97 5.69L12 16.73l-5.1 2.69.97-5.69L3.74 9.7l5.71-.83L12 3.7Z"/></svg></button>
-                                <div class="smb-quick-add" role="group" aria-label="<?= smb_h(t('Add to a board', 'Agregar a un tablero')) ?>">
-                                    <button type="button" class="smb-quick-add-btn smb-quick-add-btn--pinterest" data-quick-add="pinterest" aria-label="<?= smb_h(t('Add to Pinterest', 'Agregar a Pinterest')) ?>"></button>
-                                    <button type="button" class="smb-quick-add-btn smb-quick-add-btn--instagram" data-quick-add="instagram" aria-label="<?= smb_h(t('Add to Instagram', 'Agregar a Instagram')) ?>"></button>
-                                    <button type="button" class="smb-quick-add-btn smb-quick-add-btn--facebook" data-quick-add="facebook" aria-label="<?= smb_h(t('Add to Facebook', 'Agregar a Facebook')) ?>"></button>
-                                </div>
-                                <div class="smb-catalog-card-copy">
-                                    <strong><?= smb_h((string)$mockup['editorialTitle']) ?></strong>
-                                    <span><?= smb_h((string)$mockup['artworkTitle']) ?> · <?= smb_h((string)$mockup['contextTitle']) ?></span>
-                                </div>
-                            </article>
-                        <?php endforeach; ?>
-                        <?php if (!$mockups): ?><div class="smb-empty-catalog"><?= smb_h(t('No mockups available yet.', 'Todavía no hay mockups disponibles.')) ?></div><?php endif; ?>
+                <div class="smb-catalog-rails">
+                    <div class="smb-catalog-rail-wrap smb-catalog-rail-wrap--mockups">
+                        <button class="smb-rail-arrow smb-rail-arrow--left" type="button" data-scroll-catalog="-1" aria-label="<?= smb_h(t('Previous mockups', 'Mockups anteriores')) ?>">‹</button>
+                        <div class="smb-catalog-rail" data-catalog-rail>
+                            <?php foreach ($mockupPayload as $mockup): ?>
+                                <article
+                                    class="smb-catalog-card smb-sortable-item <?= $mockup['favorite'] ? 'is-favorite' : '' ?>"
+                                    data-catalog-card
+                                    data-mockup-id="<?= (int)$mockup['id'] ?>"
+                                    data-id="<?= (int)$mockup['id'] ?>"
+                                    data-artwork-id="<?= (int)$mockup['artworkId'] ?>"
+                                    data-series-id="<?= (int)$mockup['seriesId'] ?>"
+                                    data-inspect-mockup
+                                    tabindex="0"
+                                >
+                                    <img src="<?= smb_h((string)$mockup['image']) ?>" alt="<?= smb_h((string)$mockup['artworkTitle']) ?>" loading="lazy" draggable="false">
+                                    <button
+                                        class="smb-favorite media-icon-button media-icon-button--compact media-thumb-action media-thumb-action--right <?= $mockup['favorite'] ? 'active' : '' ?>"
+                                        type="button"
+                                        data-toggle-favorite
+                                        aria-pressed="<?= $mockup['favorite'] ? 'true' : 'false' ?>"
+                                        aria-label="<?= $mockup['favorite'] ? smb_h(t('Remove from favorites', 'Quitar de favoritos')) : smb_h(t('Add to favorites', 'Agregar a favoritos')) ?>"
+                                    ><svg class="media-action-icon" viewBox="0 0 24 24" aria-hidden="true"><path d="m12 3.7 2.55 5.17 5.71.83-4.13 4.03.97 5.69L12 16.73l-5.1 2.69.97-5.69L3.74 9.7l5.71-.83L12 3.7Z"/></svg></button>
+                                    <div class="smb-quick-add" role="group" aria-label="<?= smb_h(t('Add to a board', 'Agregar a un tablero')) ?>">
+                                        <button type="button" class="smb-quick-add-btn smb-quick-add-btn--pinterest media-icon-button media-icon-button--compact" data-quick-add="pinterest" aria-label="<?= smb_h(t('Add to Pinterest', 'Agregar a Pinterest')) ?>"></button>
+                                        <button type="button" class="smb-quick-add-btn smb-quick-add-btn--instagram media-icon-button media-icon-button--compact" data-quick-add="instagram" aria-label="<?= smb_h(t('Add to Instagram', 'Agregar a Instagram')) ?>"></button>
+                                        <button type="button" class="smb-quick-add-btn smb-quick-add-btn--facebook media-icon-button media-icon-button--compact" data-quick-add="facebook" aria-label="<?= smb_h(t('Add to Facebook', 'Agregar a Facebook')) ?>"></button>
+                                    </div>
+                                    <div class="smb-catalog-card-copy">
+                                        <strong><?= smb_h((string)$mockup['editorialTitle']) ?></strong>
+                                        <span><?= smb_h((string)$mockup['artworkTitle']) ?> · <?= smb_h((string)$mockup['contextTitle']) ?></span>
+                                    </div>
+                                </article>
+                            <?php endforeach; ?>
+                            <?php if (!$mockups): ?><div class="smb-empty-catalog"><?= smb_h(t('No mockups available yet.', 'Todavía no hay mockups disponibles.')) ?></div><?php endif; ?>
+                        </div>
+                        <button class="smb-rail-arrow smb-rail-arrow--right" type="button" data-scroll-catalog="1" aria-label="<?= smb_h(t('More mockups', 'Más mockups')) ?>">›</button>
                     </div>
-                    <button class="smb-rail-arrow smb-rail-arrow--right" type="button" data-scroll-catalog="1" aria-label="<?= smb_h(t('More mockups', 'Más mockups')) ?>">›</button>
+
+                    <div class="smb-catalog-rail-wrap smb-catalog-rail-wrap--videos">
+                        <div class="smb-catalog-rail smb-catalog-rail--videos" data-video-rail>
+                            <?php foreach ($videoPayload as $video): ?>
+                                <article
+                                    class="smb-catalog-card smb-catalog-card--video smb-sortable-item"
+                                    data-catalog-card
+                                    data-mockup-id="<?= smb_h((string)$video['id']) ?>"
+                                    data-id="<?= smb_h((string)$video['id']) ?>"
+                                    data-artwork-id="<?= (int)$video['artworkId'] ?>"
+                                    data-inspect-mockup
+                                    tabindex="0"
+                                >
+                                    <?php if ($video['image'] !== ''): ?>
+                                        <img src="<?= smb_h((string)$video['image']) ?>" alt="<?= smb_h((string)$video['artworkTitle']) ?>" loading="lazy" draggable="false">
+                                    <?php endif; ?>
+                                    <span class="smb-video-play" aria-hidden="true"><svg viewBox="0 0 24 24"><path d="M8 5.5v13l11-6.5-11-6.5Z"/></svg></span>
+                                    <div class="smb-quick-add smb-quick-add--video" role="group" aria-label="<?= smb_h(t('Add to a board', 'Agregar a un tablero')) ?>">
+                                        <button type="button" class="smb-quick-add-btn smb-quick-add-btn--instagram media-icon-button media-icon-button--compact" data-quick-add="instagram" aria-label="<?= smb_h(t('Add to Instagram', 'Agregar a Instagram')) ?>"></button>
+                                        <button type="button" class="smb-quick-add-btn smb-quick-add-btn--facebook media-icon-button media-icon-button--compact" data-quick-add="facebook" aria-label="<?= smb_h(t('Add to Facebook', 'Agregar a Facebook')) ?>"></button>
+                                    </div>
+                                    <div class="smb-catalog-card-copy">
+                                        <strong><?= smb_h((string)$video['editorialTitle']) ?></strong>
+                                        <span><?= smb_h((string)$video['artworkTitle']) ?></span>
+                                    </div>
+                                </article>
+                            <?php endforeach; ?>
+                            <?php if (!$videoPayload): ?><div class="smb-empty-catalog smb-empty-catalog--videos"><?= smb_h(t('No finished videos yet.', 'Todavía no hay videos terminados.')) ?></div><?php endif; ?>
+                        </div>
+                    </div>
                 </div>
             </section>
 
@@ -436,9 +510,9 @@ foreach ($mockups as $mockup) {
         </div>
     </main>
 </div>
-<script type="application/json" id="social-board-mockups"><?= json_encode($mockupPayload, JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES | JSON_HEX_TAG) ?></script>
+<script type="application/json" id="social-board-mockups"><?= json_encode($catalogPayload, JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES | JSON_HEX_TAG) ?></script>
 <script type="application/json" id="social-board-config"><?= json_encode($socialBoardConfig, JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES | JSON_HEX_TAG) ?></script>
 <script src="assets/vendor/sortablejs/Sortable.min.js?v=1.15.7"></script>
-<script src="social_media_board.js?v=34"></script>
+<script src="social_media_board.js?v=37"></script>
 </body>
 </html>
