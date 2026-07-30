@@ -145,6 +145,12 @@ function connections_status(?array $connection): array
     };
 }
 
+$tiktokUsername = ltrim(trim((string)($tiktokArtist['tiktok_username'] ?? '')), '@');
+$tiktokDisplayName = trim((string)($tiktokArtist['tiktok_display_name'] ?? ''));
+$tiktokAccountLabel = $tiktokUsername !== ''
+    ? '@' . $tiktokUsername
+    : ($tiktokDisplayName !== '' ? $tiktokDisplayName : t('Connected TikTok account', 'Cuenta TikTok conectada'));
+
 $artistConnections = [
     [
         'id' => 'pinterest',
@@ -197,7 +203,7 @@ $artistConnections = [
         'eyebrow' => t('Artist account', 'Cuenta del artista'),
         'description' => t('Finished videos published from the Video Lab.', 'Videos terminados publicados desde el Video Lab.'),
         'detail' => ($tiktokArtist['status'] ?? '') === 'connected'
-            ? '@' . ltrim((string)($tiktokArtist['tiktok_username'] ?? ''), '@')
+            ? $tiktokAccountLabel
             : t('Connect the TikTok account owned by this artist.', 'Conectá la cuenta de TikTok de este artista.'),
         'connection' => $tiktokArtist,
         'href' => 'integrations/tiktok/',
@@ -517,7 +523,7 @@ $artistConnections = [
                 </div>
                 <div class="connection-dialog__body">
                     <?php if (($tiktokArtist['status'] ?? '') === 'connected'): ?>
-                        <div class="connection-summary"><p><strong><?= connections_h(t('Connected account', 'Cuenta conectada')) ?></strong></p><p>@<?= connections_h(ltrim((string)($tiktokArtist['tiktok_username'] ?? ''), '@')) ?></p></div>
+                        <div class="connection-summary"><p><strong><?= connections_h(t('Connected account', 'Cuenta conectada')) ?></strong></p><p><?= connections_h($tiktokAccountLabel) ?></p></div>
                         <p><?= connections_h(t('Video publications will use this account. Posts start private until TikTok approves the app for public posting.', 'Las publicaciones de video usarán esta cuenta. Las publicaciones empiezan privadas hasta que TikTok apruebe la app para publicación pública.')) ?></p>
                         <form class="connection-form" method="post">
                             <input type="hidden" name="csrf" value="<?= connections_h($_SESSION['connections_csrf']) ?>"><input type="hidden" name="network" value="tiktok">

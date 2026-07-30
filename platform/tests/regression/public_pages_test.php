@@ -10,6 +10,10 @@ function run_public_pages_regression_tests(): void {
     TestHarness::assertContains('no developer codes or tokens are required',$pin,'artists are not asked for Pinterest developer credentials');
     TestHarness::assertTrue(!str_contains($pin,'name="access_token"'),'the artist connection page does not request a manual token');
     $connections=(string)file_get_contents($root.'/connections.php');
+    $tiktokService=(string)file_get_contents($root.'/app/Services/TikTokIntegrationService.php');
+    TestHarness::assertContains("'fields' => 'open_id,display_name'",$tiktokService,'TikTok identity lookup only requests fields covered by user.info.basic');
+    TestHarness::assertTrue(!str_contains($tiktokService,'open_id,username,display_name'),'TikTok identity lookup does not require the separately authorized user.info.profile scope');
+    TestHarness::assertContains('$tiktokAccountLabel',$connections,'connected TikTok accounts remain clearly identified when username is unavailable');
     TestHarness::assertContains("authorizationUrl(\$userId, 'artist')",$connections,'artist Pinterest connections use the official OAuth flow');
     TestHarness::assertContains("authorizationUrl(\$userId, 'platform')",$connections,'platform Pinterest connections can repeat the OAuth flow');
     TestHarness::assertContains('Artwork Mockups administrative accounts',$connections,'the official Pinterest review identity is presented before optional artist accounts');

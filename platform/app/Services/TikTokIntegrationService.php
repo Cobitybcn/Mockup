@@ -197,7 +197,7 @@ final class TikTokIntegrationService
 
     private function requestUserInfo(string $accessToken): array
     {
-        $response = $this->requestJson('GET', self::USER_INFO_URL, ['fields' => 'open_id,username,display_name'], $accessToken);
+        $response = $this->requestJson('GET', self::USER_INFO_URL, ['fields' => 'open_id,display_name'], $accessToken);
         return (array)($response['data']['user'] ?? []);
     }
 
