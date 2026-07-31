@@ -146,6 +146,15 @@ function run_publication_section_tests(): void
     TestHarness::assertContains('$explicitItems', $service, 'saveWebsiteSettings acepta la selección explícita con caption/alt por ítem');
 
     // ————— El sitio público respeta la selección explícita —————
+    // Dockerfile.web copia los archivos del artist-site uno por uno: leer aquí un
+    // archivo que la imagen no lleve pasa en local y falla dentro del build. El
+    // par queda atado — si se cae el COPY, esta suite lo canta antes de desplegar.
+    $webDockerfile = (string)file_get_contents($platformRoot . '/Dockerfile.web');
+    TestHarness::assertContains(
+        'artist-site/inc/AppPublishedCatalog.php',
+        $webDockerfile,
+        'La imagen de producción lleva el catálogo público que esta suite audita'
+    );
     $catalog = (string)file_get_contents($repoRoot . '/artist-site/inc/AppPublishedCatalog.php');
     TestHarness::assertContains(
         '$explicitFavoriteCount === 0',
