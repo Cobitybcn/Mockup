@@ -193,8 +193,30 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && ($_POST['action'] ?? '') === 'save_
 }
 
 
+// ————— POST: attach a finished desktop edit without leaving the step —————
+if ($_SERVER['REQUEST_METHOD'] === 'POST' && ($_POST['action'] ?? '') === 'upload_final_video' && $artworkId > 0) {
+    try {
+        Auth::requireValidCsrf((string)($_POST['csrf'] ?? ''), 'publication');
+        $owned = $pdo->prepare('SELECT id FROM artworks WHERE id=? AND user_id=? LIMIT 1');
+        $owned->execute([$artworkId, $userId]);
+        if (!$owned->fetchColumn()) throw new RuntimeException(t('Artwork not found.', 'Obra no encontrada.'));
+        $file = $_FILES['video'] ?? null;
+        if (!is_array($file)) throw new InvalidArgumentException(t('Select a final video.', 'Seleccioná un video final.'));
+        // The Video subsystem is loaded lazily: only this action needs it.
+        require_once __DIR__ . '/app/Video/bootstrap.php';
+        $videoRepositoryForUpload = new VideoStudioRepository($pdo);
+        $uploadService = new VideoFinalUploadService($videoRepositoryForUpload, new VideoJobRepository($videoRepositoryForUpload->pdo()));
+        $uploadService->uploadForArtwork($userId, $artworkId, $file);
+        header('Location: publication.php?id=' . rawurlencode((string)$artworkId) . '&video_uploaded=1');
+        exit;
+    } catch (Throwable $e) {
+        header('Location: publication.php?id=' . rawurlencode((string)$artworkId) . '&error=' . rawurlencode($e->getMessage()));
+        exit;
+    }
+}
+
 // ————— POST: distribution (immediate per-destination sends) —————
-if ($_SERVER['REQUEST_METHOD'] === 'POST' && in_array((string)($_POST['action'] ?? ''), ['distribute', 'tiktok_status', 'saatchi_uploaded', 'series_part_now', 'distribution_settings'], true) && $artworkId > 0) {
+if ($_SERVER['REQUEST_METHOD'] === 'POST' && in_array((string)($_POST['action'] ?? ''), ['distribute', 'distribute_all', 'tiktok_status', 'saatchi_uploaded', 'series_part_now', 'distribution_settings'], true) && $artworkId > 0) {
     $distributionAction = (string)$_POST['action'];
     try {
         Auth::requireValidCsrf((string)($_POST['csrf'] ?? ''), 'publication');
@@ -209,16 +231,26 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && in_array((string)($_POST['action'] 
             if ((string)($_POST['confirm'] ?? '') !== 'yes') {
                 throw new RuntimeException(t('Confirm the send before publishing.', 'Confirmá el envío antes de publicar.'));
             }
+            $medium = (string)($_POST['medium'] ?? 'video');
             $state = $distribution->publish(
                 (int)$publication['id'],
                 $userId,
                 (string)($_POST['destination'] ?? ''),
                 (string)($_POST['locale'] ?? ''),
-                ['board_id' => trim((string)($_POST['board_id'] ?? ''))]
+                ['board_id' => trim((string)($_POST['board_id'] ?? '')), 'medium' => $medium]
             );
             $flag = (string)($_POST['destination'] ?? '');
+            if ($flag === 'tiktok' && $medium === 'carousel') $flag = 'tiktok_carousel';
+        } elseif ($distributionAction === 'distribute_all') {
+            if ((string)($_POST['confirm'] ?? '') !== 'yes') {
+                throw new RuntimeException(t('Confirm the send before publishing.', 'Confirmá el envío antes de publicar.'));
+            }
+            $summary = $distribution->publishAllConnected((int)$publication['id'], $userId, (string)($_POST['locale'] ?? ''));
+            Auth::start();
+            $_SESSION['publication_distribute_all'] = $summary;
+            $flag = 'all';
         } elseif ($distributionAction === 'tiktok_status') {
-            $distribution->refreshTikTokStatus((int)$publication['id'], $userId);
+            $distribution->refreshTikTokStatus((int)$publication['id'], $userId, (string)($_POST['medium'] ?? 'video'));
             $flag = 'tiktok_status';
         } elseif ($distributionAction === 'series_part_now') {
             $distribution->publishSeriesPartNow(
@@ -496,6 +528,15 @@ function pub_dist_chip(string $destination, array $state): array
             'failed' => ['pub-chip pub-chip--pending', t('FAILED', 'FALLÓ')],
             default => ['pub-chip', t('Not sent yet', 'Sin enviar')],
         },
+        // Creator's Draft never says "published" on our word: the carousel
+        // waits in the artist's TikTok inbox until he finishes it there.
+        'tiktok_carousel' => match ($status) {
+            'inbox' => ['pub-chip pub-chip--ok', t('WAITING FOR YOU ON TIKTOK', 'TE ESPERA EN TIKTOK')],
+            'processing' => ['pub-chip pub-chip--ok', t('SENT · PROCESSING', 'ENVIADO · PROCESANDO')],
+            'published' => ['pub-chip pub-chip--live', t('PUBLISHED', 'PUBLICADO')],
+            'failed' => ['pub-chip pub-chip--pending', t('FAILED', 'FALLÓ')],
+            default => ['pub-chip', t('Not sent yet', 'Sin enviar')],
+        },
         'saatchi' => match ($status) {
             'listed' => ['pub-chip pub-chip--live', t('LISTED', 'LISTADO')],
             'uploaded' => ['pub-chip pub-chip--ok', t('UPLOADED BY HAND', 'CARGADO A MANO')],
@@ -534,7 +575,7 @@ function pub_page_chip(string $status): array
     <title><?= pub_h(t('Publication - Artwork Mockups', 'Publicación - Artwork Mockups')) ?></title>
     <link rel="stylesheet" href="style.css">
     <link rel="stylesheet" href="ui-catalog.css">
-    <link rel="stylesheet" href="publication.css?v=6">
+    <link rel="stylesheet" href="publication.css?v=12">
 </head>
 <body>
 <div class="app-shell">
@@ -546,15 +587,38 @@ function pub_page_chip(string $status): array
         </header>
 
         <div class="publishing-catalog">
+            <?php if (isset($_GET['video_uploaded'])): ?>
+                <div class="notice"><?= pub_h(t('Video attached to this artwork. Select it below to show it on the page — it also unlocks the TikTok step.', 'Video adjuntado a esta obra. Seleccionalo abajo para mostrarlo en la página — también habilita el paso de TikTok.')) ?></div>
+            <?php endif; ?>
+            <?php
+            // Resumen honesto del acto único: qué salió, qué se salteó y por qué.
+            Auth::start();
+            $distributeAllSummary = $_SESSION['publication_distribute_all'] ?? null;
+            unset($_SESSION['publication_distribute_all']);
+            ?>
+            <?php if (is_array($distributeAllSummary)): ?>
+                <div class="notice <?= (int)($distributeAllSummary['failed'] ?? 0) > 0 ? 'error' : '' ?>">
+                    <strong><?= (int)($distributeAllSummary['sent'] ?? 0) ?> <?= pub_h(t('sent', 'enviados')) ?> · <?= (int)($distributeAllSummary['skipped'] ?? 0) ?> <?= pub_h(t('skipped', 'salteados')) ?> · <?= (int)($distributeAllSummary['failed'] ?? 0) ?> <?= pub_h(t('failed', 'fallidos')) ?></strong>
+                    <?php foreach ((array)($distributeAllSummary['results'] ?? []) as $resultDestination => $result): ?>
+                        <br><?= pub_h(ucfirst((string)$resultDestination)) ?>: <?= pub_h(match ((string)$result['status']) {
+                            'sent' => t('sent', 'enviado'),
+                            'skipped' => t('skipped', 'salteado'),
+                            default => t('failed', 'falló'),
+                        }) ?><?= trim((string)$result['detail']) !== '' ? ' — ' . pub_h((string)$result['detail']) : '' ?>
+                    <?php endforeach; ?>
+                </div>
+            <?php endif; ?>
             <?php if (isset($_GET['dist'])): ?>
                 <div class="notice"><?= pub_h(match ((string)$_GET['dist']) {
                     'pinterest' => t('Pin series published on Pinterest.', 'Serie de pins publicada en Pinterest.'),
                     'instagram' => t('Instagram series started: part 1 published, the rest scheduled.', 'Serie de Instagram iniciada: parte 1 publicada, el resto programado.'),
                     'facebook' => t('Facebook series started: part 1 published, the rest scheduled.', 'Serie de Facebook iniciada: parte 1 publicada, el resto programado.'),
                     'tiktok' => t('Video sent to TikTok — processing.', 'Video enviado a TikTok — procesando.'),
+                    'tiktok_carousel' => t('Carousel sent: it is waiting in your TikTok inbox — pick the music and publish it there.', 'Carrusel enviado: te espera en tu bandeja de TikTok — elegí la música y publicalo desde ahí.'),
                     'tiktok_status' => t('TikTok status refreshed.', 'Estado de TikTok actualizado.'),
                     'saatchi' => t('Saatchi marked as uploaded by hand.', 'Saatchi marcado como cargado a mano.'),
                     'settings' => t('Series gap saved.', 'Lapso de la serie guardado.'),
+                    'all' => t('Distribution finished — the detail is above.', 'Distribución terminada — el detalle está arriba.'),
                     default => t('Distribution updated.', 'Distribución actualizada.'),
                 }) ?></div>
             <?php endif; ?>
@@ -666,9 +730,22 @@ function pub_page_chip(string $status): array
                                     </div>
                                 <?php endif; ?>
 
+                                <?php
+                                // Una sola función, una sola línea: estado, archivo y acción
+                                // conviven en la misma fila, sin cajas que compitan.
+                                $videoAttach = static function (string $lead): string {
+                                    return '<div class="pub-video-attach">'
+                                        . ($lead !== '' ? '<span class="pub-video-attach-lead">' . pub_h($lead) . '</span>' : '')
+                                        . '<input type="file" id="pub-video-file" name="video" form="pub-video-upload" accept="video/mp4,video/quicktime,video/webm" required class="pub-visually-hidden" data-video-file>'
+                                        . '<label class="pub-copy" for="pub-video-file">' . pub_h(t('Choose file', 'Elegir archivo')) . '</label>'
+                                        . '<span data-video-file-name>' . pub_h(t('MP4, MOV or WebM · up to 500 MB', 'MP4, MOV o WebM · hasta 500 MB')) . '</span>'
+                                        . '<button type="submit" form="pub-video-upload" class="pub-copy" data-video-upload-submit>' . pub_h(t('Upload', 'Subir')) . '</button>'
+                                        . '</div>';
+                                };
+                                ?>
                                 <h3 class="pub-section-title"><?= pub_h(t('Media composition — video', 'Composición de media — video')) ?></h3>
                                 <?php if (!$doc['finalVideos']): ?>
-                                    <p class="pub-video-empty"><?= pub_h(t('No final videos linked to this artwork yet. Create or upload one in Videos.', 'Todavía no hay videos finales vinculados a esta obra. Creá o subí uno en Videos.')) ?></p>
+                                    <?= $videoAttach(t('No final video linked to this artwork yet.', 'Todavía no hay video final vinculado a esta obra.')) ?>
                                 <?php else: ?>
                                     <p class="pub-section-hint"><?= pub_h(t('One video per page. It appears on the artwork page once the page is published.', 'Un video por página. Aparece en la página de la obra cuando la página está publicada.')) ?></p>
                                     <div class="pub-video-grid" data-video-grid>
@@ -685,6 +762,7 @@ function pub_page_chip(string $status): array
                                             </figure>
                                         <?php endforeach; ?>
                                     </div>
+                                    <?= $videoAttach('') ?>
                                 <?php endif; ?>
 
                                 <h3 class="pub-section-title"><?= pub_h(t('Website cover', 'Portada del sitio web')) ?></h3>
@@ -764,6 +842,11 @@ function pub_page_chip(string $status): array
                                     <?php endif; ?>
                                 </div>
                             </form>
+                            <form method="post" id="pub-video-upload" enctype="multipart/form-data" hidden>
+                                <input type="hidden" name="action" value="upload_final_video">
+                                <input type="hidden" name="id" value="<?= (int)$doc['artwork']['id'] ?>">
+                                <input type="hidden" name="csrf" value="<?= pub_h($csrf) ?>">
+                            </form>
                         <?php endif; ?>
                     </div>
                 </section>
@@ -791,10 +874,19 @@ function pub_page_chip(string $status): array
                     return strtoupper($locale) . ' · ' . ($locale === $doc['workingLocale'] ? t('source', 'fuente') : t('publication', 'publicación'));
                 };
                 $localeOptions = $productLocales !== [] ? $productLocales : [$doc['workingLocale']];
+                // Los pasos van plegados para dar orden; el que acaba de actuar
+                // se abre solo, para que el resultado nunca quede escondido.
+                $openStep = match ((string)($_GET['dist'] ?? '')) {
+                    'pinterest' => 'pinterest',
+                    'instagram', 'facebook', 'settings' => 'social',
+                    'tiktok', 'tiktok_carousel', 'tiktok_status' => 'tiktok',
+                    'saatchi' => 'saatchi',
+                    default => '',
+                };
                 ?>
 
-                <section class="pub-panel <?= $stepReady ? '' : 'pub-panel--inert' ?>" aria-labelledby="pub-step-saatchi" id="pub-step-saatchi">
-                    <div class="pub-panel-heading">
+                <details class="pub-panel <?= $stepReady ? '' : 'pub-panel--inert' ?>" id="pub-step-saatchi" <?= $openStep === 'saatchi' ? 'open' : '' ?>>
+                    <summary class="pub-panel-heading">
                         <div>
                             <span class="pub-kicker"><?= pub_h(t('Step 2', 'Paso 2')) ?></span>
                             <h2><?= pub_h(t('Saatchi Art', 'Saatchi Art')) ?></h2>
@@ -807,7 +899,7 @@ function pub_page_chip(string $status): array
                             <em class="pub-chip"><?= pub_h(t('Manual', 'Manual')) ?></em>
                             <em class="<?= pub_h($saatchiChipClass) ?>"><?= pub_h($saatchiChipLabel) ?></em>
                         </span>
-                    </div>
+                    </summary>
                     <div class="pub-panel-body">
                         <?php if (!$stepReady): ?>
                             <p class="pub-gate-note"><?= pub_h($stepGateNote) ?></p>
@@ -820,7 +912,7 @@ function pub_page_chip(string $status): array
                             $saatchiDescriptionLocale = $doc['adaptationLocale'] !== '' ? $doc['adaptationLocale'] : $doc['workingLocale'];
                             $saatchiDescription = (string)($saatchiPackage['description'][$saatchiDescriptionLocale] ?? '');
                             ?>
-                            <p class="pub-panel-note"><?= pub_h(t('Copy each field, upload by hand on Saatchi, mark it here, then paste the listing link in the Website step.', 'Copiá cada campo, cargá a mano en Saatchi, marcalo acá, y después pegá el enlace del listing en el paso Sitio web.')) ?></p>
+                            <p class="pub-panel-note"><?= pub_h(t('Download the package, upload it by hand on Saatchi, mark it here, then paste the listing link in the Website step.', 'Descargá el paquete, cargalo a mano en Saatchi, marcalo acá, y después pegá el enlace del listing en el paso Sitio web.')) ?></p>
                             <div class="pub-dist-package">
                                 <div class="pub-dist-package-row">
                                     <span class="pub-product-locale"><?= pub_h(t('Keywords', 'Keywords')) ?> (<?= pub_h(strtoupper((string)($saatchiPackage['keywords_locale'] ?? ''))) ?>)</span>
@@ -841,6 +933,9 @@ function pub_page_chip(string $status): array
                                             <button type="button" class="pub-copy" data-copy-text="<?= pub_h($imageCaption) ?>"><?= pub_h(t('Copy caption', 'Copiar pie')) ?></button>
                                         </figure>
                                     <?php endforeach; ?>
+                                    <a class="pub-decision pub-decision--save pub-dist-download" href="publication_saatchi_package.php?id=<?= (int)$doc['artwork']['id'] ?>">
+                                        <span><?= pub_h(t('Download', 'Descargar')) ?><br><?= pub_h(t('package .zip', 'paquete .zip')) ?></span>
+                                    </a>
                                 </div>
                                 <?php if (count((array)($saatchiPackage['images'] ?? [])) < 4): ?>
                                     <p class="pub-product-meta"><small><?= pub_h(t('Saatchi recommends 4+ varied images: front, detail, mockups.', 'Saatchi recomienda 4+ imágenes variadas: frente, detalle, mockups.')) ?></small></p>
@@ -856,10 +951,10 @@ function pub_page_chip(string $status): array
                             <?php endif; ?>
                         <?php endif; ?>
                     </div>
-                </section>
+                </details>
 
-                <section class="pub-panel <?= $stepReady ? '' : 'pub-panel--inert' ?>" aria-labelledby="pub-step-pinterest" id="pub-step-pinterest">
-                    <div class="pub-panel-heading">
+                <details class="pub-panel <?= $stepReady ? '' : 'pub-panel--inert' ?>" id="pub-step-pinterest" <?= $openStep === 'pinterest' ? 'open' : '' ?>>
+                    <summary class="pub-panel-heading">
                         <div>
                             <span class="pub-kicker"><?= pub_h(t('Step 3', 'Paso 3')) ?></span>
                             <h2>Pinterest</h2>
@@ -874,7 +969,7 @@ function pub_page_chip(string $status): array
                             <?php else: ?><em class="pub-chip pub-chip--pending"><?= pub_h(t('Not connected', 'Sin conexión')) ?></em><?php endif; ?>
                             <em class="<?= pub_h($pinChipClass) ?>"><?= pub_h($pinChipLabel) ?></em>
                         </span>
-                    </div>
+                    </summary>
                     <div class="pub-panel-body">
                         <?php if (!$stepReady): ?>
                             <p class="pub-gate-note"><?= pub_h($stepGateNote) ?></p>
@@ -887,14 +982,16 @@ function pub_page_chip(string $status): array
                                 <?php foreach ($mediaItemsPayload as $pinItem): ?>
                                     <figure class="pub-pin-card">
                                         <img src="<?= pub_h(pub_media_url((string)($pinItem['file'] ?? ''))) ?>" alt="" loading="lazy">
-                                        <?php foreach ($productLocales as $pinLocale): ?>
-                                            <?php $pinCopy = (array)($pinItem['social'][$pinLocale]['pinterest'] ?? []); ?>
-                                            <div class="pub-pin-copy">
-                                                <span class="pub-product-locale"><?= pub_h(strtoupper($pinLocale)) ?></span>
-                                                <strong><?= pub_h((string)($pinCopy['title'] ?? '')) ?></strong>
-                                                <p><?= pub_h((string)($pinCopy['description'] ?? '')) ?></p>
-                                            </div>
-                                        <?php endforeach; ?>
+                                        <?php
+                                        // El preview muestra lo que realmente va a salir: un
+                                        // envío, un idioma — igual que los pasos 4 y 5.
+                                        $pinCopy = (array)($pinItem['social'][$distDefaultLocale]['pinterest'] ?? []);
+                                        ?>
+                                        <div class="pub-pin-copy">
+                                            <span class="pub-product-locale"><?= pub_h(strtoupper($distDefaultLocale)) ?></span>
+                                            <strong><?= pub_h((string)($pinCopy['title'] ?? '')) ?></strong>
+                                            <p><?= pub_h((string)($pinCopy['description'] ?? '')) ?></p>
+                                        </div>
                                     </figure>
                                 <?php endforeach; ?>
                             </div>
@@ -930,10 +1027,10 @@ function pub_page_chip(string $status): array
                             <?php endif; ?>
                         <?php endif; ?>
                     </div>
-                </section>
+                </details>
 
-                <section class="pub-panel <?= $stepReady ? '' : 'pub-panel--inert' ?>" aria-labelledby="pub-step-social" id="pub-step-social">
-                    <div class="pub-panel-heading">
+                <details class="pub-panel <?= $stepReady ? '' : 'pub-panel--inert' ?>" id="pub-step-social" <?= $openStep === 'social' ? 'open' : '' ?>>
+                    <summary class="pub-panel-heading">
                         <div>
                             <span class="pub-kicker"><?= pub_h(t('Step 4', 'Paso 4')) ?></span>
                             <h2><?= pub_h(t('Social', 'Social')) ?> — Facebook · Instagram · X</h2>
@@ -949,7 +1046,7 @@ function pub_page_chip(string $status): array
                                 <button type="submit" class="pub-copy"><?= pub_h(t('Save', 'Guardar')) ?></button>
                             </form>
                         <?php endif; ?>
-                    </div>
+                    </summary>
                     <div class="pub-panel-body">
                         <?php if (!$stepReady): ?>
                             <p class="pub-gate-note"><?= pub_h($stepGateNote) ?></p>
@@ -1052,10 +1149,10 @@ function pub_page_chip(string $status): array
                             </div>
                         <?php endif; ?>
                     </div>
-                </section>
+                </details>
 
-                <section class="pub-panel <?= $stepReady ? '' : 'pub-panel--inert' ?>" aria-labelledby="pub-step-tiktok" id="pub-step-tiktok">
-                    <div class="pub-panel-heading">
+                <details class="pub-panel <?= $stepReady ? '' : 'pub-panel--inert' ?>" id="pub-step-tiktok" <?= $openStep === 'tiktok' ? 'open' : '' ?>>
+                    <summary class="pub-panel-heading">
                         <div>
                             <span class="pub-kicker"><?= pub_h(t('Step 5', 'Paso 5')) ?></span>
                             <h2>TikTok</h2>
@@ -1063,65 +1160,167 @@ function pub_page_chip(string $status): array
                         <?php
                         $tiktokState = (array)($doc['distStates']['tiktok'] ?? []);
                         $tiktokConnected = ($tiktokState['connection'] ?? '') === 'connected';
-                        [$tiktokChipClass, $tiktokChipLabel] = pub_dist_chip('tiktok', $tiktokState);
                         ?>
                         <span class="pub-dist-chips">
                             <?php if ($tiktokConnected): ?><em class="pub-chip pub-chip--ok"><?= pub_h(t('Connected', 'Conectado')) ?></em>
                             <?php else: ?><em class="pub-chip pub-chip--pending"><?= pub_h(t('Not connected', 'Sin conexión')) ?></em><?php endif; ?>
-                            <em class="<?= pub_h($tiktokChipClass) ?>"><?= pub_h($tiktokChipLabel) ?></em>
                         </span>
-                    </div>
+                    </summary>
                     <div class="pub-panel-body">
                         <?php if (!$stepReady): ?>
                             <p class="pub-gate-note"><?= pub_h($stepGateNote) ?></p>
                         <?php else: ?>
-                            <?php $tiktokVideoId = (int)($destinationsPayload['tiktok']['video_export_id'] ?? 0); ?>
-                            <p class="pub-panel-note"><?= pub_h(t('The narrative channel: each video tells its own story. Its composition space grows in the next stages.', 'El canal narrativo: cada video cuenta su propia historia. Su espacio de composición crece en las próximas etapas.')) ?></p>
-                            <?php if (($tiktokState['external_id'] ?? '') !== '' || ($tiktokState['attempted_at'] ?? '') !== ''): ?>
-                                <?php $tiktokAttempted = strtotime((string)$tiktokState['attempted_at']); ?>
-                                <p class="pub-product-meta"><small><?= pub_h(t('Last send:', 'Último envío:')) ?> <?= $tiktokAttempted ? pub_h(date('d/m/Y · H:i', $tiktokAttempted)) : '—' ?></small></p>
-                            <?php endif; ?>
-                            <?php if (($tiktokState['status'] ?? '') === 'failed' && ($tiktokState['error'] ?? '') !== ''): ?>
-                                <p class="pub-dist-error"><?= pub_h((string)$tiktokState['error']) ?></p>
-                            <?php endif; ?>
-                            <?php if (!$tiktokConnected): ?>
-                                <p class="pub-product-meta"><a href="connections.php"><?= pub_h(t('Open Connections →', 'Abrir Conexiones →')) ?></a></p>
-                            <?php elseif (($tiktokState['status'] ?? '') === 'processing'): ?>
-                                <form method="post">
-                                    <input type="hidden" name="action" value="tiktok_status">
-                                    <input type="hidden" name="id" value="<?= (int)$doc['artwork']['id'] ?>">
-                                    <input type="hidden" name="csrf" value="<?= pub_h($csrf) ?>">
-                                    <button type="submit" class="pub-media-toggle pub-product-regenerate"><?= pub_h(t('Check TikTok status', 'Consultar estado en TikTok')) ?></button>
-                                </form>
-                            <?php elseif (($tiktokState['status'] ?? '') !== 'published'): ?>
-                                <?php if ($tiktokVideoId <= 0): ?>
-                                    <p class="pub-product-meta"><?= pub_h(t('No video on the page — attach one in the Website step first.', 'Sin video en la página — adjuntá uno primero en el paso Sitio web.')) ?></p>
-                                <?php else: ?>
-                                    <p class="pub-dist-package-text"><?= nl2br(pub_h((string)($destinationsPayload['tiktok'][$distDefaultLocale]['caption'] ?? ''))) ?></p>
-                                    <form method="post" class="pub-dist-form">
-                                        <input type="hidden" name="action" value="distribute">
-                                        <input type="hidden" name="id" value="<?= (int)$doc['artwork']['id'] ?>">
-                                        <input type="hidden" name="csrf" value="<?= pub_h($csrf) ?>">
-                                        <input type="hidden" name="destination" value="tiktok">
-                                        <div class="pub-chip-group" role="radiogroup" aria-label="<?= pub_h(t('Send language', 'Idioma del envío')) ?>">
-                                            <?php foreach ($localeOptions as $localeOption): ?>
-                                                <label class="pub-chip-option">
-                                                    <input type="radio" name="locale" value="<?= pub_h($localeOption) ?>" <?= $localeOption === $distDefaultLocale ? 'checked' : '' ?>>
-                                                    <span><?= pub_h($localeTag($localeOption)) ?></span>
-                                                </label>
-                                            <?php endforeach; ?>
+                            <?php
+                            $tiktokVideoId = (int)($destinationsPayload['tiktok']['video_export_id'] ?? 0);
+                            $carouselState = (array)($doc['distStates']['tiktok_carousel'] ?? []);
+                            $carouselImages = (array)($destinationsPayload['tiktok']['carousel_images'] ?? []);
+                            $carouselCopy = (array)($destinationsPayload['tiktok'][$distDefaultLocale]['carousel'] ?? []);
+                            ?>
+                            <p class="pub-panel-note"><?= pub_h(t('Two media that coexist: the page video and an image carousel. Publishing one never replaces the other.', 'Dos medios que conviven: el video de la página y un carrusel de imágenes. Publicar uno jamás reemplaza al otro.')) ?></p>
+                            <div class="pub-product-grid">
+                                <?php foreach (['video', 'carousel'] as $tiktokMedium): ?>
+                                    <?php
+                                    $isCarouselCard = $tiktokMedium === 'carousel';
+                                    $mediumState = $isCarouselCard ? $carouselState : $tiktokState;
+                                    $mediumStatus = (string)($mediumState['status'] ?? '');
+                                    [$mediumChipClass, $mediumChipLabel] = pub_dist_chip($isCarouselCard ? 'tiktok_carousel' : 'tiktok', $mediumState);
+                                    $mediumAttempted = strtotime((string)($mediumState['attempted_at'] ?? ''));
+                                    ?>
+                                    <article class="pub-product-card">
+                                        <div class="pub-dist-head">
+                                            <h3><?= $isCarouselCard ? pub_h(t('Carousel', 'Carrusel')) : pub_h(t('Video', 'Video')) ?></h3>
+                                            <span class="pub-dist-chips"><em class="<?= pub_h($mediumChipClass) ?>"><?= pub_h($mediumChipLabel) ?></em></span>
                                         </div>
-                                        <label class="pub-dist-confirm">
-                                            <input type="checkbox" name="confirm" value="yes" required>
-                                            <span><?= pub_h(t('I confirm sending the video to TikTok now', 'Confirmo enviar ahora el video a TikTok')) ?></span>
-                                        </label>
-                                        <button type="submit" class="button-link"><?= pub_h(t('Send video', 'Enviar video')) ?></button>
-                                    </form>
-                                <?php endif; ?>
-                            <?php endif; ?>
+                                        <?php if ($isCarouselCard): ?>
+                                            <p class="pub-product-meta"><?= pub_h(t('Goes to your TikTok inbox: you pick the music and publish it from the app.', 'Va a tu bandeja de TikTok: vos elegís la música y lo publicás desde la app.')) ?></p>
+                                        <?php endif; ?>
+                                        <?php if ($mediumAttempted): ?>
+                                            <p class="pub-product-meta"><small><?= pub_h(t('Last send:', 'Último envío:')) ?> <?= pub_h(date('d/m/Y · H:i', $mediumAttempted)) ?></small></p>
+                                        <?php endif; ?>
+                                        <?php if ($mediumStatus === 'failed' && ($mediumState['error'] ?? '') !== ''): ?>
+                                            <p class="pub-dist-error"><?= pub_h((string)$mediumState['error']) ?></p>
+                                        <?php endif; ?>
+
+                                        <?php
+                                        // El material se muestra SIEMPRE — igual que en los pasos
+                                        // 3 y 4. La conexión gatea la acción, jamás el contenido.
+                                        $mediumHasMaterial = $isCarouselCard ? $carouselImages !== [] : $tiktokVideoId > 0;
+                                        ?>
+                                        <?php if ($isCarouselCard): ?>
+                                            <?php if ($carouselImages === []): ?>
+                                                <p class="pub-product-meta"><?= pub_h(t('The composition has no images yet.', 'La composición todavía no tiene imágenes.')) ?></p>
+                                            <?php else: ?>
+                                                <div class="pub-series-thumbs pub-tiktok-thumbs">
+                                                    <?php foreach ($carouselImages as $carouselImage): ?>
+                                                        <img src="<?= pub_h(pub_media_url((string)$carouselImage)) ?>" alt="" loading="lazy">
+                                                    <?php endforeach; ?>
+                                                </div>
+                                                <?= pub_product_field(t('Title', 'Título'), (string)($carouselCopy['title'] ?? '')) ?>
+                                                <?= pub_product_field(t('Description', 'Descripción'), (string)($carouselCopy['description'] ?? '')) ?>
+                                            <?php endif; ?>
+                                        <?php elseif ($tiktokVideoId <= 0): ?>
+                                            <p class="pub-product-meta"><?= pub_h(t('No video on the page — attach one in the Website step. The carousel stays available meanwhile.', 'Sin video en la página — adjuntá uno en el paso Sitio web. El carrusel sigue disponible mientras tanto.')) ?></p>
+                                        <?php else: ?>
+                                            <p class="pub-dist-package-text"><?= nl2br(pub_h((string)($destinationsPayload['tiktok'][$distDefaultLocale]['caption'] ?? ''))) ?></p>
+                                        <?php endif; ?>
+
+                                        <?php if (in_array($mediumStatus, ['processing', 'inbox'], true)): ?>
+                                            <?php if ($mediumStatus === 'inbox'): ?>
+                                                <p class="pub-product-meta"><?= pub_h(t('Finish it in the TikTok app; check back here once you published it.', 'Terminalo en la app de TikTok; volvé acá a consultar cuando lo hayas publicado.')) ?></p>
+                                            <?php endif; ?>
+                                            <form method="post">
+                                                <input type="hidden" name="action" value="tiktok_status">
+                                                <input type="hidden" name="id" value="<?= (int)$doc['artwork']['id'] ?>">
+                                                <input type="hidden" name="csrf" value="<?= pub_h($csrf) ?>">
+                                                <input type="hidden" name="medium" value="<?= pub_h($tiktokMedium) ?>">
+                                                <button type="submit" class="pub-media-toggle pub-product-regenerate"><?= pub_h(t('Check TikTok status', 'Consultar estado en TikTok')) ?></button>
+                                            </form>
+                                        <?php elseif (!$tiktokConnected): ?>
+                                            <p class="pub-product-meta"><a href="connections.php"><?= pub_h(t('Open Connections →', 'Abrir Conexiones →')) ?></a></p>
+                                        <?php elseif ($mediumStatus !== 'published' && $mediumHasMaterial): ?>
+                                            <form method="post" class="pub-dist-form">
+                                                <input type="hidden" name="action" value="distribute">
+                                                <input type="hidden" name="id" value="<?= (int)$doc['artwork']['id'] ?>">
+                                                <input type="hidden" name="csrf" value="<?= pub_h($csrf) ?>">
+                                                <input type="hidden" name="destination" value="tiktok">
+                                                <input type="hidden" name="medium" value="<?= pub_h($tiktokMedium) ?>">
+                                                <div class="pub-chip-group" role="radiogroup" aria-label="<?= pub_h(t('Send language', 'Idioma del envío')) ?>">
+                                                    <?php foreach ($localeOptions as $localeOption): ?>
+                                                        <label class="pub-chip-option">
+                                                            <input type="radio" name="locale" value="<?= pub_h($localeOption) ?>" <?= $localeOption === $distDefaultLocale ? 'checked' : '' ?>>
+                                                            <span><?= pub_h($localeTag($localeOption)) ?></span>
+                                                        </label>
+                                                    <?php endforeach; ?>
+                                                </div>
+                                                <label class="pub-dist-confirm">
+                                                    <input type="checkbox" name="confirm" value="yes" required>
+                                                    <span><?= $isCarouselCard
+                                                        ? pub_h(t('I confirm sending the carousel to my TikTok inbox', 'Confirmo enviar el carrusel a mi bandeja de TikTok'))
+                                                        : pub_h(t('I confirm sending the video to TikTok now', 'Confirmo enviar ahora el video a TikTok')) ?></span>
+                                                </label>
+                                                <button type="submit" class="button-link"><?= $isCarouselCard
+                                                    ? pub_h(t('Send carousel', 'Enviar carrusel'))
+                                                    : pub_h(t('Send video', 'Enviar video')) ?></button>
+                                            </form>
+                                        <?php endif; ?>
+                                    </article>
+                                <?php endforeach; ?>
+                            </div>
                         <?php endif; ?>
                     </div>
-                </section>
+                </details>
+
+                <?php if ($stepReady): ?>
+                    <?php
+                    // El control por paso se conserva; esto es el acto único que
+                    // dispara todo lo conectado, cada destino con su mecánica.
+                    $allDestinations = ['pinterest' => 'Pinterest', 'facebook' => 'Facebook', 'instagram' => 'Instagram', 'tiktok' => 'TikTok'];
+                    $connectedNames = [];
+                    $disconnectedNames = [];
+                    foreach ($allDestinations as $key => $name) {
+                        if ((($doc['distStates'][$key]['connection'] ?? '')) === 'connected') $connectedNames[] = $name;
+                        else $disconnectedNames[] = $name;
+                    }
+                    ?>
+                    <section class="pub-panel pub-all" aria-labelledby="pub-all-title">
+                        <div class="pub-panel-heading">
+                            <div>
+                                <span class="pub-kicker"><?= pub_h(t('One act', 'Un solo acto')) ?></span>
+                                <h2 id="pub-all-title"><?= pub_h(t('Distribute to everything connected', 'Distribuir a todo lo conectado')) ?></h2>
+                            </div>
+                        </div>
+                        <div class="pub-panel-body">
+                            <?php if ($connectedNames === []): ?>
+                                <p class="pub-gate-note"><?= pub_h(t('No destination is connected yet.', 'Todavía no hay ningún destino conectado.')) ?> <a href="connections.php"><?= pub_h(t('Open Connections →', 'Abrir Conexiones →')) ?></a></p>
+                            <?php else: ?>
+                                <p class="pub-panel-note"><?= pub_h(t('Fires every connected destination with its own mechanics: the pin series, part 1 of each social series with its cadence, and the TikTok post. Destinations already sent are skipped, and one failure never stops the rest.', 'Dispara cada destino conectado con su propia mecánica: la serie de pins, la parte 1 de cada serie social con su cadencia, y la publicación de TikTok. Los destinos ya enviados se saltean, y un fallo nunca detiene al resto.')) ?></p>
+                                <p class="pub-product-meta">
+                                    <?= pub_h(t('Goes out to:', 'Sale a:')) ?> <strong><?= pub_h(implode(' · ', $connectedNames)) ?></strong>
+                                    <?php if ($disconnectedNames !== []): ?><br><small><?= pub_h(t('Skipped for lack of connection:', 'Se saltea por falta de conexión:')) ?> <?= pub_h(implode(', ', $disconnectedNames)) ?></small><?php endif; ?>
+                                    <br><small><?= pub_h(t('Saatchi Art stays out: it has no usable API and is uploaded by hand from its own step.', 'Saatchi Art queda afuera: no tiene API usable y se carga a mano desde su propio paso.')) ?></small>
+                                </p>
+                                <form method="post" class="pub-dist-form">
+                                    <input type="hidden" name="action" value="distribute_all">
+                                    <input type="hidden" name="id" value="<?= (int)$doc['artwork']['id'] ?>">
+                                    <input type="hidden" name="csrf" value="<?= pub_h($csrf) ?>">
+                                    <div class="pub-chip-group" role="radiogroup" aria-label="<?= pub_h(t('Send language', 'Idioma del envío')) ?>">
+                                        <?php foreach ($localeOptions as $localeOption): ?>
+                                            <label class="pub-chip-option">
+                                                <input type="radio" name="locale" value="<?= pub_h($localeOption) ?>" <?= $localeOption === $distDefaultLocale ? 'checked' : '' ?>>
+                                                <span><?= pub_h($localeTag($localeOption)) ?></span>
+                                            </label>
+                                        <?php endforeach; ?>
+                                    </div>
+                                    <label class="pub-dist-confirm">
+                                        <input type="checkbox" name="confirm" value="yes" required>
+                                        <span><?= pub_h(t('I confirm distributing to every connected destination now', 'Confirmo distribuir ahora a todos los destinos conectados')) ?></span>
+                                    </label>
+                                    <button type="submit" class="pub-decision pub-decision--publish"><span><?= pub_h(t('Distribute', 'Distribuir')) ?><br><?= pub_h(t('to everything', 'a todo')) ?></span></button>
+                                </form>
+                            <?php endif; ?>
+                        </div>
+                    </section>
+                <?php endif; ?>
             <?php endif; ?>
         </div>
     </main>
@@ -1183,6 +1382,20 @@ function pub_page_chip(string $status): array
         });
     });
     renderVideos();
+
+    // The native file button breaks the page's tone, so the input is hidden and
+    // driven by a label; picking a file reveals its name and the upload action.
+    const videoFile = document.querySelector('[data-video-file]');
+    if (videoFile) {
+        const fileName = document.querySelector('[data-video-file-name]');
+        const uploadSubmit = document.querySelector('[data-video-upload-submit]');
+        const idleLabel = fileName ? fileName.textContent : '';
+        videoFile.addEventListener('change', () => {
+            const picked = videoFile.files && videoFile.files[0];
+            if (fileName) fileName.textContent = picked ? picked.name : idleLabel;
+            if (uploadSubmit) uploadSubmit.hidden = !picked;
+        });
+    }
 
     // Copy-to-clipboard for the Saatchi manual package fields.
     document.querySelectorAll('.pub-copy').forEach(button => {

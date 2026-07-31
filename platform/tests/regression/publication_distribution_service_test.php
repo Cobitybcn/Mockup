@@ -124,6 +124,8 @@ function run_publication_distribution_service_tests(): void
             return match ($name) {
                 'tiktok' => ['external_id' => 'publish-123', 'status' => 'processing'],
                 'tiktok_status' => ['status' => 'published'],
+                'tiktok_carousel' => ['external_id' => 'carousel-777', 'external_url' => '', 'status' => 'inbox'],
+                'tiktok_carousel_status' => ['status' => 'published'],
                 default => ['external_id' => 'ext-' . $name, 'external_url' => 'https://example.com/' . $name],
             };
         };
@@ -145,6 +147,8 @@ function run_publication_distribution_service_tests(): void
         'instagram' => $capture('instagram'),
         'tiktok' => $capture('tiktok'),
         'tiktok_status' => $capture('tiktok_status'),
+        'tiktok_carousel' => $capture('tiktok_carousel'),
+        'tiktok_carousel_status' => $capture('tiktok_carousel_status'),
         'schedule' => $capture('schedule'),
     ]);
 
@@ -271,6 +275,23 @@ function run_publication_distribution_service_tests(): void
     $refreshed = $service->refreshTikTokStatus($publicationId, $userId);
     TestHarness::assertSame('published', (string)$refreshed['status'], 'consultar estado mapea PUBLISH_COMPLETE a PUBLICADO');
 
+    // ————— TikTok: carrusel y video conviven como dos publicaciones —————
+    $videoStateBefore = $service->states($publicationId, $userId)['tiktok'];
+    $carouselState = $service->publish($publicationId, $userId, 'tiktok', 'en', ['medium' => 'carousel']);
+    $carouselRequest = $captured['tiktok_carousel'][0];
+    TestHarness::assertSame(['dist-cover.jpg', 'dist-second.jpg', 'dist-third.jpg', 'dist-fourth.jpg'], (array)$carouselRequest['image_files'], 'el carrusel viaja con toda la composición');
+    TestHarness::assertSame(0, (int)$carouselRequest['cover_index'], 'la portada del carrusel es la de la composición');
+    TestHarness::assertTrue(trim((string)$carouselRequest['title']) !== '', 'el carrusel lleva el título corto que exige Creator\'s Draft');
+    TestHarness::assertSame('inbox', (string)$carouselState['status'], 'el carrusel queda TE ESPERA EN TIKTOK — nunca "publicado" sin confirmación');
+    $videoStateAfter = $service->states($publicationId, $userId)['tiktok'];
+    TestHarness::assertSame((string)$videoStateBefore['status'], (string)$videoStateAfter['status'], 'enviar el carrusel no toca el estado del video');
+    TestHarness::assertSame('carousel-777', (string)$carouselState['external_id'], 'el carrusel guarda su propio publish_id');
+    $refreshedCarousel = $service->refreshTikTokStatus($publicationId, $userId, 'carousel');
+    TestHarness::assertSame('published', (string)$refreshedCarousel['status'], 'cuando el artista lo publica desde su bandeja, el estado se cierra en PUBLICADO');
+    TestHarness::assertSame('publish-123', (string)$service->states($publicationId, $userId)['tiktok']['external_id'], 'el video conserva su propio id, independiente del carrusel');
+    TestHarness::assertSame('inbox', PublicationDistributionService::mapTikTokStatus('SEND_TO_USER_INBOX'), 'SEND_TO_USER_INBOX se traduce a "te espera en TikTok"');
+    TestHarness::assertSame('published', PublicationDistributionService::mapTikTokStatus('PUBLISH_COMPLETE'), 'PUBLISH_COMPLETE es el único que se traduce a publicado');
+
     // ————— Motor: una fuente cambiada regenera el producto sola en el próximo envío —————
     $fingerprintBefore = (string)$productService->find($publicationId, $userId)['source_fingerprint'];
     $pdo->prepare("UPDATE bilingual_editorial_content SET published_content_json=? WHERE user_id=9 AND entity_type='mockup' AND entity_id=71 AND locale='es'")
@@ -291,6 +312,29 @@ function run_publication_distribution_service_tests(): void
     TestHarness::assertTrue($failed && $failedState['status'] === 'failed' && $failedState['error'] !== '', 'un transporte fallido deja FALLÓ con su error visible');
     $retryState = $service->publish($publicationId, $userId, 'tiktok', 'en', []);
     TestHarness::assertTrue($retryState['status'] === 'processing' && $retryState['error'] === '', 'el reintento exitoso reemplaza el error por completo (IV.16)');
+
+    // ————— Un solo acto: todo lo conectado, cada uno con su mecánica —————
+    $pdo->exec('DELETE FROM publication_distributions');
+    $pdo->exec("UPDATE instagram_connections SET status='disconnected'");
+    $summary = $service->publishAllConnected($publicationId, $userId, 'en');
+    TestHarness::assertSame('sent', (string)$summary['results']['pinterest']['status'], 'el acto único dispara Pinterest');
+    TestHarness::assertSame('sent', (string)$summary['results']['facebook']['status'], 'el acto único dispara la serie de Facebook');
+    TestHarness::assertSame('skipped', (string)$summary['results']['instagram']['status'], 'un destino sin conexión se saltea, no rompe');
+    TestHarness::assertSame('sent', (string)$summary['results']['tiktok']['status'], 'el acto único dispara TikTok');
+    TestHarness::assertTrue($summary['sent'] === 3 && $summary['skipped'] === 1 && $summary['failed'] === 0, 'el resumen cuenta enviados, salteados y fallidos');
+
+    $repeat = $service->publishAllConnected($publicationId, $userId, 'en');
+    TestHarness::assertSame('skipped', (string)$repeat['results']['pinterest']['status'], 'repetir el acto no vuelve a publicar lo ya publicado');
+    TestHarness::assertSame('skipped', (string)$repeat['results']['facebook']['status'], 'una serie ya iniciada no se reinicia');
+    TestHarness::assertSame('skipped', (string)$repeat['results']['tiktok']['status'], 'un envío de TikTok en curso no se duplica');
+
+    $pdo->exec("UPDATE instagram_connections SET status='connected'");
+    $pdo->exec('DELETE FROM publication_distributions');
+    $failNext['value'] = true;
+    $withFailure = $service->publishAllConnected($publicationId, $userId, 'en');
+    TestHarness::assertTrue($withFailure['failed'] === 1, 'un destino que falla queda registrado como fallido');
+    TestHarness::assertTrue($withFailure['sent'] >= 2, 'el fallo de un destino no detiene a los demás');
+    $pdo->exec('DELETE FROM publication_distributions');
 
     // ————— Saatchi manual + X reservado —————
     $service->markSaatchiUploaded($publicationId, $userId);

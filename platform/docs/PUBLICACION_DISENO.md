@@ -85,15 +85,22 @@ gobernando `EDITORIAL_CORE.md`; este documento no lo pisa.
 13. **Prohibido `<select>` donde quepa elección visible.** Elegir video o mockups es con
     tarjetas visuales; elegir destinos es con fichas visibles que muestran su estado — no un
     desplegable.
-14. **Vocabulario de estado propio por destino.** Cada adaptador nombra sus estados según su
+14. **TikTok: dos medios que conviven** (enmienda 2026-07-31). El Paso 5 publica **video** y
+    **carrusel de imágenes** como dos publicaciones distintas de TikTok — publicar una jamás
+    bloquea ni reemplaza a la otra. Sin video en la página, el carrusel sigue disponible: TikTok
+    nunca es un callejón sin salida. El carrusel va por **Creator's Draft** (`MEDIA_UPLOAD`),
+    porque es la única vía que le deja al artista elegir la música real; el precio es que
+    termina a mano en su teléfono, y por eso su estado dice **«te espera en TikTok»** — jamás
+    «publicado» hasta que TikTok confirme que el artista lo publicó desde su bandeja.
+15. **Vocabulario de estado propio por destino.** Cada adaptador nombra sus estados según su
     mecánica real: Saatchi «pendiente de carga manual», TikTok según su modo de envío. Prohibido
     un «Publicado» genérico prestado entre destinos que no significan lo mismo.
 
 ## IV — Verificación
 
-15. **Vara estética por paso.** Cada panel se revisa en navegador contra la ficha de obra
+16. **Vara estética por paso.** Cada panel se revisa en navegador contra la ficha de obra
     (Espacio editorial) como referencia, ANTES de construir el panel siguiente.
-16. **Los errores no sobreviven.** Un error de un intento anterior jamás persiste después de un
+17. **Los errores no sobreviven.** Un error de un intento anterior jamás persiste después de un
     intento nuevo exitoso, ni contamina la tarjeta tras un refresh (lección del error TikTok
     heredado en Videos).
 

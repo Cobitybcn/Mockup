@@ -13,6 +13,7 @@ final class TikTokPublisher
 {
     private const CREATOR_INFO_URL = 'https://open.tiktokapis.com/v2/post/publish/creator_info/query/';
     private const PUBLISH_INIT_URL = 'https://open.tiktokapis.com/v2/post/publish/video/init/';
+    private const CONTENT_INIT_URL = 'https://open.tiktokapis.com/v2/post/publish/content/init/';
     private const PUBLISH_STATUS_URL = 'https://open.tiktokapis.com/v2/post/publish/status/fetch/';
 
     public function __construct(private readonly TikTokIntegrationService $integration) {}
@@ -99,6 +100,63 @@ final class TikTokPublisher
         }
         $this->uploadFile($uploadUrl, $videoPath, $videoSize, $chunkSize);
         return ['publishId' => $publishId, 'privacyLevel' => $privacyLevel];
+    }
+
+    /**
+     * Photo carousel through Creator's Draft: TikTok pulls the images from
+     * public URLs and leaves the post in the creator's inbox, where they choose
+     * the music and publish it themselves — the only route that gives the
+     * artist real control over the track. Direct-post-only fields
+     * (privacy_level, auto_add_music, brand toggles) are deliberately absent:
+     * MEDIA_UPLOAD carries title and description and nothing else.
+     *
+     * @param list<string> $imageUrls public https URLs served from a domain verified in the TikTok portal
+     * @return array{publishId:string}
+     */
+    public function publishPhotoDraft(
+        int $userId,
+        array $imageUrls,
+        string $title,
+        string $description,
+        int $coverIndex = 0,
+        string $purpose = 'artist'
+    ): array {
+        $imageUrls = array_values(array_filter(array_map('trim', $imageUrls)));
+        if ($imageUrls === []) {
+            throw new InvalidArgumentException('El carrusel de TikTok necesita al menos una imagen.');
+        }
+        if (count($imageUrls) > 35) {
+            throw new InvalidArgumentException('TikTok admite hasta 35 imágenes por carrusel.');
+        }
+        foreach ($imageUrls as $imageUrl) {
+            if (!str_starts_with(strtolower($imageUrl), 'https://')) {
+                throw new InvalidArgumentException('TikTok descarga las imágenes del carrusel: cada URL debe ser pública y https.');
+            }
+        }
+        $coverIndex = max(0, min($coverIndex, count($imageUrls) - 1));
+        // Creator's Draft runs on video.upload — a different permission from
+        // the video.publish used by direct video posting.
+        $context = $this->integration->publishingContext($userId, $purpose, ['video.upload']);
+
+        $payload = [
+            'media_type' => 'PHOTO',
+            'post_mode' => 'MEDIA_UPLOAD',
+            'post_info' => [
+                'title' => mb_substr(trim($title), 0, 90),
+                'description' => mb_substr(trim($description), 0, 4000),
+            ],
+            'source_info' => [
+                'source' => 'PULL_FROM_URL',
+                'photo_images' => $imageUrls,
+                'photo_cover_index' => $coverIndex,
+            ],
+        ];
+        $response = $this->requestJsonBody(self::CONTENT_INIT_URL, $payload, $context['access_token']);
+        $publishId = trim((string)($response['data']['publish_id'] ?? ''));
+        if ($publishId === '') {
+            throw new RuntimeException('TikTok no devolvió un ID de publicación para el carrusel.');
+        }
+        return ['publishId' => $publishId];
     }
 
     /** @return array{status:string,failReason:string,publiclyAvailableUrl:string} */

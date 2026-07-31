@@ -146,7 +146,16 @@ function run_publication_product_service_tests(): void
     TestHarness::assertSame([3, 1], array_map('count', PublicationProductService::seriesGroups($fakeItems(4))), '4 imágenes → 2 posts (3+1)');
     TestHarness::assertSame([3, 3, 6], array_map('count', PublicationProductService::seriesGroups($fakeItems(12))), 'más de 9 → los extra se suman al tercer post');
     TestHarness::assertSame([3, 3, 10], array_map('count', PublicationProductService::seriesGroups($fakeItems(20))), 'el tercer post respeta el tope de 10 del carrusel');
-    TestHarness::assertSame('publication-product.v2', (string)$payload['schema'], 'el schema del producto es v2 (series sociales)');
+    TestHarness::assertSame('publication-product.v3', (string)$payload['schema'], 'el schema del producto es v3 (series sociales + carrusel de TikTok)');
+
+    // ————— Carrusel de TikTok (Creator's Draft: solo title + description) —————
+    $tiktokBlock = (array)$payload['destinations']['tiktok'];
+    TestHarness::assertSame(['cover.jpg', 'second.jpg'], (array)$tiktokBlock['carousel_images'], 'el carrusel viaja con toda la composición');
+    TestHarness::assertSame(0, (int)$tiktokBlock['cover_index'], 'la portada del carrusel es la portada de la composición');
+    $carouselEs = (array)$tiktokBlock['es']['carousel'];
+    TestHarness::assertSame('Hook TT', (string)$carouselEs['title'], 'el título del carrusel sale del gancho visual del mockup portada');
+    TestHarness::assertTrue(mb_strlen((string)$carouselEs['title']) <= 90, 'el título respeta el tope de 90 de TikTok');
+    TestHarness::assertSame((string)$tiktokBlock['es']['caption'], (string)$carouselEs['description'], 'la descripción del carrusel es el caption ya aprobado');
     $igSeries = (array)($payload['destinations']['instagram']['series'] ?? []);
     TestHarness::assertSame(1, count($igSeries), 'con 2 imágenes la serie es un solo post');
     TestHarness::assertSame(['cover.jpg', 'second.jpg'], (array)$igSeries[0]['images'], 'el post lleva las imágenes de su grupo en orden');
@@ -159,7 +168,7 @@ function run_publication_product_service_tests(): void
     TestHarness::assertSame($first['id'], $second['id'], 'generate reutiliza la única fila por publicación');
     TestHarness::assertSame($first['source_fingerprint'], $second['source_fingerprint'], 'fuentes idénticas producen el mismo fingerprint');
     $found = $products->find($publicationId, $userId);
-    TestHarness::assertTrue(is_array($found) && $found['payload']['schema'] === 'publication-product.v2', 'find devuelve el producto congelado con su schema');
+    TestHarness::assertTrue(is_array($found) && $found['payload']['schema'] === 'publication-product.v3', 'find devuelve el producto congelado con su schema');
     TestHarness::assertTrue(!$products->isStale($found, $userId), 'recién generado, el producto está vigente');
 
     // ————— Staleness: cambia la fuente → desactualizado; solo-status NO —————

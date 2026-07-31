@@ -67,6 +67,25 @@ function run_publication_section_tests(): void
     TestHarness::assertContains('Publicar serie espaciada', $section, 'Social publica la serie 3×3 con un solo acto');
     TestHarness::assertContains('gap_hours', $section, 'El lapso de la cadencia se ajusta una vez por usuario');
     TestHarness::assertContains('series_part_now', $section, 'Una parte programada o fallida puede dispararse ya');
+    // ————— Paso 5: video y carrusel conviven (enmienda 2026-07-31) —————
+    TestHarness::assertContains('TE ESPERA EN TIKTOK', $section, 'el carrusel dice la verdad: te espera en TikTok, no "publicado"');
+    TestHarness::assertContains("name=\"medium\"", $section, 'el Paso 5 distingue el medio (video o carrusel) en el envío');
+    TestHarness::assertContains('Enviar carrusel', $section, 'el Paso 5 ofrece enviar el carrusel');
+    TestHarness::assertContains('El carrusel sigue disponible', $section, 'sin video, TikTok no es un callejón sin salida');
+    // ————— El material se compone y se lleva sin salir del paso —————
+    TestHarness::assertContains('upload_final_video', $section, 'el video terminado se adjunta desde el paso Sitio web, sin ir a Videos');
+    TestHarness::assertContains('publication_saatchi_package.php', $section, 'el paquete de Saatchi se descarga con sus imágenes');
+    $saatchiPackage = (string)@file_get_contents($platformRoot . '/publication_saatchi_package.php');
+    TestHarness::assertContains('ZipPackage', $saatchiPackage, 'la descarga arma un ZIP sin depender de ext-zip');
+    TestHarness::assertContains('saatchi.txt', $saatchiPackage, 'el ZIP incluye las keywords, la descripción y los pies');
+    TestHarness::assertContains('1200', $saatchiPackage, 'el paquete avisa si una imagen no llega al mínimo que pide Saatchi');
+    $uploadService = (string)file_get_contents($platformRoot . '/app/Video/VideoFinalUploadService.php');
+    TestHarness::assertContains('uploadForArtwork', $uploadService, 'adjuntar un video no obliga al artista a pensar en proyectos');
+
+    $publisher = (string)file_get_contents($platformRoot . '/app/Services/TikTokPublisher.php');
+    TestHarness::assertContains('MEDIA_UPLOAD', $publisher, 'el carrusel usa Creator\'s Draft para que el artista elija la música');
+    TestHarness::assertContains('PULL_FROM_URL', $publisher, 'TikTok descarga las fotos: la única vía documentada para carrusel');
+    TestHarness::assertContains("'video.upload'", $publisher, 'el carrusel pide su propio scope, distinto del de video');
     $worker = (string)@file_get_contents($platformRoot . '/publication_distribution_worker.php');
     TestHarness::assertContains('GCP_WORKER_URL', $worker, 'El worker de cadencia valida el host como el worker social');
     TestHarness::assertContains('runScheduledSend', $worker, 'El worker dispara los envíos programados de forma idempotente');

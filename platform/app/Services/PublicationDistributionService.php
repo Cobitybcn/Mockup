@@ -18,10 +18,13 @@ declare(strict_types=1);
  */
 final class PublicationDistributionService
 {
-    public const DESTINATIONS = ['pinterest', 'instagram', 'facebook', 'tiktok', 'x', 'saatchi'];
+    public const DESTINATIONS = ['pinterest', 'instagram', 'facebook', 'tiktok', 'tiktok_carousel', 'x', 'saatchi'];
     public const DEFAULT_SERIES_GAP_HOURS = 12;
     private const LIVE_DESTINATIONS = ['pinterest', 'instagram', 'facebook', 'tiktok'];
     private const SERIES_DESTINATIONS = ['instagram', 'facebook'];
+    /** TikTok keeps both media on the same destination rows: video at part 0, carousel at part 1. */
+    private const TIKTOK_VIDEO_PART = 0;
+    private const TIKTOK_CAROUSEL_PART = 1;
 
     private PublicationProductService $products;
     private PublicationService $publications;
@@ -168,7 +171,14 @@ final class PublicationDistributionService
                 continue;
             }
 
-            $row = $destinationRows[0] ?? null;
+            // TikTok's two media live on the same destination rows; the carousel
+            // is surfaced as its own card so each speaks its own vocabulary.
+            if ($destination === 'tiktok_carousel') {
+                $destinationRows = $rows['tiktok'] ?? [];
+                $row = $destinationRows[self::TIKTOK_CAROUSEL_PART] ?? null;
+            } else {
+                $row = $destinationRows[self::TIKTOK_VIDEO_PART] ?? null;
+            }
             $status = (string)($row['status'] ?? '');
             if ($destination === 'saatchi' && $saatchiUrl !== '') {
                 $status = 'listed';
@@ -189,7 +199,7 @@ final class PublicationDistributionService
                 'external_url' => $destination === 'saatchi' && $saatchiUrl !== '' ? $saatchiUrl : (string)($row['external_url'] ?? ''),
                 'error' => (string)($row['error'] ?? ''),
                 'attempted_at' => (string)($row['attempted_at'] ?? ''),
-                'connection' => $this->connectionState($destination, $userId),
+                'connection' => $this->connectionState($destination === 'tiktok_carousel' ? 'tiktok' : $destination, $userId),
                 'sent_fingerprint' => (string)($row['product_fingerprint'] ?? ''),
                 'published_count' => $publishedCount,
                 'total_count' => $totalCount,
@@ -197,6 +207,68 @@ final class PublicationDistributionService
             ];
         }
         return $states;
+    }
+
+    /**
+     * One act, every connected destination — each with its own mechanics. A
+     * failing destination never aborts the rest: a half-finished launch has to
+     * be visible, not rolled back. Saatchi is excluded by nature (manual
+     * upload) and X has no connection yet.
+     *
+     * @return array{results:array<string,array{status:string,detail:string}>,sent:int,skipped:int,failed:int}
+     */
+    public function publishAllConnected(int $publicationId, int $userId, string $locale): array
+    {
+        [$payload] = $this->ensureCurrentProduct($publicationId, $userId);
+        $hasVideo = (int)($payload['media']['video']['export_id'] ?? 0) > 0;
+        $states = $this->states($publicationId, $userId);
+        $results = [];
+
+        foreach (self::LIVE_DESTINATIONS as $destination) {
+            $state = (array)($states[$destination] ?? []);
+            if (($state['connection'] ?? '') !== 'connected') {
+                $results[$destination] = ['status' => 'skipped', 'detail' => t('not connected', 'sin conexión')];
+                continue;
+            }
+
+            $options = [];
+            if ($destination === 'tiktok') {
+                // The page video is the natural TikTok post; without one the
+                // carousel keeps the channel alive.
+                $options['medium'] = $hasVideo ? 'video' : 'carousel';
+                $mediumState = $hasVideo ? $state : (array)($states['tiktok_carousel'] ?? []);
+                if (in_array((string)($mediumState['status'] ?? ''), ['published', 'processing', 'inbox'], true)) {
+                    $results[$destination] = ['status' => 'skipped', 'detail' => t('already sent', 'ya enviado')];
+                    continue;
+                }
+            } elseif (in_array($destination, self::SERIES_DESTINATIONS, true)) {
+                if ((int)($state['total_count'] ?? 0) > 0) {
+                    $results[$destination] = ['status' => 'skipped', 'detail' => t('series already started', 'serie ya iniciada')];
+                    continue;
+                }
+            } elseif ((string)($state['status'] ?? '') === 'published') {
+                $results[$destination] = ['status' => 'skipped', 'detail' => t('already published', 'ya publicado')];
+                continue;
+            }
+
+            try {
+                $this->publish($publicationId, $userId, $destination, $locale, $options);
+                $results[$destination] = ['status' => 'sent', 'detail' => ''];
+            } catch (Throwable $e) {
+                $results[$destination] = ['status' => 'failed', 'detail' => $e->getMessage()];
+            }
+        }
+
+        $count = static fn(string $status): int => count(array_filter(
+            $results,
+            static fn(array $result): bool => $result['status'] === $status
+        ));
+        return [
+            'results' => $results,
+            'sent' => $count('sent'),
+            'skipped' => $count('skipped'),
+            'failed' => $count('failed'),
+        ];
     }
 
     /** One confirmed act per destination step. Series destinations run the cadence. */
@@ -237,17 +309,25 @@ final class PublicationDistributionService
             return $this->states($publicationId, $userId)[$destination];
         }
 
+        // TikTok publishes two independent media; the carousel writes its own
+        // row (part 1) so sending it never touches the video's state.
+        $medium = $destination === 'tiktok' ? (string)($options['medium'] ?? 'video') : '';
+        $isCarousel = $destination === 'tiktok' && $medium === 'carousel';
+        $part = $isCarousel ? self::TIKTOK_CAROUSEL_PART : self::TIKTOK_VIDEO_PART;
+        $transportKey = $isCarousel ? 'tiktok_carousel' : $destination;
+
         $previousResults = $destination === 'pinterest' ? $this->previousItemResults($publicationId, $userId, $destination) : [];
-        $request = match ($destination) {
-            'pinterest' => $this->pinterestRequest($payload, $destinations, $locale, $link, $slug, $previousResults),
-            'tiktok' => $this->tiktokRequest($payload, $destinations, $locale, $link),
+        $request = match (true) {
+            $destination === 'pinterest' => $this->pinterestRequest($payload, $destinations, $locale, $link, $slug, $previousResults),
+            $isCarousel => $this->tiktokCarouselRequest($payload, $destinations, $locale, $slug),
+            default => $this->tiktokRequest($payload, $destinations, $locale, $link),
         };
         $request['user_id'] = $userId;
 
         try {
-            $result = ($this->transport($destination))($request);
+            $result = ($this->transport($transportKey))($request);
         } catch (Throwable $e) {
-            $this->record($publicationId, $userId, $destination, 0, ['locale' => $locale, 'status' => 'failed', 'error' => $e->getMessage(), 'request' => $request, 'fingerprint' => $fingerprint]);
+            $this->record($publicationId, $userId, $destination, $part, ['locale' => $locale, 'status' => 'failed', 'error' => $e->getMessage(), 'request' => $request, 'fingerprint' => $fingerprint]);
             throw $e;
         }
 
@@ -264,7 +344,7 @@ final class PublicationDistributionService
                 if (trim((string)($itemResult['external_url'] ?? '')) !== '') { $firstUrl = (string)$itemResult['external_url']; break; }
             }
             $request['results'] = array_values($merged);
-            $this->record($publicationId, $userId, $destination, 0, [
+            $this->record($publicationId, $userId, $destination, self::TIKTOK_VIDEO_PART, [
                 'locale' => $locale,
                 'status' => $status,
                 'external_id' => (string)($result['external_id'] ?? ''),
@@ -276,7 +356,7 @@ final class PublicationDistributionService
             return $this->states($publicationId, $userId)[$destination];
         }
 
-        $this->record($publicationId, $userId, $destination, 0, [
+        $this->record($publicationId, $userId, $destination, $part, [
             'locale' => $locale,
             'status' => (string)($result['status'] ?? 'published'),
             'external_id' => (string)($result['external_id'] ?? ''),
@@ -284,7 +364,7 @@ final class PublicationDistributionService
             'request' => $request,
             'fingerprint' => $fingerprint,
         ]);
-        return $this->states($publicationId, $userId)[$destination];
+        return $this->states($publicationId, $userId)[$isCarousel ? 'tiktok_carousel' : $destination];
     }
 
     /**
@@ -386,24 +466,48 @@ final class PublicationDistributionService
         return $this->states($publicationId, $userId)[$destination];
     }
 
-    public function refreshTikTokStatus(int $publicationId, int $userId): array
+    /** @param string $medium 'video' (part 0) or 'carousel' (part 1) */
+    public function refreshTikTokStatus(int $publicationId, int $userId, string $medium = 'video'): array
     {
-        $stmt = $this->pdo->prepare("SELECT * FROM publication_distributions WHERE publication_id=? AND user_id=? AND destination='tiktok' AND part=0 LIMIT 1");
-        $stmt->execute([$publicationId, $userId]);
+        $isCarousel = $medium === 'carousel';
+        $part = $isCarousel ? self::TIKTOK_CAROUSEL_PART : self::TIKTOK_VIDEO_PART;
+        $stmt = $this->pdo->prepare("SELECT * FROM publication_distributions WHERE publication_id=? AND user_id=? AND destination='tiktok' AND part=? LIMIT 1");
+        $stmt->execute([$publicationId, $userId, $part]);
         $row = $stmt->fetch(PDO::FETCH_ASSOC);
         if (!is_array($row)) {
             throw new RuntimeException(t('This publication has not been sent to TikTok yet.', 'Esta publicación todavía no fue enviada a TikTok.'));
         }
-        $request = json_decode((string)$row['payload_json'], true);
-        $exportId = (int)(($request['video_export_id'] ?? 0));
-        if ($exportId <= 0) {
-            throw new RuntimeException(t('The TikTok send did not record its video.', 'El envío a TikTok no registró su video.'));
+        if ($isCarousel) {
+            $publishId = trim((string)$row['external_id']);
+            if ($publishId === '') {
+                throw new RuntimeException(t('The carousel send did not record its TikTok id.', 'El envío del carrusel no registró su id de TikTok.'));
+            }
+            $result = ($this->transport('tiktok_carousel_status'))(['user_id' => $userId, 'publish_id' => $publishId]);
+        } else {
+            $request = json_decode((string)$row['payload_json'], true);
+            $exportId = (int)(($request['video_export_id'] ?? 0));
+            if ($exportId <= 0) {
+                throw new RuntimeException(t('The TikTok send did not record its video.', 'El envío a TikTok no registró su video.'));
+            }
+            $result = ($this->transport('tiktok_status'))(['user_id' => $userId, 'video_export_id' => $exportId]);
         }
-        $result = ($this->transport('tiktok_status'))(['user_id' => $userId, 'video_export_id' => $exportId]);
         $status = (string)($result['status'] ?? 'processing');
         $this->pdo->prepare('UPDATE publication_distributions SET status=?, error=?, updated_at=? WHERE id=?')
             ->execute([$status, $status === 'failed' ? (string)($result['error'] ?? '') : '', date('c'), (int)$row['id']]);
-        return $this->states($publicationId, $userId)['tiktok'];
+        return $this->states($publicationId, $userId)[$isCarousel ? 'tiktok_carousel' : 'tiktok'];
+    }
+
+    /** Maps TikTok's publish lifecycle to our own vocabulary. */
+    public static function mapTikTokStatus(string $tiktokStatus): string
+    {
+        return match (strtoupper(trim($tiktokStatus))) {
+            'PUBLISH_COMPLETE' => 'published',
+            // The draft reached the creator's inbox: it is NOT published until
+            // the artist finishes it on the phone.
+            'SEND_TO_USER_INBOX' => 'inbox',
+            'FAILED' => 'failed',
+            default => 'processing',
+        };
     }
 
     public function markSaatchiUploaded(int $publicationId, int $userId): void
@@ -609,6 +713,27 @@ final class PublicationDistributionService
         ];
     }
 
+    /**
+     * The carousel needs no video: mockups always exist, so TikTok is never a
+     * dead end. TikTok pulls the images itself, so they must be public https.
+     */
+    private function tiktokCarouselRequest(array $payload, array $destinations, string $locale, string $slug): array
+    {
+        $images = array_values(array_map('strval', (array)($destinations['tiktok']['carousel_images'] ?? [])));
+        if ($images === []) {
+            throw new RuntimeException(t('The composition has no images for the carousel.', 'La composición no tiene imágenes para el carrusel.'));
+        }
+        $carousel = (array)($destinations['tiktok'][$locale]['carousel'] ?? []);
+        return [
+            'image_files' => $images,
+            'image_urls' => array_map(fn(string $file): string => $this->publicImageUrl($slug, $file), $images),
+            'title' => (string)($carousel['title'] ?? ''),
+            'description' => (string)($carousel['description'] ?? ''),
+            'cover_index' => (int)($destinations['tiktok']['cover_index'] ?? 0),
+            'slug' => $slug,
+        ];
+    }
+
     /** Cheap local pre-check: IG rejects images outside 4:5 … 1.91:1. Skips silently when the file is not readable locally. */
     private function assertInstagramRatio(string $file): void
     {
@@ -767,6 +892,27 @@ final class PublicationDistributionService
             'tiktok_status' => function (array $request): array {
                 $result = (new VideoTikTokPublicationService($this->pdo))->refreshStatus((int)$request['user_id'], (int)$request['video_export_id']);
                 return ['status' => (string)($result['status'] ?? 'processing')];
+            },
+            'tiktok_carousel' => function (array $request): array {
+                $publisher = new TikTokPublisher(new TikTokIntegrationService($this->pdo));
+                $result = $publisher->publishPhotoDraft(
+                    (int)$request['user_id'],
+                    (array)$request['image_urls'],
+                    (string)$request['title'],
+                    (string)$request['description'],
+                    (int)$request['cover_index']
+                );
+                // Creator's Draft: it is waiting in the artist's TikTok inbox,
+                // never "published" until TikTok says so.
+                return ['external_id' => (string)($result['publishId'] ?? ''), 'external_url' => '', 'status' => 'inbox'];
+            },
+            'tiktok_carousel_status' => function (array $request): array {
+                $publisher = new TikTokPublisher(new TikTokIntegrationService($this->pdo));
+                $status = $publisher->fetchStatus((int)$request['user_id'], (string)$request['publish_id']);
+                return [
+                    'status' => self::mapTikTokStatus((string)$status['status']),
+                    'error' => (string)($status['failReason'] ?? ''),
+                ];
             },
             'schedule' => function (array $request): array {
                 if (!CloudTasksService::isAvailable()) {

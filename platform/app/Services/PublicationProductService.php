@@ -15,7 +15,7 @@ declare(strict_types=1);
  */
 final class PublicationProductService
 {
-    public const SCHEMA = 'publication-product.v2';
+    public const SCHEMA = 'publication-product.v3';
 
     private PublicationService $publications;
 
@@ -111,7 +111,16 @@ final class PublicationProductService
             'pinterest' => [],
             'instagram' => [],
             'facebook' => [],
-            'tiktok' => ['video_export_id' => $video['export_id'] ?? null],
+            'tiktok' => [
+                'video_export_id' => $video['export_id'] ?? null,
+                // The carousel travels the whole composition (TikTok accepts up
+                // to 35 photos); the cover is the composition cover.
+                'carousel_images' => array_values(array_map(
+                    static fn(array $item): string => (string)$item['file'],
+                    array_slice($mediaItems, 0, 35)
+                )),
+                'cover_index' => 0,
+            ],
             'x' => null,
             'saatchi' => $this->saatchiBlock($artworkByLocale, $mediaItems, $workingLocale, $adaptationLocales),
         ];
@@ -159,13 +168,21 @@ final class PublicationProductService
                 MockupSocialContentService::text($tiktok['caption_seed'] ?? ''),
                 $artworkContent['tags']
             );
+            $visualHook = MockupSocialContentService::text($tiktok['visual_hook'] ?? '');
             $destinations['tiktok'][$locale] = [
                 'caption' => $tiktokComposed['caption'],
                 'caption_seed' => MockupSocialContentService::text($tiktok['caption_seed'] ?? ''),
                 'hashtags' => $tiktokComposed['hashtags'],
-                'visual_hook' => MockupSocialContentService::text($tiktok['visual_hook'] ?? ''),
+                'visual_hook' => $visualHook,
                 'suggested_motion' => MockupSocialContentService::text($tiktok['suggested_motion'] ?? ''),
                 'video_notes' => MockupSocialContentService::text($tiktok['video_notes'] ?? ''),
+                // Creator's Draft only carries title and description: the title
+                // is the short hook (TikTok caps it at 90), the description the
+                // caption the artist already approved.
+                'carousel' => [
+                    'title' => mb_substr($visualHook !== '' ? $visualHook : $universalTitle, 0, 90),
+                    'description' => $tiktokComposed['caption'],
+                ],
             ];
         }
 

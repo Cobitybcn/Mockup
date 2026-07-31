@@ -15,6 +15,39 @@ final class VideoFinalUploadService
         private VideoJobRepository $jobs
     ) {}
 
+    /**
+     * Attaching a finished desktop edit must not make the artist think about
+     * "video projects": reuse the artwork's project when one exists, create it
+     * silently otherwise. Used by the Publication section, where the artist is
+     * composing the page and simply has a finished file to attach.
+     */
+    public function uploadForArtwork(int $userId, int $artworkId, array $file): array
+    {
+        if ($artworkId <= 0) throw new InvalidArgumentException('Selecciona la obra correspondiente al video final.');
+        $artwork = $this->studio->artworkIdentity($userId, $artworkId);
+        if (!$artwork) throw new OutOfBoundsException('Obra no encontrada.');
+        $canonicalId = (int)($artwork['canonicalArtworkId'] ?? $artworkId);
+
+        $projectId = 0;
+        foreach ($this->studio->listProjects($userId) as $project) {
+            if ((int)($project['artworkId'] ?? 0) === $canonicalId) {
+                $projectId = (int)$project['id'];
+                break;
+            }
+        }
+        if ($projectId <= 0) {
+            $created = (new VideoStudioService($this->studio))->createProject($userId, [
+                'artworkId' => $canonicalId,
+                'aspectRatio' => '9:16',
+                'projectType' => 'social_clip',
+            ]);
+            $projectId = (int)($created['project']['id'] ?? 0);
+        }
+        if ($projectId <= 0) throw new RuntimeException('No se pudo preparar el destino del video final.');
+
+        return $this->upload($userId, $projectId, $file, $canonicalId);
+    }
+
     public function upload(int $userId, int $projectId, array $file, int $artworkId = 0): array
     {
         $project = $this->studio->findProject($userId, $projectId);

@@ -188,4 +188,63 @@ class ImageResizer
         Logger::log("ImageResizer: Successfully resized " . basename($filePath) . ", backed up the original, and copied resized output.", 'image');
         return true;
     }
+
+    /**
+     * Non-destructive variant: writes a scaled copy to $destination and leaves
+     * the source untouched. Used by the Saatchi package, where the marketplace
+     * demands a minimum pixel size the stored mockups do not reach — the app's
+     * own images must keep their original weight.
+     *
+     * Note this scales UP when the source is smaller: interpolation cannot add
+     * detail it never captured, so the gain is passing the marketplace gate,
+     * not sharpness. Lanczos plus a light sharpen keeps the softness contained.
+     */
+    public static function resizeCopy(string $source, string $destination, int $shortestSide = 2200): bool
+    {
+        if (!is_file($source) || $shortestSide <= 0) {
+            return false;
+        }
+        $info = @getimagesize($source);
+        if (!$info) {
+            return false;
+        }
+        [$width, $height] = [(int)$info[0], (int)$info[1]];
+        $mime = (string)($info['mime'] ?? '');
+        if ($width <= 0 || $height <= 0 || str_contains($mime, 'svg')) {
+            return false;
+        }
+
+        $srcImage = match ($mime) {
+            'image/jpeg', 'image/jpg' => @imagecreatefromjpeg($source),
+            'image/png' => @imagecreatefrompng($source),
+            'image/webp' => @imagecreatefromwebp($source),
+            'image/gif' => @imagecreatefromgif($source),
+            default => @imagecreatefromstring((string)file_get_contents($source)),
+        };
+        if (!$srcImage) {
+            return false;
+        }
+
+        $scale = $shortestSide / min($width, $height);
+        $newWidth = (int)round($width * $scale);
+        $newHeight = (int)round($height * $scale);
+
+        $mode = defined('IMG_SINC') ? IMG_SINC : (defined('IMG_BICUBIC') ? IMG_BICUBIC : IMG_BILINEAR_FIXED);
+        $destImage = @imagescale($srcImage, $newWidth, $newHeight, $mode);
+        if (!$destImage) {
+            $destImage = imagecreatetruecolor($newWidth, $newHeight);
+            if (!@imagecopyresampled($destImage, $srcImage, 0, 0, 0, 0, $newWidth, $newHeight, $width, $height)) {
+                imagedestroy($srcImage);
+                imagedestroy($destImage);
+                return false;
+            }
+        }
+        @imageconvolution($destImage, [[0, -0.05, 0], [-0.05, 1.2, -0.05], [0, -0.05, 0]], 1.0, 0.0);
+
+        // Saatchi expects JPG in RGB, so the copy is always written as JPEG.
+        $saved = @imagejpeg($destImage, $destination, 95);
+        imagedestroy($srcImage);
+        imagedestroy($destImage);
+        return (bool)$saved;
+    }
 }

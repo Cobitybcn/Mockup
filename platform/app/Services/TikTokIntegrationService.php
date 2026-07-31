@@ -84,8 +84,11 @@ final class TikTokIntegrationService
         return is_array($row) ? $row : null;
     }
 
-    /** @return array{open_id:string,username:string,access_token:string,api_version:string} */
-    public function publishingContext(int $userId, string $purpose = 'artist'): array
+    /**
+     * @param list<string> $additionalScopes permissions this particular publish needs on top of the baseline
+     * @return array{open_id:string,username:string,access_token:string,api_version:string}
+     */
+    public function publishingContext(int $userId, string $purpose = 'artist', array $additionalScopes = []): array
     {
         $purpose = $this->purpose($purpose);
         $connection = $this->connection($userId, $purpose);
@@ -93,9 +96,16 @@ final class TikTokIntegrationService
             throw new RuntimeException('Conecta la cuenta de TikTok antes de publicar.');
         }
         $granted = array_values(array_filter(array_map('trim', explode(',', (string)($connection['scopes'] ?? '')))));
-        $missing = array_values(array_diff($this->scopes(), $granted));
+        $required = array_values(array_unique(array_merge(
+            $this->requiredScopes(),
+            array_filter(array_map('trim', $additionalScopes))
+        )));
+        $missing = array_values(array_diff($required, $granted));
         if ($missing) {
-            throw new RuntimeException('TikTok no concedió los permisos requeridos: '.implode(', ', $missing).'.');
+            throw new RuntimeException(
+                'TikTok no concedió los permisos requeridos: '.implode(', ', $missing)
+                . '. Reconectá la cuenta de TikTok para habilitarlos.'
+            );
         }
 
         // TikTok access tokens are short-lived (about 24h); refresh proactively
@@ -252,9 +262,26 @@ final class TikTokIntegrationService
         return $config;
     }
 
+    /**
+     * Scopes requested at authorization. `video.publish` covers direct video
+     * posting; `video.upload` is the separate permission Creator's Draft needs
+     * for the photo carousel.
+     */
     private function scopes(): array
     {
-        $configured = app_env('TIKTOK_SCOPES', 'user.info.basic,video.publish');
+        $configured = app_env('TIKTOK_SCOPES', 'user.info.basic,video.publish,video.upload');
+        return array_values(array_unique(array_filter(array_map('trim', explode(',', $configured)))));
+    }
+
+    /**
+     * Baseline demanded before any publish — deliberately narrower than what is
+     * requested. A connection authorized before a scope existed keeps working
+     * for everything it can already do; only the feature that needs the newer
+     * permission asks for it (see publishingContext's $additionalScopes).
+     */
+    private function requiredScopes(): array
+    {
+        $configured = app_env('TIKTOK_REQUIRED_SCOPES', 'user.info.basic,video.publish');
         return array_values(array_unique(array_filter(array_map('trim', explode(',', $configured)))));
     }
 

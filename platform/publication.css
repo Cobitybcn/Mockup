@@ -37,6 +37,14 @@
 
 .pub-panel { margin-top: 22px; border: 1px solid var(--line); border-radius: var(--radius); background: var(--surface); }
 .pub-panel-heading { display: flex; align-items: flex-end; justify-content: space-between; gap: 18px; padding: 18px 20px 14px; border-bottom: 1px solid var(--line); }
+/* Collapsible steps: the heading keeps its exact size and weight — folding only
+   adds the marker and drops the rule under a closed step. */
+details.pub-panel > summary { cursor: pointer; list-style: none; }
+details.pub-panel > summary::-webkit-details-marker { display: none; }
+details.pub-panel > summary::after { content: '+'; align-self: center; margin-left: 4px; color: var(--accent); font: 500 24px/1 var(--font-serif); }
+details.pub-panel[open] > summary::after { content: '−'; }
+details.pub-panel:not([open]) > summary { border-bottom: 0; }
+details.pub-panel > summary:hover { background: var(--surface-soft); }
 .pub-panel-heading .pub-kicker { margin-bottom: 5px; font-size: 9px; letter-spacing: .12em; }
 .pub-panel-heading h2 { margin: 0; font-family: var(--font-serif); font-size: clamp(22px, 2vw, 28px); font-weight: 500; }
 .pub-panel-body { padding: 20px; }
@@ -68,6 +76,11 @@
 .pub-video-card.is-selected { border-color: rgba(154, 123, 86, .75); box-shadow: inset 0 -3px rgba(154, 123, 86, .45); }
 .pub-video-card.is-selected .pub-media-toggle { border-color: #91a88b; background: #b9c9b4; color: #2f4231; }
 .pub-video-empty { padding: 18px; border: 1px dashed var(--line-dark); border-radius: 2px; color: var(--muted); font-size: 13px; line-height: 1.55; }
+/* One function, one line: message, file and action share the same soft box. */
+.pub-video-attach { display: flex; align-items: center; flex-wrap: wrap; gap: 10px; padding: 14px 18px; border: 1px dashed var(--line-dark); border-radius: 2px; color: var(--muted); font-size: 13px; }
+.pub-video-attach-lead { margin-right: 2px; }
+.pub-video-attach label { cursor: pointer; }
+.pub-visually-hidden { position: absolute; width: 1px; height: 1px; padding: 0; margin: -1px; overflow: hidden; clip: rect(0 0 0 0); white-space: nowrap; border: 0; }
 
 /* Cover picker (ported from the ficha) */
 .pub-cover-picker { border: 1px solid var(--line); border-radius: var(--radius); background: #fff; overflow: hidden; }
@@ -119,6 +132,10 @@
 .pub-decision--publish:hover, .pub-decision--publish:focus-visible { border-color: #c7ae5e; background: #e2cd86; }
 .pub-decision--unpublish:hover, .pub-decision--unpublish:focus-visible { border-color: #b9858e; background: #d3adb3; }
 
+/* The one act closes the document: it belongs to every step, so it is never folded. */
+.pub-all { border-color: var(--line-dark); }
+.pub-all .pub-panel-heading h2 { color: var(--ink); }
+
 .pub-gate-note { margin: 0 0 16px; padding: 13px 14px; border-left: 3px solid rgba(183, 127, 134, .6); background: rgba(221, 191, 195, .16); color: #5d363d; font-size: 13px; line-height: 1.55; }
 
 /* ————— Panel 2: frozen product (read-only projection) ————— */
@@ -157,11 +174,15 @@
 .pub-dist-package { display: grid; gap: 10px; margin: 4px 0 14px; padding: 14px; border: 1px solid var(--line); border-radius: 2px; background: var(--surface-soft); }
 .pub-dist-package-row { display: flex; align-items: center; justify-content: space-between; gap: 12px; }
 .pub-dist-package-text { margin: 0; max-width: 650px; color: var(--ink); font-size: 14px; line-height: 1.55; }
-.pub-dist-package-images { display: flex; flex-wrap: wrap; gap: 10px; }
+.pub-dist-package-images { display: flex; flex-wrap: wrap; align-items: flex-start; gap: 10px; }
+/* The download closes the image strip: the action sits where the material ends. */
+.pub-dist-download { width: 150px; min-width: 150px; height: 150px; min-height: 150px; padding: 16px; text-decoration: none; }
 .pub-dist-package-images figure { margin: 0; width: 150px; display: grid; gap: 5px; }
 .pub-dist-package-images img { width: 150px; height: 120px; object-fit: contain; border: 1px solid var(--line); padding: 3px; background: #efeee9; }
 .pub-dist-package-images figcaption { color: var(--muted); font-size: 11px; line-height: 1.4; max-height: 46px; overflow: hidden; }
-.pub-copy { min-height: 28px; padding: 0 12px; border: 1px solid var(--line-dark); border-radius: 999px; background: #fff; color: var(--muted); font: 700 10px/1 var(--font-sans); letter-spacing: .07em; text-transform: uppercase; cursor: pointer; }
+/* `button { width:100%; margin-top:24px }` in style.css would drop these out of
+   their line — the quiet actions must stay inline with the text they belong to. */
+.pub-copy { display: inline-flex; align-items: center; width: auto; flex: 0 0 auto; min-height: 28px; margin: 0; padding: 0 12px; border: 1px solid var(--line-dark); border-radius: 999px; background: #fff; color: var(--muted); font: 700 10px/1 var(--font-sans); letter-spacing: .07em; text-transform: uppercase; cursor: pointer; }
 .pub-copy:hover { background: var(--surface); color: var(--ink); }
 
 /* Step 3: pin series preview strip (same recipe as the cover picker) */
@@ -184,6 +205,10 @@
 .pub-series-copy p { margin: 0; max-width: 650px; color: var(--ink); font-size: 13px; line-height: 1.5; display: -webkit-box; -webkit-line-clamp: 3; -webkit-box-orient: vertical; overflow: hidden; }
 .pub-series-state { display: flex; align-items: center; flex-wrap: wrap; gap: 8px; }
 .pub-series-now { display: inline; }
+
+/* Step 5: TikTok carousel preview */
+.pub-tiktok-thumbs { grid-template-columns: repeat(auto-fill, minmax(72px, 1fr)); margin-bottom: 12px; }
+.pub-tiktok-thumbs img { height: 72px; }
 
 @media (max-width: 900px) {
     .pub-sale-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
