@@ -251,7 +251,8 @@ final class BilingualEditorialAdapterService
                 $sourceContent,
                 $adapted,
                 $entityType,
-                $adaptationStyle
+                $adaptationStyle,
+                $this->crossEntityOpenings($userId, $entityType, $entityId, $targetLocale)
             );
         }
         if ($entityType === 'mockup') {
@@ -1287,14 +1288,67 @@ RULES;
         return trim(str_replace(['**', '__'], '', $value));
     }
 
+    /**
+     * Openings already claimed, in THIS locale, by the artwork this mockup
+     * belongs to and by its sibling mockups. The adaptation is where the
+     * English copy is written, so it is where repeated English openings have to
+     * be caught (EDITORIAL_CORE Libro II Cap. 3, enmienda 2026-07-31).
+     *
+     * @return list<string>
+     */
+    private function crossEntityOpenings(int $userId, string $entityType, int $entityId, string $locale): array
+    {
+        if ($entityType !== 'mockup' || $locale === '') return [];
+        try {
+            $stmt = $this->pdo->prepare('SELECT source_artwork_id FROM mockups WHERE id=? AND user_id=? LIMIT 1');
+            $stmt->execute([$entityId, $userId]);
+            $artworkId = (int)($stmt->fetchColumn() ?: 0);
+            if ($artworkId <= 0) return [];
+
+            $siblingStmt = $this->pdo->prepare('SELECT id FROM mockups WHERE user_id=? AND source_artwork_id=? AND id<>?');
+            $siblingStmt->execute([$userId, $artworkId, $entityId]);
+            $siblingIds = array_map('intval', (array)$siblingStmt->fetchAll(PDO::FETCH_COLUMN));
+
+            $conditions = "(entity_type='artwork' AND entity_id=?)";
+            $params = [$userId, $locale, $artworkId];
+            if ($siblingIds !== []) {
+                $marks = implode(',', array_fill(0, count($siblingIds), '?'));
+                $conditions .= " OR (entity_type='mockup' AND entity_id IN ({$marks}))";
+                $params = array_merge($params, $siblingIds);
+            }
+            $rows = $this->pdo->prepare("SELECT content_json, published_content_json, is_published
+                FROM bilingual_editorial_content
+                WHERE user_id=? AND locale=? AND ({$conditions})");
+            $rows->execute($params);
+        } catch (Throwable) {
+            return [];
+        }
+
+        $openings = [];
+        foreach ($rows->fetchAll(PDO::FETCH_ASSOC) as $row) {
+            $source = (int)($row['is_published'] ?? 0) === 1 && trim((string)($row['published_content_json'] ?? '')) !== ''
+                ? (string)$row['published_content_json']
+                : (string)($row['content_json'] ?? '');
+            $decoded = json_decode($source, true);
+            if (is_array($decoded)) {
+                $openings = array_merge($openings, EditorialIntegrityPolicy::openings($decoded));
+            }
+        }
+        return array_values(array_unique($openings));
+    }
+
+    /**
+     * @param list<string> $forbiddenOpenings
+     */
     private function repairEditorialIntegrityIfNeeded(
         string $basePrompt,
         array $shape,
         array $content,
         string $entityType,
-        string $language
+        string $language,
+        array $forbiddenOpenings = []
     ): array {
-        $issues = EditorialIntegrityPolicy::issues($content, $entityType);
+        $issues = EditorialIntegrityPolicy::issues($content, $entityType, $forbiddenOpenings);
         if ($issues === []) {
             return $content;
         }
@@ -1327,7 +1381,7 @@ PROMPT;
                 $this->client->generateText([$this->client->textPart($repairPrompt)])
             );
             $content = $this->projectToSourceShape($shape, $decoded);
-            $issues = EditorialIntegrityPolicy::issues($content, $entityType);
+            $issues = EditorialIntegrityPolicy::issues($content, $entityType, $forbiddenOpenings);
             if ($issues === []) {
                 return $content;
             }

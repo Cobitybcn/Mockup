@@ -41,4 +41,83 @@ function run_editorial_integrity_policy_tests(): void
     // placeholder, verificado arriba.
     $sheetSource = (string)file_get_contents(__DIR__ . '/../../app/Services/ArtworkSheetService.php');
     TestHarness::assertContains("EditorialIntegrityPolicy::promptRules('mockup')", $sheetSource, 'direct mockup analysis also receives the policy');
+
+    // ————— EDITORIAL_CORE Libro II Cap. 3 (enmienda 2026-07-31) —————
+    // Alcance: toda descripcion de todo medio, no solo seo_description.
+    foreach ([
+        'social.pinterest.description' => 'Pinterest',
+        'social.website.description' => 'the website',
+        'social.facebook.link_description' => 'the Facebook link',
+        'social.instagram.caption' => 'the Instagram caption',
+        'social.facebook.post_text' => 'the Facebook post',
+        'social.tiktok.caption_seed' => 'the TikTok seed',
+    ] as $path => $label) {
+        $content = [];
+        $cursor = &$content;
+        foreach (explode('.', $path) as $segment) {
+            $cursor[$segment] = [];
+            $cursor = &$cursor[$segment];
+        }
+        $cursor = "Discover INTERVALLUM by Maurizio Valch, a territorial abstract painting in acrylic and oil.";
+        unset($cursor);
+        $issues = EditorialIntegrityPolicy::issues($content, 'mockup');
+        TestHarness::assertContains(
+            'action-verb opening',
+            implode(' | ', $issues),
+            "the command opening is rejected in {$label} description, not only in seo_description"
+        );
+    }
+
+    // La prohibicion sigue sin alcanzar titulos ni vocabulario comercial de SEO
+    // (Libro III Cap. 3): ahi la repeticion estable es deseable.
+    TestHarness::assertSame([], EditorialIntegrityPolicy::issues([
+        'social' => ['pinterest' => ['title' => 'Discover INTERVALLUM']],
+    ], 'mockup'), 'the opening rule governs prose, never titles or keyword vocabulary');
+
+    // No repeticion: entre canales del mismo mockup.
+    $sameOpening = 'Bands of intense red meet a luminous yellow across a scraped acrylic surface that holds the wall.';
+    $repeated = EditorialIntegrityPolicy::issues([
+        'description' => $sameOpening,
+        'social' => ['pinterest' => ['description' => $sameOpening]],
+    ], 'mockup');
+    TestHarness::assertContains(
+        'opens exactly like',
+        implode(' | ', $repeated),
+        'two channels of one mockup cannot share their first line'
+    );
+
+    // No repeticion: contra la obra y contra los mockups hermanos.
+    $artworkContent = ['description' => $sameOpening];
+    $inherited = EditorialIntegrityPolicy::issues(
+        ['social' => ['pinterest' => ['description' => $sameOpening]]],
+        'mockup',
+        EditorialIntegrityPolicy::openings($artworkContent)
+    );
+    TestHarness::assertContains(
+        'already used by this artwork',
+        implode(' | ', $inherited),
+        'a mockup cannot open like its own artwork or like a sibling mockup'
+    );
+
+    // La apertura se compara normalizada: acentos, mayusculas y puntuacion no
+    // alcanzan para disfrazar el mismo texto.
+    TestHarness::assertSame(
+        EditorialIntegrityPolicy::openingKey('Bandas de rojo intenso, ¡frente al amarillo!'),
+        EditorialIntegrityPolicy::openingKey('bandas de ROJO intenso frente al amarillo'),
+        'the opening comparison ignores case, accents and punctuation'
+    );
+    TestHarness::assertSame('', EditorialIntegrityPolicy::openingKey('Rojo y negro'), 'a text too short to compare never claims an opening');
+
+    // openings() solo recoge prosa publica — no tags, titulos ni keywords.
+    $collected = EditorialIntegrityPolicy::openings([
+        'description' => $sameOpening,
+        'tags' => ['Painting', 'Abstract Art'],
+        'social' => ['pinterest' => ['title' => 'INTERVALLUM', 'description' => 'A classically panelled room holds the canvas against cold marble and daylight.']],
+    ]);
+    TestHarness::assertSame(2, count($collected), 'the reference collects public prose only');
+
+    // El cableado que hace util la regla: obra y hermanos entran como referencia.
+    TestHarness::assertContains('siblingMockupOpenings', $sheetSource, 'direct mockup analysis compares against its siblings');
+    TestHarness::assertContains('EditorialIntegrityPolicy::openings($approvedReading)', $sheetSource, 'direct mockup analysis compares against its own artwork');
+    TestHarness::assertContains('crossEntityOpenings', $serviceSource, 'the adaptation compares openings in the locale it writes');
 }

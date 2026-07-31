@@ -152,6 +152,19 @@ Una sola lista, consumida por descripciones, SEO y títulos:
 - **Títulos genéricos desaconsejados** (no prohibidos si son históricos, nunca recomendables
   como propuestas nuevas): Untitled, Composition, Abstract Landscape, Inner World, Silent
   Journey, Eternal Light, Infinite Horizon, Fragmented Memory.
+- **Alcance: toda descripción de todo medio** (enmienda 2026-07-31). Las aperturas prohibidas
+  —incluidas las de verbo comercial: Descubre / Explora / Adquiere / Compra / Discover /
+  Explore / Acquire / Buy— rigen en **cada** texto público, no solo en `seo_description`:
+  `description`, `short_description`, `seo_description`, `website.description`,
+  `pinterest.description`, `facebook.link_description`, `facebook.post_text`,
+  `instagram.caption` y `tiktok.caption_seed`. Se validan en código y la salida que las
+  incumpla se rechaza: pedirlo en el prompt no basta, porque el modelo lo ignora.
+- **No repetición de aperturas** (enmienda 2026-07-31). Dentro de una misma obra, ningún texto
+  público puede abrir como otro. Rige entre la obra y cada uno de sus mockups, entre mockups
+  hermanos, y entre los canales de un mismo mockup. Se compara la apertura normalizada; dos
+  textos que arrancan con la misma frase son el mismo texto para el lector, que en el feed
+  solo ve las primeras líneas antes del truncado. Extiende a las descripciones la regla que
+  el Libro III Cap. 3 ya fijaba para alt text y captions.
 
 ### Cap. 4 — Voz y tono
 

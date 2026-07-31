@@ -104,6 +104,28 @@ function run_editorial_core_contract_tests(): void
     TestHarness::assertContains('approved_artwork_reading', $adapterSource, 'EDITORIAL_CORE Libro VI Cap. 2: el adapter tambien hereda la lectura publicada en vivo, no el blob');
     TestHarness::assertContains('EditorialIdentityGuard::rewriteAliases', $adapterSource, 'EDITORIAL_CORE (guardian): una sola implementacion de identidad, compartida');
 
+    // ————— Libro II Cap. 3 (enmienda 2026-07-31): alcance y no repeticion —————
+    TestHarness::assertContains(
+        'Alcance: toda descripción de todo medio',
+        $core,
+        'EDITORIAL_CORE Libro II Cap. 3: el articulo extiende las aperturas prohibidas a todo medio'
+    );
+    TestHarness::assertContains(
+        'No repetición de aperturas',
+        $core,
+        'EDITORIAL_CORE Libro II Cap. 3: el articulo prohibe repetir aperturas entre obra, mockups y canales'
+    );
+    $policySource = (string)file_get_contents($platformRoot . '/app/Support/EditorialIntegrityPolicy.php');
+    TestHarness::assertContains(
+        'isPublicCopyPath',
+        $policySource,
+        'EDITORIAL_CORE Libro II Cap. 3: el alcance es codigo ejecutable, no solo texto del prompt'
+    );
+    TestHarness::assertTrue(
+        !str_contains($policySource, "str_ends_with(\$lowerPath, 'seo_description')"),
+        'EDITORIAL_CORE Libro II Cap. 3: la prohibicion ya no queda limitada a seo_description'
+    );
+
     // ————— Libro VI Cap. 1: publicar = aprobar (gate de mockups) —————
     TestHarness::assertContains(
         'La obra necesita su contenido publicado',

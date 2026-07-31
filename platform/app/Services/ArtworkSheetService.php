@@ -439,6 +439,35 @@ final class ArtworkSheetService
     }
 
     /**
+     * Openings already claimed by the OTHER mockups of this artwork. Three pins
+     * that all begin "Discover INTERVALLUM by Maurizio Valch" read as one pin,
+     * so each sibling has to earn its own first line.
+     *
+     * @return list<string>
+     */
+    private function siblingMockupOpenings(int $artworkId, int $userId, string $mockupFile): array
+    {
+        try {
+            $stmt = $this->pdo->prepare(
+                'SELECT description, generated_json FROM mockup_sheets WHERE user_id=? AND artwork_id=? AND mockup_file<>?'
+            );
+            $stmt->execute([$userId, $artworkId, basename($mockupFile)]);
+        } catch (Throwable) {
+            return [];
+        }
+        $openings = [];
+        foreach ($stmt->fetchAll(PDO::FETCH_ASSOC) as $row) {
+            $decoded = json_decode((string)($row['generated_json'] ?? ''), true);
+            if (is_array($decoded)) {
+                $openings = array_merge($openings, EditorialIntegrityPolicy::openings($decoded));
+            }
+            $opening = EditorialIntegrityPolicy::openingKey((string)($row['description'] ?? ''));
+            if ($opening !== '') $openings[] = $opening;
+        }
+        return array_values(array_unique($openings));
+    }
+
+    /**
      * @return array<string,mixed>
      */
     public function generateMockupSheet(int $artworkSheetId, int $artworkId, string $mockupFile, int $userId, string $notes): array
@@ -537,7 +566,12 @@ final class ArtworkSheetService
                         'caption'=>(string)($neutral['caption']??''),
                         'mockup_analysis_v2'=>$decoded,
                     ]);
-                    $integrityIssues = EditorialIntegrityPolicy::issues($generated, 'mockup');
+                    // EDITORIAL_CORE Libro II Cap. 3 (enmienda 2026-07-31): un
+                    // mockup no puede abrir como su obra ni como un hermano.
+                    $integrityIssues = EditorialIntegrityPolicy::issues($generated, 'mockup', array_merge(
+                        EditorialIntegrityPolicy::openings($approvedReading),
+                        $this->siblingMockupOpenings($artworkId, $userId, $mockupFile)
+                    ));
                     if ($integrityIssues !== []) {
                         throw new RuntimeException('Mockup editorial integrity failed: ' . implode('; ', $integrityIssues));
                     }

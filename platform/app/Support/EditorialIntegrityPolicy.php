@@ -33,29 +33,61 @@ NON-NEGOTIABLE EDITORIAL INTEGRITY
 - Do not invent awards, exhibitions, institutional validation, commercial demand, critical reception, rarity, exclusivity or historical relevance.
 - Promotional language may describe confirmed technique, visible presence, atmosphere, composition, series membership and possible interest to collectors, but it must never attribute unverified value, prestige or importance.
 - Use each visual or conceptual observation once. Do not inflate the text by repeating the same idea in different words.
+- Never open any public description with a command to the reader: no "Discover", "Explore", "Acquire", "Buy", "Descubre", "Explora", "Adquiere" or "Compra". This applies to every channel, not only to the SEO description.
+- No two public texts may open with the same phrase — not across the channels of one image, not against the artwork's own reading, and not against the other images of the same artwork. Readers see only the first line before the feed truncates it, so a repeated opening reads as a repeated text.
 {$lengthRules}
 TEXT;
     }
 
     /**
+     * EDITORIAL_CORE Libro II Cap. 3 (enmienda 2026-07-31): the opening of every
+     * public description is compared against the artwork's own reading and its
+     * sibling mockups. Callers collect the reference with this helper.
+     *
      * @return list<string>
      */
-    public static function issues(array|string $content, string $entityType): array
+    public static function openings(array|string $content): array
+    {
+        $openings = [];
+        self::collectOpenings($content, '', $openings);
+        return array_values(array_unique(array_filter($openings)));
+    }
+
+    /**
+     * @param list<string> $forbiddenOpenings openings already used by the artwork
+     *                                        or by a sibling of this entity
+     * @return list<string>
+     */
+    public static function issues(array|string $content, string $entityType, array $forbiddenOpenings = []): array
     {
         if (!in_array($entityType, ['artwork', 'mockup', 'studio_note'], true)) {
             return [];
         }
 
         $issues = [];
-        self::inspectValue($content, '', $entityType, $issues);
+        $forbidden = [];
+        foreach ($forbiddenOpenings as $opening) {
+            $key = is_string($opening) ? trim($opening) : '';
+            if ($key !== '') $forbidden[$key] = true;
+        }
+        $seen = [];
+        self::inspectValue($content, '', $entityType, $issues, $forbidden, $seen);
         return array_values(array_unique($issues));
     }
 
     /**
      * @param list<string> $issues
+     * @param array<string,bool> $forbiddenOpenings
+     * @param array<string,string> $seenOpenings opening key => path that claimed it
      */
-    private static function inspectValue(mixed $value, string $path, string $entityType, array &$issues): void
-    {
+    private static function inspectValue(
+        mixed $value,
+        string $path,
+        string $entityType,
+        array &$issues,
+        array $forbiddenOpenings = [],
+        array &$seenOpenings = []
+    ): void {
         if (preg_match('/(?:^|\.)(?:claims_to_avoid|warnings)$/i', $path) === 1) {
             return;
         }
@@ -65,7 +97,9 @@ TEXT;
                     $nested,
                     $path === '' ? (string)$key : $path . '.' . (string)$key,
                     $entityType,
-                    $issues
+                    $issues,
+                    $forbiddenOpenings,
+                    $seenOpenings
                 );
             }
             return;
@@ -86,16 +120,26 @@ TEXT;
         // genericas y los verbos de accion comercial se vigilan en TODA ruta
         // de generacion y adaptacion, en ambos idiomas — no solo en el
         // analisis ingles.
-        $lowerPath = strtolower($path);
-        if (preg_match('/(?:^|\.)(?:short_)?description$|master_description$/', $lowerPath) === 1) {
+        // Enmienda 2026-07-31: el alcance dejo de ser `seo_description` y pasa a
+        // ser TODA descripcion publica de TODO medio. Lo que se pide solo en el
+        // prompt el modelo lo ignora — por eso se valida y se rechaza aqui.
+        if (self::isPublicCopyPath($path)) {
             $genericOpening = '/^(?:this|in\s+this|esta|en\s+esta|este|en\s+este)\s+(?:contemporary\s+|original\s+|abstract\s+|striking\s+|vibrante\s+)*(?:painting|artwork|work|composition|piece|pintura|obra|cuadro|composici[oó]n|pieza|lienzo)\b/iu';
             if (preg_match($genericOpening, $text) === 1) {
                 $issues[] = "{$label}: generic opening — begin with concrete visible evidence, not an object label.";
             }
-        }
-        if (str_ends_with($lowerPath, 'seo_description')) {
             if (preg_match('/^(?:descubr[ae]|explor[ae]|discover|explore|adquier[ae]|adquiera|compr[eaá]|buy|acquire)\b/iu', $text) === 1) {
                 $issues[] = "{$label}: generic action-verb opening — identify the work, do not command the reader.";
+            }
+            $opening = self::openingKey($text);
+            if ($opening !== '') {
+                if (isset($forbiddenOpenings[$opening])) {
+                    $issues[] = "{$label}: opening already used by this artwork or by another of its images — open on a different observation.";
+                } elseif (isset($seenOpenings[$opening])) {
+                    $issues[] = "{$label}: opens exactly like {$seenOpenings[$opening]} — every public text needs its own first line.";
+                } else {
+                    $seenOpenings[$opening] = $label;
+                }
             }
         }
 
@@ -103,6 +147,53 @@ TEXT;
         if ($limit > 0 && self::wordCount($text) > $limit) {
             $issues[] = "{$label}: exceeds {$limit} words.";
         }
+    }
+
+    /**
+     * Public prose that a reader or a search engine actually sees. Titles,
+     * tags and keyword lists stay out: there the stable repetition of correct
+     * commercial vocabulary is desirable (Libro III Cap. 3).
+     */
+    private static function isPublicCopyPath(string $path): bool
+    {
+        $path = strtolower($path);
+        if ($path === '') return false;
+        if (str_ends_with($path, 'description')) return true;
+        foreach (['instagram.caption', 'facebook.post_text', 'tiktok.caption_seed'] as $suffix) {
+            if (str_ends_with($path, $suffix)) return true;
+        }
+        return false;
+    }
+
+    /**
+     * The comparable opening of a text: the first eight words, lowercased and
+     * stripped of accents and punctuation. Two texts sharing it read as the
+     * same text in a feed, which truncates everything after the first line.
+     */
+    public static function openingKey(string $text): string
+    {
+        $text = strtolower(trim(strip_tags($text)));
+        $ascii = @iconv('UTF-8', 'ASCII//TRANSLIT', $text);
+        if (is_string($ascii) && $ascii !== '') $text = strtolower($ascii);
+        $text = preg_replace('/[^a-z0-9\s]+/', ' ', $text) ?? '';
+        $words = preg_split('/\s+/', trim($text), -1, PREG_SPLIT_NO_EMPTY) ?: [];
+        if (count($words) < 4) return '';
+        return implode(' ', array_slice($words, 0, 8));
+    }
+
+    /**
+     * @param list<string> $openings
+     */
+    private static function collectOpenings(mixed $value, string $path, array &$openings): void
+    {
+        if (is_array($value)) {
+            foreach ($value as $key => $nested) {
+                self::collectOpenings($nested, $path === '' ? (string)$key : $path . '.' . (string)$key, $openings);
+            }
+            return;
+        }
+        if (!is_scalar($value) || !self::isPublicCopyPath($path)) return;
+        $openings[] = self::openingKey((string)$value);
     }
 
     /**
