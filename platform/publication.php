@@ -394,6 +394,18 @@ if ($artworkId <= 0) {
         }
     }
 
+    // La grilla se lee como se leera la pagina: primero lo incluido, en el
+    // orden en que la galeria lo mostrara, y despues lo que quedo afuera. Con
+    // las tarjetas en orden de creacion los numeros salian salteados (5, 6, 2,
+    // 1…) y el orden real era invisible.
+    $mediaGrid = [];
+    foreach ($selectionOrder as $selectedId) {
+        if (isset($mockupCards[$selectedId])) $mediaGrid[] = $mockupCards[$selectedId];
+    }
+    foreach ($mockupCards as $card) {
+        if (!in_array($card['id'], $selectionOrder, true)) $mediaGrid[] = $card;
+    }
+
     // Cover options: root + root views + mockups.
     $coverItems = [];
     $addCover = static function (string $file, string $label, string $type) use (&$coverItems): void {
@@ -477,6 +489,7 @@ if ($artworkId <= 0) {
         'visibility' => (string)($publication['visibility'] ?? 'public'),
         'saatchiUrl' => (string)($publication['saatchi_url'] ?? ''),
         'mockupCards' => $mockupCards,
+        'mediaGrid' => $mediaGrid,
         'selectionOrder' => $selectionOrder,
         'coverItems' => $coverItems,
         'selectedCover' => $selectedCover,
@@ -575,7 +588,7 @@ function pub_page_chip(string $status): array
     <title><?= pub_h(t('Publication - Artwork Mockups', 'Publicación - Artwork Mockups')) ?></title>
     <link rel="stylesheet" href="style.css">
     <link rel="stylesheet" href="ui-catalog.css">
-    <link rel="stylesheet" href="publication.css?v=12">
+    <link rel="stylesheet" href="publication.css?v=13">
 </head>
 <body>
 <div class="app-shell">
@@ -711,12 +724,12 @@ function pub_page_chip(string $status): array
                                 <p class="pub-panel-note"><?= pub_h(t('Texts, SEO and captions come from the resolved artwork — they are not edited here. Here you compose what the page shows and how it sells.', 'Los textos, el SEO y los pies vienen de la obra resuelta — acá no se editan. Acá se compone qué muestra la página y cómo vende.')) ?></p>
 
                                 <h3 class="pub-section-title"><?= pub_h(t('Media composition — mockups', 'Composición de media — mockups')) ?></h3>
-                                <p class="pub-section-hint"><?= pub_h(t('The page gallery shows ONLY the selected mockups, in selection order. With none selected, it shows all of them.', 'La galería de la página muestra SOLO los mockups seleccionados, en el orden de selección. Sin ninguno seleccionado, los muestra todos.')) ?></p>
-                                <?php if (!$doc['mockupCards']): ?>
+                                <p class="pub-section-hint"><?= pub_h(t('The page gallery shows ONLY the included mockups, in the order below — drag them to reorder. With none included, it shows all of them.', 'La galería de la página muestra SOLO los mockups incluidos, en el orden de abajo — arrastralos para reordenar. Sin ninguno incluido, los muestra todos.')) ?></p>
+                                <?php if (!$doc['mediaGrid']): ?>
                                     <p class="pub-video-empty"><?= pub_h(t('This artwork has no mockups yet.', 'Esta obra todavía no tiene mockups.')) ?></p>
                                 <?php else: ?>
                                     <div class="pub-media-grid" data-media-grid>
-                                        <?php foreach ($doc['mockupCards'] as $card): ?>
+                                        <?php foreach ($doc['mediaGrid'] as $card): ?>
                                             <?php $isSelected = in_array($card['id'], $doc['selectionOrder'], true); ?>
                                             <figure class="pub-media-card <?= $isSelected ? 'is-selected' : '' ?>" data-media-card data-mockup-id="<?= (int)$card['id'] ?>">
                                                 <span class="pub-media-order" data-media-order></span>
@@ -1332,28 +1345,62 @@ function pub_page_chip(string $status): array
 
     // Ordered mockup selection: click order = page order.
     const selectedInput = form.querySelector('[data-selected-mockups]');
+    const grid = form.querySelector('[data-media-grid]');
     const cards = [...form.querySelectorAll('[data-media-card]')];
+    const idOf = card => parseInt(card.dataset.mockupId, 10);
     let order = (selectedInput.value || '').split(',').map(v => parseInt(v, 10)).filter(v => v > 0);
     const render = () => {
         selectedInput.value = order.join(',');
         cards.forEach(card => {
-            const id = parseInt(card.dataset.mockupId, 10);
-            const position = order.indexOf(id);
+            const position = order.indexOf(idOf(card));
             const selected = position !== -1;
             card.classList.toggle('is-selected', selected);
+            // Solo lo incluido se arrastra: lo que esta afuera no tiene orden.
+            card.draggable = selected;
             const badge = card.querySelector('[data-media-order]');
             if (badge) badge.textContent = selected ? String(position + 1) : '';
             const toggle = card.querySelector('[data-media-toggle]');
             if (toggle) toggle.textContent = selected ? toggle.dataset.labelRemove : toggle.dataset.labelAdd;
         });
+        // La grilla se reordena para leerse como la pagina: primero lo incluido
+        // en su orden, despues lo que quedo afuera.
+        if (grid) {
+            const byId = new Map(cards.map(card => [idOf(card), card]));
+            order.forEach(id => { const card = byId.get(id); if (card) grid.appendChild(card); });
+            cards.forEach(card => { if (order.indexOf(idOf(card)) === -1) grid.appendChild(card); });
+        }
     };
+    let dragging = 0;
     cards.forEach(card => {
         const toggle = card.querySelector('[data-media-toggle]');
-        if (!toggle) return;
-        toggle.addEventListener('click', () => {
-            const id = parseInt(card.dataset.mockupId, 10);
-            const position = order.indexOf(id);
-            if (position === -1) order.push(id); else order.splice(position, 1);
+        if (toggle) {
+            toggle.addEventListener('click', () => {
+                const id = idOf(card);
+                const position = order.indexOf(id);
+                if (position === -1) order.push(id); else order.splice(position, 1);
+                render();
+            });
+        }
+        card.addEventListener('dragstart', event => {
+            dragging = idOf(card);
+            if (order.indexOf(dragging) === -1) { event.preventDefault(); dragging = 0; return; }
+            card.classList.add('is-dragging');
+            event.dataTransfer.effectAllowed = 'move';
+            event.dataTransfer.setData('text/plain', String(dragging));
+        });
+        card.addEventListener('dragend', () => { card.classList.remove('is-dragging'); dragging = 0; });
+        card.addEventListener('dragover', event => {
+            if (!dragging || dragging === idOf(card) || order.indexOf(idOf(card)) === -1) return;
+            event.preventDefault();
+            event.dataTransfer.dropEffect = 'move';
+        });
+        card.addEventListener('drop', event => {
+            event.preventDefault();
+            const from = order.indexOf(dragging);
+            const to = order.indexOf(idOf(card));
+            if (from === -1 || to === -1 || from === to) return;
+            order.splice(from, 1);
+            order.splice(to, 0, dragging);
             render();
         });
     });

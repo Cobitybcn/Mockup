@@ -67,6 +67,11 @@ details.pub-panel > summary:hover { background: var(--surface-soft); }
 .pub-media-card.is-selected .pub-media-toggle { border-color: #91a88b; background: #b9c9b4; color: #2f4231; }
 .pub-media-order { position: absolute; top: 12px; left: 12px; display: none; width: 26px; height: 26px; align-items: center; justify-content: center; border-radius: 50%; background: rgba(47, 66, 49, .88); color: #fffaf7; font: 800 12px/1 var(--font-sans); }
 .pub-media-card.is-selected .pub-media-order { display: inline-flex; }
+/* Only what is included carries an order, so only it can be dragged. The image
+   is the handle; without this the browser drags the <img> as a ghost link. */
+.pub-media-card[draggable="true"] { cursor: grab; }
+.pub-media-card[draggable="true"] img { pointer-events: none; }
+.pub-media-card.is-dragging { opacity: .45; cursor: grabbing; }
 /* Video cards */
 .pub-video-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(190px, 1fr)); gap: 14px; }
 .pub-video-card { display: grid; gap: 8px; padding: 8px; border: 1px solid var(--line); border-radius: 2px; background: var(--surface); }

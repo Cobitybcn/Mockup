@@ -29,6 +29,15 @@ function run_publication_section_tests(): void
     TestHarness::assertContains('unpublishFinalVideo', $section, 'El video de la página se quita desde Publicación');
     TestHarness::assertContains('pub-panel--inert', $section, 'Los paneles no habilitados quedan visibles e inertes, nunca ocultos');
 
+    // ————— La grilla se lee en el orden que tendrá la página —————
+    TestHarness::assertContains('$mediaGrid', $section, 'La grilla se arma en orden de página: primero lo incluido, después lo que quedó afuera');
+    TestHarness::assertTrue(
+        !str_contains($section, "foreach (\$doc['mockupCards'] as \$card)"),
+        'La grilla ya no se dibuja en orden de creación del mockup'
+    );
+    TestHarness::assertContains('dragstart', $section, 'El orden se corrige arrastrando, no deseleccionando todo');
+    TestHarness::assertContains('card.draggable = selected', $section, 'Solo lo incluido se arrastra: lo que está afuera no tiene orden');
+
     // ————— El producto es MOTOR, no paso (enmienda 2026-07-31) —————
     TestHarness::assertTrue(
         !str_contains($section, 'generate_product'),
