@@ -49,6 +49,14 @@ class CloudTasksService
         ], $scheduledAt, app_env('GCP_SOCIAL_QUEUE_NAME', app_env('GCP_QUEUE_NAME', 'mockups-generation-queue')));
     }
 
+    public static function enqueuePublicationDistribution(int $distributionId, DateTimeImmutable $scheduledAt): string
+    {
+        return self::enqueue('publication_distribution_worker.php', [
+            'distribution_id' => $distributionId,
+            'timestamp' => date('c'),
+        ], $scheduledAt, app_env('GCP_SOCIAL_QUEUE_NAME', app_env('GCP_QUEUE_NAME', 'mockups-generation-queue')));
+    }
+
     public static function enqueueEditorialGeneration(int $jobId): string
     {
         // Editorial adaptation is deliberately isolated from the interactive

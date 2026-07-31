@@ -284,15 +284,21 @@ final class AppPublishedCatalog
             if ($file !== '') $seenFiles[$file] = true;
         }
 
-        foreach ($this->relatedItems($publicationId) as $relatedItem) {
-            $mockupId = (int)($relatedItem['mockup_id'] ?? 0);
-            $file = basename((string)($relatedItem['mockup_file'] ?? ''));
-            if (($mockupId > 0 && isset($seenMockupIds[$mockupId])) || ($file !== '' && isset($seenFiles[$file]))) {
-                continue;
+        // An explicit selection saved from the platform's Publication section is
+        // authoritative: the page shows ONLY those items, in their saved order.
+        // Publications without any explicit selection keep the legacy fallback
+        // of appending every canonical mockup, so older pages lose nothing.
+        if ($explicitFavoriteCount === 0) {
+            foreach ($this->relatedItems($publicationId) as $relatedItem) {
+                $mockupId = (int)($relatedItem['mockup_id'] ?? 0);
+                $file = basename((string)($relatedItem['mockup_file'] ?? ''));
+                if (($mockupId > 0 && isset($seenMockupIds[$mockupId])) || ($file !== '' && isset($seenFiles[$file]))) {
+                    continue;
+                }
+                $items[] = $relatedItem;
+                if ($mockupId > 0) $seenMockupIds[$mockupId] = true;
+                if ($file !== '') $seenFiles[$file] = true;
             }
-            $items[] = $relatedItem;
-            if ($mockupId > 0) $seenMockupIds[$mockupId] = true;
-            if ($file !== '') $seenFiles[$file] = true;
         }
 
         $usedEnglish = [];

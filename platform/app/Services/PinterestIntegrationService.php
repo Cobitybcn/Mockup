@@ -208,6 +208,13 @@ final class PinterestIntegrationService
         return $this->api('POST','/pins',$this->accessToken($userId,$purpose),$payload,$this->apiBase($config));
     }
 
+    public function createBoard(int $userId, string $name, string $purpose = 'artist'): array
+    {
+        $this->assertPurposeAllowed($userId,$purpose);
+        $config=$this->config($userId,$purpose);
+        return $this->api('POST','/boards',$this->accessToken($userId,$purpose),['name'=>mb_substr(trim($name),0,180)],$this->apiBase($config));
+    }
+
     public function disconnect(int $userId, string $purpose = 'artist'): void
     {
         $this->assertPurposeAllowed($userId,$purpose);

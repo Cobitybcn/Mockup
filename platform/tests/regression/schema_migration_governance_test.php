@@ -60,6 +60,10 @@ function run_schema_migration_governance_tests(): void
     TestHarness::assertTrue(true, 'la investigación de búsqueda de Series queda separada por idioma y mercado');
     $pdo->query('SELECT user_id,artwork_id,video_export_id,published_at,updated_at FROM artwork_video_publications WHERE 1=0');
     TestHarness::assertTrue(true, 'cada obra puede publicar un único video final en el sitio del artista');
+    $pdo->query('SELECT user_id,publication_id,status,payload_json,source_fingerprint,generated_at FROM publication_products WHERE 1=0');
+    TestHarness::assertTrue(true, 'el producto terminado congelado por publicación pertenece al esquema versionado');
+    $pdo->query('SELECT destination,locale,status,external_url,payload_json,product_fingerprint,part,scheduled_at,task_name,publish_attempt_id FROM publication_distributions WHERE 1=0');
+    TestHarness::assertTrue(true, 'el estado de distribución por destino y por parte (cadencia) pertenece al esquema versionado');
 
     $now = date(DATE_ATOM);
     $insert = $pdo->prepare("INSERT INTO users

@@ -129,7 +129,6 @@ function videos_artist_site_url(string $slug): string
                             $sourceLabel = ($final['source'] ?? '') === 'desktop' ? t('Uploaded from computer', 'Subido desde la computadora') : t('Created in Video Lab', 'Creado en Video Lab');
                             $sitePublished = !empty($final['sitePublished']);
                             $siteVideoUrl = videos_artist_site_url((string)($final['siteSlug'] ?? ''));
-                            $canPublish = empty($final['associationMissing']) && $siteVideoUrl !== '';
                             ?>
                             <article class="videos-final-card">
                                 <div class="videos-final-media-shell">
@@ -161,16 +160,16 @@ function videos_artist_site_url(string $slug): string
                                             <small data-final-artwork-error hidden></small>
                                         </form>
                                     </details>
-                                    <form class="videos-final-publish" data-final-publish-form>
-                                        <input type="hidden" name="csrf" value="<?= videos_h($csrf) ?>">
-                                        <input type="hidden" name="exportId" value="<?= (int)$final['id'] ?>">
-                                        <button type="submit" <?= $sitePublished || !$canPublish ? 'disabled' : '' ?>
-                                            title="<?= videos_h(!$canPublish ? t('Assign a published artwork first', 'Asigná primero una obra publicada') : '') ?>"><?= $sitePublished ? videos_h(t('PUBLISHED', 'PUBLICADO')) : videos_h(t('PUBLISH', 'PUBLICAR')) ?></button>
-                                        <?php if ($sitePublished && $siteVideoUrl !== ''): ?>
-                                            <a href="<?= videos_h($siteVideoUrl) ?>" target="_blank" rel="noopener"><?= videos_h(t('VIEW →', 'VER →')) ?></a>
+                                    <div class="videos-final-publish videos-final-site-state">
+                                        <?php if ($sitePublished): ?>
+                                            <span><?= videos_h(t('ON THE ARTWORK PAGE', 'EN LA PÁGINA DE LA OBRA')) ?></span>
+                                            <?php if ($siteVideoUrl !== ''): ?>
+                                                <a href="<?= videos_h($siteVideoUrl) ?>" target="_blank" rel="noopener"><?= videos_h(t('VIEW →', 'VER →')) ?></a>
+                                            <?php endif; ?>
+                                        <?php else: ?>
+                                            <span><?= videos_h(t('Publishes to the site from', 'Se publica al sitio desde')) ?> <a href="publication.php<?= (int)($final['canonicalArtworkId'] ?? 0) > 0 ? '?id=' . (int)$final['canonicalArtworkId'] : '' ?>"><?= videos_h(t('Publication', 'Publicación')) ?></a></span>
                                         <?php endif; ?>
-                                        <small data-final-publish-error hidden></small>
-                                    </form>
+                                    </div>
                                     <?php
                                     $tiktokRow = $tiktokRows[(int)$final['id']] ?? null;
                                     $tiktokStatus = (string)($tiktokRow['status'] ?? '');
@@ -355,6 +354,6 @@ function videos_artist_site_url(string $slug): string
         </div>
     </main>
 </div>
-<script src="videos.js?v=9"></script>
+<script src="videos.js?v=10"></script>
 </body>
 </html>

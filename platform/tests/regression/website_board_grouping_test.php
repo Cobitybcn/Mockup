@@ -222,11 +222,14 @@ function run_website_board_grouping_regression_tests(): void
     TestHarness::assertContains("'editorial_sync_key' => 'studio-note-'", $studioNotesPage, 'cada nota nueva recibe una identidad estable para sincronización');
     TestHarness::assertContains('$studioNoteTargetIds', $editorialSyncScript, 'la sincronización resuelve el identificador productivo de cada nota');
     TestHarness::assertContains("'studio_note' => \$target->prepare", $editorialSyncScript, 'la sincronización admite snapshots bilingües de Notas de estudio');
-    TestHarness::assertContains('data-website-cover-picker', $artworkPage, 'Website muestra la portada activa en un selector visual');
-    TestHarness::assertContains('class="artwork-cover-options"', $artworkPage, 'Website permite comparar las portadas mediante miniaturas');
-    TestHarness::assertContains('type="radio"', $artworkPage, 'la portada elegida se envia como una opcion accesible del formulario');
-    TestHarness::assertTrue(!str_contains($artworkPage, '<select name="header_file">'), 'Website ya no oculta la portada elegida en un select de texto');
-    TestHarness::assertContains("['camera_slot_name']", $artworkPage, 'los mockups del selector usan el nombre real de su camara');
+    // Enmienda 2026-07-31: la portada del sitio se elige en la seccion
+    // Publicacion (ficha limpia, una sola puerta).
+    $publicationPage = (string)file_get_contents($platformRoot . '/publication.php');
+    TestHarness::assertContains('data-cover-picker', $publicationPage, 'Publicacion muestra la portada activa en un selector visual');
+    TestHarness::assertContains('class="pub-cover-options"', $publicationPage, 'Publicacion permite comparar las portadas mediante miniaturas');
+    TestHarness::assertContains('type="radio"', $publicationPage, 'la portada elegida se envia como una opcion accesible del formulario');
+    TestHarness::assertTrue(!str_contains($publicationPage, '<select name="header_file">'), 'Publicacion no oculta la portada elegida en un select de texto');
+    TestHarness::assertContains("['camera_slot_name']", $publicationPage, 'los mockups del selector usan el nombre real de su camara');
     TestHarness::assertTrue(!str_contains($artworkPage, 'website_studio_notes.php?source=artwork:'), 'Artwork reserva su cabecera para el trabajo visual principal');
     TestHarness::assertTrue(!str_contains($seriesPage, 'website_studio_notes.php?source=series:'), 'Series reserva su encabezado para Create Art como unica accion contextual');
     TestHarness::assertContains('website_studio_notes.php?source=mockup:', $viewerPage, 'el viewer puede iniciar una Studio Note desde el mockup activo');

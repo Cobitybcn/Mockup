@@ -766,6 +766,12 @@ final class VideoStudioRepository
         throw new RuntimeException('No se pudo publicar el video.');
     }
 
+    public function unpublishFinalVideo(int $userId, int $exportId): void
+    {
+        $this->pdo->prepare('DELETE FROM artwork_video_publications WHERE user_id=? AND video_export_id=?')
+            ->execute([$userId, $exportId]);
+    }
+
     public function begin(): void
     {
         Database::beginWriteTransaction($this->pdo);

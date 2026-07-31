@@ -133,8 +133,14 @@ final class PublicationService
         return $id > 0 ? $this->get($id, $userId) : null;
     }
 
-    /** @param array<string,mixed> $input */
-    public function saveWebsiteSettings(int $sheetId, int $userId, array $input, string $intent = 'save'): array
+    /**
+     * @param array<string,mixed> $input
+     * @param list<array{mockup_id:int,caption?:string,alt_text?:string}>|null $explicitItems
+     *   Ordered explicit media selection from the Publication section. Null keeps
+     *   the legacy behaviour (favorites snapshot) for old callers; an array —
+     *   even an empty one — is authoritative and replaces the favorites coupling.
+     */
+    public function saveWebsiteSettings(int $sheetId, int $userId, array $input, string $intent = 'save', ?array $explicitItems = null): array
     {
         $publicationId = $this->createForSheet($sheetId, $userId);
 
@@ -149,13 +155,36 @@ final class PublicationService
             'description' => trim((string)$sheet['description']),
         ];
 
+        if ($explicitItems === null) {
+            $mockupSheetIds = $this->favoriteMockupSheetIds($sheetId, $userId);
+            $itemOverrides = [];
+        } else {
+            $mockupIds = array_values(array_filter(array_map(
+                static fn(array $item): int => (int)($item['mockup_id'] ?? 0),
+                $explicitItems
+            ), static fn(int $id): bool => $id > 0));
+            $sheetIdByMockup = $this->mapMockupIdsToSheetIds($sheetId, $userId, $mockupIds);
+            $mockupSheetIds = [];
+            $itemOverrides = [];
+            foreach ($explicitItems as $item) {
+                $mockupId = (int)($item['mockup_id'] ?? 0);
+                if (!isset($sheetIdByMockup[$mockupId])) continue;
+                $mockupSheetId = $sheetIdByMockup[$mockupId];
+                $mockupSheetIds[] = $mockupSheetId;
+                $itemOverrides[$mockupSheetId] = [
+                    'caption' => trim((string)($item['caption'] ?? '')),
+                    'alt_text' => trim((string)($item['alt_text'] ?? '')),
+                ];
+            }
+        }
+
         $this->pdo->prepare("UPDATE publications SET content_source='inherit' WHERE id=? AND user_id=?")
             ->execute([$publicationId, $userId]);
         $this->save($publicationId, $userId, $content + [
             'visibility' => (string)($input['visibility'] ?? 'public'),
             'publish' => $intent === 'publish',
             'unpublish' => $intent === 'unpublish',
-        ], $this->favoriteMockupSheetIds($sheetId, $userId));
+        ], $mockupSheetIds, $itemOverrides);
         return $this->get($publicationId, $userId);
     }
 
@@ -244,7 +273,8 @@ final class PublicationService
         return $row;
     }
 
-    public function save(int $id, int $userId, array $input, ?array $mockupIds = null): void
+    /** @param array<int,array{caption?:string,alt_text?:string}> $itemOverrides keyed by mockup_sheet_id */
+    public function save(int $id, int $userId, array $input, ?array $mockupIds = null, array $itemOverrides = []): void
     {
         $publication = $this->get($id, $userId);
         $allowedVisibility = ['private', 'unlisted', 'public'];
@@ -273,7 +303,10 @@ final class PublicationService
             foreach (array_values(array_unique(array_map('intval', $mockupIds))) as $position => $mockupId) {
                 $valid->execute([$mockupId, $userId, (int)$publication['artwork_sheet_id']]);
                 if ($mockup = $valid->fetch(PDO::FETCH_ASSOC)) {
-                    $insert->execute([$id, $mockupId, $position, $position === 0 ? 'cover' : 'context', $mockup['title'], $mockup['alt_text'], $mockup['caption']]);
+                    $override = $itemOverrides[$mockupId] ?? [];
+                    $altText = trim((string)($override['alt_text'] ?? '')) !== '' ? (string)$override['alt_text'] : (string)$mockup['alt_text'];
+                    $caption = trim((string)($override['caption'] ?? '')) !== '' ? (string)$override['caption'] : (string)$mockup['caption'];
+                    $insert->execute([$id, $mockupId, $position, $position === 0 ? 'cover' : 'context', $mockup['title'], $altText, $caption]);
                 }
             }
         }
@@ -367,21 +400,25 @@ final class PublicationService
         return $stmt->fetchAll(PDO::FETCH_ASSOC);
     }
 
-    /** @return array<int,int> */
-    private function favoriteMockupSheetIds(int $sheetId, int $userId): array
+    /**
+     * Resolves mockup ids to their latest mockup_sheet id within one artwork sheet.
+     *
+     * @param list<int> $mockupIds
+     * @return array<int,int> mockup_id => mockup_sheet_id (only resolvable ones)
+     */
+    public function mapMockupIdsToSheetIds(int $sheetId, int $userId, array $mockupIds): array
     {
-        if (!class_exists('MockupFavorites')) return [];
-        $favoriteIds = MockupFavorites::idsForUser($userId);
-        if (!$favoriteIds) return [];
+        $mockupIds = array_values(array_unique(array_filter(array_map('intval', $mockupIds), static fn(int $id): bool => $id > 0)));
+        if (!$mockupIds) return [];
 
-        $marks = implode(',', array_fill(0, count($favoriteIds), '?'));
+        $marks = implode(',', array_fill(0, count($mockupIds), '?'));
         $stmt = $this->pdo->prepare("SELECT m.id mockup_id,MAX(ms.id) mockup_sheet_id
             FROM mockups m
             INNER JOIN mockup_sheets ms ON ms.user_id=m.user_id
                 AND (ms.mockup_id=m.id OR ms.mockup_file=m.mockup_file)
             WHERE m.user_id=? AND ms.artwork_sheet_id=? AND m.id IN ($marks)
             GROUP BY m.id");
-        $stmt->execute(array_merge([$userId, $sheetId], $favoriteIds));
+        $stmt->execute(array_merge([$userId, $sheetId], $mockupIds));
 
         $found = [];
         foreach ($stmt->fetchAll(PDO::FETCH_ASSOC) as $row) {
@@ -392,7 +429,17 @@ final class PublicationService
             $this->pdo->prepare('UPDATE mockup_sheets SET mockup_id=? WHERE id=? AND user_id=? AND (mockup_id IS NULL OR mockup_id=0)')
                 ->execute([$mockupId, $mockupSheetId, $userId]);
         }
+        return $found;
+    }
 
+    /** @return array<int,int> */
+    private function favoriteMockupSheetIds(int $sheetId, int $userId): array
+    {
+        if (!class_exists('MockupFavorites')) return [];
+        $favoriteIds = MockupFavorites::idsForUser($userId);
+        if (!$favoriteIds) return [];
+
+        $found = $this->mapMockupIdsToSheetIds($sheetId, $userId, $favoriteIds);
         $ordered = [];
         foreach ($favoriteIds as $favoriteId) {
             if (isset($found[$favoriteId])) $ordered[] = $found[$favoriteId];

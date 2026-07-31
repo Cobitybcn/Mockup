@@ -175,33 +175,44 @@ function run_editorial_core_contract_tests(): void
     TestHarness::assertContains('artistEditedMockupIds', $jobServiceSource, 'EDITORIAL_CORE Libro VI Cap. 4: la cascada saltea los mockups editados a mano');
     TestHarness::assertContains('guardIdentityBeforePublish', (string)file_get_contents($platformRoot . '/app/Services/BilingualEditorialService.php'), 'EDITORIAL_CORE (compuerta): setPublished revalida identidad antes de congelar el snapshot');
 
-    // ————— Libro VI Cap. 1: el estado publicar=aprobar es visible y accionable —————
+    // ————— Libro VI Cap. 1 (enmienda 2026-07-31): la ficha termina en «obra
+    // resuelta»; publicar vive en la sección Publicación —————
     $artworkScreen = (string)file_get_contents($platformRoot . '/artwork.php');
+    $publicationScreen = (string)file_get_contents($platformRoot . '/publication.php');
     TestHarness::assertContains(
         'data-spanish-publication-state',
         $artworkScreen,
-        'EDITORIAL_CORE Libro VI Cap. 1: la ficha de obra expone el estado de publicación — publicar es el acto de aprobación del artista'
+        'EDITORIAL_CORE Libro VI Cap. 1: la ficha de obra MUESTRA el estado editorial — visible siempre, nunca accionable como publicación'
+    );
+    TestHarness::assertContains(
+        'publication.php',
+        $artworkScreen,
+        'EDITORIAL_CORE Libro VI Cap. 1 (enmienda 2026-07-31): la ficha señala que publicar se hace en la sección Publicación'
+    );
+    TestHarness::assertTrue(
+        !str_contains($artworkScreen, 'website_intent'),
+        'EDITORIAL_CORE Libro VI Cap. 1 (enmienda 2026-07-31): la ficha no contiene ninguna decisión de publicación — una sola puerta'
     );
 
-    // ————— Libro VI Cap. 1 (enmienda opción A): UNA sola decisión de publicación —————
+    // ————— Libro VI Cap. 1 (opción A, reubicada): UNA sola decisión de publicación —————
     TestHarness::assertContains(
-        'setSpanishPublished($artworkOwnerId',
-        $artworkScreen,
-        'EDITORIAL_CORE Libro VI Cap. 1 (opción A): «Publicar Obra» publica también el texto aprobado — un solo acto, no dos publicar distintos'
+        'setSpanishPublished($userId',
+        $publicationScreen,
+        'EDITORIAL_CORE Libro VI Cap. 1 (opción A): «Publicar Obra» publica también el texto aprobado — un solo acto, ahora en Publicación'
     );
     TestHarness::assertContains(
         'queueMockupCascadeForArtwork',
-        $artworkScreen,
+        $publicationScreen,
         'EDITORIAL_CORE Libro VI Cap. 4: publicar la obra dispara la cascada de mockups desde el mismo acto'
     );
     TestHarness::assertContains(
         'Generá el contenido editorial antes de publicar la obra',
-        $artworkScreen,
+        $publicationScreen,
         'EDITORIAL_CORE Libro VI Cap. 1: sin contenido generado la obra no se publica (compuerta con mensaje claro)'
     );
     TestHarness::assertContains(
         'dispatchCascade',
-        $artworkScreen,
+        $publicationScreen,
         'EDITORIAL_CORE: la cascada se despacha tras el commit, nunca contra jobs sin confirmar'
     );
     TestHarness::assertTrue(

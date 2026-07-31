@@ -28,9 +28,11 @@ function run_artist_site_metrics_tests(): void
         'la tabla de eventos del sitio acepta registros'
     );
 
-    $artworkScreen = (string)file_get_contents(dirname(__DIR__, 2) . '/artwork.php');
-    TestHarness::assertContains('name="saatchi_url"', $artworkScreen, 'la pestaña Website de la obra ofrece el campo del listing de Saatchi');
-    TestHarness::assertContains('saatchiart.com', $artworkScreen, 'el enlace de Saatchi se valida contra saatchiart.com');
+    // Enmienda 2026-07-31: el campo de Saatchi vive en la seccion Publicacion,
+    // no en la ficha de obra (ficha limpia, una sola puerta).
+    $publicationScreen = (string)file_get_contents(dirname(__DIR__, 2) . '/publication.php');
+    TestHarness::assertContains('name="saatchi_url"', $publicationScreen, 'la seccion Publicacion ofrece el campo del listing de Saatchi');
+    TestHarness::assertContains('saatchiart.com', $publicationScreen, 'el enlace de Saatchi se valida contra saatchiart.com');
 
     $publicSite = (string)file_get_contents(dirname(__DIR__, 3) . '/artist-site/index.php');
     TestHarness::assertContains('function app_saatchi_listing_url', $publicSite, 'la ficha publica resuelve el enlace de Saatchi por obra');

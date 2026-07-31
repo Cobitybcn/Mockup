@@ -232,6 +232,7 @@ $rootAlbumActive = in_array($currentPage, ['root_album.php', 'artwork.php', 'art
 $seriesActive = $currentPage === 'series.php';
 $profileActive = ($currentPage === 'artist_profile.php');
 $studioNotesActive = ($currentPage === 'website_studio_notes.php');
+$publicationActive = ($currentPage === 'publication.php');
 $socialMediaCatalogActive = in_array($currentPage, ['social_media_catalog.php', 'social_media_board.php'], true);
 $videosActive = ($currentPage === 'videos.php');
 $videoStudioActive = ($currentPage === 'video.php');
@@ -253,6 +254,7 @@ $sidebarUsesCompactBasicNavigation = $sidebarUser
     && !$sidebarIsAdmin
     && FeatureAccess::planForUser($sidebarUser) === FeatureAccess::PLAN_ARTIST_STUDIO;
 $sidebarStudioNotesUrl = $sidebarCanUseWebsite ? 'website_studio_notes.php' : 'account.php?upgrade=artist_pro&feature=website#plan';
+$sidebarPublicationUrl = $sidebarCanUseWebsite ? 'publication.php' : 'account.php?upgrade=artist_pro&feature=website#plan';
 $sidebarStoreUrl = $sidebarCanUseWebsite ? '../site-admin/?area=store&section=orders' : 'account.php?upgrade=artist_pro&feature=website#plan';
 $sidebarSocialUrl = $sidebarCanUseSocial ? 'social_media_board.php' : 'account.php?upgrade=artist_pro&feature=social#plan';
 $sidebarVideosUrl = $sidebarCanUseVideo ? 'videos.php' : 'account.php?upgrade=artist_pro&feature=video#plan';
@@ -884,6 +886,7 @@ if ($generatedResultsActive && $sidebarContextArtworkId > 0) {
                 <div class="sidebar-mobile-section sidebar-publishing-mobile">
                     <span><?= h(t('Publish', 'Publicar')) ?></span>
                     <?php if ($sidebarCanUseWebsite): ?>
+                        <a class="<?= $publicationActive ? 'active' : '' ?>" href="<?= htmlspecialchars($sidebarPublicationUrl, ENT_QUOTES, 'UTF-8') ?>"><?= h(t('Publication', 'Publicación')) ?></a>
                         <a class="<?= $studioNotesActive ? 'active' : '' ?>" href="<?= htmlspecialchars($sidebarStudioNotesUrl, ENT_QUOTES, 'UTF-8') ?>"><?= h(t('Studio Notes', 'Notas de Estudio')) ?></a>
                     <?php endif; ?>
                     <?php if ($sidebarCanUseSocial): ?>
@@ -985,6 +988,7 @@ if ($generatedResultsActive && $sidebarContextArtworkId > 0) {
                     <span class="sidebar-library-divider" aria-hidden="true"></span>
                     <div class="sidebar-publishing-tabs">
                         <?php if ($sidebarCanUseWebsite): ?>
+                            <a class="sidebar-tab <?= $publicationActive ? 'active' : '' ?>" href="<?= htmlspecialchars($sidebarPublicationUrl, ENT_QUOTES, 'UTF-8') ?>"><?= h(t('Publication', 'Publicación')) ?></a>
                             <a class="sidebar-tab <?= $studioNotesActive ? 'active' : '' ?>" href="<?= htmlspecialchars($sidebarStudioNotesUrl, ENT_QUOTES, 'UTF-8') ?>"><?= h(t('Studio Notes', 'Notas de Estudio')) ?></a>
                         <?php endif; ?>
                         <?php if ($sidebarCanUseSocial): ?>
@@ -1056,6 +1060,7 @@ if ($generatedResultsActive && $sidebarContextArtworkId > 0) {
             <div class="sidebar-mobile-section sidebar-publishing-mobile">
                 <span><?= h(t('Publish', 'Publicar')) ?></span>
                 <?php if ($sidebarCanUseWebsite): ?>
+                    <a class="<?= $publicationActive ? 'active' : '' ?>" href="<?= htmlspecialchars($sidebarPublicationUrl, ENT_QUOTES, 'UTF-8') ?>"><?= h(t('Publication', 'Publicación')) ?></a>
                     <a class="<?= $studioNotesActive ? 'active' : '' ?>" href="<?= htmlspecialchars($sidebarStudioNotesUrl, ENT_QUOTES, 'UTF-8') ?>"><?= h(t('Studio Notes', 'Notas de Estudio')) ?></a>
                 <?php endif; ?>
                 <?php if ($sidebarCanUseSocial): ?>

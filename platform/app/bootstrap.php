@@ -58,6 +58,8 @@ require_once __DIR__ . '/Services/CameraSlotStudio.php';
 require_once __DIR__ . '/Services/ArtworkSheetService.php';
 require_once __DIR__ . '/Services/ArtworkAnalysisV2Service.php';
 require_once __DIR__ . '/Services/PublicationService.php';
+require_once __DIR__ . '/Services/PublicationProductService.php';
+require_once __DIR__ . '/Services/PublicationDistributionService.php';
 require_once __DIR__ . '/Services/StudioNoteMediaService.php';
 require_once __DIR__ . '/Services/StudioNoteChangeClassifier.php';
 require_once __DIR__ . '/Services/StudioNoteWorkspaceService.php';

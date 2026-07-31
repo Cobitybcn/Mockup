@@ -115,8 +115,10 @@ function run_public_pages_regression_tests(): void {
     TestHarness::assertContains('.artwork-series-reference:focus-within .artwork-series-preview',$artistStyles,'series previews appear for keyboard focus');
     $videosPage=(string)file_get_contents($root.'/videos.php');
     $publicVideoMedia=(string)file_get_contents($root.'/publication_video_media.php');
-    TestHarness::assertContains('data-final-publish-form',$videosPage,'each final video exposes its direct site publication action');
-    TestHarness::assertContains("\$sitePublished ? videos_h(t('PUBLISHED', 'PUBLICADO')) : videos_h(t('PUBLISH', 'PUBLICAR'))",$videosPage,'the final video publication action stays deliberately short');
+    // Enmienda 2026-07-31 (PUBLICACION_DISENO I.5, puerta unica): la tarjeta de
+    // video ya no publica al sitio — muestra el estado y señala Publicacion.
+    TestHarness::assertTrue(!str_contains($videosPage,'data-final-publish-form'),'final video cards no longer publish to the site directly (single door)');
+    TestHarness::assertContains('publication.php',$videosPage,'final video cards point to the Publication section for site publishing');
     TestHarness::assertTrue(!str_contains($publicVideoMedia,'Auth::requireUser'),'published artwork videos play without a private workspace session');
     TestHarness::assertContains('artwork_video_publications',$publicVideoMedia,'public video delivery requires an explicit artwork publication');
     $videoLandingStart=strpos($artistSite,'function render_published_artwork_video');

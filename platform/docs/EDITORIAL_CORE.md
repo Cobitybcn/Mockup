@@ -307,19 +307,27 @@ determina el espacio, no el espacio a la obra.**
 Gates operativos: sin título del artista + serie asignada + dirección de serie escrita, no
 se genera lectura de obra (bloqueo con mensaje claro). **Publicar = aprobar** — publicar la
 lectura de la obra es la aprobación que habilita sus mockups; sin obra publicada, el mockup
-no genera contenido. **El estado de publicación es siempre visible y accionable en la ficha**
-(enmienda 2026-07-29): contenido sin publicar o con cambios sin publicar se señala
-explícitamente — incluida la advertencia en la sección Website — porque un estado invisible
-deja al artista sin saber por qué el sitio no muestra su contenido.
+no genera contenido.
 
-**UNA sola decisión de publicación por obra** (enmienda 2026-07-29, opción A del artista):
-«Publicar Obra» es un único acto que publica la página del sitio, publica el texto aprobado
-y dispara la cascada de mockups; «Despublicar» retira página y texto juntos. No existen dos
-"publicar" con significados distintos en la misma ficha. Compuerta: sin contenido editorial
-generado, la obra no se publica (mensaje claro que señala «Generar contenido»). La ficha
-queda con dos decisiones del artista: *Generar contenido* (el sistema hace todo lo
-inteligente) y *Publicar/Despublicar* (su única aprobación). La configuración comercial
-(precio, Saatchi, portada) es configuración que se guarda, no una publicación.
+**La ficha termina en «obra resuelta»; publicar vive en la sección Publicación** (enmienda
+2026-07-31, supersede la enmienda 2026-07-29 "accionable en la ficha"): la ficha de obra es
+solo obra — identidad, material visual, notas y Espacio editorial — y su único estado terminal
+es *obra resuelta* (contenido editorial completo). La ficha MUESTRA ese estado siempre
+(visible, nunca accionable como publicación) y señala que publicar se hace en Publicación.
+Toda decisión de publicación y toda configuración comercial (precio, disponibilidad, Saatchi,
+portada, visibilidad) viven únicamente en la sección Publicación — **una sola puerta**:
+prohibidos botones o atajos de publicación dispersos en otras pantallas. El contrato de
+estructura y diseño de esa sección es `PUBLICACION_DISENO.md`.
+
+**UNA sola decisión de publicación por obra** (enmienda 2026-07-29, opción A del artista;
+reubicada 2026-07-31): «Publicar Obra» sigue siendo un único acto — publica la página del
+sitio, publica el texto aprobado y dispara la cascada de mockups; «Despublicar» retira página
+y texto juntos. No existen dos "publicar" con significados distintos. Compuerta: sin
+contenido editorial generado, la obra no se publica (mensaje claro que señala «Generar
+contenido» en la ficha). Las dos decisiones del artista quedan repartidas así: *Generar
+contenido* en la ficha (el sistema hace todo lo inteligente) y *Publicar/Despublicar* en la
+sección Publicación (su única aprobación). La configuración comercial es configuración que
+se guarda, no una publicación.
 
 ### Cap. 2 — La lectura viva
 

@@ -835,132 +835,6 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && ($_POST['action'] ?? '') === 'gener
     }
 }
 
-if ($_SERVER['REQUEST_METHOD'] === 'POST' && ($_POST['action'] ?? '') === 'sync_artwork_website_v2') {
-    try {
-        $sheet = (new ArtworkSheetService($pdo))->sheetForArtwork($id, $artworkOwnerId);
-        if (!in_array((string)($sheet['status'] ?? ''), ['validated', 'approved'], true)) {
-            throw new RuntimeException(t('Validate the artwork analysis before sending it to the website.', 'Validá el análisis de la obra antes de enviarlo al sitio web.'));
-        }
-        $publicationId = (new PublicationService($pdo))->createForSheet((int)$sheet['id'], $artworkOwnerId);
-        $website = new ArtworkWebsiteV2Service($pdo);
-        $result = $website->send($website->buildContract($publicationId, $artworkOwnerId));
-        header('Location: artwork.php?id=' . rawurlencode((string)$id) . '&website_v2_synced=' . rawurlencode((string)($result['status'] ?? 'updated')));
-        exit;
-    } catch (Throwable $e) {
-        header('Location: artwork.php?id=' . rawurlencode((string)$id) . '&metadata_error=' . rawurlencode($e->getMessage()));
-        exit;
-    }
-}
-
-if ($_SERVER['REQUEST_METHOD'] === 'POST' && ($_POST['action'] ?? '') === 'save_artwork_website') {
-    $websiteTransactionStarted = false;
-    try {
-        $websitePublicationService = new PublicationService($pdo);
-        $websiteTransactionStarted = !$pdo->inTransaction();
-        if ($websiteTransactionStarted) $pdo->beginTransaction();
-        $sheet = (new ArtworkSheetService($pdo))->sheetForArtwork($id, $artworkOwnerId);
-        $intent = (string)($_POST['website_intent'] ?? 'save');
-        if (!in_array($intent, ['save', 'publish', 'unpublish'], true)) $intent = 'save';
-        // EDITORIAL_CORE Libro VI Cap. 1 (opcion A, 2026-07-29): UNA sola
-        // decision de publicacion por obra. "Publicar Obra" publica la pagina
-        // Y la lectura editorial aprobada, y dispara la cascada de mockups;
-        // "Despublicar" retira ambas. La compuerta: sin contenido editorial
-        // generado no se publica.
-        $unifiedCascade = null;
-        if ($bilingualExperiment && in_array($intent, ['publish', 'unpublish'], true)) {
-            $unifiedSpanish = $bilingualEditorialService->get($artworkOwnerId, 'artwork', $id, $bilingualEditorialService->sourceLocale($artworkOwnerId));
-            $unifiedHasContent = (bool)array_filter(
-                (array)($unifiedSpanish['content'] ?? []),
-                static fn($value): bool => !is_array($value) && trim((string)$value) !== ''
-            );
-            if ($intent === 'publish') {
-                if (!$unifiedHasContent) {
-                    throw new RuntimeException(t('Generate the editorial content before publishing the artwork (Editorial workspace, "Generate content").', 'Generá el contenido editorial antes de publicar la obra (Espacio editorial, «Generar contenido»).'));
-                }
-                $bilingualEditorialService->setSpanishPublished($artworkOwnerId, 'artwork', $id, true);
-                $unifiedCascade = (new BilingualEditorialJobService($pdo))->queueMockupCascadeForArtwork($artworkOwnerId, $id);
-            } elseif ($unifiedHasContent) {
-                $bilingualEditorialService->setSpanishPublished($artworkOwnerId, 'artwork', $id, false);
-            }
-        }
-        $savedWebsitePublication = $websitePublicationService->saveWebsiteSettings((int)$sheet['id'], $artworkOwnerId, $_POST, $intent);
-        $headerFile = basename(trim((string)($_POST['header_file'] ?? '')));
-        $allowedHeaders = array_filter([basename((string)($sheet['source_image_file'] ?? ''))]);
-        $headerViews = $pdo->prepare('SELECT file_name FROM root_artwork_candidates WHERE artwork_id=?');
-        $headerViews->execute([$id]);
-        $allowedHeaders = array_merge($allowedHeaders, array_map('basename', $headerViews->fetchAll(PDO::FETCH_COLUMN)));
-        $groupStmt = $pdo->prepare('SELECT COALESCE(artwork_group_id,0) FROM artworks WHERE id=? AND user_id=?');
-        $groupStmt->execute([$id, $artworkOwnerId]);
-        $groupId = (int)($groupStmt->fetchColumn() ?: 0);
-        $headerMockups = $pdo->prepare('SELECT mockup_file FROM mockup_sheets WHERE user_id=? AND (artwork_id=? OR artwork_sheet_id=? OR (? > 0 AND artwork_group_id=?))');
-        $headerMockups->execute([$artworkOwnerId, $id, (int)$sheet['id'], $groupId, $groupId]);
-        $allowedHeaders = array_merge($allowedHeaders, array_map('basename', $headerMockups->fetchAll(PDO::FETCH_COLUMN)));
-        if ($headerFile !== '' && !in_array($headerFile, $allowedHeaders, true)) throw new RuntimeException(t('The selected website cover does not belong to this artwork.', 'La portada seleccionada para el sitio web no pertenece a esta obra.'));
-        $saatchiUrl = trim((string)($_POST['saatchi_url'] ?? ''));
-        if ($saatchiUrl !== '') {
-            $saatchiHost = strtolower((string)(parse_url($saatchiUrl, PHP_URL_HOST) ?: ''));
-            if (!str_starts_with($saatchiUrl, 'https://')
-                || ($saatchiHost !== 'saatchiart.com' && !str_ends_with($saatchiHost, '.saatchiart.com'))) {
-                throw new RuntimeException(t('The Saatchi Art link must be an https URL on saatchiart.com.', 'El enlace de Saatchi Art debe ser una URL https de saatchiart.com.'));
-            }
-        }
-        $pdo->prepare('UPDATE publications SET header_file=?,saatchi_url=?,updated_at=? WHERE id=? AND user_id=?')
-            ->execute([$headerFile, $saatchiUrl, date('c'), (int)$savedWebsitePublication['id'], $artworkOwnerId]);
-        $constellationCountry = trim((string)($_POST['constellation_country'] ?? ''));
-        $constellation = $pdo->prepare('SELECT id FROM artist_site_constellations WHERE user_id=? AND artwork_id=? LIMIT 1');
-        $constellation->execute([$artworkOwnerId, $id]);
-        $constellationId = (int)($constellation->fetchColumn() ?: 0);
-        if ($constellationId > 0) {
-            $pdo->prepare("UPDATE artist_site_constellations SET enabled=?,country=?,region='',city='',postal_code='',latitude='',longitude='',privacy=?,public_note='',updated_at=? WHERE id=? AND user_id=?")
-                ->execute([$constellationCountry === '' ? 0 : 1, $constellationCountry, $constellationCountry === '' ? 'private' : 'country', date('c'), $constellationId, $artworkOwnerId]);
-        } elseif ($constellationCountry !== '') {
-            $now = date('c');
-            $pdo->prepare("INSERT INTO artist_site_constellations (user_id,artwork_id,enabled,country,region,city,postal_code,latitude,longitude,privacy,public_note,created_at,updated_at) VALUES (?,?,1,?,'','','','','','country','',?,?)")
-                ->execute([$artworkOwnerId, $id, $constellationCountry, $now, $now]);
-        }
-        $saleVariant = $pdo->prepare('SELECT * FROM artist_site_print_variants WHERE user_id=? AND artwork_id=? ORDER BY id LIMIT 1');
-        $saleVariant->execute([$artworkOwnerId, $id]);
-        $sale = $saleVariant->fetch(PDO::FETCH_ASSOC) ?: null;
-        $priceInput = trim((string)($_POST['sale_price'] ?? ''));
-        if ($sale || $priceInput !== '') {
-            $price = str_replace(',', '.', $priceInput === '' ? '0' : $priceInput);
-            if (!is_numeric($price) || (float)$price < 0) throw new RuntimeException(t('Enter a valid artwork price.', 'Ingresá un precio válido para la obra.'));
-            $currency = strtoupper(trim((string)($_POST['sale_currency'] ?? 'EUR')));
-            if (!preg_match('/^[A-Z]{3}$/', $currency)) throw new RuntimeException(t('Currency must use a three-letter ISO code.', 'La moneda debe usar un código ISO de tres letras.'));
-            $saleStatus = (string)($_POST['sale_status'] ?? 'draft');
-            if (!in_array($saleStatus, ['draft', 'active', 'paused', 'sold_out'], true)) $saleStatus = 'draft';
-            $stock = max(0, (int)($_POST['sale_stock'] ?? 0));
-            if ($saleStatus === 'active' && ((float)$price <= 0 || $stock <= 0)) {
-                throw new RuntimeException(t('Available artworks need a price and at least one available unit.', 'Las obras disponibles necesitan un precio y al menos una unidad disponible.'));
-            }
-            $now = date('c');
-            if ($sale) {
-                $stockOnHand = $stock + max(0, (int)($sale['stock_reserved'] ?? 0));
-                $pdo->prepare('UPDATE artist_site_print_variants SET stock_on_hand=?,price_minor=?,currency=?,status=?,updated_at=? WHERE id=? AND user_id=? AND artwork_id=?')
-                    ->execute([$stockOnHand, (int)round((float)$price * 100), $currency, $saleStatus, $now, (int)$sale['id'], $artworkOwnerId, $id]);
-            } else {
-                $pdo->prepare("INSERT INTO artist_site_print_variants (user_id,artwork_id,title,sku,size_label,support,finish,inventory_mode,edition_size,stock_on_hand,stock_reserved,price_minor,currency,status,created_at,updated_at) VALUES (?,?,?,?,'','','','in_stock',1,?,0,?,?,?, ?,?)")
-                    ->execute([$artworkOwnerId, $id, trim((string)($sheet['title'] ?? '')), 'ART-' . $id, $stock, (int)round((float)$price * 100), $currency, $saleStatus, $now, $now]);
-            }
-        }
-        if ($websiteTransactionStarted) $pdo->commit();
-        // La cascada se despacha tras el commit: las tareas no deben correr
-        // contra jobs aun no confirmados.
-        if ($unifiedCascade !== null) {
-            (new BilingualEditorialJobService($pdo))->dispatchCascade($artworkOwnerId, $unifiedCascade);
-        }
-        $message = $intent === 'publish' ? t('published', 'publicada') : ($intent === 'unpublish' ? t('unpublished', 'despublicada') : t('saved', 'guardada'));
-        $cascadeSuffix = $unifiedCascade !== null && $unifiedCascade['queued'] !== []
-            ? '&cascade_count=' . count($unifiedCascade['queued'])
-            : '';
-        header('Location: artwork.php?id=' . rawurlencode((string)$id) . '&website_saved=' . rawurlencode($message) . $cascadeSuffix . '#website-publication');
-        exit;
-    } catch (Throwable $e) {
-        if ($websiteTransactionStarted && $pdo->inTransaction()) $pdo->rollBack();
-        header('Location: artwork.php?id=' . rawurlencode((string)$id) . '&website_error=' . rawurlencode($e->getMessage()) . '#website-publication');
-        exit;
-    }
-}
 
 if (!function_exists('artwork_adopt_root_view_candidates')) {
     /**
@@ -1207,58 +1081,6 @@ if ($orientation === '' && (float)$width > 0 && (float)$height > 0) {
 $orientation = $orientation ?: t('Not specified', 'No especificado');
 $sheetService = new ArtworkSheetService($pdo);
 $artworkSheet = $sheetService->sheetForArtwork($id, $artworkOwnerId);
-$publicationService = new PublicationService($pdo);
-$websitePublication = $publicationService->findForSheet((int)$artworkSheet['id'], $artworkOwnerId);
-$websiteStatus = (string)($websitePublication['status'] ?? 'not_prepared');
-$websiteVisibility = (string)($websitePublication['visibility'] ?? 'public');
-$constellationStmt = $pdo->prepare('SELECT country FROM artist_site_constellations WHERE user_id=? AND artwork_id=? AND enabled=1 LIMIT 1');
-$constellationStmt->execute([$artworkOwnerId, $id]);
-$websiteConstellationCountry = trim((string)($constellationStmt->fetchColumn() ?: ''));
-$websiteSaleStmt = $pdo->prepare('SELECT * FROM artist_site_print_variants WHERE user_id=? AND artwork_id=? ORDER BY id LIMIT 1');
-$websiteSaleStmt->execute([$artworkOwnerId, $id]);
-$websiteSale = $websiteSaleStmt->fetch(PDO::FETCH_ASSOC) ?: null;
-$websiteSaleAvailable = $websiteSale ? max(0, (int)$websiteSale['stock_on_hand'] - (int)$websiteSale['stock_reserved']) : 0;
-$websiteCurrencyStmt = $pdo->prepare('SELECT currency FROM artist_site_settings WHERE user_id=? LIMIT 1');
-$websiteCurrencyStmt->execute([$artworkOwnerId]);
-$websiteDefaultCurrency = strtoupper(trim((string)($websiteCurrencyStmt->fetchColumn() ?: 'EUR')));
-$websiteCoverOptions = [];
-$websiteCoverItems = [];
-$addWebsiteCover = static function (array &$options, array &$items, string $file, string $label, string $type): void {
-    $file = basename(trim($file));
-    if ($file === '' || isset($options[$file])) return;
-    $options[$file] = $label;
-    $items[$file] = [
-        'file' => $file,
-        'label' => $label,
-        'type' => $type,
-    ];
-};
-$addWebsiteCover($websiteCoverOptions, $websiteCoverItems, $rootFile, t('Main artwork image', 'Imagen principal de la obra'), t('Artwork', 'Obra'));
-foreach ($rootCandidatesList as $candidate) {
-    $addWebsiteCover(
-        $websiteCoverOptions,
-        $websiteCoverItems,
-        (string)($candidate['file_name'] ?? ''),
-        ucwords(str_replace('-', ' ', (string)($candidate['view_type'] ?? 'Artwork view'))),
-        t('Artwork view', 'Vista de obra')
-    );
-}
-foreach ($relatedMockups as $mockup) {
-    $mockupState = (array)($mockup['selector_state'] ?? []);
-    $mockupCombination = (array)($mockupState['combination'] ?? []);
-    $mockupLabel = trim((string)($mockupCombination['camera_slot_name'] ?? ''));
-    if ($mockupLabel === '') $mockupLabel = trim((string)($mockup['title'] ?? ''));
-    if ($mockupLabel === '') $mockupLabel = trim((string)($mockup['context_id'] ?? ''));
-    if ($mockupLabel === '') $mockupLabel = t('Mockup', 'Mockup') . ' ' . (int)($mockup['id'] ?? 0);
-    $addWebsiteCover($websiteCoverOptions, $websiteCoverItems, (string)($mockup['mockup_file'] ?? ''), $mockupLabel, t('Mockup', 'Mockup'));
-}
-$websiteSelectedCover = basename((string)($websitePublication['header_file'] ?? ''));
-$websiteSelectedCover = isset($websiteCoverItems[$websiteSelectedCover]) ? $websiteSelectedCover : $rootFile;
-$websiteSelectedCoverItem = $websiteCoverItems[$websiteSelectedCover] ?? reset($websiteCoverItems) ?: [
-    'file' => $rootFile,
-    'label' => t('Main artwork image', 'Imagen principal de la obra'),
-    'type' => t('Artwork', 'Obra'),
-];
 $artworkSheetGenerated = json_decode((string)($artworkSheet['generated_json'] ?? ''), true);
 $artworkSheetGenerated = is_array($artworkSheetGenerated) ? $artworkSheetGenerated : [];
 $v2DraftMatch = artwork_v2_draft_for_image($rootFile);
@@ -1314,11 +1136,6 @@ $artworkSheetHasMetadata = trim((string)($artworkSheet['title'] ?? '')) !== ''
     || trim((string)($artworkSheet['alt_text'] ?? '')) !== ''
     || trim((string)($artworkSheet['keywords'] ?? '')) !== ''
     || !empty($artworkSheetLongTail);
-$websiteMetadataComplete = trim((string)($artworkSheet['title'] ?? '')) !== ''
-    && (trim((string)($artworkSheet['short_description'] ?? '')) !== '' || trim((string)($artworkSheet['description'] ?? '')) !== '')
-    && trim((string)($artworkSheet['alt_text'] ?? '')) !== ''
-    && trim((string)($artworkSheet['keywords'] ?? '')) !== ''
-    && trim((string)($artworkSheet['tags'] ?? '')) !== '';
 $artworkMetadataValidated = $artworkSheetHasMetadata
     && in_array((string)($artworkSheet['status'] ?? ''), ['review', 'validated', 'approved'], true);
 $storedTitle = trim((string)($artwork['final_title'] ?? ''));
@@ -1523,78 +1340,6 @@ $editIconSvg = '<svg viewBox="0 0 24 24" width="18" height="18" stroke="currentC
         .bilingual-reanalysis-actions form { margin:0; }
         .bilingual-reanalysis-actions button { min-height:38px; margin:0; padding:9px 16px; border:1px solid #d8c17e; border-radius:3px; background:#ead99f; color:#554a30; box-shadow:none; font-size:10px; font-weight:700; letter-spacing:.05em; text-transform:uppercase; }
         .bilingual-reanalysis-actions button.secondary { border-color:var(--line); background:var(--surface); color:var(--muted); }
-        .artwork-website-panel { margin:22px 0 0; border:1px solid var(--line); border-radius:var(--radius); background:var(--surface); }
-        .artwork-website-panel > summary { display:flex; align-items:center; justify-content:space-between; gap:20px; padding:18px 20px; cursor:pointer; list-style:none; }
-        .artwork-website-panel > summary::-webkit-details-marker { display:none; }
-        .artwork-website-panel > summary::after { content:'+'; flex:0 0 auto; color:var(--accent); font:500 24px/1 var(--font-serif); }
-        .artwork-website-panel[open] > summary::after { content:'−'; }
-        .artwork-website-summary strong { display:block; font:500 23px/1.1 var(--font-serif); color:var(--ink); }
-        .artwork-website-summary span { display:block; margin-top:5px; color:var(--muted); font-size:12px; }
-        .artwork-website-state { border:1px solid rgba(160,92,71,.28); border-radius:999px; padding:7px 11px; background:rgba(224,104,76,.09); color:var(--ink); font-size:10px; font-weight:700; letter-spacing:.07em; text-transform:uppercase; white-space:nowrap; }
-        .artwork-website-form { padding:22px 20px 20px; border-top:1px solid var(--line); }
-        .artwork-website-note { margin:0; padding:13px 14px; border-left:3px solid rgba(224,104,76,.52); background:var(--surface-soft); color:var(--muted); font-size:13px; line-height:1.5; }
-        .artwork-website-sale { margin-top:18px; padding-top:18px; border-top:1px solid var(--line); }
-        .artwork-website-sale h4 { margin:0 0 12px; font:500 20px/1.2 var(--font-serif); }
-        .artwork-website-sale-grid { display:grid; grid-template-columns:repeat(4,minmax(0,1fr)); gap:12px; }
-        .artwork-website-sale-grid label { display:grid; gap:7px; color:var(--muted); font-size:11px; font-weight:700; letter-spacing:.06em; text-transform:uppercase; }
-        .artwork-website-sale-grid input,.artwork-website-sale-grid select { width:100%; box-sizing:border-box; padding:12px 13px; border:1px solid var(--line); border-radius:var(--radius); background:#fff; color:var(--ink); font:400 15px/1.4 var(--font-sans); }
-        .artwork-website-shipping { display:flex; align-items:center; justify-content:space-between; gap:18px; margin-top:12px; padding:13px 14px; background:var(--surface-soft); color:var(--muted); font-size:13px; }
-        .artwork-website-shipping a { color:var(--accent); font-weight:700; white-space:nowrap; }
-        .artwork-website-saatchi { display:grid; gap:7px; margin-top:14px; color:var(--muted); font-size:11px; font-weight:700; letter-spacing:.06em; text-transform:uppercase; }
-        .artwork-website-saatchi input { width:100%; box-sizing:border-box; padding:12px 13px; border:1px solid var(--line); border-radius:var(--radius); background:#fff; color:var(--ink); font:400 15px/1.4 var(--font-sans); }
-        .artwork-website-saatchi small { color:var(--muted); font-size:12px; font-weight:400; letter-spacing:normal; text-transform:none; line-height:1.5; }
-        .artwork-website-settings { display:grid; grid-template-columns:repeat(3,minmax(0,1fr)); align-items:end; gap:16px; margin-top:18px; }
-        .artwork-website-settings label { display:grid; gap:7px; color:var(--muted); font-size:11px; font-weight:700; letter-spacing:.06em; text-transform:uppercase; }
-        .artwork-website-settings input,.artwork-website-settings select { width:100%; box-sizing:border-box; padding:12px 13px; border:1px solid var(--line); border-radius:var(--radius); background:#fff; color:var(--ink); font:400 15px/1.4 var(--font-sans); }
-        .artwork-website-cover { grid-column:1 / -1; display:grid; gap:7px; }
-        .artwork-website-cover-label { color:var(--muted); font-size:11px; font-weight:700; letter-spacing:.06em; text-transform:uppercase; }
-        .artwork-cover-picker { border:1px solid var(--line); border-radius:var(--radius); background:#fff; overflow:hidden; }
-        .artwork-cover-picker > summary { min-height:112px; display:grid; grid-template-columns:86px minmax(0,1fr) auto; align-items:center; gap:16px; padding:10px; list-style:none; cursor:pointer; }
-        .artwork-cover-picker > summary::-webkit-details-marker { display:none; }
-        .artwork-cover-picker > summary:hover { background:var(--surface-soft); }
-        .artwork-cover-current-image { width:86px; height:92px; display:block; border:1px solid var(--line-dark); padding:4px; background:var(--surface); object-fit:contain; }
-        .artwork-cover-current-copy { min-width:0; display:grid; gap:4px; }
-        .artwork-cover-current-copy strong { overflow:hidden; color:var(--ink); font:500 20px/1.15 var(--font-serif); text-overflow:ellipsis; white-space:nowrap; }
-        .artwork-cover-current-copy span { color:var(--muted); font-size:12px; letter-spacing:.02em; }
-        .artwork-cover-change { align-self:center; padding:8px 10px; color:var(--accent); font-size:11px; font-weight:700; letter-spacing:.06em; text-transform:uppercase; }
-        .artwork-cover-change::after { content:' ↓'; font:500 16px/1 var(--font-serif); }
-        .artwork-cover-picker[open] .artwork-cover-change::after { content:' ↑'; }
-        .artwork-cover-options { display:flex; gap:12px; overflow-x:auto; padding:14px 12px 16px; border-top:1px solid var(--line); background:var(--surface-soft); scroll-snap-type:x proximity; scrollbar-color:var(--line-dark) transparent; }
-        .artwork-cover-option { position:relative; flex:0 0 142px; display:grid; grid-template-rows:154px auto; gap:8px; padding:6px; border:1px solid var(--line); border-radius:2px; background:var(--surface); cursor:pointer; scroll-snap-align:start; text-transform:none; }
-        .artwork-cover-option input { position:absolute; width:1px; height:1px; opacity:0; pointer-events:none; }
-        .artwork-cover-option img { width:100%; height:154px; display:block; object-fit:contain; background:#efeee9; }
-        .artwork-cover-option-copy { min-width:0; display:grid; gap:2px; padding:0 3px 3px; }
-        .artwork-cover-option-copy strong { overflow:hidden; color:var(--ink); font:500 15px/1.15 var(--font-serif); text-overflow:ellipsis; white-space:nowrap; }
-        .artwork-cover-option-copy small { color:var(--muted); font-size:9px; font-weight:700; letter-spacing:.08em; text-transform:uppercase; }
-        .artwork-cover-option:hover { border-color:var(--line-dark); }
-        .artwork-cover-option.is-selected { border-color:rgba(224,104,76,.72); box-shadow:inset 0 -3px rgba(224,104,76,.48); }
-        .artwork-cover-option.is-selected .artwork-cover-option-copy small { color:#a65a47; }
-        .artwork-website-actions { grid-column:1 / -1; display:flex; justify-content:flex-end; align-items:flex-start; flex-wrap:wrap; gap:14px; padding-top:8px; }
-        .artwork-website-actions .website-decision {
-            display:inline-flex;
-            align-items:center;
-            justify-content:center;
-            width:136px;
-            min-width:136px;
-            height:136px;
-            min-height:136px;
-            margin:0;
-            padding:18px;
-            border-radius:4px;
-            box-shadow:0 8px 20px rgba(58,52,43,.10);
-            font-size:11px;
-            font-weight:700;
-            letter-spacing:.08em;
-            line-height:1.35;
-            text-align:center;
-            text-transform:uppercase;
-        }
-        .artwork-website-actions .website-save { border-color:#a8b9a3; background:#b9c9b4; color:#2f4231; }
-        .artwork-website-actions .website-publish { border-color:#d6c27d; background:#ead99f; color:#554a30; }
-        .artwork-website-actions .website-unpublish { border-color:#c9a0a7; background:#ddbfc3; color:#5d363d; }
-        .artwork-website-actions .website-save:hover,.artwork-website-actions .website-save:focus-visible { border-color:#91a88b; background:#a8bca2; }
-        .artwork-website-actions .website-publish:hover,.artwork-website-actions .website-publish:focus-visible { border-color:#c7ae5e; background:#e2cd86; }
-        .artwork-website-actions .website-unpublish:hover,.artwork-website-actions .website-unpublish:focus-visible { border-color:#b9858e; background:#d3adb3; }
         @media (max-width:800px) {
             .v2-admin-grid,.bilingual-editorial-spread { grid-template-columns:1fr; grid-template-rows:none; }
             .bilingual-editorial-page { display:block; grid-column:auto; grid-row:auto; }
@@ -3080,18 +2825,6 @@ $editIconSvg = '<svg viewBox="0 0 24 24" width="18" height="18" stroke="currentC
                 padding: 6px 10px 40px;
             }
 
-            .artwork-website-panel > summary { align-items:flex-start; padding:16px; }
-            .artwork-website-state { margin-left:auto; }
-            .artwork-website-form { padding:18px 14px 14px; }
-            .artwork-website-settings,.artwork-website-sale-grid { grid-template-columns:1fr; }
-            .artwork-cover-picker > summary { min-height:98px; grid-template-columns:70px minmax(0,1fr); gap:12px; }
-            .artwork-cover-current-image { width:70px; height:78px; }
-            .artwork-cover-change { grid-column:2; padding:0; }
-            .artwork-cover-option { flex-basis:126px; grid-template-rows:136px auto; }
-            .artwork-cover-option img { height:136px; }
-            .artwork-website-shipping { align-items:flex-start; flex-direction:column; }
-            .artwork-website-actions { justify-content:flex-end; }
-            .artwork-website-actions .website-decision { width:112px; min-width:112px; height:112px; min-height:112px; padding:14px; font-size:10px; }
 
             .artwork-session-header,
             .artwork-page-header {
@@ -3387,15 +3120,6 @@ $editIconSvg = '<svg viewBox="0 0 24 24" width="18" height="18" stroke="currentC
             <?php if (isset($_GET['v2_generated'])): ?>
                 <div class="notice"><?= h(t('Analysis v2 draft generated. Review it below; nothing was published or applied.', 'Borrador de análisis v2 generado. Revisalo abajo; no se publicó ni aplicó nada.')) ?></div>
             <?php endif; ?>
-            <?php if (isset($_GET['website_v2_synced'])): ?>
-                <div class="notice"><?= h(t('Artwork sent to the Maurizio Valch catalogue. It remains hidden until you enable it in the website admin.', 'Obra enviada al catálogo de Maurizio Valch. Permanece oculta hasta que la habilités en la administración del sitio web.')) ?></div>
-            <?php endif; ?>
-            <?php if (isset($_GET['website_saved'])): ?>
-                <div class="notice"><?= h(t('Website entry', 'Entrada del sitio web')) ?> <?= h((string)$_GET['website_saved']) ?>.<?php if ((int)($_GET['cascade_count'] ?? 0) > 0): ?> <?= h(t('Approved text published;', 'Texto aprobado publicado;')) ?> <?= (int)$_GET['cascade_count'] ?> <?= h(t('mockups refreshing in the background.', 'mockups actualizándose en segundo plano.')) ?><?php endif; ?></div>
-            <?php endif; ?>
-            <?php if (isset($_GET['website_error'])): ?>
-                <div class="notice error"><?= h((string)$_GET['website_error']) ?></div>
-            <?php endif; ?>
             <?php if (isset($_GET['metadata_error'])): ?>
                 <div class="notice error"><?= h((string)$_GET['metadata_error']) ?></div>
             <?php endif; ?>
@@ -3471,7 +3195,7 @@ $editIconSvg = '<svg viewBox="0 0 24 24" width="18" height="18" stroke="currentC
                             : ($artworkSpanishDirty
                                 ? h(t('Unpublished changes — the site shows the previous version', 'Cambios sin publicar — el sitio muestra la versión anterior'))
                                 : h(t('Spanish published and up to date on the site', 'Español publicado y al día en el sitio'))) ?></span>
-                        <span><?= h(t('Publication is one single act: the "Publish Artwork" button in the Website section publishes the page, this approved text, and refreshes the mockups.', 'La publicación es un solo acto: el botón «Publicar Obra» de la sección Sitio Web publica la página, este texto aprobado y actualiza los mockups.')) ?></span>
+                        <span><?= h(t('Publishing happens in the Publication section: one act publishes the page, this approved text, and refreshes the mockups.', 'Publicar se hace en la sección Publicación: un solo acto publica la página, este texto aprobado y actualiza los mockups.')) ?> <a href="publication.php?id=<?= (int)$id ?>" style="color:var(--accent);font-weight:700;"><?= h(t('Open Publication', 'Abrir Publicación')) ?> →</a></span>
                     </div>
                     <?php endif; ?>
                     <details class="bilingual-editorial-memo">
@@ -3740,111 +3464,6 @@ $editIconSvg = '<svg viewBox="0 0 24 24" width="18" height="18" stroke="currentC
 
                             <div class="artwork-metadata-slot"><?= $artworkMetadataPanelHtml ?></div>
 
-                            <details class="artwork-website-panel" id="website-publication">
-                                <summary>
-                                    <span class="artwork-website-summary">
-                                        <strong><?= h(t('Website', 'Sitio web')) ?></strong>
-                                        <span><?= h(t('Publication, sale and delivery settings', 'Configuración de publicación, venta y entrega')) ?></span>
-                                    </span>
-                                    <span class="artwork-website-state"><?= h(str_replace('_', ' ', $websiteStatus)) ?></span>
-                                </summary>
-                                <form method="post" class="artwork-website-form">
-                                    <input type="hidden" name="action" value="save_artwork_website">
-                                    <p class="artwork-website-note"><?= h(t('Title, descriptions, SEO keywords, tags, alt text and captions come directly from Artwork Metadata.', 'El título, las descripciones, las palabras clave SEO, las etiquetas, el texto alternativo y los pies de imagen provienen directamente de los Metadatos de la Obra.')) ?> <strong><?= $websiteMetadataComplete ? h(t('Content complete.', 'Contenido completo.')) : h(t('Some metadata is still incomplete.', 'Algunos metadatos todavía están incompletos.')) ?></strong></p>
-
-                                    <section class="artwork-website-sale" aria-labelledby="website-sale-title">
-                                        <h4 id="website-sale-title"><?= h(t('Price and availability', 'Precio y disponibilidad')) ?></h4>
-                                        <div class="artwork-website-sale-grid">
-                                            <label><?= h(t('Availability', 'Disponibilidad')) ?>
-                                                <select name="sale_status">
-                                                    <?php foreach (['draft' => t('Not for sale', 'No a la venta'), 'active' => t('Available', 'Disponible'), 'paused' => t('Temporarily unavailable', 'Temporalmente no disponible'), 'sold_out' => t('Sold', 'Vendido')] as $value => $label): ?>
-                                                        <option value="<?= h($value) ?>" <?= (string)($websiteSale['status'] ?? 'draft') === $value ? 'selected' : '' ?>><?= h($label) ?></option>
-                                                    <?php endforeach; ?>
-                                                </select>
-                                            </label>
-                                            <label><?= h(t('Available units', 'Unidades disponibles')) ?><input type="number" min="0" step="1" name="sale_stock" value="<?= $websiteSaleAvailable ?>"></label>
-                                            <label><?= h(t('Price', 'Precio')) ?><input inputmode="decimal" name="sale_price" value="<?= $websiteSale ? h(number_format((int)$websiteSale['price_minor'] / 100, 2, '.', '')) : '' ?>" placeholder="2500.00"></label>
-                                            <label><?= h(t('Currency', 'Moneda')) ?><input name="sale_currency" maxlength="3" value="<?= h((string)($websiteSale['currency'] ?? $websiteDefaultCurrency)) ?>"></label>
-                                        </div>
-                                        <div class="artwork-website-shipping">
-                                            <span><?= h(t('Shipping uses the editable rates by continent for the whole store.', 'El envío usa las tarifas editables por continente para toda la tienda.')) ?></span>
-                                            <a href="../site-admin/?area=store&amp;section=shipping"><?= h(t('Edit shipping rates', 'Editar tarifas de envío')) ?></a>
-                                        </div>
-                                        <label class="artwork-website-saatchi">
-                                            <?= h(t('Saatchi Art listing link', 'Enlace del listing en Saatchi Art')) ?>
-                                            <input type="url" name="saatchi_url" value="<?= h((string)($websitePublication['saatchi_url'] ?? '')) ?>" placeholder="https://www.saatchiart.com/art/...">
-                                            <small><?= h(t('When set, the public artwork page shows "Buy on Saatchi Art" as the primary action.', 'Si se completa, la ficha pública muestra "Comprar en Saatchi Art" como acción principal.')) ?></small>
-                                        </label>
-                                    </section>
-
-                                    <div class="artwork-website-settings">
-                                        <label><?= h(t('Visibility', 'Visibilidad')) ?>
-                                            <select name="visibility">
-                                                <?php foreach (['public' => t('Public', 'Público'), 'unlisted' => t('Unlisted', 'No listado'), 'private' => t('Private', 'Privado')] as $value => $label): ?>
-                                                    <option value="<?= h($value) ?>" <?= $websiteVisibility === $value ? 'selected' : '' ?>><?= h($label) ?></option>
-                                                <?php endforeach; ?>
-                                            </select>
-                                        </label>
-                                        <label><?= h(t('Constellation country', 'País de constelación')) ?><input name="constellation_country" value="<?= h($websiteConstellationCountry) ?>" placeholder="<?= h(t('Optional', 'Opcional')) ?>"></label>
-                                        <div class="artwork-website-cover">
-                                            <span class="artwork-website-cover-label"><?= h(t('Website cover', 'Portada del sitio web')) ?></span>
-                                            <details class="artwork-cover-picker" data-website-cover-picker>
-                                                <summary>
-                                                    <img
-                                                        class="artwork-cover-current-image"
-                                                        src="<?= h(media_url((string)$websiteSelectedCoverItem['file'])) ?>"
-                                                        alt=""
-                                                        data-cover-current-image
-                                                    >
-                                                    <span class="artwork-cover-current-copy">
-                                                        <strong data-cover-current-label><?= h((string)$websiteSelectedCoverItem['label']) ?></strong>
-                                                        <span data-cover-current-type><?= h((string)$websiteSelectedCoverItem['type']) ?> <?= h(t('selected for the website', 'seleccionada para el sitio web')) ?></span>
-                                                    </span>
-                                                    <span class="artwork-cover-change"><?= h(t('Change cover', 'Cambiar portada')) ?></span>
-                                                </summary>
-                                                <div class="artwork-cover-options" role="radiogroup" aria-label="<?= h(t('Choose website cover', 'Elegir portada del sitio web')) ?>">
-                                                    <?php foreach ($websiteCoverItems as $file => $item): ?>
-                                                        <?php $coverSelected = $websiteSelectedCover === $file; ?>
-                                                        <label class="artwork-cover-option <?= $coverSelected ? 'is-selected' : '' ?>" data-cover-option>
-                                                            <input
-                                                                type="radio"
-                                                                name="header_file"
-                                                                value="<?= h($file) ?>"
-                                                                data-cover-image="<?= h(media_url($file)) ?>"
-                                                                data-cover-label="<?= h((string)$item['label']) ?>"
-                                                                data-cover-type="<?= h((string)$item['type']) ?>"
-                                                                <?= $coverSelected ? 'checked' : '' ?>
-                                                            >
-                                                            <img src="<?= h(media_url($file)) ?>" alt="<?= h((string)$item['label']) ?>" loading="lazy">
-                                                            <span class="artwork-cover-option-copy">
-                                                                <strong><?= h((string)$item['label']) ?></strong>
-                                                                <small><?= $coverSelected ? h(t('Selected', 'Seleccionada')) . ' · ' : '' ?><?= h((string)$item['type']) ?></small>
-                                                            </span>
-                                                        </label>
-                                                    <?php endforeach; ?>
-                                                </div>
-                                            </details>
-                                        </div>
-                                        <?php if ($bilingualExperiment && !$artworkSpanishHasContent): ?>
-                                            <div class="notice error" style="margin:0 0 12px;">
-                                                <?= h(t('This artwork has no editorial content yet: generate it first (Editorial workspace, "Generate content") — publishing requires it.', 'Esta obra todavía no tiene contenido editorial: generalo primero (Espacio editorial, «Generar contenido») — publicar lo requiere.')) ?>
-                                            </div>
-                                        <?php elseif ($bilingualExperiment && $artworkSpanishHasContent && !$artworkSpanishPublished && $websiteStatus === 'published'): ?>
-                                            <div class="notice error" style="margin:0 0 12px;">
-                                                <?= h(t('The page is published but its approved Spanish text is not. Press "Publish Artwork" once to sync everything (page + text + mockups).', 'La página está publicada pero su texto español aprobado no. Apretá «Publicar Obra» una vez para sincronizar todo (página + texto + mockups).')) ?>
-                                            </div>
-                                        <?php endif; ?>
-                                        <div class="artwork-website-actions">
-                                            <button class="website-decision website-save" type="submit" name="website_intent" value="save"><span><?= h(t('Save Website', 'Guardar Sitio Web')) ?><br><?= h(t('Settings', 'Configuración')) ?></span></button>
-                                            <?php if ($websiteStatus === 'published'): ?>
-                                                <button class="website-decision website-unpublish" type="submit" name="website_intent" value="unpublish"><span><?= h(t('Unpublish', 'Despublicar')) ?><br><?= h(t('Artwork', 'Obra')) ?></span></button>
-                                            <?php else: ?>
-                                                <button class="website-decision website-publish" type="submit" name="website_intent" value="publish"><span><?= h(t('Publish', 'Publicar')) ?><br><?= h(t('Artwork', 'Obra')) ?></span></button>
-                                            <?php endif; ?>
-                                        </div>
-                                    </div>
-                                </form>
-                            </details>
 
                             <form class="artwork-metadata-layout-form" method="post">
                                 <input type="hidden" name="action" value="save_artwork_metadata">
@@ -4916,31 +4535,6 @@ document.querySelectorAll('.v2-mobile-toggle').forEach((button) => {
         if (!panel) return;
         const open = panel.classList.toggle('is-open');
         button.setAttribute('aria-expanded', open ? 'true' : 'false');
-    });
-});
-</script>
-<script>
-document.querySelectorAll('[data-website-cover-picker]').forEach((picker) => {
-    const currentImage = picker.querySelector('[data-cover-current-image]');
-    const currentLabel = picker.querySelector('[data-cover-current-label]');
-    const currentType = picker.querySelector('[data-cover-current-type]');
-
-    picker.querySelectorAll('input[name="header_file"]').forEach((input) => {
-        input.addEventListener('change', () => {
-            picker.querySelectorAll('[data-cover-option]').forEach((option) => {
-                const optionInput = option.querySelector('input[name="header_file"]');
-                const selected = optionInput === input;
-                option.classList.toggle('is-selected', selected);
-                const type = option.querySelector('small');
-                if (type && optionInput) {
-                    type.textContent = (selected ? awI18n.selectedPrefix + ' · ' : '') + (optionInput.dataset.coverType || awI18n.imageFallback);
-                }
-            });
-            if (currentImage) currentImage.src = input.dataset.coverImage || '';
-            if (currentLabel) currentLabel.textContent = input.dataset.coverLabel || awI18n.websiteCoverFallback;
-            if (currentType) currentType.textContent = (input.dataset.coverType || awI18n.imageFallback) + ' ' + awI18n.selectedForWebsite;
-            window.setTimeout(() => { picker.open = false; }, 140);
-        });
     });
 });
 </script>

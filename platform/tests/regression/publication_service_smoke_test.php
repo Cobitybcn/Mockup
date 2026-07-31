@@ -78,6 +78,27 @@ $publicationId = $service->createForSheet(1, 7);
 $favoriteWebsitePublication = $service->saveWebsiteSettings(1, 7, ['visibility' => 'public'], 'save');
 $favoriteWebsiteItems = $favoriteWebsitePublication['items'];
 $favoriteSheetMockupId = (int)$pdo->query('SELECT COALESCE(mockup_id,0) FROM mockup_sheets WHERE id=12')->fetchColumn();
+
+// Selección explícita desde la sección Publicación: reemplaza el acople de
+// favoritos, respeta el orden y guarda caption/alt refinados por ítem.
+$explicitPublication = $service->saveWebsiteSettings(1, 7, ['visibility' => 'public'], 'save', [
+    ['mockup_id' => 71, 'caption' => 'Custom page caption', 'alt_text' => 'Custom page alt'],
+]);
+$explicitItems = $explicitPublication['items'];
+$explicitOk = count($explicitItems) === 1
+    && (int)$explicitItems[0]['mockup_sheet_id'] === 12
+    && (string)$explicitItems[0]['caption'] === 'Custom page caption'
+    && (string)$explicitItems[0]['alt_text'] === 'Custom page alt'
+    && (int)$explicitItems[0]['position'] === 0;
+
+// Selección explícita vacía = la página queda sin ítems propios (el sitio cae
+// al fallback legacy de mostrar todo el material).
+$clearedPublication = $service->saveWebsiteSettings(1, 7, ['visibility' => 'public'], 'save', []);
+$clearedOk = count($clearedPublication['items']) === 0;
+
+// Llamada legacy (null): sigue tomando los favoritos como antes.
+$legacyPublication = $service->saveWebsiteSettings(1, 7, ['visibility' => 'public'], 'save');
+$legacyOk = count($legacyPublication['items']) === 1 && (int)$legacyPublication['items'][0]['mockup_sheet_id'] === 12;
 $service->save($publicationId, 7, [
     'title' => 'Test Work', 'description' => 'Curatorial description',
     'short_description' => 'Short description', 'language' => 'en',
@@ -124,6 +145,9 @@ $checks = [
     count($favoriteWebsiteItems) === 1,
     (int)$favoriteWebsiteItems[0]['mockup_sheet_id'] === 12,
     $favoriteSheetMockupId === 71,
+    $explicitOk,
+    $clearedOk,
+    $legacyOk,
     $jobId > 0,
     $publication['status'] === 'published',
     count($publication['items']) === 1,
