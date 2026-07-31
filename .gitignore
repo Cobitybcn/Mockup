@@ -16,3 +16,7 @@ Thumbs.db
 /platform/logs/
 /platform/analysis/
 /platform/video/
+
+# Local working artifacts: DB backups and rendered demo videos (98 MB), never versioned nor shipped.
+/output/
+/tmp/

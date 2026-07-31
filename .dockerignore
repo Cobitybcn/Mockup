@@ -26,3 +26,5 @@ platform/storage/world_mothers/*
 artist-site/assets/uploads
 artist-site/assets/tenants
 artist-site/tools/sftp-venv
+output
+tmp
