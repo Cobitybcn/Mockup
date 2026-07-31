@@ -588,7 +588,7 @@ function pub_page_chip(string $status): array
     <title><?= pub_h(t('Publication - Artwork Mockups', 'Publicación - Artwork Mockups')) ?></title>
     <link rel="stylesheet" href="style.css">
     <link rel="stylesheet" href="ui-catalog.css">
-    <link rel="stylesheet" href="publication.css?v=13">
+    <link rel="stylesheet" href="publication.css?v=14">
 </head>
 <body>
 <div class="app-shell">
@@ -733,6 +733,7 @@ function pub_page_chip(string $status): array
                                             <?php $isSelected = in_array($card['id'], $doc['selectionOrder'], true); ?>
                                             <figure class="pub-media-card <?= $isSelected ? 'is-selected' : '' ?>" data-media-card data-mockup-id="<?= (int)$card['id'] ?>">
                                                 <span class="pub-media-order" data-media-order></span>
+                                                <span class="pub-media-cover" data-media-cover><?= pub_h(t('Cover', 'Portada')) ?></span>
                                                 <img src="<?= pub_h(pub_media_url($card['file'])) ?>" alt="<?= pub_h($card['label']) ?>" loading="lazy">
                                                 <figcaption><?= pub_h($card['label']) ?></figcaption>
                                                 <button type="button" class="pub-media-toggle" data-media-toggle
@@ -1355,6 +1356,10 @@ function pub_page_chip(string $status): array
             const position = order.indexOf(idOf(card));
             const selected = position !== -1;
             card.classList.toggle('is-selected', selected);
+            // La primera imagen es la portada en todos lados: el hook del
+            // carrusel de TikTok y la que lidera el primer post de la serie.
+            // Se elige arrastrandola al frente, no con un selector aparte.
+            card.classList.toggle('is-cover', position === 0);
             // Solo lo incluido se arrastra: lo que esta afuera no tiene orden.
             card.draggable = selected;
             const badge = card.querySelector('[data-media-order]');

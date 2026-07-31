@@ -15,7 +15,7 @@ declare(strict_types=1);
  */
 final class PublicationProductService
 {
-    public const SCHEMA = 'publication-product.v3';
+    public const SCHEMA = 'publication-product.v4';
 
     private PublicationService $publications;
 
@@ -169,6 +169,15 @@ final class PublicationProductService
                 $artworkContent['tags']
             );
             $visualHook = MockupSocialContentService::text($tiktok['visual_hook'] ?? '');
+            // El objeto que se publica es la OBRA, no la escena que la rodea:
+            // el carrusel abre con la lectura de la obra y la escena del mockup
+            // de portada entra despues, como contexto.
+            $artworkShort = trim((string)($artworkContent['short_description'] ?? ''));
+            $carouselComposed = self::tiktokCaption(
+                self::composeBlocks([$artworkShort, MockupSocialContentService::text($tiktok['caption_seed'] ?? '')]),
+                $artworkContent['tags'],
+                4000
+            );
             $destinations['tiktok'][$locale] = [
                 'caption' => $tiktokComposed['caption'],
                 'caption_seed' => MockupSocialContentService::text($tiktok['caption_seed'] ?? ''),
@@ -177,11 +186,12 @@ final class PublicationProductService
                 'suggested_motion' => MockupSocialContentService::text($tiktok['suggested_motion'] ?? ''),
                 'video_notes' => MockupSocialContentService::text($tiktok['video_notes'] ?? ''),
                 // Creator's Draft only carries title and description: the title
-                // is the short hook (TikTok caps it at 90), the description the
-                // caption the artist already approved.
+                // names the artwork (TikTok caps it at 90) and the description
+                // opens on the artwork's own reading.
                 'carousel' => [
-                    'title' => mb_substr($visualHook !== '' ? $visualHook : $universalTitle, 0, 90),
-                    'description' => $tiktokComposed['caption'],
+                    'title' => mb_substr($universalTitle !== '' ? $universalTitle : $visualHook, 0, 90),
+                    'description' => $carouselComposed['caption'],
+                    'opens_with' => 'artwork',
                 ],
             ];
         }
@@ -192,24 +202,36 @@ final class PublicationProductService
             $lead = $group[0];
             $igPost = ['part' => $groupIndex + 1, 'lead_key' => (string)((int)$lead['mockup_sheet_id']), 'images' => array_values(array_map(static fn(array $i): string => (string)$i['file'], $group))];
             $fbPost = $igPost;
+            // Una serie no puede abrir tres veces igual: el post 1 presenta la
+            // OBRA y cierra con su escena; los siguientes abren con su propia
+            // escena y dejan la obra despues. Informacion completa en los tres,
+            // primeras lineas distintas — que es lo unico que se ve en el feed
+            // antes del truncado.
+            $artworkFirst = $groupIndex === 0;
+            $igPost['opens_with'] = $artworkFirst ? 'artwork' : 'scene';
+            $fbPost['opens_with'] = $igPost['opens_with'];
             foreach ($locales as $locale) {
+                $artworkShort = trim((string)($artworkByLocale[$locale]['short_description'] ?? ''));
                 $leadInstagram = (array)($lead['social'][$locale]['instagram'] ?? []);
                 $igCaption = MockupSocialContentService::text($leadInstagram['caption'] ?? '', (string)($destinations['instagram'][$locale]['caption'] ?? ''));
                 $igCta = MockupSocialContentService::text($leadInstagram['cta'] ?? '', (string)($destinations['instagram'][$locale]['cta'] ?? ''));
                 $igPost[$locale] = [
-                    'composed' => implode("\n\n", array_filter([$igCaption, $igCta], static fn(string $p): bool => $p !== '')),
+                    'composed' => self::composeBlocks(
+                        $artworkFirst ? [$artworkShort, $igCaption, $igCta] : [$igCaption, $artworkShort, $igCta],
+                        2200
+                    ),
                     'hashtags' => MockupSocialContentService::list($leadInstagram['hashtags'] ?? [], (array)($destinations['instagram'][$locale]['hashtags'] ?? [])),
                     'alts' => array_values(array_map(static fn(array $i): string => (string)($i[$locale]['alt_text'] ?? ''), $group)),
                 ];
                 $leadFacebook = (array)($lead['social'][$locale]['facebook'] ?? []);
-                $fbParts = array_filter([
-                    MockupSocialContentService::text($leadFacebook['post_text'] ?? '', (string)($destinations['facebook'][$locale]['post_text'] ?? '')),
-                    MockupSocialContentService::text($leadFacebook['link_description'] ?? ''),
-                    MockupSocialContentService::text($leadFacebook['cta'] ?? ''),
-                ], static fn(string $p): bool => $p !== '');
+                $fbText = MockupSocialContentService::text($leadFacebook['post_text'] ?? '', (string)($destinations['facebook'][$locale]['post_text'] ?? ''));
+                $fbLink = MockupSocialContentService::text($leadFacebook['link_description'] ?? '');
+                $fbCta = MockupSocialContentService::text($leadFacebook['cta'] ?? '');
                 $fbPost[$locale] = [
                     'headline' => MockupSocialContentService::text($leadFacebook['headline'] ?? '', (string)($destinations['facebook'][$locale]['headline'] ?? '')),
-                    'composed' => implode("\n\n", $fbParts),
+                    'composed' => self::composeBlocks(
+                        $artworkFirst ? [$artworkShort, $fbText, $fbLink, $fbCta] : [$fbText, $artworkShort, $fbLink, $fbCta]
+                    ),
                     'alts' => array_values(array_map(static fn(array $i): string => (string)($i[$locale]['alt_text'] ?? ''), $group)),
                 ];
             }
@@ -364,6 +386,26 @@ final class PublicationProductService
      *
      * @return array{caption:string,hashtags:list<string>}
      */
+    /**
+     * Joins the blocks of a post in the order the caller decided, dropping what
+     * is empty and what repeats verbatim — the artwork reading and the scene
+     * copy sometimes carry the same sentence, and printing it twice inside one
+     * post is exactly the repetition this composition exists to avoid.
+     *
+     * @param list<string> $blocks
+     */
+    private static function composeBlocks(array $blocks, int $limit = 0): string
+    {
+        $clean = [];
+        foreach ($blocks as $block) {
+            $block = trim((string)$block);
+            if ($block === '' || in_array($block, $clean, true)) continue;
+            $clean[] = $block;
+        }
+        $composed = implode("\n\n", $clean);
+        return $limit > 0 && mb_strlen($composed) > $limit ? rtrim(mb_substr($composed, 0, $limit)) : $composed;
+    }
+
     public static function tiktokCaption(string $captionSeed, string|array $tags, int $limit = 2200): array
     {
         $seed = trim($captionSeed);

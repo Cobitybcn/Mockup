@@ -146,16 +146,26 @@ function run_publication_product_service_tests(): void
     TestHarness::assertSame([3, 1], array_map('count', PublicationProductService::seriesGroups($fakeItems(4))), '4 imágenes → 2 posts (3+1)');
     TestHarness::assertSame([3, 3, 6], array_map('count', PublicationProductService::seriesGroups($fakeItems(12))), 'más de 9 → los extra se suman al tercer post');
     TestHarness::assertSame([3, 3, 10], array_map('count', PublicationProductService::seriesGroups($fakeItems(20))), 'el tercer post respeta el tope de 10 del carrusel');
-    TestHarness::assertSame('publication-product.v3', (string)$payload['schema'], 'el schema del producto es v3 (series sociales + carrusel de TikTok)');
+    TestHarness::assertSame('publication-product.v4', (string)$payload['schema'], 'el schema del producto es v4 (la obra abre el carrusel y el primer post de cada serie)');
 
     // ————— Carrusel de TikTok (Creator's Draft: solo title + description) —————
     $tiktokBlock = (array)$payload['destinations']['tiktok'];
     TestHarness::assertSame(['cover.jpg', 'second.jpg'], (array)$tiktokBlock['carousel_images'], 'el carrusel viaja con toda la composición');
     TestHarness::assertSame(0, (int)$tiktokBlock['cover_index'], 'la portada del carrusel es la portada de la composición');
     $carouselEs = (array)$tiktokBlock['es']['carousel'];
-    TestHarness::assertSame('Hook TT', (string)$carouselEs['title'], 'el título del carrusel sale del gancho visual del mockup portada');
+    // El objeto que se publica es la obra, no la escena: el carrusel la nombra
+    // y abre con su lectura; la escena del mockup entra después, como contexto.
+    TestHarness::assertSame('STRATA TEST — UNUM', (string)$carouselEs['title'], 'el título del carrusel nombra la obra, no el gancho del mockup');
     TestHarness::assertTrue(mb_strlen((string)$carouselEs['title']) <= 90, 'el título respeta el tope de 90 de TikTok');
-    TestHarness::assertSame((string)$tiktokBlock['es']['caption'], (string)$carouselEs['description'], 'la descripción del carrusel es el caption ya aprobado');
+    TestHarness::assertSame('artwork', (string)$carouselEs['opens_with'], 'el carrusel declara que abre con la obra');
+    TestHarness::assertTrue(
+        str_starts_with((string)$carouselEs['description'], 'Corta ES'),
+        'la descripción del carrusel abre con la lectura de la obra'
+    );
+    TestHarness::assertTrue(
+        str_contains((string)$carouselEs['description'], 'Semilla TikTok ES'),
+        'la escena del mockup portada sigue estando, después de la obra'
+    );
     $igSeries = (array)($payload['destinations']['instagram']['series'] ?? []);
     TestHarness::assertSame(1, count($igSeries), 'con 2 imágenes la serie es un solo post');
     TestHarness::assertSame(['cover.jpg', 'second.jpg'], (array)$igSeries[0]['images'], 'el post lleva las imágenes de su grupo en orden');
@@ -168,7 +178,7 @@ function run_publication_product_service_tests(): void
     TestHarness::assertSame($first['id'], $second['id'], 'generate reutiliza la única fila por publicación');
     TestHarness::assertSame($first['source_fingerprint'], $second['source_fingerprint'], 'fuentes idénticas producen el mismo fingerprint');
     $found = $products->find($publicationId, $userId);
-    TestHarness::assertTrue(is_array($found) && $found['payload']['schema'] === 'publication-product.v3', 'find devuelve el producto congelado con su schema');
+    TestHarness::assertTrue(is_array($found) && $found['payload']['schema'] === 'publication-product.v4', 'find devuelve el producto congelado con su schema');
     TestHarness::assertTrue(!$products->isStale($found, $userId), 'recién generado, el producto está vigente');
 
     // ————— Staleness: cambia la fuente → desactualizado; solo-status NO —————
@@ -184,6 +194,54 @@ function run_publication_product_service_tests(): void
     TestHarness::assertTrue($products->isStale($products->find($publicationId, $userId), $userId), 'adjuntar un video a la página invalida el producto');
     $withVideo = $products->generate($publicationId, $userId);
     TestHarness::assertSame(55, (int)$withVideo['payload']['destinations']['tiktok']['video_export_id'], 'tiktok referencia el video de la página');
+
+    // ————— Serie 3×3: el post 1 abre con la OBRA, los demás con su escena —————
+    // Con 4 imágenes la serie son dos posts (3+1). El segundo tiene su propia
+    // escena, así que se ve la inversión: ningún post repite la primera línea
+    // del anterior, que es lo único que se lee en el feed antes del truncado.
+    $pdo->exec("INSERT INTO mockups (id,user_id,mockup_file) VALUES (73,9,'third.jpg'),(74,9,'fourth.jpg')");
+    $pdo->exec("INSERT INTO mockup_sheets (id,user_id,artwork_sheet_id,mockup_id,mockup_file,title,alt_text,caption) VALUES
+        (14,9,1,73,'third.jpg','Third mock','Item alt 14','Item cap 14'),
+        (15,9,1,74,'fourth.jpg','Fourth mock','Item alt 15','Item cap 15')");
+    $pdo->prepare("INSERT INTO publication_items (publication_id,mockup_sheet_id,position,role,title,alt_text,caption) VALUES
+        (?,14,2,'context','Third mock','Item alt 14','Item cap 14'),
+        (?,15,3,'context','Fourth mock','Item alt 15','Item cap 15')")
+        ->execute([$publicationId, $publicationId]);
+    $secondLeadEs = [
+        'caption' => 'Fourth cap ES', 'alt_text' => 'Fourth alt ES',
+        'social' => [
+            'instagram' => ['caption' => 'Escena cuatro ES', 'hook' => '', 'hashtags' => ['#sala'], 'cta' => 'IG CTA 4'],
+            'facebook' => ['headline' => 'FB H4', 'post_text' => 'FB escena cuatro', 'link_description' => '', 'cta' => ''],
+        ],
+    ];
+    $insertContent->execute([9, 'mockup', 74, 'es', $json(['caption' => 'draft 4']), 'source', 1, $json($secondLeadEs)]);
+
+    $seriesPayload = $products->assemble($publicationId, $userId);
+    $ig = (array)($seriesPayload['destinations']['instagram']['series'] ?? []);
+    TestHarness::assertSame(2, count($ig), '4 imágenes → 2 posts (3+1)');
+    TestHarness::assertSame('artwork', (string)$ig[0]['opens_with'], 'el primer post de la serie presenta la obra');
+    TestHarness::assertSame('scene', (string)$ig[1]['opens_with'], 'los posts siguientes abren con su propia escena');
+    TestHarness::assertTrue(
+        str_starts_with((string)$ig[0]['es']['composed'], 'Corta ES'),
+        'el post 1 abre con la lectura de la obra y la escena queda después'
+    );
+    TestHarness::assertTrue(
+        str_starts_with((string)$ig[1]['es']['composed'], 'Escena cuatro ES'),
+        'el post 2 abre con la escena de SU imagen líder, no con la obra'
+    );
+    TestHarness::assertContains(
+        'Corta ES',
+        (string)$ig[1]['es']['composed'],
+        'el post 2 igual lleva la obra, después de su escena: información completa, apertura distinta'
+    );
+    $firstLine = static fn(string $text): string => trim(explode("\n", trim($text))[0] ?? '');
+    TestHarness::assertTrue(
+        $firstLine((string)$ig[0]['es']['composed']) !== $firstLine((string)$ig[1]['es']['composed']),
+        'ningún post de la serie repite la primera línea de otro'
+    );
+    $fb = (array)($seriesPayload['destinations']['facebook']['series'] ?? []);
+    TestHarness::assertTrue(str_starts_with((string)$fb[0]['es']['composed'], 'Corta ES'), 'facebook sigue la misma inversión que instagram');
+    TestHarness::assertTrue(str_starts_with((string)$fb[1]['es']['composed'], 'FB escena cuatro'), 'el segundo post de facebook abre con su escena');
 
     // ————— Compuertas —————
     $pdo->prepare("INSERT INTO publications

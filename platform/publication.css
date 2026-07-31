@@ -67,6 +67,10 @@ details.pub-panel > summary:hover { background: var(--surface-soft); }
 .pub-media-card.is-selected .pub-media-toggle { border-color: #91a88b; background: #b9c9b4; color: #2f4231; }
 .pub-media-order { position: absolute; top: 12px; left: 12px; display: none; width: 26px; height: 26px; align-items: center; justify-content: center; border-radius: 50%; background: rgba(47, 66, 49, .88); color: #fffaf7; font: 800 12px/1 var(--font-sans); }
 .pub-media-card.is-selected .pub-media-order { display: inline-flex; }
+/* La portada manda en todos los destinos: es el hook del carrusel y la que
+   lidera el primer post. Se elige arrastrandola al frente. */
+.pub-media-cover { position: absolute; top: 12px; right: 12px; display: none; padding: 4px 8px; border-radius: 2px; background: rgba(154, 123, 86, .92); color: #fffaf7; font: 700 9px/1 var(--font-sans); letter-spacing: .1em; text-transform: uppercase; }
+.pub-media-card.is-cover .pub-media-cover { display: inline-block; }
 /* Only what is included carries an order, so only it can be dragged. The image
    is the handle; without this the browser drags the <img> as a ghost link. */
 .pub-media-card[draggable="true"] { cursor: grab; }
