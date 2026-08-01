@@ -590,10 +590,17 @@
         updateGenerationPolling();
     }
 
-    function assignReference(sceneId, role, assetKey) {
-        const asset = assetByKey(assetKey);
+    async function assignReference(sceneId, role, assetKey) {
+        let asset = assetByKey(assetKey);
+        // A clip generated in this session (or in another tab) may not be in the
+        // library yet. Pull it in once before giving up, instead of doing nothing.
+        if (!asset && String(assetKey).startsWith('generation_job:')) {
+            await refreshLibrary();
+            asset = assetByKey(assetKey);
+        }
         const scene = sceneById(sceneId);
-        if (!asset || !scene) return;
+        if (!scene) return;
+        if (!asset) return toast('That result is not available as a reference yet. Try again in a moment.', true);
         if (asset.mediaType === 'video') {
             if (role === 'start_frame' && asset.type !== 'generation_job') {
                 return toast('Uploaded videos are edited from the Videos section.', true);
@@ -784,12 +791,20 @@
         if (!state.generationTimer) state.generationTimer = window.setTimeout(pollGeneration, 7000);
     }
 
+    function generationSignature() {
+        return scenes().map(scene => `${scene.id}:${Number(scene.active_generation?.id || 0)}`).join(',');
+    }
+
     async function pollGeneration() {
         state.generationTimer = null;
         if (!currentProject() || document.hidden) return updateGenerationPolling();
         try {
+            const before = generationSignature();
             const result = await request(state.endpoints.generationStatus || 'video_generation_status.php', { projectId: currentProject().id });
             if (result.project && result.scenes) applyStudio(result);
+            // A finished clip only becomes assignable once it reaches the library,
+            // so pull it in before the board offers it as another sequence's start.
+            if (generationSignature() !== before) await refreshLibrary();
         } catch (_) { /* keep the board usable during a transient polling failure */ }
         updateGenerationPolling();
     }
