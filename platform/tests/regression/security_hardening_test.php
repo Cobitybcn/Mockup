@@ -98,6 +98,24 @@ function run_security_hardening_regression_tests(): void
         );
     }
 
+    // El allow-list de arriba es una lista escrita a mano, así que un worker
+    // nuevo se despliega perfectamente y muere en 403 sin que nada avise: fue
+    // lo que pasó con publication_distribution_worker.php, cuyas partes 2 y 3
+    // quedaron «programadas» para siempre. La lista se deriva ahora de quién
+    // encola de verdad — si Cloud Tasks apunta a un handler, tiene que estar.
+    $tasksService = (string)file_get_contents($platformRoot . '/app/Services/CloudTasksService.php');
+    preg_match_all("/self::enqueue\(\s*'([a-z0-9_]+\.php)'/i", $tasksService, $enqueued);
+    TestHarness::assertTrue(count($enqueued[1]) > 0, 'la fuente de handlers encolados se lee de CloudTasksService');
+    $unreachable = [];
+    foreach (array_unique($enqueued[1]) as $handler) {
+        if (!str_contains($workerApache, str_replace('.', '\\.', $handler))) $unreachable[] = $handler;
+    }
+    TestHarness::assertSame(
+        [],
+        $unreachable,
+        'todo handler que Cloud Tasks encola está habilitado en apache-worker.conf'
+    );
+
     $bootstrapScript = (string)file_get_contents($platformRoot . '/scripts/bootstrap_operational_project.ps1');
     TestHarness::assertContains('--max-attempts=8', $bootstrapScript, 'task retries have a finite production limit');
     TestHarness::assertContains('--min-backoff=5s', $bootstrapScript, 'task failures cannot create a tight retry storm');
