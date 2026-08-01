@@ -92,18 +92,19 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && ($_POST['action'] ?? '') === 'save_
 
         $savedPublication = $publicationService->saveWebsiteSettings((int)$sheet['id'], $userId, $_POST, $intent, $explicitItems);
 
-        $headerFile = basename(trim((string)($_POST['header_file'] ?? '')));
-        $allowedHeaders = array_filter([basename((string)($sheet['source_image_file'] ?? ''))]);
-        $headerViews = $pdo->prepare('SELECT file_name FROM root_artwork_candidates WHERE artwork_id=?');
-        $headerViews->execute([$artworkId]);
-        $allowedHeaders = array_merge($allowedHeaders, array_map('basename', $headerViews->fetchAll(PDO::FETCH_COLUMN)));
-        $groupStmt = $pdo->prepare('SELECT COALESCE(artwork_group_id,0) FROM artworks WHERE id=? AND user_id=?');
-        $groupStmt->execute([$artworkId, $userId]);
-        $groupId = (int)($groupStmt->fetchColumn() ?: 0);
-        $headerMockups = $pdo->prepare('SELECT mockup_file FROM mockup_sheets WHERE user_id=? AND (artwork_id=? OR artwork_sheet_id=? OR (? > 0 AND artwork_group_id=?))');
-        $headerMockups->execute([$userId, $artworkId, (int)$sheet['id'], $groupId, $groupId]);
-        $allowedHeaders = array_merge($allowedHeaders, array_map('basename', $headerMockups->fetchAll(PDO::FETCH_COLUMN)));
-        if ($headerFile !== '' && !in_array($headerFile, $allowedHeaders, true)) throw new RuntimeException(t('The selected website cover does not belong to this artwork.', 'La portada seleccionada para el sitio web no pertenece a esta obra.'));
+        // Una sola portada, decidida en un solo lugar: la imagen 1 de la
+        // composición encabeza la página, abre el carrusel de TikTok y lidera
+        // el primer post. El selector aparte tenía lista propia y las dos
+        // elecciones terminaban separadas. Sin composición no se toca la
+        // portada vigente: la galería sigue mostrando todo y la página queda
+        // como está.
+        $headerFile = basename(trim((string)($savedPublication['header_file'] ?? '')));
+        if ($selectedMockupIds !== []) {
+            $firstMockup = $pdo->prepare('SELECT mockup_file FROM mockups WHERE id=? AND user_id=? LIMIT 1');
+            $firstMockup->execute([$selectedMockupIds[0], $userId]);
+            $firstFile = basename((string)($firstMockup->fetchColumn() ?: ''));
+            if ($firstFile !== '') $headerFile = $firstFile;
+        }
         $saatchiUrl = trim((string)($_POST['saatchi_url'] ?? ''));
         if ($saatchiUrl !== '') {
             $saatchiHost = strtolower((string)(parse_url($saatchiUrl, PHP_URL_HOST) ?: ''));
@@ -406,25 +407,11 @@ if ($artworkId <= 0) {
         if (!in_array($card['id'], $selectionOrder, true)) $mediaGrid[] = $card;
     }
 
-    // Cover options: root + root views + mockups.
-    $coverItems = [];
-    $addCover = static function (string $file, string $label, string $type) use (&$coverItems): void {
-        $file = basename(trim($file));
-        if ($file === '' || isset($coverItems[$file])) return;
-        $coverItems[$file] = ['file' => $file, 'label' => $label, 'type' => $type];
-    };
-    $addCover($rootFile, t('Main artwork image', 'Imagen principal de la obra'), t('Artwork', 'Obra'));
-    $candidateStmt = $pdo->prepare('SELECT file_name, view_type FROM root_artwork_candidates WHERE artwork_id=? ORDER BY id ASC');
-    $candidateStmt->execute([$artworkId]);
-    foreach ($candidateStmt->fetchAll(PDO::FETCH_ASSOC) as $candidate) {
-        $addCover((string)($candidate['file_name'] ?? ''), ucwords(str_replace('-', ' ', (string)($candidate['view_type'] ?? 'view'))), t('Artwork view', 'Vista de obra'));
-    }
-    foreach ($mockupCards as $card) {
-        $addCover($card['file'], $card['label'], t('Mockup', 'Mockup'));
-    }
+    // La portada ya no se elige aparte: es la imagen 1 de la composición. Se
+    // conserva solo para leer cuál es la vigente cuando todavía no hay
+    // composición (galería en modo «mostrar todo»).
     $selectedCover = basename((string)($publication['header_file'] ?? ''));
-    if (!isset($coverItems[$selectedCover])) $selectedCover = $rootFile;
-    $selectedCoverItem = $coverItems[$selectedCover] ?? ['file' => $rootFile, 'label' => t('Main artwork image', 'Imagen principal de la obra'), 'type' => t('Artwork', 'Obra')];
+    if ($selectedCover === '') $selectedCover = $rootFile;
 
     // Commercial data.
     $saleStmt = $pdo->prepare('SELECT * FROM artist_site_print_variants WHERE user_id=? AND artwork_id=? ORDER BY id LIMIT 1');
@@ -491,9 +478,7 @@ if ($artworkId <= 0) {
         'mockupCards' => $mockupCards,
         'mediaGrid' => $mediaGrid,
         'selectionOrder' => $selectionOrder,
-        'coverItems' => $coverItems,
         'selectedCover' => $selectedCover,
-        'selectedCoverItem' => $selectedCoverItem,
         'sale' => $sale,
         'saleAvailable' => $saleAvailable,
         'defaultCurrency' => $defaultCurrency,
@@ -588,7 +573,7 @@ function pub_page_chip(string $status): array
     <title><?= pub_h(t('Publication - Artwork Mockups', 'Publicación - Artwork Mockups')) ?></title>
     <link rel="stylesheet" href="style.css">
     <link rel="stylesheet" href="ui-catalog.css">
-    <link rel="stylesheet" href="publication.css?v=15">
+    <link rel="stylesheet" href="publication.css?v=16">
 </head>
 <body>
 <div class="app-shell">
@@ -780,35 +765,6 @@ function pub_page_chip(string $status): array
                                     </div>
                                     <?= $videoAttach('') ?>
                                 <?php endif; ?>
-
-                                <h3 class="pub-section-title"><?= pub_h(t('Website cover', 'Portada del sitio web')) ?></h3>
-                                <details class="pub-cover-picker" data-cover-picker>
-                                    <summary>
-                                        <img class="pub-cover-current-image" src="<?= pub_h(pub_media_url((string)$doc['selectedCoverItem']['file'])) ?>" alt="" data-cover-current-image>
-                                        <span class="pub-cover-current-copy">
-                                            <strong data-cover-current-label><?= pub_h((string)$doc['selectedCoverItem']['label']) ?></strong>
-                                            <span data-cover-current-type><?= pub_h((string)$doc['selectedCoverItem']['type']) ?> <?= pub_h(t('selected for the website', 'seleccionada para el sitio web')) ?></span>
-                                        </span>
-                                        <span class="pub-cover-change"><?= pub_h(t('Change cover', 'Cambiar portada')) ?></span>
-                                    </summary>
-                                    <div class="pub-cover-options" role="radiogroup" aria-label="<?= pub_h(t('Choose website cover', 'Elegir portada del sitio web')) ?>">
-                                        <?php foreach ($doc['coverItems'] as $file => $item): ?>
-                                            <?php $coverSelected = $doc['selectedCover'] === $file; ?>
-                                            <label class="pub-cover-option <?= $coverSelected ? 'is-selected' : '' ?>" data-cover-option>
-                                                <input type="radio" name="header_file" value="<?= pub_h($file) ?>"
-                                                    data-cover-image="<?= pub_h(pub_media_url($file)) ?>"
-                                                    data-cover-label="<?= pub_h((string)$item['label']) ?>"
-                                                    data-cover-type="<?= pub_h((string)$item['type']) ?>"
-                                                    <?= $coverSelected ? 'checked' : '' ?>>
-                                                <img src="<?= pub_h(pub_media_url($file)) ?>" alt="<?= pub_h((string)$item['label']) ?>" loading="lazy">
-                                                <span class="pub-cover-option-copy">
-                                                    <strong><?= pub_h((string)$item['label']) ?></strong>
-                                                    <small><?= pub_h((string)$item['type']) ?></small>
-                                                </span>
-                                            </label>
-                                        <?php endforeach; ?>
-                                    </div>
-                                </details>
 
                                 <h3 class="pub-section-title"><?= pub_h(t('Price and availability', 'Precio y disponibilidad')) ?></h3>
                                 <div class="pub-sale-grid">
@@ -1474,21 +1430,6 @@ function pub_page_chip(string $status): array
         });
     });
 
-    // Cover picker (same behaviour as the former artwork panel).
-    form.querySelectorAll('[data-cover-picker]').forEach(picker => {
-        const currentImage = picker.querySelector('[data-cover-current-image]');
-        const currentLabel = picker.querySelector('[data-cover-current-label]');
-        picker.querySelectorAll('input[name="header_file"]').forEach(input => {
-            input.addEventListener('change', () => {
-                picker.querySelectorAll('[data-cover-option]').forEach(option => {
-                    option.classList.toggle('is-selected', option.querySelector('input[name="header_file"]') === input);
-                });
-                if (currentImage) currentImage.src = input.dataset.coverImage || '';
-                if (currentLabel) currentLabel.textContent = input.dataset.coverLabel || '';
-                window.setTimeout(() => { picker.open = false; }, 140);
-            });
-        });
-    });
 })();
 </script>
 </body>

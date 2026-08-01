@@ -225,10 +225,24 @@ function run_website_board_grouping_regression_tests(): void
     // Enmienda 2026-07-31: la portada del sitio se elige en la seccion
     // Publicacion (ficha limpia, una sola puerta).
     $publicationPage = (string)file_get_contents($platformRoot . '/publication.php');
-    TestHarness::assertContains('data-cover-picker', $publicationPage, 'Publicacion muestra la portada activa en un selector visual');
-    TestHarness::assertContains('class="pub-cover-options"', $publicationPage, 'Publicacion permite comparar las portadas mediante miniaturas');
-    TestHarness::assertContains('type="radio"', $publicationPage, 'la portada elegida se envia como una opcion accesible del formulario');
-    TestHarness::assertTrue(!str_contains($publicationPage, '<select name="header_file">'), 'Publicacion no oculta la portada elegida en un select de texto');
+    // Enmienda 2026-08-01: la portada dejo de ser una eleccion aparte. El
+    // selector tenia lista propia (todos los mockups de la obra) al margen de
+    // la composicion, asi que las dos elecciones se separaban: paginas con la
+    // cabecera en la septima imagen de la grilla, o en una que no estaba. Ahora
+    // la portada ES la imagen 1 de la composicion, en un solo lugar.
+    TestHarness::assertTrue(
+        !str_contains($publicationPage, 'data-cover-picker') && !str_contains($publicationPage, 'pub-cover-options'),
+        'la portada ya no se elige en un selector aparte de la composicion'
+    );
+    TestHarness::assertTrue(
+        !str_contains($publicationPage, 'name="header_file"'),
+        'la portada no viaja como un campo propio del formulario: se deriva de la imagen 1'
+    );
+    TestHarness::assertContains(
+        '$selectedMockupIds[0]',
+        $publicationPage,
+        'al guardar, la portada del sitio es la primera imagen de la composicion'
+    );
     TestHarness::assertContains("['camera_slot_name']", $publicationPage, 'los mockups del selector usan el nombre real de su camara');
     TestHarness::assertTrue(!str_contains($artworkPage, 'website_studio_notes.php?source=artwork:'), 'Artwork reserva su cabecera para el trabajo visual principal');
     TestHarness::assertTrue(!str_contains($seriesPage, 'website_studio_notes.php?source=series:'), 'Series reserva su encabezado para Create Art como unica accion contextual');
