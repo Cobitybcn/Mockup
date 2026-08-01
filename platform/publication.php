@@ -1298,6 +1298,16 @@ function pub_page_chip(string $status): array
     </main>
 </div>
 <script>
+// El aviso de un envío viaja en la URL, así que cada recarga repetía un error
+// ya resuelto y no había forma de sacárselo de encima. Se muestra una vez y la
+// dirección queda limpia: recargar deja de mentir sobre el estado actual.
+(() => {
+    const url = new URL(window.location.href);
+    if (['error', 'saved', 'video_warning', 'dist', 'cascade_count'].some(key => url.searchParams.has(key))) {
+        ['error', 'saved', 'video_warning', 'cascade_count'].forEach(key => url.searchParams.delete(key));
+        window.history.replaceState({}, '', url.pathname + url.search + url.hash);
+    }
+})();
 (() => {
     const form = document.querySelector('[data-publication-form]');
     if (!form) return;

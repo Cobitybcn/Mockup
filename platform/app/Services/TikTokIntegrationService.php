@@ -102,9 +102,15 @@ final class TikTokIntegrationService
         )));
         $missing = array_values(array_diff($required, $granted));
         if ($missing) {
+            // Decir solo lo que FALTA deja al artista reconectando en círculos.
+            // TikTok solo concede los permisos habilitados para la app en su
+            // portal: si reconectando no aparecen, el bloqueo esta alli y no
+            // aqui. Mostrar lo concedido convierte el mensaje en diagnostico.
             throw new RuntimeException(
-                'TikTok no concedió los permisos requeridos: '.implode(', ', $missing)
-                . '. Reconectá la cuenta de TikTok para habilitarlos.'
+                'TikTok no concedió los permisos requeridos: ' . implode(', ', $missing)
+                . '. Concedidos en la conexión actual: ' . (implode(', ', $granted) ?: '—')
+                . '. Reconectá la cuenta; si TikTok no ofrece el permiso en su propia pantalla de autorización,'
+                . ' primero hay que habilitarlo para la app en el portal de desarrollador de TikTok.'
             );
         }
 
