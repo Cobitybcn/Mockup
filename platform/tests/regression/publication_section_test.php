@@ -37,6 +37,12 @@ function run_publication_section_tests(): void
     );
     TestHarness::assertContains('dragstart', $section, 'El orden se corrige arrastrando, no deseleccionando todo');
     TestHarness::assertContains('card.draggable = selected', $section, 'Solo lo incluido se arrastra: lo que está afuera no tiene orden');
+    TestHarness::assertContains(
+        'position === 0 || position === 3 || position === 6',
+        $section,
+        'Las cabeceras de publicación son las posiciones 1, 4 y 7 — el reparto en posts se ve sin contar de a tres'
+    );
+    TestHarness::assertContains('is-lead', $section, 'Las cabeceras de publicación se distinguen con su propio fondo');
 
     // ————— El producto es MOTOR, no paso (enmienda 2026-07-31) —————
     TestHarness::assertTrue(

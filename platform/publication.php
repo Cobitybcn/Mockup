@@ -588,7 +588,7 @@ function pub_page_chip(string $status): array
     <title><?= pub_h(t('Publication - Artwork Mockups', 'Publicación - Artwork Mockups')) ?></title>
     <link rel="stylesheet" href="style.css">
     <link rel="stylesheet" href="ui-catalog.css">
-    <link rel="stylesheet" href="publication.css?v=14">
+    <link rel="stylesheet" href="publication.css?v=15">
 </head>
 <body>
 <div class="app-shell">
@@ -728,12 +728,14 @@ function pub_page_chip(string $status): array
                                 <?php if (!$doc['mediaGrid']): ?>
                                     <p class="pub-video-empty"><?= pub_h(t('This artwork has no mockups yet.', 'Esta obra todavía no tiene mockups.')) ?></p>
                                 <?php else: ?>
-                                    <div class="pub-media-grid" data-media-grid>
+                                    <div class="pub-media-grid" data-media-grid
+                                        data-label-cover="<?= pub_h(t('Cover', 'Portada')) ?>"
+                                        data-label-lead="<?= pub_h(t('Opens post', 'Abre post')) ?>">
                                         <?php foreach ($doc['mediaGrid'] as $card): ?>
                                             <?php $isSelected = in_array($card['id'], $doc['selectionOrder'], true); ?>
                                             <figure class="pub-media-card <?= $isSelected ? 'is-selected' : '' ?>" data-media-card data-mockup-id="<?= (int)$card['id'] ?>">
                                                 <span class="pub-media-order" data-media-order></span>
-                                                <span class="pub-media-cover" data-media-cover><?= pub_h(t('Cover', 'Portada')) ?></span>
+                                                <span class="pub-media-cover" data-media-cover></span>
                                                 <img src="<?= pub_h(pub_media_url($card['file'])) ?>" alt="<?= pub_h($card['label']) ?>" loading="lazy">
                                                 <figcaption><?= pub_h($card['label']) ?></figcaption>
                                                 <button type="button" class="pub-media-toggle" data-media-toggle
@@ -1356,10 +1358,19 @@ function pub_page_chip(string $status): array
             const position = order.indexOf(idOf(card));
             const selected = position !== -1;
             card.classList.toggle('is-selected', selected);
-            // La primera imagen es la portada en todos lados: el hook del
-            // carrusel de TikTok y la que lidera el primer post de la serie.
-            // Se elige arrastrandola al frente, no con un selector aparte.
+            // Las cabeceras de publicacion son las posiciones 1, 4 y 7: la serie
+            // parte la composicion de a tres y cada grupo lo abre su primera
+            // imagen (lo que pase de 9 se suma al post 3, sin mover cabeceras).
+            // La 1 manda en todo: portada de la pagina y tapa del carrusel.
+            const lead = selected && (position === 0 || position === 3 || position === 6);
             card.classList.toggle('is-cover', position === 0);
+            card.classList.toggle('is-lead', lead);
+            const flag = card.querySelector('[data-media-cover]');
+            if (flag) {
+                flag.textContent = position === 0
+                    ? (grid?.dataset.labelCover || '')
+                    : (lead ? `${grid?.dataset.labelLead || ''} ${Math.floor(position / 3) + 1}` : '');
+            }
             // Solo lo incluido se arrastra: lo que esta afuera no tiene orden.
             card.draggable = selected;
             const badge = card.querySelector('[data-media-order]');
