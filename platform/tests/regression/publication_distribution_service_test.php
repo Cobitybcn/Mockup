@@ -349,4 +349,61 @@ function run_publication_distribution_service_tests(): void
         $xBlocked = true;
     }
     TestHarness::assertTrue($xBlocked, 'X es lugar reservado: publish rechaza');
+
+    // ————— Lo que la inyección de transportes NO puede ver —————
+    // Los tests inyectan transportes falsos, así que el cuerpo real de los
+    // transportes nunca se ejecuta acá. Una llamada estática a un método de
+    // instancia pasó la suite entera y murió en producción con los 7 pines:
+    // «Non-static method PinterestPublisher::imagePinPayload() cannot be called
+    // statically». Este invariante vigila la FORMA de la llamada en el código
+    // fuente, que es exactamente el punto ciego de la inyección.
+    $platformRoot = dirname(__DIR__, 2);
+    $sources = [];
+    foreach (['/app', ''] as $subdirectory) {
+        $directory = $platformRoot . $subdirectory;
+        $iterator = $subdirectory === ''
+            ? new ArrayIterator(array_map(static fn(string $f): SplFileInfo => new SplFileInfo($f), (array)glob($directory . '/*.php')))
+            : new RecursiveIteratorIterator(new RecursiveDirectoryIterator($directory, FilesystemIterator::SKIP_DOTS));
+        foreach ($iterator as $entry) {
+            if ($entry instanceof SplFileInfo && strtolower($entry->getExtension()) === 'php') {
+                $sources[$entry->getPathname()] = true;
+            }
+        }
+    }
+    $publisherStatics = [];
+    foreach ((new ReflectionClass('PinterestPublisher'))->getMethods() as $method) {
+        if ($method->isStatic()) $publisherStatics[] = $method->getName();
+    }
+    $badCalls = [];
+    foreach (array_keys($sources) as $file) {
+        $code = (string)file_get_contents($file);
+        if (preg_match_all('/PinterestPublisher::([a-zA-Z_][a-zA-Z0-9_]*)\s*\(/', $code, $matches) === 0) continue;
+        foreach ($matches[1] as $called) {
+            if (!in_array($called, $publisherStatics, true)) {
+                $badCalls[] = basename($file) . ' → PinterestPublisher::' . $called . '()';
+            }
+        }
+    }
+    TestHarness::assertSame(
+        [],
+        array_values(array_unique($badCalls)),
+        'ninguna llamada estática apunta a un método de instancia de PinterestPublisher'
+    );
+
+    // Un destino que no publicó NADA no está enviado: publish debe fallar para
+    // que el resumen del lote no lo cuente entre los éxitos.
+    $allFailed = new PublicationDistributionService($pdo, $productService, $publicationService, [
+        'pinterest' => static fn(array $request): array => ['external_id' => 'board-1', 'items' => [
+            ['key' => '1', 'external_id' => '', 'external_url' => '', 'error' => 'Pinterest rechazó la imagen'],
+            ['key' => '2', 'external_id' => '', 'external_url' => '', 'error' => 'Pinterest rechazó la imagen'],
+        ]],
+    ]);
+    $pinterestFailed = false;
+    try {
+        $allFailed->publish($publicationId, $userId, 'pinterest', 'en', []);
+    } catch (RuntimeException $e) {
+        $pinterestFailed = str_contains($e->getMessage(), 'rechazó');
+    }
+    TestHarness::assertTrue($pinterestFailed, 'con cero pines publicados el destino falla en vez de reportarse enviado');
+    TestHarness::assertSame('failed', (string)$allFailed->states($publicationId, $userId)['pinterest']['status'], 'y la fila queda registrada como fallada, con su detalle');
 }

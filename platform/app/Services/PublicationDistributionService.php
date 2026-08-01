@@ -353,6 +353,14 @@ final class PublicationDistributionService
                 'request' => $request,
                 'fingerprint' => $fingerprint,
             ]);
+            // A destination that published NOTHING has not been sent. Returning
+            // normally here made the batch summary count it among the successes
+            // while every single pin had failed — a report worse than an error,
+            // because it stops you from looking.
+            if ($status === 'failed') {
+                throw new RuntimeException(mb_substr(implode(' · ', $errors), 0, 1200)
+                    ?: t('No item could be published.', 'No se pudo publicar ningún ítem.'));
+            }
             return $this->states($publicationId, $userId)[$destination];
         }
 
@@ -814,18 +822,22 @@ final class PublicationDistributionService
                         $variant = ['title' => (string)$item['title'], 'description' => (string)$item['description']];
                         $pinItem = ['alt_text' => (string)$item['alt_text']];
                         if ($useUrl) {
-                            $payload = PinterestPublisher::imagePinPayload($variant, $pinItem, $boardId, $request['link'], $this->publicImageUrl($request['slug'], (string)$item['image_file']));
+                            $payload = (new PinterestPublisher())->imagePinPayload($variant, $pinItem, $boardId, $request['link'], $this->publicImageUrl($request['slug'], (string)$item['image_file']));
                         } else {
                             $path = $this->localImagePath((string)$item['image_file']);
                             if ($path === '') throw new RuntimeException(t('Image unavailable', 'Imagen no disponible') . ': ' . basename((string)$item['image_file']));
-                            $payload = PinterestPublisher::imageBase64PinPayload($variant, $pinItem, $boardId, $request['link'], $path);
+                            $payload = (new PinterestPublisher())->imageBase64PinPayload($variant, $pinItem, $boardId, $request['link'], $path);
                         }
                         $created = $pinterest->createPin($userId, $payload, 'artist');
                         $pinId = (string)($created['id'] ?? '');
+                        // A sandbox pin has no page on pinterest.com: linking to
+                        // one sends the artist to an empty page and reads as "it
+                        // never published". No link is honest; a dead one is not.
+                        $live = app_env('PINTEREST_API_ENVIRONMENT', 'production') !== 'sandbox';
                         $results[] = [
                             'key' => (string)$item['key'],
                             'external_id' => $pinId,
-                            'external_url' => $pinId !== '' ? 'https://www.pinterest.com/pin/' . rawurlencode($pinId) . '/' : '',
+                            'external_url' => $pinId !== '' && $live ? 'https://www.pinterest.com/pin/' . rawurlencode($pinId) . '/' : '',
                             'error' => '',
                         ];
                     } catch (Throwable $pinError) {
