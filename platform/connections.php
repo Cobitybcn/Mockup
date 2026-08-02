@@ -13,6 +13,7 @@ $pinterestService = new PinterestIntegrationService($pdo);
 $metaService = new MetaIntegrationService($pdo);
 $instagramService = new InstagramIntegrationService($pdo);
 $tiktokService = new TikTokIntegrationService($pdo);
+$xService = new XIntegrationService($pdo);
 
 $connectionError = (string)($_SESSION['connections_error'] ?? '');
 $connectionNotice = (string)($_SESSION['connections_notice'] ?? '');
@@ -46,8 +47,11 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         } elseif ($action === 'connect_tiktok') {
             header('Location: ' . $tiktokService->authorizationUrl($userId, 'artist'));
             exit;
-        } elseif ($action === 'disconnect_tiktok') {
-            $tiktokService->disconnect($userId, 'artist');
+        } elseif ($action === 'connect_x') {
+            header('Location: ' . $xService->authorizationUrl($userId, 'artist'));
+            exit;
+        } elseif ($action === 'disconnect_x') {
+            $xService->disconnect($userId, 'artist');
             $_SESSION['connections_notice'] = t('TikTok was disconnected.', 'TikTok fue desconectado.');
         } elseif ($action === 'connect_pinterest') {
             header('Location: ' . $pinterestService->authorizationUrl($userId, 'artist'));
@@ -103,6 +107,7 @@ $pinterestApp = $pinterestService->artistAppConfiguration($userId);
 $facebookArtist = $metaService->connection($userId, 'artist');
 $instagramArtist = $instagramService->connection($userId, 'artist');
 $tiktokArtist = $tiktokService->connection($userId, 'artist');
+$xArtist = $xService->connection($userId, 'artist');
 $facebookPages = [];
 if (($facebookArtist['status'] ?? '') === 'awaiting_page') {
     try {
@@ -145,6 +150,11 @@ function connections_status(?array $connection): array
     };
 }
 
+$xUsername = ltrim(trim((string)($xArtist['x_username'] ?? '')), '@');
+$xDisplayName = trim((string)($xArtist['x_display_name'] ?? ''));
+$xAccountLabel = $xUsername !== ''
+    ? '@' . $xUsername
+    : ($xDisplayName !== '' ? $xDisplayName : t('Connected X account', 'Cuenta X conectada'));
 $tiktokUsername = ltrim(trim((string)($tiktokArtist['tiktok_username'] ?? '')), '@');
 $tiktokDisplayName = trim((string)($tiktokArtist['tiktok_display_name'] ?? ''));
 $tiktokAccountLabel = $tiktokUsername !== ''
@@ -196,6 +206,18 @@ $artistConnections = [
         'connection' => $instagramArtist,
         'href' => 'integrations/instagram/',
         'action' => ($instagramArtist['status'] ?? '') === 'connected' ? t('Manage Instagram', 'Gestionar Instagram') : t('Connect Instagram', 'Conectar Instagram'),
+    ],
+    [
+        'id' => 'x',
+        'name' => 'X',
+        'eyebrow' => t('Artist account', 'Cuenta del artista'),
+        'description' => t('Posts published from the Publication section.', 'Publicaciones enviadas desde la sección Publicación.'),
+        'detail' => ($xArtist['status'] ?? '') === 'connected'
+            ? $xAccountLabel
+            : t('Connect the X account owned by this artist.', 'Conectá la cuenta de X de este artista.'),
+        'connection' => $xArtist,
+        'href' => 'integrations/x/',
+        'action' => ($xArtist['status'] ?? '') === 'connected' ? t('Manage X', 'Gestionar X') : t('Connect X', 'Conectar X'),
     ],
     [
         'id' => 'tiktok',
@@ -511,6 +533,33 @@ $artistConnections = [
                             </form>
                         <?php else: ?>
                             <p><strong><?= connections_h(t('Instagram will be connected on the published site.', 'Instagram se conectará en el sitio publicado.')) ?></strong> <?= connections_h(t("Localhost does not contain Instagram's private credentials and will not modify the artist's live connection.", 'Localhost no contiene las credenciales privadas de Instagram y no modificará la conexión en producción del artista.')) ?></p>
+                        <?php endif; ?>
+                    <?php endif; ?>
+                </div>
+            </dialog>
+
+            <dialog class="connection-dialog" id="connection-x" aria-labelledby="connection-x-title">
+                <div class="connection-dialog__head">
+                    <div><span><?= connections_h(t('Artist account', 'Cuenta del artista')) ?></span><h2 id="connection-x-title">X</h2></div>
+                    <button class="connection-dialog__close" type="button" data-connection-close aria-label="<?= connections_h(t('Close', 'Cerrar')) ?>">&times;</button>
+                </div>
+                <div class="connection-dialog__body">
+                    <?php if (($xArtist['status'] ?? '') === 'connected'): ?>
+                        <div class="connection-summary"><p><strong><?= connections_h(t('Connected account', 'Cuenta conectada')) ?></strong></p><p><?= connections_h($xAccountLabel) ?></p></div>
+                        <p><?= connections_h(t('Publications from the Publication section will use this account.', 'Las publicaciones de la sección Publicación usarán esta cuenta.')) ?></p>
+                        <form class="connection-form" method="post">
+                            <input type="hidden" name="csrf" value="<?= connections_h($_SESSION['connections_csrf']) ?>"><input type="hidden" name="network" value="x">
+                            <div class="connection-form__actions"><button class="button-link secondary" name="action" value="disconnect_x"><?= connections_h(t('Disconnect X', 'Desconectar X')) ?></button></div>
+                        </form>
+                    <?php else: ?>
+                        <?php if ($xService->oauthEnabled()): ?>
+                            <p><?= connections_h(t("Connect the artist's X account directly. Nothing will be published during connection.", 'Conectá directamente la cuenta de X del artista. No se publicará nada durante la conexión.')) ?></p>
+                            <form class="connection-form" method="post">
+                                <input type="hidden" name="csrf" value="<?= connections_h($_SESSION['connections_csrf']) ?>"><input type="hidden" name="network" value="x">
+                                <div class="connection-form__actions"><button class="button-link primary" name="action" value="connect_x"><?= connections_h(t('Connect X', 'Conectar X')) ?></button></div>
+                            </form>
+                        <?php else: ?>
+                            <p><strong><?= connections_h(t('X is not connected yet.', 'X todavía no está conectado.')) ?></strong> <?= connections_h(t('Set X_OAUTH_ENABLED to true once the callback registered in the X developer portal matches this installation.', 'Poné X_OAUTH_ENABLED en true cuando la URI de retorno registrada en el portal de X coincida con esta instalación.')) ?></p>
                         <?php endif; ?>
                     <?php endif; ?>
                 </div>

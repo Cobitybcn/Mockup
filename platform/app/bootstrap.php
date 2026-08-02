@@ -91,6 +91,7 @@ require_once __DIR__ . '/Services/SocialCampaignPinterestBridge.php';
 require_once __DIR__ . '/Services/SocialCampaignMetaBridge.php';
 require_once __DIR__ . '/Services/SocialPublishJobService.php';
 require_once __DIR__ . '/Services/TikTokIntegrationService.php';
+require_once __DIR__ . '/Services/XIntegrationService.php';
 require_once __DIR__ . '/Services/TikTokPublisher.php';
 require_once __DIR__ . '/Services/VideoTikTokPublicationService.php';
 require_once __DIR__ . '/Services/SocialBoardPublishService.php';
