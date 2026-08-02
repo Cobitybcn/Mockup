@@ -736,12 +736,14 @@ function pub_page_chip(string $status): array
                                         . '</div>';
                                 };
                                 ?>
-                                <h3 class="pub-section-title"><?= pub_h(t('Media composition — video', 'Composición de media — video')) ?></h3>
-                                <?php if (!$doc['finalVideos']): ?>
-                                    <?= $videoAttach(t('No final video linked to this artwork yet.', 'Todavía no hay video final vinculado a esta obra.')) ?>
+                                <h3 class="pub-section-title"><?= pub_h(t('Media composition', 'Composición de media')) ?></h3>
+                                <p class="pub-section-hint"><?= pub_h(t('The video leads the page, then the included mockups in the order below — drag them to reorder. With none included, it shows all of them.', 'El video abre la página y despues van los mockups incluidos, en el orden de abajo — arrastralos para reordenar. Sin ninguno incluido, los muestra todos.')) ?></p>
+                                <?php if (!$doc['finalVideos'] && !$doc['mediaGrid']): ?>
+                                    <p class="pub-video-empty"><?= pub_h(t('This artwork has no video or mockups yet.', 'Esta obra todavía no tiene video ni mockups.')) ?></p>
                                 <?php else: ?>
-                                    <p class="pub-section-hint"><?= pub_h(t('One video per page. It appears on the artwork page once the page is published.', 'Un video por página. Aparece en la página de la obra cuando la página está publicada.')) ?></p>
-                                    <div class="pub-video-grid" data-video-grid>
+                                    <div class="pub-media-grid" data-media-grid
+                                        data-label-cover="<?= pub_h(t('Cover', 'Portada')) ?>"
+                                        data-label-lead="<?= pub_h(t('Opens post', 'Abre post')) ?>">
                                         <?php foreach ($doc['finalVideos'] as $finalVideo): ?>
                                             <?php $videoSelected = (int)$finalVideo['id'] === (int)$doc['attachedVideoId']; ?>
                                             <figure class="pub-video-card <?= $videoSelected ? 'is-selected' : '' ?>" data-video-card data-video-id="<?= (int)$finalVideo['id'] ?>">
@@ -754,18 +756,6 @@ function pub_page_chip(string $status): array
                                                     data-label-remove="<?= pub_h(t('On page · remove', 'En la página · quitar')) ?>"><?= $videoSelected ? pub_h(t('On page · remove', 'En la página · quitar')) : pub_h(t('Show on page', 'Mostrar en la página')) ?></button>
                                             </figure>
                                         <?php endforeach; ?>
-                                    </div>
-                                    <?= $videoAttach('') ?>
-                                <?php endif; ?>
-
-                                <h3 class="pub-section-title"><?= pub_h(t('Media composition — mockups', 'Composición de media — mockups')) ?></h3>
-                                <p class="pub-section-hint"><?= pub_h(t('The page gallery shows ONLY the included mockups, in the order below — drag them to reorder. With none included, it shows all of them.', 'La galería de la página muestra SOLO los mockups incluidos, en el orden de abajo — arrastralos para reordenar. Sin ninguno incluido, los muestra todos.')) ?></p>
-                                <?php if (!$doc['mediaGrid']): ?>
-                                    <p class="pub-video-empty"><?= pub_h(t('This artwork has no mockups yet.', 'Esta obra todavía no tiene mockups.')) ?></p>
-                                <?php else: ?>
-                                    <div class="pub-media-grid" data-media-grid
-                                        data-label-cover="<?= pub_h(t('Cover', 'Portada')) ?>"
-                                        data-label-lead="<?= pub_h(t('Opens post', 'Abre post')) ?>">
                                         <?php foreach ($doc['mediaGrid'] as $card): ?>
                                             <?php $isSelected = in_array($card['id'], $doc['selectionOrder'], true); ?>
                                             <figure class="pub-media-card <?= $isSelected ? 'is-selected' : '' ?>" data-media-card data-mockup-id="<?= (int)$card['id'] ?>">
@@ -780,6 +770,7 @@ function pub_page_chip(string $status): array
                                         <?php endforeach; ?>
                                     </div>
                                 <?php endif; ?>
+                                <?= $videoAttach($doc['finalVideos'] ? '' : t('No final video linked to this artwork yet.', 'Todavía no hay video final vinculado a esta obra.')) ?>
 
                                 <h3 class="pub-section-title"><?= pub_h(t('Price and availability', 'Precio y disponibilidad')) ?></h3>
                                 <div class="pub-sale-grid">

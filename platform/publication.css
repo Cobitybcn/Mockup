@@ -81,8 +81,7 @@ details.pub-panel > summary:hover { background: var(--surface-soft); }
 .pub-media-card[draggable="true"] { cursor: grab; }
 .pub-media-card[draggable="true"] img { pointer-events: none; }
 .pub-media-card.is-dragging { opacity: .45; cursor: grabbing; }
-/* Video cards */
-.pub-video-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(190px, 1fr)); gap: 14px; }
+/* Video card — a member of .pub-media-grid, always the lead item */
 .pub-video-card { display: grid; gap: 8px; padding: 8px; border: 1px solid var(--line); border-radius: 2px; background: var(--surface); }
 .pub-video-card img { width: 100%; height: 170px; object-fit: cover; background: #26221f; }
 .pub-video-card figcaption { color: var(--ink); font-family: var(--font-serif); font-size: 14px; line-height: 1.2; }
@@ -221,5 +220,5 @@ details.pub-panel > summary:hover { background: var(--surface-soft); }
     .publishing-catalog { padding: 16px; }
     .pub-sale-grid { grid-template-columns: 1fr; }
     .pub-decision { width: 112px; min-width: 112px; height: 112px; min-height: 112px; padding: 14px; font-size: 10px; }
-    .pub-media-grid, .pub-video-grid { grid-template-columns: repeat(auto-fill, minmax(150px, 1fr)); }
+    .pub-media-grid { grid-template-columns: repeat(auto-fill, minmax(150px, 1fr)); }
 }
