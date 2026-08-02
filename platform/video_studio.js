@@ -262,6 +262,10 @@
 
     function visibleReferenceAssets() {
         return referenceAssets()
+            // Regenerations remain in history, but the working catalog only
+            // shows the active result of each sequence in this project.
+            .filter(asset => asset.type !== 'generation_job'
+                || (Number(asset.projectId || 0) === Number(currentProject()?.id || 0) && Boolean(asset.active)))
             .filter(asset => asset.type === 'reference_asset' || !state.artworkFilter || artworkFilterKey(asset) === state.artworkFilter)
             .filter(asset => asset.type === 'reference_asset' || !state.seriesFilter
                 || (state.seriesFilter === 'none' ? Number(asset.seriesId || 0) === 0 : Number(asset.seriesId) === Number(state.seriesFilter)))
@@ -579,21 +583,25 @@
      */
     function timelineBlocks() {
         const sources = new Map();
+        const activeSequenceSources = [];
         renderedScenes().forEach((scene, index) => {
             const generation = scene.active_generation;
-            sources.set(Number(generation.id), {
+            const source = {
                 generationId: Number(generation.id),
                 name: `Sequence ${index + 1}`,
                 thumbnailUrl: String(generation.thumbnailUrl || ''),
+                previewUrl: String(generation.previewUrl || ''),
                 length: sceneSeconds(scene),
-            });
+            };
+            sources.set(Number(generation.id), source);
+            activeSequenceSources.push(source);
         });
 
         referenceAssets().filter(asset => asset.mediaType === 'video').forEach(asset => {
             sources.set(`${asset.type}:${Number(asset.id)}`, {
                 sourceType: String(asset.type), sourceId: Number(asset.id),
                 name: String(asset.label || 'Imported video'), thumbnailUrl: String(asset.thumbnailUrl || ''),
-                length: Number(asset.durationSeconds || 0), hasAudio: Boolean(asset.hasAudio),
+                previewUrl: String(asset.previewUrl || ''), length: Number(asset.durationSeconds || 0), hasAudio: Boolean(asset.hasAudio),
             });
         });
         const stored = currentProject()?.timeline;
@@ -616,7 +624,7 @@
         }
         if (!Array.isArray(stored) || stored.length === 0) {
             let at = 0;
-            return [...sources.values()].filter(source => source.sourceType !== 'reference_asset').map((source, index) => {
+            return activeSequenceSources.map((source, index) => {
                 const block = { ...source, id: `v-${source.generationId}-${index}`, sourceType: 'generation_job', sourceId: source.generationId, start: 0, end: source.length, track: 1, timelineStart: at, enabled: true, linkGroup: '' };
                 at += source.length;
                 return block;
@@ -716,6 +724,8 @@
             music?.assetId || 0,
             renderedScenes().length,
             ungeneratedScenes(),
+            state.selectedBlock,
+            state.selectedAudioBlock,
             state.musicUploading ? 1 : 0,
         ].join('|');
     }
@@ -743,8 +753,11 @@
         const ready = renderedScenes().length;
         const pending = exportPending();
         const total = videoSeconds();
+        const selectedClip = timelineBlocks()[state.selectedBlock] || null;
 
-        const monitor = result?.previewUrl && !stale
+        const monitor = selectedClip?.previewUrl
+            ? `<video class="vds-monitor-video" src="${escapeHtml(selectedClip.previewUrl)}" poster="${escapeHtml(selectedClip.thumbnailUrl || '')}" preload="metadata" controls playsinline data-clip-preview></video><span class="vds-monitor-badge">Selected · ${escapeHtml(selectedClip.name || 'Clip')}</span>`
+            : result?.previewUrl && !stale
             ? `<video class="vds-monitor-video" src="${escapeHtml(result.previewUrl)}"${
                 result.thumbnailUrl ? ` poster="${escapeHtml(result.thumbnailUrl)}"` : ''
               } preload="metadata" playsinline data-montage-video></video>`
@@ -761,16 +774,19 @@
         dom.exportPanel.innerHTML = `
         <div class="vds-nle">
             <section class="vds-nle-pane vds-nle-program">
+                <header class="vds-nle-program-head"><span>${selectedClip ? 'Vista previa del clip' : 'Monitor del montaje'}</span></header>
                 <div class="vds-monitor">${monitor}</div>
+                <div class="vds-nle-program-actions">
+                    <button class="vds-nle-action" type="button" data-cut-split${selectedClip ? '' : ' disabled'}>✂ Cortar aquí</button>
+                    <button class="vds-nle-action" type="button" data-cut-remove${selectedClip || state.selectedAudioBlock >= 0 ? '' : ' disabled'}>Eliminar clip</button>
+                    <button class="vds-nle-action" type="button" data-cut-duplicate${selectedClip ? '' : ' disabled'}>Duplicar</button>
+                </div>
             </section>
 
             <section class="vds-nle-pane vds-nle-timeline">
                 <header class="vds-nle-head">
-                    <span>Timeline · ${escapeHtml(currentProject().title || 'Montage')}</span>
+                    <span>Timeline · ${escapeHtml(currentProject().title || 'Montage')} · Selecciona un clip para verlo y editarlo</span>
                     <div class="vds-nle-tools">
-                        <button class="vds-nle-tool" type="button" data-cut-split title="Cut the clip under the playhead">Cut</button>
-                        <button class="vds-nle-tool" type="button" data-cut-duplicate title="Duplicate the selected clip">Duplicate</button>
-                        <button class="vds-nle-tool" type="button" data-cut-remove title="Take the selected clip off V1">Remove</button>
                         <button class="vds-nle-tool" type="button" data-cut-reset title="Back to whole sequences, in order">Reset</button>
                         <button class="vds-nle-tool" type="button" data-unlink-selected title="Detach linked audio">Unlink audio</button>
                     </div>
@@ -1062,6 +1078,8 @@
         const scroll = $('[data-timeline-scroll]');
         const lane = $('[data-timeline-lane]');
         const video = $('[data-montage-video]');
+        const clipPreview = $('[data-clip-preview]');
+        const previewBlock = timelineBlocks()[state.selectedBlock] || null;
         // The program monitor is an exported MP4 and already contains its mix.
         // Playing the loose music element here would reproduce the same track twice.
         const audio = null;
@@ -1174,14 +1192,17 @@
             seek(0);
         });
 
-        // A clip has to be picked before it can be duplicated or removed, and
-        // clicking the empty part of V1 puts the selection down again.
+        // Trim starts on pointer-down; ordinary selection waits for click so
+        // it does not destroy the element while a drag is beginning.
         $$('[data-track-video]').forEach(row => row.addEventListener('pointerdown', event => {
+            const clip = event.target.closest('[data-block-index]');
+            if (clip && event.target.closest('[data-trim]')) { beginTrim(event, Number(clip.dataset.blockIndex), String(event.target.dataset.trim)); return; }
+        }));
+        $$('[data-track-video]').forEach(row => row.addEventListener('click', event => {
             const clip = event.target.closest('[data-block-index]');
             state.selectedBlock = clip ? Number(clip.dataset.blockIndex) : -1;
             state.selectedAudioBlock = -1;
-            if (clip && event.target.closest('[data-trim]')) { beginTrim(event, Number(clip.dataset.blockIndex), String(event.target.dataset.trim)); return; }
-            buildTimeline();
+            renderExportPanel();
         }));
 
         $$('[data-track-video]').forEach(row => {
@@ -1207,13 +1228,17 @@
             row.addEventListener('pointerdown', event => {
                 const clip = event.target.closest('[data-audio-index]');
                 if (!clip) return;
-                state.selectedAudioBlock = Number(clip.dataset.audioIndex);
-                state.selectedBlock = -1;
                 if (event.target.closest('[data-audio-trim]')) {
-                    beginAudioTrim(event, state.selectedAudioBlock, String(event.target.dataset.audioTrim));
+                    beginAudioTrim(event, Number(clip.dataset.audioIndex), String(event.target.dataset.audioTrim));
                     return;
                 }
-                buildTimeline();
+            });
+            row.addEventListener('click', event => {
+                const clip = event.target.closest('[data-audio-index]');
+                if (!clip) return;
+                state.selectedAudioBlock = Number(clip.dataset.audioIndex);
+                state.selectedBlock = -1;
+                renderExportPanel();
             });
             row.addEventListener('dragstart', event => {
                 const clip = event.target.closest('[data-audio-index]');
@@ -1407,6 +1432,25 @@
                 return linked ? { ...audio, timelineStart:Number(linked.timelineStart||0), sourceStart:Number(linked.start||0), sourceEnd:Number(linked.end||0) } : { ...audio };
             }),
         };
+
+        if (clipPreview && previewBlock) {
+            const sourceStart = Number(previewBlock.start || 0);
+            const sourceEnd = Number(previewBlock.end || previewBlock.length || 0);
+            const timelineStart = Number(previewBlock.timelineStart || 0);
+            clipPreview.addEventListener('loadedmetadata', () => {
+                if (clipPreview.currentTime < sourceStart || clipPreview.currentTime >= sourceEnd) clipPreview.currentTime = sourceStart;
+            }, { once:true });
+            clipPreview.addEventListener('timeupdate', () => {
+                if (sourceEnd > sourceStart && clipPreview.currentTime >= sourceEnd) {
+                    clipPreview.pause();
+                    clipPreview.currentTime = sourceEnd - 0.01;
+                }
+                state.playhead = timelineStart + Math.max(0, clipPreview.currentTime - sourceStart);
+                layoutTimeline();
+                const time = $('[data-montage-time]');
+                if (time) time.textContent = timecode(state.playhead);
+            });
+        }
         commitTimelineDocument(document, successMessage);
     }
 

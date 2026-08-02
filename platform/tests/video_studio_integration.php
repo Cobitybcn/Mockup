@@ -266,6 +266,10 @@ try {
     TestHarness::assertContains('data-unlink-selected', $studioJavascript, 'linked imported audio can be detached');
     TestHarness::assertContains('moveAudioBlock', $studioJavascript, 'detached audio can move independently between A1 and A2');
     TestHarness::assertContains('beginAudioTrim', $studioJavascript, 'detached audio has independent trim controls');
+    TestHarness::assertContains('activeSequenceSources.map', $studioJavascript, 'a new timeline contains only the active result left in each sequence');
+    TestHarness::assertContains('Boolean(asset.active)', $studioJavascript, 'discarded regenerations stay out of the working catalog');
+    TestHarness::assertContains('data-clip-preview', $studioJavascript, 'selecting a timeline clip opens its source preview');
+    TestHarness::assertContains('data-cut-remove', $studioJavascript, 'the program monitor exposes a visible delete action');
     TestHarness::assertContains('timelineImportUrl', $studioPage, 'large timeline imports bypass the Cloud Run request limit');
     TestHarness::assertContains('const audio = null;', $studioJavascript, 'the rendered monitor never plays a second loose music track');
     TestHarness::assertContains('Render out of date', $studioJavascript, 'an old export is visibly separated from the current cut');
