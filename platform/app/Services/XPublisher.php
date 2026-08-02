@@ -14,6 +14,13 @@ final class XPublisher
 {
     private const POST_URL = 'https://api.x.com/2/tweets';
     private const MEDIA_URL = 'https://api.x.com/2/media/upload';
+    /**
+     * X retired the single "POST /2/media/upload?command=INIT|APPEND|FINALIZE"
+     * shape in 2025 — each step is now its own resource. STATUS is the one
+     * survivor of the old query-param form; the other three moved under
+     * /2/media/upload/{id}/... and INIT wants JSON, not multipart.
+     */
+    private const MEDIA_INIT_URL = 'https://api.x.com/2/media/upload/initialize';
     /** X shows at most four images in one post. */
     private const MAX_MEDIA = 4;
     /** Comfortably under X's per-chunk ceiling for the APPEND command. */
@@ -142,7 +149,7 @@ final class XPublisher
             throw new RuntimeException('X does not accept this image type: '.$mime);
         }
 
-        $data = $this->mediaCommand($accessToken, [
+        $data = $this->mediaMultipart($accessToken, self::MEDIA_URL, [
             'media' => new CURLFile($path, $mime, basename($path)),
             'media_category' => 'tweet_image',
         ]);
@@ -154,9 +161,10 @@ final class XPublisher
     }
 
     /**
-     * Chunked upload: INIT reserves the media id, APPEND sends the file in
-     * pieces, FINALIZE closes it — then X processes the video asynchronously,
-     * so the caller waits on STATUS before the id is safe to post with.
+     * Chunked upload across three dedicated resources: INIT reserves the media
+     * id, APPEND sends the file in pieces, FINALIZE closes it — then X
+     * processes the video asynchronously, so the caller waits on STATUS
+     * before the id is safe to post with.
      */
     private function uploadVideo(string $accessToken, string $path, int $bytes): string
     {
@@ -165,13 +173,12 @@ final class XPublisher
             throw new RuntimeException('X does not accept this video type: '.$mime);
         }
 
-        $init = $this->mediaCommand($accessToken, [
-            'command' => 'INIT',
+        $init = $this->mediaJson($accessToken, self::MEDIA_INIT_URL, [
             'media_type' => $mime,
             'media_category' => 'tweet_video',
-            'total_bytes' => (string)$bytes,
+            'total_bytes' => $bytes,
         ]);
-        $mediaId = trim((string)($init['id'] ?? $init['media_id_string'] ?? ''));
+        $mediaId = trim((string)($init['id'] ?? ''));
         if ($mediaId === '') {
             throw new RuntimeException('X did not return a media id for the video.');
         }
@@ -190,9 +197,7 @@ final class XPublisher
                 }
                 try {
                     file_put_contents($chunkPath, $chunk);
-                    $this->mediaCommand($accessToken, [
-                        'command' => 'APPEND',
-                        'media_id' => $mediaId,
+                    $this->mediaMultipart($accessToken, self::MEDIA_URL.'/'.$mediaId.'/append', [
                         'segment_index' => (string)$segment,
                         'media' => new CURLFile($chunkPath, 'application/octet-stream', 'chunk'),
                     ]);
@@ -204,12 +209,12 @@ final class XPublisher
             fclose($handle);
         }
 
-        $finalized = $this->mediaCommand($accessToken, ['command' => 'FINALIZE', 'media_id' => $mediaId]);
+        $finalized = $this->mediaJson($accessToken, self::MEDIA_URL.'/'.$mediaId.'/finalize', null);
         $this->awaitProcessing($accessToken, $mediaId, (array)($finalized['processing_info'] ?? []));
         return $mediaId;
     }
 
-    /** Polls STATUS until X reports the video ready, failed, or takes too long. */
+    /** Polls STATUS — the one step X left on the old query-param endpoint. */
     private function awaitProcessing(string $accessToken, string $mediaId, array $info): void
     {
         $deadline = time() + self::MAX_PROCESSING_WAIT_SECONDS;
@@ -222,32 +227,53 @@ final class XPublisher
                 throw new RuntimeException('X is still processing the video; try posting again in a minute.');
             }
             sleep(max(1, min(10, (int)($info['check_after_secs'] ?? 3))));
-            $status = $this->mediaCommand($accessToken, ['command' => 'STATUS', 'media_id' => $mediaId], get: true);
+            $status = $this->mediaGet($accessToken, self::MEDIA_URL.'?'.http_build_query(['command' => 'STATUS', 'media_id' => $mediaId]));
             $info = (array)($status['processing_info'] ?? []);
         }
     }
 
+    /** @param array<string,mixed>|null $fields null → an empty body, still POSTed (FINALIZE takes no fields) */
+    private function mediaJson(string $accessToken, string $url, ?array $fields): array
+    {
+        return $this->mediaRequest($url, [
+            CURLOPT_POST => true,
+            CURLOPT_HTTPHEADER => ['Authorization: Bearer '.$accessToken, 'Content-Type: application/json'],
+            CURLOPT_POSTFIELDS => $fields === null ? '' : (json_encode($fields, JSON_UNESCAPED_UNICODE) ?: '{}'),
+        ]);
+    }
+
+    /** @param array<string,mixed> $fields a CURLFile among them makes cURL encode this as multipart on its own */
+    private function mediaMultipart(string $accessToken, string $url, array $fields): array
+    {
+        return $this->mediaRequest($url, [
+            CURLOPT_POST => true,
+            CURLOPT_HTTPHEADER => ['Authorization: Bearer '.$accessToken],
+            CURLOPT_POSTFIELDS => $fields,
+        ]);
+    }
+
+    private function mediaGet(string $accessToken, string $url): array
+    {
+        return $this->mediaRequest($url, [
+            CURLOPT_HTTPHEADER => ['Authorization: Bearer '.$accessToken],
+        ]);
+    }
+
     /**
-     * One call to the chunked-upload command endpoint. APPEND commonly answers
-     * with no body at all — that is success, not a parse failure.
+     * One HTTP call to a media-upload resource. APPEND commonly answers with
+     * no body at all — that is success, not a parse failure.
      *
-     * @param array<string,mixed> $fields
+     * @param array<int,mixed> $options extra curl_setopt_array options for this call
      * @return array<string,mixed>
      */
-    private function mediaCommand(string $accessToken, array $fields, bool $get = false): array
+    private function mediaRequest(string $url, array $options): array
     {
         $handle = curl_init();
-        $options = [
-            CURLOPT_URL => $get ? self::MEDIA_URL.'?'.http_build_query($fields) : self::MEDIA_URL,
+        curl_setopt_array($handle, $options + [
+            CURLOPT_URL => $url,
             CURLOPT_RETURNTRANSFER => true,
             CURLOPT_TIMEOUT => 120,
-            CURLOPT_HTTPHEADER => ['Authorization: Bearer '.$accessToken],
-        ];
-        if (!$get) {
-            $options[CURLOPT_POST] = true;
-            $options[CURLOPT_POSTFIELDS] = $fields;
-        }
-        curl_setopt_array($handle, $options);
+        ]);
         $body = curl_exec($handle);
         $status = (int)curl_getinfo($handle, CURLINFO_RESPONSE_CODE);
         $error = curl_error($handle);
