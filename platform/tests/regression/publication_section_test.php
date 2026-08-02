@@ -135,7 +135,15 @@ function run_publication_section_tests(): void
         'La moneda no se decide obra por obra: el formulario ya no la envía'
     );
     TestHarness::assertContains('pub_store_currency', $section, 'El precio guardado hereda la moneda de la tienda');
-    $siteManager = (string)file_get_contents($repoRoot . '/site-admin/app/SiteManagerService.php');
+    // site-admin vive al lado de platform/ en el repo y DENTRO de la raíz en la
+    // imagen de producción (Dockerfile.web lo copia a html/site-admin). Buscar
+    // en una sola ruta pasa en local y falla en el build, que es donde la suite
+    // decide si se despliega.
+    $siteManagerPath = is_file($repoRoot . '/site-admin/app/SiteManagerService.php')
+        ? $repoRoot . '/site-admin/app/SiteManagerService.php'
+        : $platformRoot . '/site-admin/app/SiteManagerService.php';
+    TestHarness::assertTrue(is_file($siteManagerPath), 'la suite encuentra Site Manager en el repo y dentro de la imagen');
+    $siteManager = (string)file_get_contents($siteManagerPath);
     TestHarness::assertContains('$currency = $this->storeCurrency($userId);', $siteManager, 'El alta de stock también hereda la moneda de la tienda');
     TestHarness::assertContains(
         'UPDATE artist_site_print_variants SET currency=?',
