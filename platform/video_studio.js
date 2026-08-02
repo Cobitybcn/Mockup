@@ -584,6 +584,7 @@
     function timelineBlocks() {
         const sources = new Map();
         const activeSequenceSources = [];
+        const activeGenerationIds = new Set();
         renderedScenes().forEach((scene, index) => {
             const generation = scene.active_generation;
             const source = {
@@ -594,6 +595,7 @@
                 length: sceneSeconds(scene),
             };
             sources.set(Number(generation.id), source);
+            activeGenerationIds.add(Number(generation.id));
             activeSequenceSources.push(source);
         });
 
@@ -609,6 +611,7 @@
             return stored.videoBlocks.reduce((blocks, block) => {
                 const sourceType = String(block.sourceType || 'generation_job');
                 const sourceId = Number(block.sourceId || block.generationId || 0);
+                if (sourceType === 'generation_job' && !activeGenerationIds.has(sourceId)) return blocks;
                 const source = sources.get(sourceType === 'generation_job' ? sourceId : `${sourceType}:${sourceId}`);
                 if (!source) return blocks;
                 const start = Math.max(0, Number(block.sourceStart) || 0);

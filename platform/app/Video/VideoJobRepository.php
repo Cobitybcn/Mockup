@@ -373,7 +373,7 @@ final class VideoJobRepository
                 s.transition_out_type,s.transition_out_duration_seconds
             FROM video_generation_jobs j INNER JOIN video_scenes s ON s.id=j.video_scene_id
             INNER JOIN video_projects p ON p.id=s.video_project_id
-            WHERE p.id=? AND p.user_id=? AND j.status='succeeded'");
+            WHERE p.id=? AND p.user_id=? AND j.status='succeeded' AND j.active_slot=1");
         $generationStmt->execute([$projectId, $userId]);
         $sources = [];
         foreach ($generationStmt->fetchAll() as $row) {
