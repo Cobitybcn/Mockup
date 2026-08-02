@@ -252,7 +252,10 @@ final class XIntegrationService
             throw new RuntimeException('X answered with something that is not JSON.');
         }
         if (isset($decoded['errors']) || isset($decoded['title'])) {
-            $first = (array)((array)($decoded['errors'] ?? []))[0] ?? [];
+            // Index the list first: casting before the subscript reads a key that
+            // may not be there, and the notice would print before any redirect.
+            $errors = array_values((array)($decoded['errors'] ?? []));
+            $first = (array)($errors[0] ?? []);
             $reason = trim((string)(
                 $first['detail'] ?? $first['message'] ?? $decoded['detail'] ?? $decoded['title'] ?? ''
             ));
