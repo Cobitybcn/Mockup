@@ -165,6 +165,14 @@ details.pub-panel > summary:hover { background: var(--surface-soft); }
 .pub-field select { width: 100%; box-sizing: border-box; padding: 12px 13px; border: 1px solid var(--line); border-radius: var(--radius); background: #fff; color: var(--ink); font: 400 15px/1.4 var(--font-sans); }
 
 /* Saatchi manual package next to its action */
+/* Una obra ya listada guarda su paquete plegado: sigue disponible sin volver a
+   ocupar la pantalla con material que ya se usó. */
+.pub-dist-package-fold { margin: 4px 0 14px; }
+.pub-dist-package-fold > summary { display: inline-flex; align-items: center; gap: 6px; cursor: pointer; list-style: none; }
+.pub-dist-package-fold > summary::-webkit-details-marker { display: none; }
+.pub-dist-package-fold > summary::before { content: '▸'; }
+.pub-dist-package-fold[open] > summary::before { content: '▾'; }
+.pub-dist-package-fold > .pub-dist-package { margin-top: 10px; }
 .pub-dist-package { display: grid; gap: 10px; margin: 4px 0 14px; padding: 14px; border: 1px solid var(--line); border-radius: 2px; background: var(--surface-soft); }
 .pub-dist-package-row { display: flex; align-items: center; justify-content: space-between; gap: 12px; }
 .pub-dist-package-text { margin: 0; max-width: 650px; color: var(--ink); font-size: 14px; line-height: 1.55; }

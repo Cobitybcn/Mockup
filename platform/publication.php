@@ -583,7 +583,7 @@ function pub_page_chip(string $status): array
     <title><?= pub_h(t('Publication - Artwork Mockups', 'Publicación - Artwork Mockups')) ?></title>
     <link rel="stylesheet" href="style.css">
     <link rel="stylesheet" href="ui-catalog.css">
-    <link rel="stylesheet" href="publication.css?v=16">
+    <link rel="stylesheet" href="publication.css?v=17">
 </head>
 <body>
 <div class="app-shell">
@@ -885,16 +885,23 @@ function pub_page_chip(string $status): array
                     <div class="pub-panel-body">
                         <?php if (!$stepReady): ?>
                             <p class="pub-gate-note"><?= pub_h($stepGateNote) ?></p>
-                        <?php elseif (($saatchiState['status'] ?? '') === 'listed'): ?>
-                            <p class="pub-product-meta"><a href="<?= pub_h((string)$saatchiState['external_url']) ?>" target="_blank" rel="noopener"><?= pub_h(t('View listing →', 'Ver listing →')) ?></a></p>
                         <?php else: ?>
                             <?php
+                            // Una obra listada no consume su paquete: sigue siendo
+                            // material de consulta para corregir o volver a subir.
+                            $saatchiListed = ($saatchiState['status'] ?? '') === 'listed';
                             $saatchiPackage = (array)($destinationsPayload['saatchi'] ?? []);
                             $saatchiKeywords = (array)($saatchiPackage['keywords'] ?? []);
                             $saatchiDescriptionLocale = $doc['adaptationLocale'] !== '' ? $doc['adaptationLocale'] : $doc['workingLocale'];
                             $saatchiDescription = (string)($saatchiPackage['description'][$saatchiDescriptionLocale] ?? '');
                             ?>
-                            <p class="pub-panel-note"><?= pub_h(t('Download the package, upload it by hand on Saatchi, mark it here, then paste the listing link in the Website step.', 'Descargá el paquete, cargalo a mano en Saatchi, marcalo acá, y después pegá el enlace del listing en el paso Sitio web.')) ?></p>
+                            <?php if ($saatchiListed): ?>
+                                <p class="pub-product-meta"><a href="<?= pub_h((string)$saatchiState['external_url']) ?>" target="_blank" rel="noopener"><?= pub_h(t('View listing →', 'Ver listing →')) ?></a></p>
+                                <details class="pub-dist-package-fold">
+                                    <summary class="pub-copy"><?= pub_h(t('Show the package again', 'Ver el paquete de nuevo')) ?></summary>
+                            <?php else: ?>
+                                <p class="pub-panel-note"><?= pub_h(t('Download the package, upload it by hand on Saatchi, mark it here, then paste the listing link in the Website step.', 'Descargá el paquete, cargalo a mano en Saatchi, marcalo acá, y después pegá el enlace del listing en el paso Sitio web.')) ?></p>
+                            <?php endif; ?>
                             <div class="pub-dist-package">
                                 <div class="pub-dist-package-row">
                                     <span class="pub-product-locale"><?= pub_h(t('Keywords', 'Keywords')) ?> (<?= pub_h(strtoupper((string)($saatchiPackage['keywords_locale'] ?? ''))) ?>)</span>
@@ -923,7 +930,8 @@ function pub_page_chip(string $status): array
                                     <p class="pub-product-meta"><small><?= pub_h(t('Saatchi recommends 4+ varied images: front, detail, mockups.', 'Saatchi recomienda 4+ imágenes variadas: frente, detalle, mockups.')) ?></small></p>
                                 <?php endif; ?>
                             </div>
-                            <?php if (($saatchiState['status'] ?? '') !== 'uploaded'): ?>
+                            <?php if ($saatchiListed): ?></details><?php endif; ?>
+                            <?php if (!$saatchiListed && ($saatchiState['status'] ?? '') !== 'uploaded'): ?>
                                 <form method="post">
                                     <input type="hidden" name="action" value="saatchi_uploaded">
                                     <input type="hidden" name="id" value="<?= (int)$doc['artwork']['id'] ?>">
