@@ -40,7 +40,8 @@ function run_publication_distribution_service_tests(): void
             scopes TEXT DEFAULT '', status TEXT NOT NULL DEFAULT 'disconnected', connected_at TEXT DEFAULT '', access_token_expires_at TEXT DEFAULT '')");
     }
     $pdo->exec('CREATE TABLE app_settings (key TEXT PRIMARY KEY, value TEXT NOT NULL, updated_at TEXT NOT NULL)');
-    foreach (['20260731_000001_publication_products.php', '20260731_000002_publication_distributions.php', '20260731_000003_publication_distribution_series.php'] as $migrationFile) {
+    $pdo->exec("CREATE TABLE video_exports (id INTEGER PRIMARY KEY, user_id INTEGER NOT NULL, status TEXT NOT NULL DEFAULT '', output_path TEXT NOT NULL DEFAULT '')");
+    foreach (['20260731_000001_publication_products.php', '20260731_000002_publication_distributions.php', '20260731_000003_publication_distribution_series.php', '20260802_000002_x_connections.php'] as $migrationFile) {
         $migration = require dirname(__DIR__, 2) . '/migrations/schema/' . $migrationFile;
         $migration['up']($pdo);
     }
@@ -151,6 +152,8 @@ function run_publication_distribution_service_tests(): void
         'tiktok_carousel_status' => $capture('tiktok_carousel_status'),
         'instagram_video' => $capture('instagram_video'),
         'facebook_video' => $capture('facebook_video'),
+        'x' => $capture('x'),
+        'x_video' => $capture('x_video'),
         'schedule' => $capture('schedule'),
     ]);
 
@@ -269,6 +272,7 @@ function run_publication_distribution_service_tests(): void
     }
     TestHarness::assertTrue($noVideo, 'tiktok sin video en la página bloquea con mensaje claro');
     $pdo->exec('INSERT INTO artwork_video_publications (user_id,artwork_id,video_export_id) VALUES (9,101,55)');
+    $pdo->exec("INSERT INTO video_exports (id,user_id,status,output_path) VALUES (55,9,'succeeded','results/dist-test-video.mp4')");
     $productService->generate($publicationId, $userId); // el video cambió las fuentes → regenerar
     $tiktokState = $service->publish($publicationId, $userId, 'tiktok', 'en', []);
     TestHarness::assertSame('processing', (string)$tiktokState['status'], 'tiktok queda ENVIADO · PROCESANDO');
@@ -357,7 +361,8 @@ function run_publication_distribution_service_tests(): void
     TestHarness::assertSame('sent', (string)$summary['results']['facebook_video']['status'], 'el acto único también manda el reel de Facebook cuando la página tiene video');
     TestHarness::assertSame('skipped', (string)$summary['results']['instagram_video']['status'], 'el reel de una red sin conexión se saltea igual que su serie');
     TestHarness::assertSame('skipped', (string)$summary['results']['x']['status'], 'X sin conexión se saltea como cualquier otra red');
-    TestHarness::assertTrue($summary['sent'] === 4 && $summary['skipped'] === 3 && $summary['failed'] === 0, 'el resumen cuenta enviados, salteados y fallidos, reel y X incluidos');
+    TestHarness::assertSame('skipped', (string)$summary['results']['x_video']['status'], 'el reel de X sin conexión se saltea igual que su serie');
+    TestHarness::assertTrue($summary['sent'] === 4 && $summary['skipped'] === 4 && $summary['failed'] === 0, 'el resumen cuenta enviados, salteados y fallidos, reel y X incluidos');
 
     $repeat = $service->publishAllConnected($publicationId, $userId, 'en');
     TestHarness::assertSame('skipped', (string)$repeat['results']['pinterest']['status'], 'repetir el acto no vuelve a publicar lo ya publicado');
@@ -372,7 +377,7 @@ function run_publication_distribution_service_tests(): void
     TestHarness::assertTrue($withFailure['sent'] >= 2, 'el fallo de un destino no detiene a los demás');
     $pdo->exec('DELETE FROM publication_distributions');
 
-    // ————— Saatchi manual + X reservado —————
+    // ————— Saatchi manual + X sin conectar —————
     $service->markSaatchiUploaded($publicationId, $userId);
     TestHarness::assertSame('uploaded', (string)$service->states($publicationId, $userId)['saatchi']['status'], 'Saatchi marcado a mano queda CARGADO A MANO');
     $pdo->prepare('UPDATE publications SET saatchi_url=? WHERE id=?')->execute(['https://www.saatchiart.com/art/x', $publicationId]);
@@ -384,7 +389,34 @@ function run_publication_distribution_service_tests(): void
     } catch (RuntimeException $e) {
         $xBlocked = true;
     }
-    TestHarness::assertTrue($xBlocked, 'X es lugar reservado: publish rechaza');
+    TestHarness::assertTrue($xBlocked, 'X sin conectar bloquea igual que cualquier otra red');
+
+    // ————— X: serie de imágenes y el reel de video, con la cuenta ya conectada —————
+    $pdo->prepare("INSERT INTO x_connections (user_id,purpose,x_user_id,x_username,x_display_name,scopes,status,connected_at,created_at,updated_at) VALUES (?,?,?,?,?,?,?,?,?,?)")
+        ->execute([9, 'artist', 'x-uid-9', 'artist_handle', 'Artist', 'tweet.write users.read offline.access', 'connected', $now, $now, $now]);
+    $xState = $service->publish($publicationId, $userId, 'x', 'en', []);
+    $xRequest = $captured['x'][0];
+    TestHarness::assertSame(1, (int)$xRequest['part'], 'la parte 1 de X sale al momento, igual que las otras series');
+    TestHarness::assertSame(3, count((array)$xRequest['image_files']), 'la parte 1 de X lleva su grupo de 3 imágenes');
+    TestHarness::assertTrue(mb_strlen((string)$xRequest['text']) <= 280, 'el texto de X respeta el límite de 280, link incluido');
+    TestHarness::assertSame('scheduled', (string)$xState['status'], 'la serie de X sigue la misma cadencia que Instagram y Facebook');
+
+    $videoAbsolutePath = RESULTS_DIR . DIRECTORY_SEPARATOR . 'dist-test-video.mp4';
+    file_put_contents($videoAbsolutePath, 'fake mp4 bytes');
+    $xSeriesCallsBefore = count($captured['x'] ?? []);
+    try {
+        $xReel = $service->publish($publicationId, $userId, 'x_video', 'en', []);
+        TestHarness::assertSame('published', (string)$xReel['status'], 'el video de X queda publicado en su propia fila');
+        TestHarness::assertSame(1, count($captured['x_video'] ?? []), 'el reel de X usa el transporte de video, no el de la serie');
+        TestHarness::assertSame($xSeriesCallsBefore, count($captured['x'] ?? []), 'mandar el reel de X no vuelve a invocar el transporte de la serie');
+        TestHarness::assertTrue(is_file((string)($captured['x_video'][0]['video_path'] ?? '')), 'el reel de X resuelve un archivo local real — X sube bytes, no una URL');
+        TestHarness::assertTrue(trim((string)($captured['x_video'][0]['text'] ?? '')) !== '', 'el reel de X lleva su propio copy compuesto');
+        $xSeriesAfter = $service->states($publicationId, $userId)['x'];
+        TestHarness::assertSame((int)$xState['published_count'], (int)$xSeriesAfter['published_count'], 'mandar el reel de X no suma partes a su serie');
+        TestHarness::assertSame((string)$xState['status'], (string)$xSeriesAfter['status'], 'el estado de la serie de X queda intacto');
+    } finally {
+        @unlink($videoAbsolutePath);
+    }
 
     // ————— Lo que la inyección de transportes NO puede ver —————
     // Los tests inyectan transportes falsos, así que el cuerpo real de los

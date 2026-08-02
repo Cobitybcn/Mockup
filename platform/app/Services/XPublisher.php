@@ -2,11 +2,13 @@
 declare(strict_types=1);
 
 /**
- * Posts to X, with the artwork's own images attached.
+ * Posts to X, with the artwork's own images or its page video attached.
  *
  * Media costs more credits than text against the monthly allowance, but a post
  * about a painting that shows no painting is not worth saving credits over.
- * Each image is uploaded first and referenced by id in the post itself.
+ * A still image uploads in one request; a video goes through X's chunked
+ * upload (INIT/APPEND/FINALIZE) and is polled until X finishes processing it,
+ * because a tweet that references the media before that point is rejected.
  */
 final class XPublisher
 {
@@ -14,6 +16,12 @@ final class XPublisher
     private const MEDIA_URL = 'https://api.x.com/2/media/upload';
     /** X shows at most four images in one post. */
     private const MAX_MEDIA = 4;
+    /** Comfortably under X's per-chunk ceiling for the APPEND command. */
+    private const APPEND_CHUNK_BYTES = 4 * 1024 * 1024;
+    /** X's own ceiling for a video attached to a post. */
+    private const MAX_VIDEO_BYTES = 512 * 1024 * 1024;
+    /** A page montage is short; if X hasn't finished processing by then, something is wrong. */
+    private const MAX_PROCESSING_WAIT_SECONDS = 180;
 
     public function __construct(private XIntegrationService $integration) {}
 
@@ -39,7 +47,40 @@ final class XPublisher
                 error_log('X media upload skipped for '.basename((string)$path).': '.$e->getMessage());
             }
         }
+        return $this->postTweet($context, $text, $mediaIds);
+    }
 
+    /**
+     * The page's own video, sent as its single attachment — a tweet carries
+     * either images or one video, never both.
+     *
+     * @return array{id:string,url:string,response:array<string,mixed>}
+     */
+    public function publishVideo(int $userId, string $text, string $purpose, string $videoPath): array
+    {
+        $text = trim($text);
+        if ($text === '') {
+            throw new InvalidArgumentException('There is nothing to post on X.');
+        }
+        if ($videoPath === '' || !is_file($videoPath)) {
+            throw new RuntimeException('The video is not available on disk.');
+        }
+        $bytes = (int)(filesize($videoPath) ?: 0);
+        if ($bytes <= 0) {
+            throw new RuntimeException('The video file is empty.');
+        }
+        if ($bytes > self::MAX_VIDEO_BYTES) {
+            throw new RuntimeException('The video exceeds the 512 MB limit X accepts.');
+        }
+
+        $context = $this->integration->publishingContext($userId, $purpose);
+        $mediaId = $this->uploadVideo((string)$context['access_token'], $videoPath, $bytes);
+        return $this->postTweet($context, $text, [$mediaId]);
+    }
+
+    /** @param array<string,mixed> $context @param list<string> $mediaIds */
+    private function postTweet(array $context, string $text, array $mediaIds): array
+    {
         $handle = curl_init();
         curl_setopt_array($handle, [
             CURLOPT_URL => self::POST_URL,
@@ -101,18 +142,112 @@ final class XPublisher
             throw new RuntimeException('X does not accept this image type: '.$mime);
         }
 
-        $handle = curl_init();
-        curl_setopt_array($handle, [
-            CURLOPT_URL => self::MEDIA_URL,
-            CURLOPT_POST => true,
-            CURLOPT_RETURNTRANSFER => true,
-            CURLOPT_TIMEOUT => 60,
-            CURLOPT_HTTPHEADER => ['Authorization: Bearer '.$accessToken],
-            // X's v2 upload endpoint refuses the file outright without this —
-            // every image in a post fails the same way, silently, until it is
-            // set. There is no video path here, so it is always a still image.
-            CURLOPT_POSTFIELDS => ['media' => new CURLFile($path, $mime, basename($path)), 'media_category' => 'tweet_image'],
+        $data = $this->mediaCommand($accessToken, [
+            'media' => new CURLFile($path, $mime, basename($path)),
+            'media_category' => 'tweet_image',
         ]);
+        $mediaId = trim((string)($data['id'] ?? $data['media_id_string'] ?? ''));
+        if ($mediaId === '') {
+            throw new RuntimeException('X did not return a media id.');
+        }
+        return $mediaId;
+    }
+
+    /**
+     * Chunked upload: INIT reserves the media id, APPEND sends the file in
+     * pieces, FINALIZE closes it — then X processes the video asynchronously,
+     * so the caller waits on STATUS before the id is safe to post with.
+     */
+    private function uploadVideo(string $accessToken, string $path, int $bytes): string
+    {
+        $mime = (string)(new finfo(FILEINFO_MIME_TYPE))->file($path);
+        if (!in_array($mime, ['video/mp4', 'video/quicktime'], true)) {
+            throw new RuntimeException('X does not accept this video type: '.$mime);
+        }
+
+        $init = $this->mediaCommand($accessToken, [
+            'command' => 'INIT',
+            'media_type' => $mime,
+            'media_category' => 'tweet_video',
+            'total_bytes' => (string)$bytes,
+        ]);
+        $mediaId = trim((string)($init['id'] ?? $init['media_id_string'] ?? ''));
+        if ($mediaId === '') {
+            throw new RuntimeException('X did not return a media id for the video.');
+        }
+
+        $handle = fopen($path, 'rb');
+        if ($handle === false) {
+            throw new RuntimeException('The video could not be opened for reading.');
+        }
+        try {
+            for ($segment = 0; !feof($handle); $segment++) {
+                $chunk = fread($handle, self::APPEND_CHUNK_BYTES);
+                if ($chunk === false || $chunk === '') break;
+                $chunkPath = tempnam(sys_get_temp_dir(), 'xvid');
+                if ($chunkPath === false) {
+                    throw new RuntimeException('A temporary file could not be created for the upload.');
+                }
+                try {
+                    file_put_contents($chunkPath, $chunk);
+                    $this->mediaCommand($accessToken, [
+                        'command' => 'APPEND',
+                        'media_id' => $mediaId,
+                        'segment_index' => (string)$segment,
+                        'media' => new CURLFile($chunkPath, 'application/octet-stream', 'chunk'),
+                    ]);
+                } finally {
+                    @unlink($chunkPath);
+                }
+            }
+        } finally {
+            fclose($handle);
+        }
+
+        $finalized = $this->mediaCommand($accessToken, ['command' => 'FINALIZE', 'media_id' => $mediaId]);
+        $this->awaitProcessing($accessToken, $mediaId, (array)($finalized['processing_info'] ?? []));
+        return $mediaId;
+    }
+
+    /** Polls STATUS until X reports the video ready, failed, or takes too long. */
+    private function awaitProcessing(string $accessToken, string $mediaId, array $info): void
+    {
+        $deadline = time() + self::MAX_PROCESSING_WAIT_SECONDS;
+        while ((string)($info['state'] ?? 'succeeded') !== 'succeeded') {
+            if ((string)($info['state'] ?? '') === 'failed') {
+                $reason = (array)($info['error'] ?? []);
+                throw new RuntimeException('X could not process the video: '.trim((string)($reason['message'] ?? 'unknown error')));
+            }
+            if (time() >= $deadline) {
+                throw new RuntimeException('X is still processing the video; try posting again in a minute.');
+            }
+            sleep(max(1, min(10, (int)($info['check_after_secs'] ?? 3))));
+            $status = $this->mediaCommand($accessToken, ['command' => 'STATUS', 'media_id' => $mediaId], get: true);
+            $info = (array)($status['processing_info'] ?? []);
+        }
+    }
+
+    /**
+     * One call to the chunked-upload command endpoint. APPEND commonly answers
+     * with no body at all — that is success, not a parse failure.
+     *
+     * @param array<string,mixed> $fields
+     * @return array<string,mixed>
+     */
+    private function mediaCommand(string $accessToken, array $fields, bool $get = false): array
+    {
+        $handle = curl_init();
+        $options = [
+            CURLOPT_URL => $get ? self::MEDIA_URL.'?'.http_build_query($fields) : self::MEDIA_URL,
+            CURLOPT_RETURNTRANSFER => true,
+            CURLOPT_TIMEOUT => 120,
+            CURLOPT_HTTPHEADER => ['Authorization: Bearer '.$accessToken],
+        ];
+        if (!$get) {
+            $options[CURLOPT_POST] = true;
+            $options[CURLOPT_POSTFIELDS] = $fields;
+        }
+        curl_setopt_array($handle, $options);
         $body = curl_exec($handle);
         $status = (int)curl_getinfo($handle, CURLINFO_RESPONSE_CODE);
         $error = curl_error($handle);
@@ -121,15 +256,18 @@ final class XPublisher
         if ($body === false) {
             throw new RuntimeException('X could not be reached: '.$error);
         }
-        $decoded = json_decode((string)$body, true);
-        if (!is_array($decoded) || $status >= 400) {
-            throw new RuntimeException('X refused the image: '.mb_substr((string)$body, 0, 300));
+        $decoded = trim((string)$body) === '' ? [] : json_decode((string)$body, true);
+        if (!is_array($decoded)) {
+            throw new RuntimeException('X answered with something that is not JSON.');
         }
-        $data = (array)($decoded['data'] ?? $decoded);
-        $mediaId = trim((string)($data['id'] ?? $data['media_id_string'] ?? ''));
-        if ($mediaId === '') {
-            throw new RuntimeException('X did not return a media id.');
+        if ($status >= 400 || isset($decoded['errors']) || isset($decoded['title'])) {
+            $errors = array_values((array)($decoded['errors'] ?? []));
+            $first = (array)($errors[0] ?? []);
+            $reason = trim((string)(
+                $first['detail'] ?? $first['message'] ?? $decoded['detail'] ?? $decoded['title'] ?? ''
+            ));
+            throw new RuntimeException('X refused the video: '.($reason !== '' ? $reason : (string)$body));
         }
-        return $mediaId;
+        return (array)($decoded['data'] ?? $decoded);
     }
 }

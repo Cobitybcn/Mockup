@@ -18,7 +18,7 @@ declare(strict_types=1);
  */
 final class PublicationDistributionService
 {
-    public const DESTINATIONS = ['pinterest', 'instagram', 'instagram_video', 'facebook', 'facebook_video', 'tiktok', 'tiktok_carousel', 'x', 'saatchi'];
+    public const DESTINATIONS = ['pinterest', 'instagram', 'instagram_video', 'facebook', 'facebook_video', 'tiktok', 'tiktok_carousel', 'x', 'x_video', 'saatchi'];
     public const DEFAULT_SERIES_GAP_HOURS = 12;
     private const LIVE_DESTINATIONS = ['pinterest', 'instagram', 'facebook', 'tiktok', 'x'];
     private const SERIES_DESTINATIONS = ['instagram', 'facebook', 'x'];
@@ -34,7 +34,7 @@ final class PublicationDistributionService
     private const META_VIDEO_PART = 10;
     /** X's post limit; a link always counts as 23 of it. */
     private const X_LIMIT = 280;
-    private const META_VIDEO_DESTINATIONS = ['instagram_video' => 'instagram', 'facebook_video' => 'facebook'];
+    private const META_VIDEO_DESTINATIONS = ['instagram_video' => 'instagram', 'facebook_video' => 'facebook', 'x_video' => 'x'];
 
     private PublicationProductService $products;
     private PublicationService $publications;
@@ -232,7 +232,7 @@ final class PublicationDistributionService
      * One act, every connected destination — each with its own mechanics. A
      * failing destination never aborts the rest: a half-finished launch has to
      * be visible, not rolled back. Saatchi is excluded by nature (manual
-     * upload) and X has no connection yet.
+     * upload).
      *
      * @return array{results:array<string,array{status:string,detail:string}>,sent:int,skipped:int,failed:int}
      */
@@ -348,7 +348,9 @@ final class PublicationDistributionService
             if ((int)($payload['media']['video']['export_id'] ?? 0) <= 0) {
                 throw new RuntimeException(t('This page has no video to send.', 'Esta página no tiene video para enviar.'));
             }
-            $request = $this->metaVideoRequest($metaVideoChannel, $payload, $destinations, $locale, $link, $slug);
+            $request = $metaVideoChannel === 'x'
+                ? $this->xVideoRequest((int)($payload['media']['video']['export_id'] ?? 0), $userId, $destinations, $locale, $link, $slug)
+                : $this->metaVideoRequest($metaVideoChannel, $payload, $destinations, $locale, $link, $slug);
             $request['user_id'] = $userId;
             // The row belongs to the network, at the part the series skips: that
             // is where states() reads the reel from, and why sending it can
@@ -909,6 +911,45 @@ final class PublicationDistributionService
     }
 
     /**
+     * X's chunked upload takes bytes, not a URL the way Meta's does — the
+     * exported video is fetched onto local disk (from GCS when that is where
+     * it lives) before the transport can hand it to XPublisher, the same way
+     * publication_video_media.php serves it to a browser.
+     */
+    private function xVideoRequest(int $exportId, int $userId, array $destinations, string $locale, string $link, string $slug): array
+    {
+        $path = $this->localVideoPath($exportId, $userId);
+        if ($path === '') {
+            throw new RuntimeException(t('The video file could not be found.', 'No se pudo encontrar el archivo del video.'));
+        }
+        $series = (array)($destinations['x']['series'] ?? []);
+        $block = (array)(((array)($series[0] ?? []))[$locale] ?? []);
+        $composed = $this->xRequest(['media' => ['items' => []]], ['x' => [$locale => $block]], $locale, $link);
+
+        return [
+            'text' => $composed['text'],
+            'video_path' => $path,
+            'slug' => $slug,
+            'part' => self::META_VIDEO_PART,
+        ];
+    }
+
+    private function localVideoPath(int $exportId, int $userId): string
+    {
+        $stmt = $this->pdo->prepare("SELECT output_path FROM video_exports WHERE id=? AND user_id=? AND status='succeeded' LIMIT 1");
+        $stmt->execute([$exportId, $userId]);
+        $key = trim((string)($stmt->fetchColumn() ?: ''));
+        if ($key === '') return '';
+        // Mirrors VideoMediaStorage::localObjectPath — a key relative to the
+        // platform root, wherever this service happens to run from.
+        $path = dirname(__DIR__, 2) . DIRECTORY_SEPARATOR . str_replace('/', DIRECTORY_SEPARATOR, ltrim($key, '/'));
+        if (!is_file($path) && class_exists('StorageService') && StorageService::isGcsActive()) {
+            StorageService::downloadFile($key, $path);
+        }
+        return is_file($path) ? $path : '';
+    }
+
+    /**
      * X counts every link as 23 characters whatever its real length. What gives
      * way, in order, is the sentence, then the tags, then — only if the title
      * alone would still not fit — the title itself. The link never gives way:
@@ -1118,6 +1159,18 @@ final class PublicationDistributionService
                     (string)$request['text'],
                     'artist',
                     $paths
+                );
+                return ['external_id' => (string)($result['id'] ?? ''), 'external_url' => (string)($result['url'] ?? '')];
+            },
+            'x_video' => function (array $request): array {
+                if (app_env('X_LIVE_PUBLISH_ENABLED', 'false') !== 'true') {
+                    throw new RuntimeException(t('Live X publishing is not enabled in this environment.', 'La publicación en vivo de X no está habilitada en este entorno.'));
+                }
+                $result = (new XPublisher(new XIntegrationService($this->pdo)))->publishVideo(
+                    (int)$request['user_id'],
+                    (string)$request['text'],
+                    'artist',
+                    (string)$request['video_path']
                 );
                 return ['external_id' => (string)($result['id'] ?? ''), 'external_url' => (string)($result['url'] ?? '')];
             },

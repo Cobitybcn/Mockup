@@ -856,7 +856,7 @@ function pub_page_chip(string $status): array
                 // se abre solo, para que el resultado nunca quede escondido.
                 $openStep = match ((string)($_GET['dist'] ?? '')) {
                     'pinterest' => 'pinterest',
-                    'instagram', 'facebook', 'instagram_video', 'facebook_video', 'x', 'settings' => 'social',
+                    'instagram', 'facebook', 'instagram_video', 'facebook_video', 'x', 'x_video', 'settings' => 'social',
                     'tiktok', 'tiktok_carousel', 'tiktok_status' => 'tiktok',
                     'saatchi' => 'saatchi',
                     default => '',
@@ -1111,18 +1111,20 @@ function pub_page_chip(string $status): array
                                         $reelState = (array)($doc['distStates'][$reelKey] ?? []);
                                         $reelStatus = (string)($reelState['status'] ?? '');
                                         $pageHasVideo = (int)($productPayload['media']['video']['export_id'] ?? 0);
-                                        // Only Meta has a video destination today (PublicationDistributionService::
-                                        // META_VIDEO_DESTINATIONS). X takes images only — offering this button for
-                                        // it drew a form whose destination the backend has never recognized.
-                                        $reelSupported = in_array($socialKey, ['facebook', 'instagram'], true);
+                                        // PublicationDistributionService::META_VIDEO_DESTINATIONS is the source of
+                                        // truth for who has a video destination — this list has to match it, or
+                                        // the button reappears for a network the backend does not recognize.
+                                        $reelSupported = in_array($socialKey, ['facebook', 'instagram', 'x'], true);
                                         ?>
                                         <?php if ($reelSupported && $socialConnected && $pageHasVideo > 0): ?>
                                             <div class="pub-series-post">
                                                 <div class="pub-series-copy">
                                                     <span class="pub-product-locale"><?= pub_h(t('Page video', 'Video de la página')) ?></span>
-                                                    <p><?= pub_h($socialKey === 'facebook'
-                                                        ? t('Sent as a video post, on its own — it does not touch the series.', 'Se manda como post de video, aparte — no toca la serie.')
-                                                        : t('Sent as a Reel, on its own — it does not touch the series.', 'Se manda como Reel, aparte — no toca la serie.')) ?></p>
+                                                    <p><?= pub_h(match ($socialKey) {
+                                                        'facebook' => t('Sent as a video post, on its own — it does not touch the series.', 'Se manda como post de video, aparte — no toca la serie.'),
+                                                        'x' => t('Sent as a post with the video attached, on its own — it does not touch the series.', 'Se manda como post con el video adjunto, aparte — no toca la serie.'),
+                                                        default => t('Sent as a Reel, on its own — it does not touch the series.', 'Se manda como Reel, aparte — no toca la serie.'),
+                                                    }) ?></p>
                                                     <?php if ($reelStatus === 'published'): ?>
                                                         <span class="pub-series-state">
                                                             <em class="pub-chip pub-chip--live"><?= pub_h(t('PUBLISHED', 'PUBLICADO')) ?></em>
@@ -1147,9 +1149,11 @@ function pub_page_chip(string $status): array
                                                             </div>
                                                             <label class="pub-dist-confirm">
                                                                 <input type="checkbox" name="confirm" value="yes" required>
-                                                                <span><?= pub_h($socialKey === 'facebook'
-                                                                    ? t('I confirm sending the page video to Facebook', 'Confirmo enviar el video de la página a Facebook')
-                                                                    : t('I confirm sending the page video as a Reel', 'Confirmo enviar el video de la página como Reel')) ?></span>
+                                                                <span><?= pub_h(match ($socialKey) {
+                                                                    'facebook' => t('I confirm sending the page video to Facebook', 'Confirmo enviar el video de la página a Facebook'),
+                                                                    'x' => t('I confirm sending the page video to X', 'Confirmo enviar el video de la página a X'),
+                                                                    default => t('I confirm sending the page video as a Reel', 'Confirmo enviar el video de la página como Reel'),
+                                                                }) ?></span>
                                                             </label>
                                                             <button type="submit" class="button-link"><?= $reelStatus === 'failed' ? pub_h(t('Retry video', 'Reintentar video')) : pub_h(t('Send video only', 'Enviar solo el video')) ?></button>
                                                         </form>
