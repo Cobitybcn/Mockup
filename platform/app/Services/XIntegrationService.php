@@ -195,13 +195,26 @@ final class XIntegrationService
         return $response;
     }
 
-    /** @return array<string,mixed> */
+    /**
+     * The handle is a label for the Connections card, not the connection itself.
+     * On the Free tier this read is rate limited to a handful of calls a day, so
+     * losing a perfectly good token over it would be absurd: come back empty and
+     * let the account connect anyway.
+     *
+     * @return array<string,mixed>
+     */
     private function identity(string $accessToken): array
     {
-        $response = $this->request('GET', self::ME_URL, [], ['Authorization: Bearer '.$accessToken]);
+        try {
+            $response = $this->request('GET', self::ME_URL, [], ['Authorization: Bearer '.$accessToken]);
+        } catch (Throwable $e) {
+            error_log('X identity lookup failed, connecting without it: '.$e->getMessage());
+            return [];
+        }
         $data = (array)($response['data'] ?? []);
         if (trim((string)($data['id'] ?? '')) === '') {
-            throw new RuntimeException('X did not return the account identity.');
+            error_log('X identity lookup returned no account: '.json_encode($response));
+            return [];
         }
         return $data;
     }
@@ -237,6 +250,13 @@ final class XIntegrationService
         $decoded = json_decode((string)$body, true);
         if (!is_array($decoded)) {
             throw new RuntimeException('X answered with something that is not JSON.');
+        }
+        if (isset($decoded['errors']) || isset($decoded['title'])) {
+            $first = (array)((array)($decoded['errors'] ?? []))[0] ?? [];
+            $reason = trim((string)(
+                $first['detail'] ?? $first['message'] ?? $decoded['detail'] ?? $decoded['title'] ?? ''
+            ));
+            throw new RuntimeException('X answered: '.($reason !== '' ? $reason : (string)$body));
         }
         return $decoded;
     }
