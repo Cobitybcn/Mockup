@@ -26,3 +26,6 @@ platform/storage/world_mothers/*
 artist-site/assets/uploads
 artist-site/assets/tenants
 artist-site/tools/sftp-venv
+# The image already drops these; uploading them only slows every build.
+output
+tmp
