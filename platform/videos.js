@@ -99,8 +99,13 @@
         if (uploadError) uploadError.hidden = true;
         try {
             const response = await fetch('video_final_upload.php', { method: 'POST', body: new FormData(uploadForm), credentials: 'same-origin' });
-            const payload = await response.json().catch(() => ({}));
-            if (!response.ok || !payload.ok) throw new Error(payload.error || 'The final video could not be uploaded.');
+            const payload = await response.json().catch(() => null);
+            if (payload === null) {
+                // A non-JSON body means the request never reached the handler —
+                // say so with the status instead of a message that explains nothing.
+                throw new Error(`The server answered ${response.status} without a reason. Reload the page and try again.`);
+            }
+            if (!response.ok || !payload.ok) throw new Error(payload.error || `The upload failed (${response.status}).`);
             window.location.reload();
         } catch (error) {
             if (uploadError) {

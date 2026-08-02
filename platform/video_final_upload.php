@@ -4,10 +4,13 @@ declare(strict_types=1);
 require_once __DIR__ . '/app/Video/bootstrap.php';
 
 VideoHttp::requirePost();
-$user = Auth::requireUser();
-FeatureAccess::requireJson($user, FeatureAccess::VIDEO_MANAGE, 'Video Lab');
 
-VideoHttp::handle(static function () use ($user): array {
+VideoHttp::handle(static function (): array {
+    // Answering in JSON matters here: requireUser() would redirect to the login
+    // page, and fetch() then reports an unreadable body instead of the reason.
+    $user = Auth::user();
+    if (!$user) VideoHttp::respond(['ok' => false, 'error' => 'Your session expired. Sign in again and retry the upload.'], 401);
+    FeatureAccess::requireJson($user, FeatureAccess::VIDEO_MANAGE, 'Video Lab');
     VideoHttp::verifyCsrf(['csrf' => (string)($_POST['csrf'] ?? '')]);
     $file = $_FILES['video'] ?? null;
     if (!is_array($file)) throw new InvalidArgumentException('Select a final video.');
