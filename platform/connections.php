@@ -52,7 +52,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             exit;
         } elseif ($action === 'disconnect_x') {
             $xService->disconnect($userId, 'artist');
-            $_SESSION['connections_notice'] = t('TikTok was disconnected.', 'TikTok fue desconectado.');
+            $_SESSION['connections_notice'] = t('X was disconnected.', 'X fue desconectado.');
         } elseif ($action === 'connect_pinterest') {
             header('Location: ' . $pinterestService->authorizationUrl($userId, 'artist'));
             exit;
