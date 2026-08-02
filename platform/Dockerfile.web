@@ -78,7 +78,7 @@ COPY artist-site/data/site.php /var/www/artist-site/data/site.php
 # Configure Apache port to 8080 (Cloud Run standard)
 RUN sed -i 's/Listen 80/Listen 8080/g' /etc/apache2/ports.conf
 RUN sed -i 's/<VirtualHost \*:80>/<VirtualHost \*:8080>/g' /etc/apache2/sites-available/000-default.conf
-RUN sed -i '/<VirtualHost \*:8080>/a\    RewriteEngine On\n    RewriteRule ^/?integrations/pinterest/callback$ /integrations/pinterest/callback/index.php [END]\n    RewriteRule ^/?integrations/meta/callback$ /integrations/meta/callback/index.php [END]\n    RewriteRule ^/?integrations/instagram/callback$ /integrations/instagram/callback/index.php [END]\n    RewriteRule ^/?integrations/tiktok/callback$ /integrations/tiktok/callback/index.php [END]' /etc/apache2/sites-available/000-default.conf
+RUN sed -i '/<VirtualHost \*:8080>/a\    RewriteEngine On\n    RewriteRule ^/?integrations/pinterest/callback$ /integrations/pinterest/callback/index.php [END]\n    RewriteRule ^/?integrations/meta/callback$ /integrations/meta/callback/index.php [END]\n    RewriteRule ^/?integrations/instagram/callback$ /integrations/instagram/callback/index.php [END]\n    RewriteRule ^/?integrations/tiktok/callback$ /integrations/tiktok/callback/index.php [END]\n    RewriteRule ^/?integrations/x/callback$ /integrations/x/callback/index.php [END]' /etc/apache2/sites-available/000-default.conf
 
 # Set permissions
 RUN chown -R www-data:www-data /var/www/html
