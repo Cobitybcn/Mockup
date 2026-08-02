@@ -11,7 +11,7 @@
     const seriesFilter = document.querySelector('[data-video-filter-series]');
     const visibleCount = document.querySelector('[data-video-visible-count]');
     const noResults = document.querySelector('[data-video-no-results]');
-    const cards = Array.from(document.querySelectorAll('[data-video-card]'));
+    let cards = Array.from(document.querySelectorAll('[data-video-card]'));
     const uploadModal = document.querySelector('[data-final-upload-modal]');
     const uploadForm = uploadModal?.querySelector('[data-final-upload-form]');
     const uploadError = uploadModal?.querySelector('[data-final-upload-error]');
@@ -164,6 +164,34 @@
         } finally {
             if (submit) { submit.disabled = false; submit.textContent = 'Upload video'; }
         }
+    });
+
+    document.querySelectorAll('[data-delete-generation]').forEach(button => {
+        button.addEventListener('click', async () => {
+            const generationId = Number(button.dataset.deleteGeneration || 0);
+            const label = String(button.dataset.generationLabel || 'este video');
+            const active = button.dataset.generationActive === '1';
+            const warning = active
+                ? `\n\nEste es el resultado ACTUAL de una secuencia. Esa secuencia quedará sin video generado.`
+                : '';
+            if (!generationId || !window.confirm(`¿Eliminar definitivamente “${label}”?\n\nSe borrarán el MP4, la miniatura y sus referencias. Esta acción no se puede deshacer.${warning}`)) return;
+            const card = button.closest('[data-video-card]');
+            card?.classList.add('is-deleting');
+            button.disabled = true;
+            try {
+                const result = await postJson('video_api.php', { action:'generation_delete', generationId });
+                cards = cards.filter(candidate => candidate !== card);
+                card?.remove();
+                applyFilters();
+                if (cards.length === 0) window.location.reload();
+                const mb = Number(result.freedBytes || 0) / 1048576;
+                if (visibleCount) visibleCount.title = mb > 0 ? `${mb.toFixed(1)} MB liberados` : 'Video eliminado del almacenamiento';
+            } catch (error) {
+                card?.classList.remove('is-deleting');
+                button.disabled = false;
+                window.alert(error instanceof Error ? error.message : 'No se pudo eliminar el video.');
+            }
+        });
     });
 
     document.querySelectorAll('[data-final-artwork-form]').forEach(form => {

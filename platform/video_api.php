@@ -82,6 +82,10 @@ VideoHttp::handle(function (): array {
             $input['instruction'] ?? ''
         ),
         'library_list' => ['assets' => $service->library($userId)],
+        'generation_delete' => (new VideoGenerationDeleteService($repository))->delete(
+            $userId,
+            (int)($input['generationId'] ?? 0)
+        ),
         default => throw new InvalidArgumentException('Unknown Video Lab action.'),
     };
 });

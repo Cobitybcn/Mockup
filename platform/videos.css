@@ -742,3 +742,6 @@ body.has-video-modal { overflow: hidden; }
     .videos-modal { padding: 10px; }
     .videos-modal-dialog { width: 100%; }
 }
+.videos-delete-generation { color: #b94b43; }
+.videos-delete-generation:hover { color: #fff; background: #9f3f38; border-color: #9f3f38; }
+.videos-card.is-deleting { opacity: .45; pointer-events: none; }

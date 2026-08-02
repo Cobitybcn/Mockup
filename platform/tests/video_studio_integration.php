@@ -234,6 +234,8 @@ try {
     $studioPage = (string)file_get_contents(__DIR__ . '/../video.php');
     $studioStyles = (string)file_get_contents(__DIR__ . '/../video_studio.css');
     $editorPage = (string)file_get_contents(__DIR__ . '/../video_editor.php');
+    $videosPage = (string)file_get_contents(__DIR__ . '/../videos.php');
+    $videosJavascript = (string)file_get_contents(__DIR__ . '/../videos.js');
     $editorServiceSource = (string)file_get_contents(__DIR__ . '/../app/Video/VideoEditorService.php');
     $studioSidebar = (string)file_get_contents(__DIR__ . '/../sidebar.php');
     TestHarness::assertContains('data-project-aspect-ratio="9:16"', $studioPage, 'the workspace exposes a direct vertical format choice');
@@ -271,6 +273,8 @@ try {
     TestHarness::assertContains('Boolean(asset.active)', $studioJavascript, 'discarded regenerations stay out of the working catalog');
     TestHarness::assertContains('data-clip-preview', $studioJavascript, 'selecting a timeline clip opens its source preview');
     TestHarness::assertContains('data-cut-remove', $studioJavascript, 'the program monitor exposes a visible delete action');
+    TestHarness::assertContains('data-delete-generation', $videosPage, 'Videos exposes permanent deletion for each generated clip');
+    TestHarness::assertContains('Esta acción no se puede deshacer', $videosJavascript, 'permanent video deletion requires an explicit irreversible warning');
     TestHarness::assertContains('timelineImportUrl', $studioPage, 'large timeline imports bypass the Cloud Run request limit');
     TestHarness::assertContains('const audio = null;', $studioJavascript, 'the rendered monitor never plays a second loose music track');
     TestHarness::assertContains('Render out of date', $studioJavascript, 'an old export is visibly separated from the current cut');
@@ -339,6 +343,25 @@ try {
     } catch (DomainException) {
         TestHarness::assertTrue(true, 'Gemini Omni interpolation fails closed');
     }
+
+    $deleteFixture = tempnam(sys_get_temp_dir(), 'video-delete-');
+    if ($deleteFixture === false) throw new RuntimeException('Could not prepare generated-video deletion fixture.');
+    file_put_contents($deleteFixture, 'generated-video-bytes');
+    $deleteKey = 'video/generations/tests/delete-' . $jobId . '.mp4';
+    StorageService::uploadFile($deleteKey, $deleteFixture);
+    @unlink($deleteFixture);
+    $pdo->prepare('UPDATE video_generation_jobs SET output_path=? WHERE id=? AND user_id=?')->execute([$deleteKey,$jobId,$userId]);
+    $pdo->prepare('UPDATE video_projects SET timeline_json=? WHERE id=? AND user_id=?')->execute([
+        json_encode(['schemaVersion'=>2,'videoBlocks'=>[['sourceType'=>'generation_job','sourceId'=>$jobId]],'audioBlocks'=>[]]),
+        $projectId,$userId,
+    ]);
+    $deletedVideo = (new VideoGenerationDeleteService($studioRepository))->delete($userId, $jobId);
+    TestHarness::assertSame($jobId, (int)$deletedVideo['deletedGenerationId'], 'a generated clip can be deleted permanently from Videos');
+    TestHarness::assertTrue(StorageService::objectSize($deleteKey) === null, 'permanent deletion removes the generated MP4 from storage');
+    TestHarness::assertTrue($jobRepository->findGeneration($jobId) === null, 'permanent deletion removes the generation database record');
+    $referenceCount = $pdo->prepare("SELECT COUNT(*) FROM video_scene_references WHERE source_type='generation_job' AND source_id=?");
+    $referenceCount->execute([$jobId]);
+    TestHarness::assertSame(0, (int)$referenceCount->fetchColumn(), 'permanent deletion removes references to the generated clip');
 } finally {
     if ($unassignedProjectId > 0) {
         $pdo->prepare('DELETE FROM video_projects WHERE id=? AND user_id=?')->execute([$unassignedProjectId,$userId]);

@@ -70,7 +70,7 @@ function videos_artist_site_url(string $slug): string
     <title><?= videos_h(t('Videos - Artwork Mockups', 'Videos - Artwork Mockups')) ?></title>
     <link rel="stylesheet" href="style.css">
     <link rel="stylesheet" href="ui-catalog.css">
-    <link rel="stylesheet" href="videos.css?v=15">
+    <link rel="stylesheet" href="videos.css?v=16">
     <link rel="stylesheet" href="media-controls.css?v=2">
 </head>
 <body>
@@ -231,7 +231,7 @@ function videos_artist_site_url(string $slug): string
                                 $seriesId = (int)($video['seriesId'] ?? 0);
                                 $seriesTitle = trim((string)($video['seriesTitle'] ?? ''));
                                 ?>
-                                <article class="videos-card <?= $aspect === '16:9' ? 'is-landscape' : 'is-portrait' ?>" data-video-card data-artwork-id="<?= $artworkId ?>" data-series-id="<?= $seriesId ?>">
+                                <article class="videos-card <?= $aspect === '16:9' ? 'is-landscape' : 'is-portrait' ?>" data-video-card data-artwork-id="<?= $artworkId ?>" data-series-id="<?= $seriesId ?>" data-generation-id="<?= $id ?>">
                                     <div class="videos-card-media-shell">
                                         <button
                                             class="videos-card-media"
@@ -248,6 +248,7 @@ function videos_artist_site_url(string $slug): string
                                         <div class="media-thumb-action-cluster" aria-label="<?= videos_h(t('Video actions', 'Acciones del video')) ?>">
                                             <a class="media-icon-button" href="video_editor.php?generation_id=<?= $id ?>" aria-label="<?= videos_h(t('Edit video', 'Editar video')) ?>" title="<?= videos_h(t('Edit video', 'Editar video')) ?>"><svg class="media-action-icon" viewBox="0 0 24 24" aria-hidden="true"><path d="M12 20h9M16.5 3.5a2.12 2.12 0 0 1 3 3L8 18l-4 1 1-4Z"/></svg></a>
                                             <a class="media-icon-button" href="<?= videos_h($downloadUrl) ?>" aria-label="<?= videos_h(t('Download video', 'Descargar video')) ?>" title="<?= videos_h(t('Download video', 'Descargar video')) ?>"><svg class="media-action-icon" viewBox="0 0 24 24" aria-hidden="true"><path d="M12 3v12M7.5 10.5 12 15l4.5-4.5M5 19h14"/></svg></a>
+                                            <button class="media-icon-button videos-delete-generation" type="button" data-delete-generation="<?= $id ?>" data-generation-active="<?= !empty($video['active']) ? '1' : '0' ?>" data-generation-label="<?= videos_h($projectTitle . ' · ' . $clipIdentity) ?>" aria-label="<?= videos_h(t('Delete video permanently', 'Eliminar video definitivamente')) ?>" title="<?= videos_h(t('Delete permanently', 'Eliminar definitivamente')) ?>"><svg class="media-action-icon" viewBox="0 0 24 24" aria-hidden="true"><path d="M4 7h16M9 7V4h6v3m-8 0 1 13h8l1-13M10 11v5m4-5v5"/></svg></button>
                                         </div>
                                     </div>
                                     <div class="videos-card-body">
@@ -315,6 +316,6 @@ function videos_artist_site_url(string $slug): string
         </div>
     </main>
 </div>
-<script src="videos.js?v=13"></script>
+<script src="videos.js?v=14"></script>
 </body>
 </html>

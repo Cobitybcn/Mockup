@@ -20,6 +20,7 @@ require_once __DIR__ . '/VideoReferenceUploadService.php';
 require_once __DIR__ . '/VideoMusicService.php';
 require_once __DIR__ . '/VideoTimelineService.php';
 require_once __DIR__ . '/VideoTimelineImportService.php';
+require_once __DIR__ . '/VideoGenerationDeleteService.php';
 require_once __DIR__ . '/VideoFinalUploadService.php';
 require_once __DIR__ . '/VideoGenerationService.php';
 require_once __DIR__ . '/VideoEditorService.php';
