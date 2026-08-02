@@ -98,7 +98,15 @@
         if (submit) { submit.disabled = true; submit.textContent = 'Subiendo…'; }
         if (uploadError) uploadError.hidden = true;
         try {
-            const response = await fetch('video_final_upload.php', { method: 'POST', body: new FormData(uploadForm), credentials: 'same-origin' });
+            // RequestSecurity guards this endpoint and answers in plain text
+            // unless the request states it wants JSON — without this its reason
+            // arrives as an unreadable body.
+            const response = await fetch('video_final_upload.php', {
+                method: 'POST',
+                body: new FormData(uploadForm),
+                credentials: 'same-origin',
+                headers: { 'Accept': 'application/json', 'X-Requested-With': 'XMLHttpRequest' },
+            });
             const payload = await response.json().catch(() => null);
             if (payload === null) {
                 // A non-JSON body means the request never reached the handler —

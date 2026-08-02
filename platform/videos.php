@@ -354,6 +354,6 @@ function videos_artist_site_url(string $slug): string
         </div>
     </main>
 </div>
-<script src="videos.js?v=11"></script>
+<script src="videos.js?v=12"></script>
 </body>
 </html>
