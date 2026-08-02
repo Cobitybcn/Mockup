@@ -134,6 +134,18 @@ Una sola lista, consumida por descripciones, SEO y títulos:
 - **Límites de palabras**: descripción de obra ≤350 · corta ≤70 · mockup ≤180 · website ≤140
   · Pinterest ≤100 · Instagram/Facebook ≤180 · alt text ≤90 · caption ≤50 · excerpt de nota
   ≤70 · seo_description de nota ≤35.
+- **Límites de CARACTERES de Saatchi Art** (enmienda 2026-08-01): título ≤65 **caracteres**
+  con espacios · descripción ≤1000 · pie de imagen <50. Se miden en caracteres, no en
+  palabras, porque son topes duros del formulario de Saatchi: un texto que los pase no se
+  puede publicar. Los campos del sitio no sirven ahí — la descripción larga (1587 caracteres
+  medidos) y el pie del sitio (≈180) los exceden. Saatchi lleva **campos propios, generados
+  con su presupuesto**, jamás un recorte del texto largo: truncar corta a mitad de frase y
+  eso ya está prohibido en este mismo capítulo.
+- **Título de Saatchi**: `TÍTULO EXACTO - cola SEO` dentro de los 65 caracteres totales. La
+  cola se genera contra el presupuesto que deja cada obra (65 − largo del título − 3), que
+  varía entre 42 y 56 caracteres en el catálogo actual. Si no entra una cola honesta, el
+  título viaja solo. **Prohibido abreviar, truncar o mutilar el título de la obra** para
+  hacerle lugar a la cola: el título es identidad (Libro I).
 
 ### Cap. 3 — Anti-genérico
 

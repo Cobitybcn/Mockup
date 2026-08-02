@@ -95,6 +95,13 @@ gobernando `EDITORIAL_CORE.md`; este documento no lo pisa.
 15. **Vocabulario de estado propio por destino.** Cada adaptador nombra sus estados según su
     mecánica real: Saatchi «pendiente de carga manual», TikTok según su modo de envío. Prohibido
     un «Publicado» genérico prestado entre destinos que no significan lo mismo.
+16. **Meta: el video es un acto aparte de la serie** (enmienda 2026-08-02). Instagram y Facebook
+    suman el video del sitio como **cuarta publicación**, con su propia fila, igual que TikTok
+    separa video y carrusel: enviar el reel jamás toca la serie 3×3 ya publicada ni la reprograma.
+    No entra como «una parte más» porque no lo es — en Instagram un video **es un Reel**, con su
+    formato vertical y sus límites de duración, y en Facebook usa otro endpoint que el de foto.
+    Aparece cuando la página tiene video, y su ausencia no bloquea nada: sin video, el Paso 4
+    sigue siendo la serie de imágenes de siempre.
 
 ## IV — Verificación
 
@@ -113,10 +120,15 @@ gobernando `EDITORIAL_CORE.md`; este documento no lo pisa.
   Website configurado y publicado se abren redes y marketplaces: proceso editorial universal
   servido de la memoria → producto terminado único → distribución por adaptador.
 - Seis adaptadores, cada uno con su mecánica propia: Pinterest (1 imagen + tablero + link),
-  Instagram (imagen/carrusel), Facebook (imagen/carrusel), TikTok (video con audio propio vía
-  Direct Post; carrusel nativo con mecánica de audio a definir), X (lugar reservado, sin
-  conexión), Saatchi Art (paquete manual: 4+ imágenes con caption, 12 keywords ≤20 caracteres
+  Instagram (imagen/carrusel **y Reel**), Facebook (imagen/carrusel **y video**), TikTok (video
+  con audio propio vía Direct Post; carrusel nativo con mecánica de audio a definir), X (lugar
+  reservado, sin conexión), Saatchi Art (paquete manual: 4+ imágenes con caption, 12 keywords ≤20 caracteres
   derivadas de `tags` con dedupe semántico y sin repetir set entre obras similares, descripción;
   lazo de vuelta: pegar `purchase_url` del listing creado).
+- **Saatchi tiene campos propios, no prestados** (enmienda 2026-08-01). Sus tres topes son de
+  la plataforma y se miden en caracteres: título ≤65 con espacios, descripción ≤1000, pie de
+  imagen <50. Ningún campo del sitio entra en ese presupuesto, así que el paso 2 no reusa los
+  textos de la página: los recibe generados para Saatchi. El título se compone
+  `TÍTULO - cola SEO` con la cola calculada por obra, y si no entra, viaja el título solo.
 - Tableros, campañas y estudios anteriores: descartados como base. Solo se asumen las
   conexiones y el CORE editorial.
