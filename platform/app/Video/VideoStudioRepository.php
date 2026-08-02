@@ -632,6 +632,10 @@ final class VideoStudioRepository
             if (!is_array($snapshot)) $snapshot = [];
             $kind = (string)($snapshot['kind'] ?? '');
             if (!in_array($kind, ['final','uploaded_final'], true)) continue;
+            // Building a montage is iteration. It only belongs among the finished
+            // videos once the artist has said it is finished; uploading a file is
+            // that statement in itself.
+            if ($kind === 'final' && trim((string)($snapshot['approvedAt'] ?? '')) === '') continue;
 
             $artworkId = (int)($snapshot['artworkId'] ?? $row['project_artwork_id'] ?? 0);
             if ($artworkId > 0) $artworkIds[$artworkId] = $artworkId;
@@ -697,6 +701,30 @@ final class VideoStudioRepository
     {
         $identity = $this->artworkIdentityMap($userId, [$artworkId])[$artworkId] ?? null;
         return is_array($identity) ? $identity : null;
+    }
+
+    /** Mark a montage as finished, which is what puts it among the final videos. */
+    public function approveExport(int $userId, int $exportId, bool $approved = true): array
+    {
+        $stmt = $this->pdo->prepare("SELECT e.id,e.timeline_snapshot_json FROM video_exports e
+            INNER JOIN video_projects p ON p.id=e.video_project_id AND p.user_id=e.user_id
+            WHERE e.id=? AND e.user_id=? AND e.status='succeeded' LIMIT 1");
+        $stmt->execute([$exportId, $userId]);
+        $row = $stmt->fetch();
+        if (!is_array($row)) throw new OutOfBoundsException('Montaje no encontrado.');
+
+        $snapshot = json_decode((string)($row['timeline_snapshot_json'] ?? ''), true);
+        if (!is_array($snapshot)) $snapshot = [];
+        if ((string)($snapshot['kind'] ?? '') !== 'final') {
+            throw new DomainException('Este archivo no es un montaje del proyecto.');
+        }
+        if ($approved) $snapshot['approvedAt'] = date('c');
+        else unset($snapshot['approvedAt']);
+
+        $this->pdo->prepare('UPDATE video_exports SET timeline_snapshot_json=?,updated_at=? WHERE id=? AND user_id=?')
+            ->execute([self::encode($snapshot), date('c'), $exportId, $userId]);
+
+        return ['exportId' => $exportId, 'approved' => $approved];
     }
 
     public function assignFinalArtwork(int $userId, int $exportId, int $artworkId): array
@@ -847,6 +875,8 @@ final class VideoStudioRepository
             'generatedClipCount' => (int)($row['generated_clip_count'] ?? 0),
             'createdAt' => (string)$row['created_at'],
             'updatedAt' => (string)$row['updated_at'],
+            'kind' => (string)($snapshot['kind'] ?? ''),
+            'approvedAt' => (string)($snapshot['approvedAt'] ?? ''),
         ];
     }
 

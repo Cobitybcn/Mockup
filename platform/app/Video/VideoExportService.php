@@ -81,7 +81,7 @@ final class VideoExportService
             }
             if ($export['status'] !== 'processing') throw new RuntimeException('Export could not be claimed.');
             $result = $this->builder->build($export);
-            $this->jobs->markExportSucceeded($exportId, $result['path'], $result['durationSeconds'], $result['bytes']);
+            $this->jobs->markExportSucceeded($exportId, $result['path'], $result['durationSeconds'], $result['bytes'], (string)($result['thumbnailPath'] ?? ''));
             return ['status' => 'succeeded', 'exportId' => $exportId];
         } catch (Throwable $e) {
             $this->jobs->markExportFailed($exportId, $e->getMessage());

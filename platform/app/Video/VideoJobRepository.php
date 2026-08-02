@@ -328,9 +328,21 @@ final class VideoJobRepository
         $this->pdo->prepare('UPDATE video_exports SET task_name=?,updated_at=? WHERE id=?')->execute([$taskName,date('c'),$exportId]);
     }
 
-    public function markExportSucceeded(int $exportId, string $path, float $duration, int $bytes): void
+    public function markExportSucceeded(int $exportId, string $path, float $duration, int $bytes, string $thumbnailPath = ''): void
     {
         $now = date('c');
+        if ($thumbnailPath !== '') {
+            // The poster belongs with the rest of the export's description, which
+            // is where every listing already looks for it.
+            $read = $this->pdo->prepare('SELECT timeline_snapshot_json FROM video_exports WHERE id=?');
+            $read->execute([$exportId]);
+            $snapshot = json_decode((string)$read->fetchColumn(), true);
+            if (is_array($snapshot)) {
+                $snapshot['thumbnailPath'] = $thumbnailPath;
+                $this->pdo->prepare('UPDATE video_exports SET timeline_snapshot_json=? WHERE id=?')
+                    ->execute([self::encode($snapshot), $exportId]);
+            }
+        }
         $stmt = $this->pdo->prepare("UPDATE video_exports SET status='succeeded',output_path=?,duration_seconds=?,bytes=?,error='',completed_at=?,updated_at=? WHERE id=?");
         $stmt->execute([$path,$duration,$bytes,$now,$now,$exportId]);
     }

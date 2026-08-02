@@ -621,7 +621,7 @@
         const music = musicOf();
         return [
             currentProject()?.id,
-            result?.id, result?.status, result?.previewUrl,
+            result?.id, result?.status, result?.previewUrl, result?.approvedAt,
             scenes().map(scene => `${scene.id}:${sceneSeconds(scene)}`).join(','),
             music?.assetId || 0,
             renderedScenes().length,
@@ -731,6 +731,13 @@
                 <p class="vds-nle-note">Level is the white line over the clip — drag it up or down. The diamonds at each end open the fades.</p>` : `
                 <p class="vds-nle-note">Add a track on A1 and it plays across the whole montage, ending with the picture.</p>`}
                 ${result?.previewUrl ? `<div class="vds-nle-line"><span>Result</span><output>${clockTime(result.durationSeconds || 0)} · ${Math.round((result.bytes || 0) / 1048576)} MB</output></div>` : ''}
+                ${result?.previewUrl && String(result.kind || '') === 'final' ? (
+                    result.approvedAt
+                        ? `<div class="vds-nle-line"><span>Finished</span><output>in Videos</output></div>
+                           <button class="vds-nle-btn" type="button" data-export-approve="0">Take back to draft</button>`
+                        : `<p class="vds-nle-note">This is the project's current cut. It stays here until you call it finished.</p>
+                           <button class="vds-nle-btn" type="button" data-export-approve="1">Mark as finished</button>`
+                ) : ''}
                 <button class="vds-nle-btn vds-nle-btn--primary" type="button" data-start-export${ready === 0 || pending ? ' disabled' : ''}>${
                     pending ? 'Building…' : result?.previewUrl ? 'Rebuild montage' : 'Join sequences'
                 }</button>
@@ -1614,6 +1621,18 @@
 
         if (event.target.closest('[data-start-export]')) { startExport(); return; }
         if (event.target.closest('[data-music-clear]')) { updateMusic({ clear: true }, 'Music removed'); return; }
+        const approve = event.target.closest('[data-export-approve]');
+        if (approve) {
+            const result = latestExport();
+            if (!result?.id) return;
+            const wanted = approve.dataset.exportApprove === '1';
+            queueMutation(() => request(state.endpoints.exportApprove || 'video_export_approve.php', {
+                projectId: currentProject().id,
+                exportId: result.id,
+                approved: wanted,
+            }), wanted ? 'Montage marked as finished' : 'Back to draft');
+            return;
+        }
 
         const generate = event.target.closest('[data-generate-sequence]');
         if (generate) { showGenerationModal(Number(generate.dataset.generateSequence)); return; }

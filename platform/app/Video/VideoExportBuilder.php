@@ -46,8 +46,18 @@ final class VideoExportBuilder
             if (!is_file($output) || filesize($output) < 1024) throw new RuntimeException('FFmpeg did not create a valid MP4 export.');
             $key = sprintf('video/exports/%d/%d/export_%d.mp4', (int)$export['user_id'], (int)$export['video_project_id'], (int)$export['id']);
             if (!StorageService::uploadFile($key, $output)) throw new RuntimeException('Could not store the MP4 export.');
+
+            // Without a poster the montage shows up as a black card everywhere it
+            // is listed, while an uploaded video shows its first frame.
+            $thumbnailKey = '';
+            $poster = $directory . DIRECTORY_SEPARATOR . 'poster.jpg';
+            if (VideoFfmpeg::thumbnail($output, $poster)) {
+                $candidate = sprintf('video/exports/%d/%d/export_%d.jpg', (int)$export['user_id'], (int)$export['video_project_id'], (int)$export['id']);
+                if (StorageService::uploadFile($candidate, $poster)) $thumbnailKey = $candidate;
+            }
+
             $duration = VideoFfmpeg::duration($output);
-            return ['path' => $key, 'durationSeconds' => $duration, 'bytes' => filesize($output) ?: 0];
+            return ['path' => $key, 'durationSeconds' => $duration, 'bytes' => filesize($output) ?: 0, 'thumbnailPath' => $thumbnailKey];
         } finally {
             $this->removeDirectory($directory);
         }
