@@ -269,6 +269,7 @@ try {
     TestHarness::assertContains('timelineImportUrl', $studioPage, 'large timeline imports bypass the Cloud Run request limit');
     TestHarness::assertContains('const audio = null;', $studioJavascript, 'the rendered monitor never plays a second loose music track');
     TestHarness::assertContains('Render out of date', $studioJavascript, 'an old export is visibly separated from the current cut');
+    TestHarness::assertTrue(substr_count($studioJavascript, "const stale = Boolean(result?.previewUrl)") >= 2, 'the editor render declares its stale-export guard before using it');
     TestHarness::assertContains('data-generated-clip', $studioJavascript, 'generated results expose a direct drag source');
     TestHarness::assertContains('data-use-clip-next', $studioJavascript, 'generated results expose a one-click next-sequence action');
     TestHarness::assertContains('data-continuation-frame-preview', $studioJavascript, 'an explicit continuation previews the frame that will actually be sent');

@@ -738,6 +738,7 @@
 
         const result = latestExport();
         const music = musicOf();
+        const stale = Boolean(result?.previewUrl) && Number(result.projectVersion || 0) !== Number(currentProject()?.version || 0);
         const missing = ungeneratedScenes();
         const ready = renderedScenes().length;
         const pending = exportPending();
