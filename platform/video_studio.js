@@ -26,6 +26,11 @@
         openContexts: new Set(),
         sortables: [],
         generationTimer: null,
+        exportTimer: null,
+        musicUploading: false,
+        musicAudio: null,
+        pxs: 18,
+        playhead: 0,
     };
 
     const $ = (selector, context = root) => context.querySelector(selector);
@@ -39,6 +44,7 @@
         catalogRail: $('[data-catalog-rail]'),
         catalogHelp: $('[data-catalog-help]'),
         boardGrid: $('[data-sequence-boards]'),
+        exportPanel: $('[data-export-panel]'),
         generationModal: $('[data-generation-modal]'),
         generationSummary: $('[data-generation-summary]'),
         toast: $('[data-video-toast]'),
@@ -447,6 +453,33 @@
         return { id: 'draft', label: labels.draft };
     }
 
+    // Only the transitions ffmpeg renders distinctly are offered. 'fade' and
+    // 'cross_dissolve' both reach xfade as a plain fade, so one stands for both,
+    // and 'ai_transition' is left out because nothing generates it.
+    const transitionOptions = [
+        { id: 'cut', label: 'Cut' },
+        { id: 'cross_dissolve', label: 'Cross dissolve' },
+        { id: 'dip_black', label: 'Dip to black' },
+        { id: 'dip_white', label: 'Dip to white' },
+    ];
+
+    function transitionControls(scene, index) {
+        if (index >= scenes().length - 1) return '';
+        const type = String(scene.transitionOut?.type || 'cut');
+        const known = transitionOptions.some(option => option.id === type) ? type : 'cut';
+        // 0.5s is what the builder falls back to when no length was stored, so
+        // the control shows that rather than implying a value nobody chose.
+        const stored = Number(scene.transitionOut?.durationSeconds || 0);
+        const seconds = stored > 0 ? stored : 0.5;
+        const durations = [0.3, 0.5, 0.8, 1.2];
+        return `<label><span>Transition to Sequence ${index + 2}</span><select data-scene-field="transitionType" data-scene-id="${scene.id}">${
+            transitionOptions.map(option => `<option value="${option.id}"${option.id === known ? ' selected' : ''}>${escapeHtml(option.label)}</option>`).join('')
+        }</select></label>
+        ${known === 'cut' ? '' : `<label><span>Transition length</span><select data-scene-field="transitionDurationSeconds" data-scene-id="${scene.id}">${
+            durations.map(value => `<option value="${value}"${Math.abs(seconds - value) < 0.01 ? ' selected' : ''}>${value} s</option>`).join('')
+        }</select></label>`}`;
+    }
+
     function renderBoards() {
         const durationValues = state.capabilities.durations || [4,6,8];
         dom.boardGrid.innerHTML = scenes().map((scene, index) => {
@@ -497,6 +530,7 @@
                     ${referenceManager(scene, index)}
                     <div class="vds-context-grid">
                         <label><span>Duration</span><select data-scene-field="durationSeconds" data-scene-id="${scene.id}">${durationValues.map(value => `<option value="${value}"${Number(scene.durationSeconds) === Number(value) ? ' selected' : ''}>${value} seconds</option>`).join('')}</select></label>
+                        ${transitionControls(scene, index)}
                     </div>
                 </div>
                 ${scene.active_generation?.previewUrl ? `<div class="vds-inline-result"><span>Generated result</span>${resultPreview(scene, index)}</div>` : ''}
@@ -508,6 +542,626 @@
             </article>`;
         }).join('');
         prepareContinuationFramePreviews();
+    }
+
+    function latestExport() { return state.studio?.latestExport || null; }
+
+    function exportPending() {
+        return ['queued','processing'].includes(String(latestExport()?.status || ''));
+    }
+
+    function ungeneratedScenes() {
+        return scenes().filter(scene => !scene.active_generation?.previewUrl).length;
+    }
+
+    function sceneSeconds(scene) {
+        return Number(scene.active_generation?.durationSeconds || scene.durationSeconds || 0);
+    }
+
+    function videoSeconds() {
+        return scenes().reduce((total, scene) => total + sceneSeconds(scene), 0);
+    }
+
+    const pad = value => String(Math.floor(value)).padStart(2, '0');
+    function timecode(seconds) {
+        const s = Math.max(0, Number(seconds) || 0);
+        return `00:00:${pad(s % 60)}:${pad((s % 1) * 24)}`;
+    }
+    function clockTime(seconds) {
+        const s = Math.max(0, Number(seconds) || 0);
+        return `${Math.floor(s / 60)}:${pad(s % 60)}`;
+    }
+    function decibels(volume) {
+        if (!(volume > 0.001)) return '−∞ dB';
+        const db = 20 * Math.log10(volume);
+        return `${db >= 0 ? '+' : '−'}${Math.abs(db).toFixed(1)} dB`;
+    }
+
+    // Geometry of the audio lane, shared by the rubber band and its grips.
+    const LANE = { videoHeight: 84, audioHeight: 118, labelHeight: 15, unityAt: 0.42, maxGain: 4 };
+    const laneTop = () => LANE.labelHeight + 5;
+    const laneBottom = () => LANE.audioHeight - 5;
+    const unityY = () => laneTop() + (laneBottom() - laneTop()) * LANE.unityAt;
+    function gainToY(volume) {
+        return volume >= 1
+            ? unityY() - (unityY() - laneTop()) * Math.min(1, (volume - 1) / (LANE.maxGain - 1))
+            : laneBottom() - (laneBottom() - unityY()) * volume;
+    }
+    function yToGain(y) {
+        const clamped = Math.max(laneTop(), Math.min(laneBottom(), y));
+        return clamped <= unityY()
+            ? 1 + ((unityY() - clamped) / (unityY() - laneTop())) * (LANE.maxGain - 1)
+            : (laneBottom() - clamped) / (laneBottom() - unityY());
+    }
+
+    /**
+     * style.css zooms the whole page, so pointer coordinates arrive in a
+     * different unit than the CSS pixels the timeline is laid out in. Every
+     * drag divides by this factor before converting to seconds.
+     */
+    function laneScale(element) {
+        const width = element?.offsetWidth || 0;
+        if (width <= 0) return 1;
+        const rendered = element.getBoundingClientRect().width;
+        return rendered > 0 ? rendered / width : 1;
+    }
+
+    function musicOf() { return currentProject()?.music || null; }
+
+    /**
+     * The panel is rebuilt only when its shape changes. Re-rendering on every
+     * nudge of the level would tear down the montage <video> mid-playback.
+     */
+    function panelSignature() {
+        const result = latestExport();
+        const music = musicOf();
+        return [
+            currentProject()?.id,
+            result?.id, result?.status, result?.previewUrl,
+            scenes().map(scene => `${scene.id}:${sceneSeconds(scene)}`).join(','),
+            music?.assetId || 0,
+            ungeneratedScenes(),
+            state.musicUploading ? 1 : 0,
+        ].join('|');
+    }
+
+    function renderExportPanel() {
+        if (!dom.exportPanel) return;
+        if (!currentProject() || scenes().length === 0) {
+            dom.exportPanel.innerHTML = '';
+            dom.exportPanel.dataset.signature = '';
+            return;
+        }
+        const signature = panelSignature();
+        if (dom.exportPanel.dataset.signature === signature) { layoutTimeline(); return; }
+        dom.exportPanel.dataset.signature = signature;
+
+        const result = latestExport();
+        const music = musicOf();
+        const missing = ungeneratedScenes();
+        const pending = exportPending();
+        const total = videoSeconds();
+
+        const monitor = result?.previewUrl
+            ? `<video class="vds-monitor-video" src="${escapeHtml(result.previewUrl)}"${
+                result.thumbnailUrl ? ` poster="${escapeHtml(result.thumbnailUrl)}"` : ''
+              } preload="metadata" playsinline data-montage-video></video>`
+            : `<div class="vds-monitor-empty"><strong>${pending ? 'Building the montage' : 'No montage yet'}</strong><small>${
+                missing > 0
+                    ? `Generate the ${missing === 1 ? 'remaining sequence' : `${missing} remaining sequences`} first.`
+                    : pending ? 'It will appear here when it finishes.' : 'Join the sequences to see it here.'
+              }</small></div>`;
+
+        const failure = String(result?.status || '') === 'failed' && String(result?.error || '').trim()
+            ? `<p class="vds-nle-error" role="alert"><strong>The montage could not be built.</strong><span>${escapeHtml(String(result.error).trim())}</span></p>`
+            : '';
+
+        dom.exportPanel.innerHTML = `
+        <div class="vds-nle">
+            <section class="vds-nle-pane vds-nle-program">
+                <div class="vds-monitor">${monitor}</div>
+            </section>
+
+            <section class="vds-nle-pane vds-nle-timeline">
+                <header class="vds-nle-head"><span>Timeline · ${escapeHtml(currentProject().title || 'Montage')}</span></header>
+                <div class="vds-nle-grid">
+                    <div class="vds-nle-gutter"><span></span><span>V1</span><span>A1</span></div>
+                    <div class="vds-nle-scroll" data-timeline-scroll>
+                        <div class="vds-nle-lane" data-timeline-lane>
+                            <div class="vds-nle-ruler" data-timeline-ruler><div class="vds-nle-work" data-timeline-work></div></div>
+                            <div class="vds-nle-row vds-nle-row--v" data-track-video></div>
+                            <div class="vds-nle-row vds-nle-row--a" data-track-audio>${music ? `
+                                <div class="vds-nle-clip vds-nle-clip--a" data-music-clip>
+                                    <div class="vds-nle-clip-label"><span>${escapeHtml(music.label || 'Music')}</span><em>fx</em></div>
+                                    <div class="vds-nle-bed"></div>
+                                    <canvas data-wave-canvas></canvas>
+                                    <div class="vds-nle-out" data-out-left></div>
+                                    <div class="vds-nle-out" data-out-right></div>
+                                </div>
+                                <svg class="vds-nle-rubber" data-rubber aria-hidden="true"></svg>
+                                <button class="vds-nle-grip vds-nle-grip--v" data-grip-gain aria-label="Music level. Drag up or down, or use the arrow keys."></button>
+                                <button class="vds-nle-grip vds-nle-grip--h" data-grip-fade-in aria-label="Fade in. Drag sideways, or use the arrow keys."></button>
+                                <button class="vds-nle-grip vds-nle-grip--h" data-grip-fade aria-label="Fade out. Drag sideways, or use the arrow keys."></button>
+                                <span class="vds-nle-tip" data-tip-gain></span>
+                                <span class="vds-nle-tip" data-tip-fade></span>
+                                <span class="vds-nle-tip" data-tip-fade-in></span>` : `
+                                <label class="vds-nle-drop">
+                                    <span>${state.musicUploading ? 'Uploading…' : '＋ Add music'}</span>
+                                    <input type="file" accept="audio/*" data-music-file${state.musicUploading ? ' disabled' : ''}>
+                                </label>`}
+                            </div>
+                            <div class="vds-nle-end" data-timeline-end></div>
+                            <div class="vds-nle-cti" data-timeline-cti></div>
+                        </div>
+                    </div>
+                </div>
+                <footer class="vds-nle-foot">
+                    <span class="vds-nle-hint" data-timeline-hint></span>
+                    <div class="vds-nle-transport">
+                        <button class="vds-nle-icon" type="button" data-montage-step="-1" aria-label="Previous frame"><svg viewBox="0 0 16 16"><path d="M12 2v12l-8-6z"/></svg></button>
+                        <button class="vds-nle-icon vds-nle-icon--play" type="button" data-montage-play aria-label="Play"><svg viewBox="0 0 16 16" data-play-icon><path d="M4 2l9 6-9 6z"/></svg></button>
+                        <button class="vds-nle-icon" type="button" data-montage-step="1" aria-label="Next frame"><svg viewBox="0 0 16 16"><path d="M4 2v12l8-6z"/></svg></button>
+                        <span class="vds-nle-tc" data-montage-time>${timecode(0)}</span>
+                        <span class="vds-nle-tc vds-nle-tc--end">/ ${timecode(total)}</span>
+                    </div>
+                    <input type="range" min="6" max="80" step="1" value="${state.pxs}" data-timeline-zoom aria-label="Timeline zoom">
+                </footer>
+            </section>
+
+            <aside class="vds-nle-pane vds-nle-inspector">
+                <h3>Montage</h3>
+                <div class="vds-nle-kv"><span>Sequences</span><b>${scenes().length} · ${clockTime(total)} · ${escapeHtml(currentProject().aspectRatio || '9:16')}</b></div>
+                ${music ? `
+                <div class="vds-nle-kv"><span>Track A1</span><b>${escapeHtml(music.label || 'Music')}</b></div>
+                <div class="vds-nle-two">
+                    <label class="vds-nle-file"><span>${state.musicUploading ? 'Uploading…' : 'Replace'}</span><input type="file" accept="audio/*" data-music-file${state.musicUploading ? ' disabled' : ''}></label>
+                    <button class="vds-nle-btn" type="button" data-music-clear>Remove</button>
+                </div>
+                <div class="vds-nle-line"><span>Level</span><output data-out-gain></output></div>
+                <div class="vds-nle-line"><span>Fade in</span><output data-out-fade-in></output></div>
+                <div class="vds-nle-line"><span>Fade out</span><output data-out-fade></output></div>
+                <div class="vds-nle-line"><span>Music in</span><output data-out-offset></output></div>
+                <p class="vds-nle-note">Level is the white line over the clip — drag it up or down. The diamonds at each end open the fades.</p>` : `
+                <p class="vds-nle-note">Add a track on A1 and it plays across the whole montage, ending with the picture.</p>`}
+                ${result?.previewUrl ? `<div class="vds-nle-line"><span>Result</span><output>${clockTime(result.durationSeconds || 0)} · ${Math.round((result.bytes || 0) / 1048576)} MB</output></div>` : ''}
+                <button class="vds-nle-btn vds-nle-btn--primary" type="button" data-start-export${missing > 0 || pending ? ' disabled' : ''}>${
+                    pending ? 'Building…' : result?.previewUrl ? 'Rebuild montage' : 'Join sequences'
+                }</button>
+                ${missing > 0 ? `<p class="vds-nle-note">Generate the ${missing === 1 ? 'remaining sequence' : `${missing} remaining sequences`} before joining them.</p>` : ''}
+                ${result?.previewUrl ? `<div class="vds-nle-two">
+                    <a class="vds-nle-btn" href="${escapeHtml(result.previewUrl)}&download=1">Download MP4</a>
+                    <a class="vds-nle-btn" href="videos.php">Open Videos</a>
+                </div>` : ''}
+                ${failure}
+            </aside>
+        </div>`;
+
+        buildTimeline();
+        wireTimeline();
+    }
+
+    function buildTimeline() {
+        const total = videoSeconds();
+        const ruler = $('[data-timeline-ruler]');
+        const row = $('[data-track-video]');
+        if (!ruler || !row) return;
+
+        [...ruler.querySelectorAll('b,i')].forEach(node => node.remove());
+        const major = state.pxs > 40 ? 2 : state.pxs > 22 ? 5 : 10;
+        for (let second = 0; second <= total + 0.001; second += major / 5) {
+            const tick = document.createElement('i');
+            tick.style.left = `${second * state.pxs}px`;
+            if (Math.abs(second % major) < 0.001) {
+                tick.className = 'is-major';
+                const label = document.createElement('b');
+                label.style.left = `${second * state.pxs}px`;
+                label.textContent = timecode(second).slice(0, 8) + ':00';
+                ruler.append(label);
+            }
+            ruler.append(tick);
+        }
+
+        row.innerHTML = '';
+        let at = 0;
+        scenes().forEach((scene, index) => {
+            const seconds = sceneSeconds(scene);
+            const frame = String(scene.active_generation?.thumbnailUrl || '');
+            const clip = document.createElement('div');
+            clip.className = 'vds-nle-clip vds-nle-clip--v';
+            clip.style.left = `${at * state.pxs}px`;
+            clip.style.width = `${seconds * state.pxs}px`;
+            clip.innerHTML =
+                `<div class="vds-nle-clip-label"><span>Sequence ${index + 1}</span><em>${seconds.toFixed(1)}s</em></div>` +
+                (frame ? `<img src="${escapeHtml(frame)}" alt="" draggable="false">` : '');
+            row.append(clip);
+            at += seconds;
+        });
+
+        drawWaveform();
+        layoutTimeline();
+    }
+
+    function drawWaveform() {
+        const canvas = $('[data-wave-canvas]');
+        const music = musicOf();
+        if (!canvas || !music) return;
+        const peaks = Array.isArray(music.peaks) ? music.peaks : [];
+        const width = Math.max(1, Math.round(Number(music.durationSeconds || 0) * state.pxs));
+        const height = LANE.audioHeight - LANE.labelHeight;
+        canvas.width = width; canvas.height = height;
+        canvas.style.width = `${width}px`;
+        const g = canvas.getContext('2d');
+        g.clearRect(0, 0, width, height);
+        if (peaks.length === 0) return;
+        g.fillStyle = '#7fc9e8';
+        const step = width / peaks.length;
+        const mid = height / 2;
+        const amp = height * 0.45;
+        for (let i = 0; i < peaks.length; i++) {
+            const value = Math.max(0, Math.min(1, peaks[i])) * amp;
+            g.fillRect(i * step, mid - value, Math.max(0.55, step * 0.82), value * 2);
+        }
+    }
+
+    function drawRubber() {
+        const svg = $('[data-rubber]');
+        const music = musicOf();
+        if (!svg || !music) return;
+        const total = videoSeconds();
+        const track = Number(music.durationSeconds || 0);
+        const offset = Number(music.offsetSeconds || 0);
+        const gain = Number(music.volume ?? 1);
+        const fade = Number(music.fadeOutSeconds || 0);
+        const fadeIn = Number(music.fadeInSeconds || 0);
+        const width = Math.max(total, offset + track) * state.pxs;
+
+        svg.setAttribute('width', width);
+        svg.setAttribute('height', LANE.audioHeight);
+        svg.setAttribute('viewBox', `0 0 ${width} ${LANE.audioHeight}`);
+        svg.style.width = `${width}px`;
+        svg.style.height = `${LANE.audioHeight}px`;
+
+        const from = Math.max(offset, 0) * state.pxs;
+        const to = Math.min(offset + track, total) * state.pxs;
+        const y = gainToY(gain);
+        const inX = Math.min(to, from + fadeIn * state.pxs);
+        const outX = Math.max(inX, Math.min(to, (total - fade) * state.pxs));
+
+        svg.innerHTML =
+            `<line x1="${from}" y1="${gainToY(1)}" x2="${to}" y2="${gainToY(1)}" stroke="#4d7f99" stroke-width="1" stroke-dasharray="2 3"/>` +
+            `<path d="M${from} ${fadeIn > 0.01 ? laneBottom() : y} L${inX} ${y} L${outX} ${y} L${to} ${laneBottom()}" fill="none" stroke="#e6e6e6" stroke-width="1.4"/>`;
+
+        // The level band spans the whole held section so it can be grabbed anywhere.
+        const gainGrip = $('[data-grip-gain]');
+        if (gainGrip) {
+            gainGrip.style.left = `${inX}px`;
+            gainGrip.style.width = `${Math.max(24, outX - inX)}px`;
+            gainGrip.style.top = `${y}px`;
+        }
+        const inGrip = $('[data-grip-fade-in]');
+        if (inGrip) { inGrip.style.left = `${inX}px`; inGrip.style.top = `${y}px`; }
+        const fadeGrip = $('[data-grip-fade]');
+        if (fadeGrip) { fadeGrip.style.left = `${outX}px`; fadeGrip.style.top = `${y}px`; }
+
+        const gainTip = $('[data-tip-gain]');
+        if (gainTip) {
+            gainTip.textContent = decibels(gain);
+            gainTip.style.left = `${from + 5}px`;
+            gainTip.style.top = `${Math.max(LANE.labelHeight + 1, y - 15)}px`;
+        }
+        const fadeTip = $('[data-tip-fade]');
+        if (fadeTip) {
+            fadeTip.textContent = `${fade.toFixed(1)} s`;
+            fadeTip.style.left = `${Math.max(0, outX - 40)}px`;
+            fadeTip.style.top = `${y + 6}px`;
+        }
+        const inTip = $('[data-tip-fade-in]');
+        if (inTip) {
+            inTip.textContent = fadeIn > 0.01 ? `${fadeIn.toFixed(1)} s` : '';
+            inTip.style.left = `${inX + 6}px`;
+            inTip.style.top = `${y + 6}px`;
+        }
+
+        const gainOut = $('[data-out-gain]'); if (gainOut) gainOut.textContent = decibels(gain);
+        const fadeOut = $('[data-out-fade]'); if (fadeOut) fadeOut.textContent = `${fade.toFixed(1)} s`;
+        const fadeInOut = $('[data-out-fade-in]'); if (fadeInOut) fadeInOut.textContent = `${fadeIn.toFixed(1)} s`;
+        const offsetOut = $('[data-out-offset]'); if (offsetOut) offsetOut.textContent = timecode(Math.max(0, offset));
+    }
+
+    function layoutTimeline() {
+        const lane = $('[data-timeline-lane]');
+        if (!lane) return;
+        const total = videoSeconds();
+        const music = musicOf();
+        const track = Number(music?.durationSeconds || 0);
+        const offset = Number(music?.offsetSeconds || 0);
+        const width = Math.max(total, offset + track) * state.pxs;
+        lane.style.width = `${width}px`;
+
+        const clip = $('[data-music-clip]');
+        if (clip && music) {
+            clip.style.left = `${offset * state.pxs}px`;
+            clip.style.width = `${track * state.pxs}px`;
+            const left = $('[data-out-left]');
+            const right = $('[data-out-right]');
+            if (left) left.style.cssText = `left:0;width:${Math.max(0, -offset) * state.pxs}px`;
+            if (right) right.style.cssText = `right:0;width:${Math.max(0, (offset + track) - total) * state.pxs}px`;
+        }
+
+        const work = $('[data-timeline-work]');
+        if (work) work.style.width = `${total * state.pxs}px`;
+
+        const height = 24 + LANE.videoHeight + LANE.audioHeight;
+        const end = $('[data-timeline-end]');
+        if (end) { end.style.left = `${total * state.pxs}px`; end.style.height = `${height}px`; }
+        const cti = $('[data-timeline-cti]');
+        if (cti) { cti.style.left = `${state.playhead * state.pxs}px`; cti.style.height = `${height}px`; }
+
+        const hint = $('[data-timeline-hint]');
+        if (hint) {
+            hint.textContent = !music
+                ? 'Drop a track on A1 to score the montage.'
+                : offset < 0 ? `The montage starts ${clockTime(-offset)} into the track.`
+                : offset > 0 ? `Opens in silence; the music comes in at ${clockTime(offset)}.`
+                : 'The music starts with the first frame.';
+        }
+        drawRubber();
+    }
+
+    function wireTimeline() {
+        const scroll = $('[data-timeline-scroll]');
+        const lane = $('[data-timeline-lane]');
+        const video = $('[data-montage-video]');
+        const audio = musicOf() ? ensureMusicAudio() : null;
+        if (!lane) return;
+
+        const seek = seconds => {
+            state.playhead = Math.max(0, Math.min(videoSeconds(), seconds));
+            if (video) video.currentTime = state.playhead;
+            syncMusicAudio();
+            layoutTimeline();
+            const time = $('[data-montage-time]');
+            if (time) time.textContent = timecode(state.playhead);
+        };
+
+        $('[data-timeline-ruler]')?.addEventListener('pointerdown', event => {
+            const bounds = lane.getBoundingClientRect();
+            seek((event.clientX - bounds.left) / laneScale(lane) / state.pxs);
+        });
+
+        $('[data-timeline-zoom]')?.addEventListener('input', event => {
+            const anchor = scroll ? (scroll.scrollLeft + scroll.clientWidth / 2) / state.pxs : 0;
+            state.pxs = Number(event.target.value);
+            buildTimeline();
+            if (scroll) scroll.scrollLeft = Math.max(0, anchor * state.pxs - scroll.clientWidth / 2);
+        });
+
+        const clip = $('[data-music-clip]');
+        clip?.addEventListener('pointerdown', event => {
+            if (event.button !== 0 || event.target.closest('.vds-nle-grip')) return;
+            event.preventDefault();
+            clip.setPointerCapture(event.pointerId);
+            clip.classList.add('is-dragging');
+            const music = musicOf();
+            const track = Number(music.durationSeconds || 0);
+            const originX = event.clientX;
+            const originOffset = Number(music.offsetSeconds || 0);
+            let offset = originOffset;
+            const scale = laneScale(lane);
+            const move = e => {
+                offset = Math.max(-(track - 1), Math.min(originOffset + (e.clientX - originX) / scale / state.pxs, videoSeconds() - 1));
+                music.offsetSeconds = offset;
+                layoutTimeline();
+            };
+            const done = () => {
+                clip.classList.remove('is-dragging');
+                clip.removeEventListener('pointermove', move);
+                clip.removeEventListener('pointerup', done);
+                clip.removeEventListener('pointercancel', done);
+                if (Math.abs(offset - originOffset) > 0.05) updateMusic({ offsetSeconds: Number(offset.toFixed(3)) });
+            };
+            clip.addEventListener('pointermove', move);
+            clip.addEventListener('pointerup', done);
+            clip.addEventListener('pointercancel', done);
+        });
+
+        wireGrip('[data-grip-gain]', (_x, y, music) => { music.volume = Math.round(yToGain(y) * 100) / 100; },
+            music => ({ volume: music.volume }));
+        wireGrip('[data-grip-fade]', (x, _y, music) => {
+            music.fadeOutSeconds = Math.max(0, Math.min(4, Math.round((videoSeconds() - x / state.pxs) * 10) / 10));
+        }, music => ({ fadeOutSeconds: music.fadeOutSeconds }));
+        wireGrip('[data-grip-fade-in]', (x, _y, music) => {
+            const entry = Math.max(0, Number(music.offsetSeconds || 0));
+            music.fadeInSeconds = Math.max(0, Math.min(4, Math.round((x / state.pxs - entry) * 10) / 10));
+        }, music => ({ fadeInSeconds: music.fadeInSeconds }));
+
+        $('[data-grip-gain]')?.addEventListener('keydown', event => {
+            const music = musicOf();
+            if (!music) return;
+            const step = event.shiftKey ? 0.25 : 0.05;
+            if (event.key === 'ArrowUp') music.volume = Math.min(LANE.maxGain, Number(music.volume ?? 1) + step);
+            else if (event.key === 'ArrowDown') music.volume = Math.max(0, Number(music.volume ?? 1) - step);
+            else return;
+            event.preventDefault();
+            music.volume = Math.round(music.volume * 100) / 100;
+            drawRubber();
+            updateMusic({ volume: music.volume });
+        });
+        $('[data-grip-fade-in]')?.addEventListener('keydown', event => {
+            const music = musicOf();
+            if (!music) return;
+            if (event.key === 'ArrowRight') music.fadeInSeconds = Math.min(4, Number(music.fadeInSeconds || 0) + 0.1);
+            else if (event.key === 'ArrowLeft') music.fadeInSeconds = Math.max(0, Number(music.fadeInSeconds || 0) - 0.1);
+            else return;
+            event.preventDefault();
+            music.fadeInSeconds = Math.round(music.fadeInSeconds * 10) / 10;
+            drawRubber();
+            updateMusic({ fadeInSeconds: music.fadeInSeconds });
+        });
+        $('[data-grip-fade]')?.addEventListener('keydown', event => {
+            const music = musicOf();
+            if (!music) return;
+            if (event.key === 'ArrowLeft') music.fadeOutSeconds = Math.min(4, Number(music.fadeOutSeconds || 0) + 0.1);
+            else if (event.key === 'ArrowRight') music.fadeOutSeconds = Math.max(0, Number(music.fadeOutSeconds || 0) - 0.1);
+            else return;
+            event.preventDefault();
+            music.fadeOutSeconds = Math.round(music.fadeOutSeconds * 10) / 10;
+            drawRubber();
+            updateMusic({ fadeOutSeconds: music.fadeOutSeconds });
+        });
+
+        $('[data-montage-play]')?.addEventListener('click', () => {
+            if (!video) return;
+            if (video.paused) video.play().catch(() => undefined); else video.pause();
+        });
+        $$('[data-montage-step]').forEach(button => button.addEventListener('click', () => {
+            seek(state.playhead + Number(button.dataset.montageStep) / 24);
+        }));
+
+        if (video) {
+            video.addEventListener('timeupdate', () => {
+                state.playhead = video.currentTime;
+                syncMusicAudio();
+                layoutTimeline();
+                const time = $('[data-montage-time]');
+                if (time) time.textContent = timecode(state.playhead);
+                if (!scroll) return;
+                const x = state.playhead * state.pxs;
+                if (x < scroll.scrollLeft || x > scroll.scrollLeft + scroll.clientWidth - 40) {
+                    scroll.scrollLeft = Math.max(0, x - scroll.clientWidth * 0.3);
+                }
+            });
+            video.addEventListener('play', () => { setPlayIcon(true); audio?.play().catch(() => undefined); });
+            ['pause','ended'].forEach(name => video.addEventListener(name, () => { setPlayIcon(false); audio?.pause(); }));
+        }
+    }
+
+    function wireGrip(selector, apply, changes) {
+        const grip = $(selector);
+        if (!grip) return;
+        grip.addEventListener('pointerdown', event => {
+            const music = musicOf();
+            if (!music) return;
+            event.preventDefault();
+            event.stopPropagation();
+            grip.setPointerCapture(event.pointerId);
+            const row = $('[data-track-audio]');
+            const scale = laneScale(row);
+            const move = e => {
+                const bounds = row.getBoundingClientRect();
+                apply((e.clientX - bounds.left) / scale, (e.clientY - bounds.top) / scale, music);
+                drawRubber();
+            };
+            const done = () => {
+                grip.removeEventListener('pointermove', move);
+                grip.removeEventListener('pointerup', done);
+                grip.removeEventListener('pointercancel', done);
+                updateMusic(changes(music));
+            };
+            grip.addEventListener('pointermove', move);
+            grip.addEventListener('pointerup', done);
+            grip.addEventListener('pointercancel', done);
+        });
+    }
+
+    function setPlayIcon(playing) {
+        const icon = $('[data-play-icon]');
+        if (icon) icon.innerHTML = playing ? '<path d="M4 2h3.2v12H4zM8.8 2H12v12H8.8z"/>' : '<path d="M4 2l9 6-9 6z"/>';
+    }
+
+    /** One detached audio element carries the preview mix, outside the re-render. */
+    function ensureMusicAudio() {
+        const music = musicOf();
+        if (!music) { state.musicAudio?.pause(); state.musicAudio = null; return null; }
+        if (!state.musicAudio || state.musicAudio.dataset.assetId !== String(music.assetId)) {
+            state.musicAudio?.pause();
+            state.musicAudio = new Audio(music.previewUrl);
+            state.musicAudio.dataset.assetId = String(music.assetId);
+            state.musicAudio.preload = 'metadata';
+        }
+        return state.musicAudio;
+    }
+
+    function syncMusicAudio() {
+        const audio = state.musicAudio;
+        const music = musicOf();
+        if (!audio || !music) return;
+        const offset = Number(music.offsetSeconds || 0);
+        const track = Number(music.durationSeconds || 0);
+        const fade = Number(music.fadeOutSeconds || 0);
+        const total = videoSeconds();
+        const into = state.playhead - offset;
+        if (into < 0 || into > track) { audio.volume = 0; return; }
+        const remaining = total - state.playhead;
+        const entry = Math.max(0, offset);
+        const fadeIn = Number(music.fadeInSeconds || 0);
+        const sinceEntry = state.playhead - entry;
+        // The element cannot amplify past 1, so a boost is only heard in the MP4.
+        const gain = Math.min(1, Number(music.volume ?? 1));
+        const rampIn = fadeIn > 0 && sinceEntry < fadeIn ? Math.max(0, sinceEntry / fadeIn) : 1;
+        const rampOut = fade > 0 && remaining < fade ? Math.max(0, remaining / fade) : 1;
+        audio.volume = gain * Math.min(rampIn, rampOut);
+        if (Math.abs(audio.currentTime - into) > 0.25) audio.currentTime = into;
+    }
+
+    function updateExportPolling() {
+        if (!exportPending() || document.hidden) {
+            window.clearTimeout(state.exportTimer);
+            state.exportTimer = null;
+            return;
+        }
+        if (!state.exportTimer) state.exportTimer = window.setTimeout(pollExport, 6000);
+    }
+
+    async function pollExport() {
+        state.exportTimer = null;
+        if (!currentProject() || document.hidden) return updateExportPolling();
+        try {
+            const result = await request(state.endpoints.exportStatus || 'video_export_status.php', { projectId: currentProject().id });
+            if (result.project && result.scenes) applyStudio(result);
+        } catch (_) { /* keep the board usable during a transient polling failure */ }
+        updateExportPolling();
+    }
+
+    async function uploadMusic(file) {
+        if (!file || !currentProject()) return;
+        const body = new FormData();
+        body.append('csrf', state.csrf);
+        body.append('projectId', String(currentProject().id));
+        body.append('version', String(currentProject().version));
+        body.append('music', file);
+        state.musicUploading = true;
+        renderExportPanel();
+        try {
+            const response = await fetch(state.endpoints.musicUpload || 'video_music_upload.php', { method: 'POST', credentials: 'same-origin', body });
+            let data;
+            try { data = await response.json(); } catch (_) { data = { ok: false, error: `The upload failed (${response.status}).` }; }
+            if (!response.ok || !data.ok) throw new Error(data.error || `The upload failed (${response.status}).`);
+            state.musicUploading = false;
+            applyStudio(data);
+            toast('Music added');
+        } catch (error) {
+            state.musicUploading = false;
+            renderExportPanel();
+            toast(error.message || 'The music could not be uploaded.', true);
+        }
+    }
+
+    function updateMusic(changes, successMessage = '') {
+        if (!currentProject() || !changes || Object.keys(changes).length === 0) return;
+        queueMutation(() => request(state.endpoints.musicUpdate || 'video_music_update.php', {
+            projectId: currentProject().id,
+            version: currentProject().version,
+            ...changes,
+        }), successMessage);
+    }
+
+    function startExport() {
+        if (ungeneratedScenes() > 0 || exportPending()) return;
+        queueMutation(
+            () => request(state.endpoints.exportStart || 'video_export_start.php', { projectId: currentProject().id, version: currentProject().version, kind: 'final' }),
+            'Montage started'
+        ).finally(updateExportPolling);
     }
 
     function destroySortables() {
@@ -587,7 +1241,9 @@
         } else {
             destroySortables();
         }
+        renderExportPanel();
         updateGenerationPolling();
+        updateExportPolling();
     }
 
     async function assignReference(sceneId, role, assetKey) {
@@ -949,6 +1605,9 @@
             return;
         }
 
+        if (event.target.closest('[data-start-export]')) { startExport(); return; }
+        if (event.target.closest('[data-music-clear]')) { updateMusic({ clear: true }, 'Music removed'); return; }
+
         const generate = event.target.closest('[data-generate-sequence]');
         if (generate) { showGenerationModal(Number(generate.dataset.generateSequence)); return; }
         if (event.target.closest('[data-cancel-generation]')) { dom.generationModal.hidden = true; state.pendingGenerationSceneId = null; return; }
@@ -967,6 +1626,12 @@
     });
 
     root.addEventListener('change', event => {
+        if (event.target.matches('[data-music-file]')) {
+            const file = event.target.files?.[0];
+            event.target.value = '';
+            uploadMusic(file);
+            return;
+        }
         const instruction = event.target.closest('[data-reference-instruction]');
         if (instruction) {
             queueMutation(() => api({
@@ -1019,7 +1684,7 @@
         if (field) {
             const sceneId = Number(field.dataset.sceneId);
             const key = String(field.dataset.sceneField);
-            const value = key === 'durationSeconds' ? Number(field.value) : field.value;
+            const value = ['durationSeconds','transitionDurationSeconds'].includes(key) ? Number(field.value) : field.value;
             queueMutation(() => api({ action: 'scene_update', sceneId, version: currentProject().version, changes: { [key]: value } }));
         }
     });
@@ -1115,6 +1780,7 @@
     });
     document.addEventListener('visibilitychange', () => {
         updateGenerationPolling();
+        updateExportPolling();
         if (!document.hidden) refreshLibrary();
     });
     window.addEventListener('focus', refreshLibrary);

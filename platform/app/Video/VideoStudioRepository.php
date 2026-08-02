@@ -21,7 +21,10 @@ final class VideoStudioRepository
 
     public function findProject(int $userId, int $projectId): ?array
     {
-        $stmt = $this->pdo->prepare("SELECT * FROM video_projects WHERE id=? AND user_id=? AND status<>'deleted' LIMIT 1");
+        $stmt = $this->pdo->prepare("SELECT p.*,a.original_name AS music_name,a.file_path AS music_file_path
+            FROM video_projects p
+            LEFT JOIN video_reference_assets a ON a.id=p.music_asset_id AND a.user_id=p.user_id
+            WHERE p.id=? AND p.user_id=? AND p.status<>'deleted' LIMIT 1");
         $stmt->execute([$projectId, $userId]);
         $row = $stmt->fetch();
         return is_array($row) ? $this->normalizeProject($row) : null;
@@ -576,6 +579,9 @@ final class VideoStudioRepository
         foreach ($uploadedStmt->fetchAll() as $row) {
             $assetId = (int)$row['id'];
             $mediaType = (string)$row['media_type'];
+            // Music lives in this table too, but it is not a visual reference
+            // and must never reach the catalog rail.
+            if ($mediaType === 'audio') continue;
             $previewUrl = 'video_reference_media.php?asset_id=' . $assetId;
             $uploadedReferences[] = [
                 'assetKey' => 'reference_asset:' . $assetId,
@@ -835,12 +841,43 @@ final class VideoStudioRepository
             'projectType' => (string)$row['project_type'],
             'status' => (string)$row['status'],
             'masterVolume' => (float)$row['master_volume'],
+            'music' => $this->normalizeProjectMusic($row),
             'version' => (int)$row['version'],
             'sceneCount' => (int)($row['scene_count'] ?? 0),
             'generatedClipCount' => (int)($row['generated_clip_count'] ?? 0),
             'createdAt' => (string)$row['created_at'],
             'updatedAt' => (string)$row['updated_at'],
         ];
+    }
+
+    /**
+     * The name and file path only arrive on queries that join the track, so a
+     * summary row reports the project has no usable music rather than half of it.
+     */
+    private function normalizeProjectMusic(array $row): ?array
+    {
+        $assetId = (int)($row['music_asset_id'] ?? 0);
+        if ($assetId <= 0 || !array_key_exists('music_file_path', $row) || (string)$row['music_file_path'] === '') return null;
+        return [
+            'assetId' => $assetId,
+            'label' => (string)($row['music_name'] ?? 'Music'),
+            'filePath' => (string)$row['music_file_path'],
+            'previewUrl' => 'video_reference_media.php?asset_id=' . $assetId,
+            'offsetSeconds' => (float)($row['music_offset_seconds'] ?? 0),
+            'fadeInSeconds' => (float)($row['music_fade_in_seconds'] ?? 0),
+            'fadeOutSeconds' => (float)($row['music_fade_out_seconds'] ?? 0),
+            'volume' => (float)($row['master_volume'] ?? 1),
+            'durationSeconds' => (float)($row['music_duration_seconds'] ?? 0),
+            'peaks' => $this->decodePeaks($row['music_peaks_json'] ?? null),
+        ];
+    }
+
+    /** @return list<float> */
+    private function decodePeaks(mixed $stored): array
+    {
+        if (!is_string($stored) || $stored === '') return [];
+        $peaks = json_decode($stored, true);
+        return is_array($peaks) ? array_values(array_map(static fn($v): float => (float)$v, $peaks)) : [];
     }
 
     private function normalizeScene(array $row): array

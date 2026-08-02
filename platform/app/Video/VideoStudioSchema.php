@@ -32,6 +32,12 @@ final class VideoStudioSchema
             project_type VARCHAR(40) NOT NULL DEFAULT 'custom',
             status VARCHAR(30) NOT NULL DEFAULT 'draft',
             master_volume DECIMAL(5,4) NOT NULL DEFAULT 1.0000,
+            music_asset_id INT UNSIGNED NULL,
+            music_offset_seconds DECIMAL(9,3) NOT NULL DEFAULT 0,
+            music_fade_in_seconds DECIMAL(6,3) NOT NULL DEFAULT 0,
+            music_fade_out_seconds DECIMAL(6,3) NOT NULL DEFAULT 0.5,
+            music_duration_seconds DECIMAL(9,3) NOT NULL DEFAULT 0,
+            music_peaks_json MEDIUMTEXT NULL,
             version INT UNSIGNED NOT NULL DEFAULT 1,
             created_at VARCHAR(40) NOT NULL,
             updated_at VARCHAR(40) NOT NULL,
@@ -174,7 +180,7 @@ final class VideoStudioSchema
     private static function migrateSqlite(PDO $pdo): void
     {
         $statements = [
-            "CREATE TABLE IF NOT EXISTS video_projects (id INTEGER PRIMARY KEY AUTOINCREMENT,user_id INTEGER NOT NULL,title TEXT NOT NULL,description TEXT NOT NULL DEFAULT '',global_prompt TEXT NOT NULL DEFAULT '',artwork_id INTEGER,series_id INTEGER,aspect_ratio TEXT NOT NULL DEFAULT '9:16',target_duration_seconds REAL NOT NULL DEFAULT 30,project_type TEXT NOT NULL DEFAULT 'custom',status TEXT NOT NULL DEFAULT 'draft',master_volume REAL NOT NULL DEFAULT 1,version INTEGER NOT NULL DEFAULT 1,created_at TEXT NOT NULL,updated_at TEXT NOT NULL,FOREIGN KEY(user_id) REFERENCES users(id) ON DELETE CASCADE,FOREIGN KEY(artwork_id) REFERENCES artworks(id) ON DELETE SET NULL,FOREIGN KEY(series_id) REFERENCES artwork_series(id) ON DELETE SET NULL)",
+            "CREATE TABLE IF NOT EXISTS video_projects (id INTEGER PRIMARY KEY AUTOINCREMENT,user_id INTEGER NOT NULL,title TEXT NOT NULL,description TEXT NOT NULL DEFAULT '',global_prompt TEXT NOT NULL DEFAULT '',artwork_id INTEGER,series_id INTEGER,aspect_ratio TEXT NOT NULL DEFAULT '9:16',target_duration_seconds REAL NOT NULL DEFAULT 30,project_type TEXT NOT NULL DEFAULT 'custom',status TEXT NOT NULL DEFAULT 'draft',master_volume REAL NOT NULL DEFAULT 1,music_asset_id INTEGER,music_offset_seconds REAL NOT NULL DEFAULT 0,music_fade_in_seconds REAL NOT NULL DEFAULT 0,music_fade_out_seconds REAL NOT NULL DEFAULT 0.5,music_duration_seconds REAL NOT NULL DEFAULT 0,music_peaks_json TEXT,version INTEGER NOT NULL DEFAULT 1,created_at TEXT NOT NULL,updated_at TEXT NOT NULL,FOREIGN KEY(user_id) REFERENCES users(id) ON DELETE CASCADE,FOREIGN KEY(artwork_id) REFERENCES artworks(id) ON DELETE SET NULL,FOREIGN KEY(series_id) REFERENCES artwork_series(id) ON DELETE SET NULL)",
             "CREATE INDEX IF NOT EXISTS idx_video_projects_user_updated ON video_projects(user_id,updated_at)",
             "CREATE INDEX IF NOT EXISTS idx_video_projects_user_status ON video_projects(user_id,status)",
             "CREATE TABLE IF NOT EXISTS video_scenes (id INTEGER PRIMARY KEY AUTOINCREMENT,video_project_id INTEGER NOT NULL,position INTEGER NOT NULL,title TEXT NOT NULL,purpose TEXT NOT NULL DEFAULT 'custom',prompt TEXT NOT NULL DEFAULT '',duration_seconds REAL NOT NULL DEFAULT 6,generation_mode TEXT NOT NULL DEFAULT 'image_to_video',artwork_motion TEXT NOT NULL DEFAULT 'locked',camera_movement TEXT NOT NULL DEFAULT 'static',custom_camera_movement TEXT NOT NULL DEFAULT '',motion_intensity TEXT NOT NULL DEFAULT 'low',transition_out_type TEXT NOT NULL DEFAULT 'cut',transition_out_duration_seconds REAL NOT NULL DEFAULT 0,audio_mode TEXT NOT NULL DEFAULT 'silence',status TEXT NOT NULL DEFAULT 'draft',is_locked INTEGER NOT NULL DEFAULT 0,created_at TEXT NOT NULL,updated_at TEXT NOT NULL,UNIQUE(video_project_id,position),FOREIGN KEY(video_project_id) REFERENCES video_projects(id) ON DELETE CASCADE)",

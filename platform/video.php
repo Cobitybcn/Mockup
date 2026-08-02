@@ -58,6 +58,10 @@ $payload = [
         'generationStart' => 'video_generation_start.php',
         'generationStatus' => 'video_generation_status.php',
         'referenceUpload' => 'video_reference_upload.php',
+        'exportStart' => 'video_export_start.php',
+        'exportStatus' => 'video_export_status.php',
+        'musicUpload' => 'video_music_upload.php',
+        'musicUpdate' => 'video_music_update.php',
     ],
 ];
 
@@ -73,7 +77,7 @@ function vds_h(mixed $value): string
     <meta name="viewport" content="width=device-width,initial-scale=1">
     <title><?= vds_h(t('Video Lab - Artwork Mockups', 'Video Lab - Artwork Mockups')) ?></title>
     <link rel="stylesheet" href="style.css">
-    <link rel="stylesheet" href="video_studio.css?v=17">
+    <link rel="stylesheet" href="video_studio.css?v=28">
     <link rel="stylesheet" href="media-controls.css?v=2">
 </head>
 <body>
@@ -153,6 +157,7 @@ function vds_h(mixed $value): string
                         <button type="button" data-add-sequence><span aria-hidden="true">＋</span> <?= vds_h(t('Add sequence', 'Agregar secuencia')) ?></button>
                     </header>
                     <div class="vds-board-grid" data-sequence-boards></div>
+                    <section class="vds-montage" aria-labelledby="vds-montage-title" data-export-panel></section>
                 </section>
             </div>
 
@@ -175,6 +180,6 @@ function vds_h(mixed $value): string
 </div>
 <script type="application/json" id="video-studio-data"><?= json_encode($payload, JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES | JSON_HEX_TAG | JSON_HEX_AMP | JSON_HEX_APOS | JSON_HEX_QUOT) ?></script>
 <script src="assets/vendor/sortablejs/Sortable.min.js?v=1.15.7"></script>
-<script src="video_studio.js?v=22"></script>
+<script src="video_studio.js?v=33"></script>
 </body>
 </html>

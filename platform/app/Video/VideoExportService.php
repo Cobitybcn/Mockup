@@ -32,7 +32,15 @@ final class VideoExportService
         try {
             $exportId = $this->jobs->createExport([
                 'user_id' => $userId, 'project_id' => $projectId, 'aspect_ratio' => $project['aspectRatio'],
-                'snapshot' => ['kind' => $kind, 'projectVersion' => $version, 'createdAt' => date('c'), 'scenes' => $timeline],
+                // The music is captured here so a finished export keeps the track
+                // it was built with, even if the project later changes it.
+                'snapshot' => [
+                    'kind' => $kind,
+                    'projectVersion' => $version,
+                    'createdAt' => date('c'),
+                    'scenes' => $timeline,
+                    'music' => $project['music'] ?? null,
+                ],
             ]);
             $this->studio->touchProject($userId, $projectId, $version);
             $pdo->commit();

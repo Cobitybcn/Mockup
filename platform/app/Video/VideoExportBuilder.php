@@ -34,8 +34,15 @@ final class VideoExportBuilder
                 $durations[] = $actual > 0 ? $actual : $requested;
             }
 
+            $music = null;
+            if (is_array($snapshot['music'] ?? null) && (string)($snapshot['music']['filePath'] ?? '') !== '') {
+                $music = $snapshot['music'];
+                $music['localPath'] = $directory . DIRECTORY_SEPARATOR . 'music.audio';
+                $this->storage->materializeObject((string)$music['filePath'], $music['localPath']);
+            }
+
             $output = $directory . DIRECTORY_SEPARATOR . 'export.mp4';
-            $this->join($normalized, $durations, $snapshot['scenes'], $output, ($snapshot['kind'] ?? 'final') === 'preview');
+            $this->join($normalized, $durations, $snapshot['scenes'], $output, ($snapshot['kind'] ?? 'final') === 'preview', $music);
             if (!is_file($output) || filesize($output) < 1024) throw new RuntimeException('FFmpeg did not create a valid MP4 export.');
             $key = sprintf('video/exports/%d/%d/export_%d.mp4', (int)$export['user_id'], (int)$export['video_project_id'], (int)$export['id']);
             if (!StorageService::uploadFile($key, $output)) throw new RuntimeException('Could not store the MP4 export.');
@@ -46,7 +53,7 @@ final class VideoExportBuilder
         }
     }
 
-    private function join(array $files, array $durations, array $scenes, string $output, bool $preview): void
+    private function join(array $files, array $durations, array $scenes, string $output, bool $preview, ?array $music = null): void
     {
         $arguments = [VideoFfmpeg::binary(),'-y'];
         foreach ($files as $file) array_push($arguments, '-i', $file);
@@ -84,11 +91,43 @@ final class VideoExportBuilder
             $filter = implode(';', $filterParts);
         }
 
-        array_push($arguments, '-f','lavfi','-t',(string)max(0.1,$total),'-i','anullsrc=channel_layout=stereo:sample_rate=48000');
+        $total = max(0.1, $total);
         $audioIndex = count($files);
+        if ($music !== null) {
+            // The offset is where the track's own start sits on the video: negative
+            // means seek into it, positive means hold silence first. Then pad and
+            // trim so the music always ends exactly with the picture, and fade out
+            // just before that instead of cutting.
+            $offset = (float)($music['offsetSeconds'] ?? 0);
+            if ($offset < 0) array_push($arguments, '-ss', sprintf('%.3F', -$offset));
+            array_push($arguments, '-i', (string)$music['localPath']);
+
+            $fadeOut = max(0.0, min((float)($music['fadeOutSeconds'] ?? 0), $total));
+            $audioFilter = sprintf('[%d:a]', $audioIndex);
+            if ($offset > 0) {
+                $delay = (int)round(min($offset, $total) * 1000);
+                $audioFilter .= sprintf('adelay=%d:all=1,', $delay);
+            }
+            $audioFilter .= sprintf('apad,atrim=0:%.3F,asetpts=PTS-STARTPTS', $total);
+            $volume = (float)($music['volume'] ?? 1);
+            if ($volume > 0 && abs($volume - 1.0) > 0.001) $audioFilter .= sprintf(',volume=%.3F', $volume);
+
+            // The fade in starts where the music actually enters the montage,
+            // which is the offset when it is delayed and the first frame otherwise.
+            $entry = max(0.0, min($offset, $total));
+            $fadeIn = max(0.0, min((float)($music['fadeInSeconds'] ?? 0), max(0.0, $total - $entry)));
+            if ($fadeIn > 0.01) $audioFilter .= sprintf(',afade=t=in:st=%.3F:d=%.3F', $entry, $fadeIn);
+            if ($fadeOut > 0.01) $audioFilter .= sprintf(',afade=t=out:st=%.3F:d=%.3F', max(0.0, $total - $fadeOut), $fadeOut);
+            $filter .= ';' . $audioFilter . '[a]';
+            $audioMap = '[a]';
+        } else {
+            array_push($arguments, '-f','lavfi','-t',(string)$total,'-i','anullsrc=channel_layout=stereo:sample_rate=48000');
+            $audioMap = $audioIndex . ':a';
+        }
+
         $crf = $preview ? '25' : '20';
         array_push($arguments,
-            '-filter_complex',$filter,'-map','[v]','-map',$audioIndex . ':a',
+            '-filter_complex',$filter,'-map','[v]','-map',$audioMap,
             '-c:v','libx264','-preset','medium','-crf',$crf,'-pix_fmt','yuv420p',
             '-c:a','aac','-b:a','192k','-shortest','-movflags','+faststart',$output
         );
