@@ -19,11 +19,13 @@ final class VideoExportService
         if (!in_array($kind, ['preview','final'], true)) throw new InvalidArgumentException('Invalid export type.');
         $timeline = $this->jobs->exportTimeline($userId, $projectId);
         if ($timeline === []) throw new InvalidArgumentException('Add scenes before exporting.');
-        foreach ($timeline as $scene) {
-            if ($scene['generationId'] === null || $scene['outputPath'] === '') {
-                throw new DomainException('Generate every scene before building the project montage.');
-            }
-        }
+        // A sequence with nothing generated is simply not part of the cut. Only
+        // an empty project has nothing to join.
+        $timeline = array_values(array_filter(
+            $timeline,
+            static fn(array $scene): bool => $scene['generationId'] !== null && $scene['outputPath'] !== ''
+        ));
+        if ($timeline === []) throw new DomainException('Generate at least one sequence before building the montage.');
         $pending = $this->jobs->pendingExport($userId, $projectId);
         if ($pending) return $this->payload($userId, $projectId, (int)$pending['id']);
 

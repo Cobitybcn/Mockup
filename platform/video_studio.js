@@ -550,8 +550,12 @@
         return ['queued','processing'].includes(String(latestExport()?.status || ''));
     }
 
+    function renderedScenes() {
+        return scenes().filter(scene => scene.active_generation?.previewUrl);
+    }
+
     function ungeneratedScenes() {
-        return scenes().filter(scene => !scene.active_generation?.previewUrl).length;
+        return scenes().length - renderedScenes().length;
     }
 
     function sceneSeconds(scene) {
@@ -559,7 +563,7 @@
     }
 
     function videoSeconds() {
-        return scenes().reduce((total, scene) => total + sceneSeconds(scene), 0);
+        return renderedScenes().reduce((total, scene) => total + sceneSeconds(scene), 0);
     }
 
     const pad = value => String(Math.floor(value)).padStart(2, '0');
@@ -620,6 +624,7 @@
             result?.id, result?.status, result?.previewUrl,
             scenes().map(scene => `${scene.id}:${sceneSeconds(scene)}`).join(','),
             music?.assetId || 0,
+            renderedScenes().length,
             ungeneratedScenes(),
             state.musicUploading ? 1 : 0,
         ].join('|');
@@ -639,6 +644,7 @@
         const result = latestExport();
         const music = musicOf();
         const missing = ungeneratedScenes();
+        const ready = renderedScenes().length;
         const pending = exportPending();
         const total = videoSeconds();
 
@@ -647,8 +653,8 @@
                 result.thumbnailUrl ? ` poster="${escapeHtml(result.thumbnailUrl)}"` : ''
               } preload="metadata" playsinline data-montage-video></video>`
             : `<div class="vds-monitor-empty"><strong>${pending ? 'Building the montage' : 'No montage yet'}</strong><small>${
-                missing > 0
-                    ? `Generate the ${missing === 1 ? 'remaining sequence' : `${missing} remaining sequences`} first.`
+                ready === 0
+                    ? 'Generate a sequence first.'
                     : pending ? 'It will appear here when it finishes.' : 'Join the sequences to see it here.'
               }</small></div>`;
 
@@ -710,7 +716,8 @@
 
             <aside class="vds-nle-pane vds-nle-inspector">
                 <h3>Montage</h3>
-                <div class="vds-nle-kv"><span>Sequences</span><b>${scenes().length} · ${clockTime(total)} · ${escapeHtml(currentProject().aspectRatio || '9:16')}</b></div>
+                <div class="vds-nle-kv"><span>Sequences</span><b>${ready} · ${clockTime(total)} · ${escapeHtml(currentProject().aspectRatio || '9:16')}</b></div>
+                ${missing > 0 ? `<p class="vds-nle-note">${missing === 1 ? 'One sequence has nothing generated and stays out of the cut.' : `${missing} sequences have nothing generated and stay out of the cut.`}</p>` : ''}
                 ${music ? `
                 <div class="vds-nle-kv"><span>Track A1</span><b>${escapeHtml(music.label || 'Music')}</b></div>
                 <div class="vds-nle-two">
@@ -724,10 +731,10 @@
                 <p class="vds-nle-note">Level is the white line over the clip — drag it up or down. The diamonds at each end open the fades.</p>` : `
                 <p class="vds-nle-note">Add a track on A1 and it plays across the whole montage, ending with the picture.</p>`}
                 ${result?.previewUrl ? `<div class="vds-nle-line"><span>Result</span><output>${clockTime(result.durationSeconds || 0)} · ${Math.round((result.bytes || 0) / 1048576)} MB</output></div>` : ''}
-                <button class="vds-nle-btn vds-nle-btn--primary" type="button" data-start-export${missing > 0 || pending ? ' disabled' : ''}>${
+                <button class="vds-nle-btn vds-nle-btn--primary" type="button" data-start-export${ready === 0 || pending ? ' disabled' : ''}>${
                     pending ? 'Building…' : result?.previewUrl ? 'Rebuild montage' : 'Join sequences'
                 }</button>
-                ${missing > 0 ? `<p class="vds-nle-note">Generate the ${missing === 1 ? 'remaining sequence' : `${missing} remaining sequences`} before joining them.</p>` : ''}
+                ${ready === 0 ? '<p class="vds-nle-note">Generate a sequence before joining.</p>' : ''}
                 ${result?.previewUrl ? `<div class="vds-nle-two">
                     <a class="vds-nle-btn" href="${escapeHtml(result.previewUrl)}&download=1">Download MP4</a>
                     <a class="vds-nle-btn" href="videos.php">Open Videos</a>
@@ -763,7 +770,7 @@
 
         row.innerHTML = '';
         let at = 0;
-        scenes().forEach((scene, index) => {
+        renderedScenes().forEach((scene, index) => {
             const seconds = sceneSeconds(scene);
             const frame = String(scene.active_generation?.thumbnailUrl || '');
             const clip = document.createElement('div');
@@ -1157,7 +1164,7 @@
     }
 
     function startExport() {
-        if (ungeneratedScenes() > 0 || exportPending()) return;
+        if (renderedScenes().length === 0 || exportPending()) return;
         queueMutation(
             () => request(state.endpoints.exportStart || 'video_export_start.php', { projectId: currentProject().id, version: currentProject().version, kind: 'final' }),
             'Montage started'
