@@ -24,7 +24,10 @@ gobernando `EDITORIAL_CORE.md`; este documento no lo pisa.
    media + publicar la página (el más importante) · 2 **Saatchi Art** — el paquete manual y su
    estado (CTA primario por constitución) · 3 **Pinterest** — la serie completa de pins ·
    4 **Social** — Facebook, Instagram y X, series 3×3 con cadencia · 5 **TikTok** — naturaleza
-   narrativa propia. Cada paso es UN acto con SU estado; nunca "todo en una sola acción".
+   narrativa propia. Cada paso conserva UN acto con SU estado. Como atajo de orquestación,
+   el cierre puede ofrecer **«Distribuir a todo lo conectado»**: no constituye un sexto paso,
+   no mezcla estados y no reemplaza los actos individuales; ejecuta en orden solamente los
+   destinos conectados que estén disponibles y conserva el resultado honesto de cada uno.
    El molde visual es el Espacio editorial de la ficha de obra. La media se selecciona UNA
    sola vez, en Sitio web; los pasos siguientes toman de esa composición — jamás re-eligen.
 
@@ -78,10 +81,12 @@ gobernando `EDITORIAL_CORE.md`; este documento no lo pisa.
     `.button-link` (primaria / secundaria / mini / danger), encabezados de panel kicker+título,
     tarjetas de media existentes. Un componente que no existe se boceta y se aprueba con el
     artista ANTES de escribir código.
-12. **Bloques de decisión reservados a las decisiones reales:** Publicar Obra (Paso 1) y un
-    acto de publicación por paso de distribución (con confirmación explícita). Uno primario
-    por panel, nunca dos. El producto NO es una decisión (es motor automático). Todo lo demás
-    son acciones secundarias discretas.
+12. **Bloques de decisión reservados a las decisiones reales:** Publicar Obra (Paso 1), un
+    acto de publicación por paso de distribución (con confirmación explícita) y, al cierre,
+    el atajo opcional «Distribuir a todo lo conectado». Uno primario por panel, nunca dos.
+    El atajo global vive fuera de los paneles, sólo coordina los mismos actos y jamás altera
+    su semántica. El producto NO es una decisión (es motor automático). Todo lo demás son
+    acciones secundarias discretas.
 13. **Prohibido `<select>` donde quepa elección visible.** Elegir video o mockups es con
     tarjetas visuales; elegir destinos es con fichas visibles que muestran su estado — no un
     desplegable.

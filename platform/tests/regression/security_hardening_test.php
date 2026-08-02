@@ -98,6 +98,21 @@ function run_security_hardening_regression_tests(): void
         );
     }
 
+    $logger = (string)file_get_contents($platformRoot . '/app/Support/Logger.php');
+    $videoWorker = (string)file_get_contents($platformRoot . '/video_worker.php');
+    TestHarness::assertTrue(
+        str_contains($logger, "'task_name'")
+            && str_contains($logger, "'trace'")
+            && str_contains($logger, "'error_id'"),
+        'worker failures emit structured Cloud Tasks correlation fields'
+    );
+    TestHarness::assertTrue(
+        str_contains($videoWorker, "Logger::exception('video_worker'")
+            && str_contains($videoWorker, "'Video generation failed.'")
+            && !str_contains($videoWorker, "'error' => \$e->getMessage()"),
+        'video worker keeps exception details in logs and returns only a correlation id'
+    );
+
     // El allow-list de arriba es una lista escrita a mano, así que un worker
     // nuevo se despliega perfectamente y muere en 403 sin que nada avise: fue
     // lo que pasó con publication_distribution_worker.php, cuyas partes 2 y 3

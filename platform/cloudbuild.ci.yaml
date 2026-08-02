@@ -93,6 +93,10 @@ steps:
                 ;;
               site-admin/*|platform/*.css|platform/*.js|platform/assets/*|platform/public/*|platform/tests/*|platform/scripts/audit_studio_note_media.php|platform/scripts/repair_studio_note_media.php|platform/cloudbuild*.yaml)
                 ;;
+              platform/publication.php|platform/publication_saatchi_package.php|platform/artwork.php|platform/index.php|platform/login.php|platform/website_catalog.php|platform/header.php|platform/sidebar.php|platform/footer.php)
+                # These are authenticated web documents. Worker handlers use
+                # app/* services and their own top-level entry points.
+                ;;
               platform/*)
                 worker_required=true
                 ;;

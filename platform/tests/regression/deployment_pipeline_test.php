@@ -49,6 +49,11 @@ function run_deployment_pipeline_regression_tests(): void
         $cloudBuild,
         'diagnostic and pipeline-only changes do not rebuild the generation worker'
     );
+    TestHarness::assertContains(
+        'platform/publication.php|platform/publication_saatchi_package.php|platform/artwork.php',
+        $cloudBuild,
+        'changes limited to established web documents do not rebuild or redeploy the private worker'
+    );
     TestHarness::assertTrue(
         str_contains($setupScript, "'platform/**', 'site-admin/**'")
             && str_contains($setupScript, "'artist-site/**'")

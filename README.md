@@ -13,6 +13,12 @@ The active local environment is identified by `APP_ENV=local` and uses the clean
 
 Retired database copies and user archives under `C:\laragon\archives\artworkmockups` are recovery material only; they are not application data sources. Local feature work must stay on a branch other than `main`. Only a push to GitHub's `main` branch can activate the production delivery workflow described below.
 
+Production changes follow one release unit: branch `codex/*` → preflight → review → squash
+merge into `main`. Intermediate repair commits stay on the branch; they must not be pushed
+one by one to `main`, because every accepted `main` commit is an immutable production release.
+Unrelated app, worker, public-site, and documentation changes should use separate release
+units so the path filters can avoid unnecessary builds.
+
 ## Production CI/CD
 
 Artwork Mockups uses two path-filtered Google Cloud Build triggers on GitHub's `main` branch:

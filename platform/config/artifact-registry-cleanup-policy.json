@@ -1,0 +1,25 @@
+[
+  {
+    "name": "delete-versions-older-than-30-days",
+    "action": {"type": "Delete"},
+    "condition": {
+      "tagState": "any",
+      "olderThan": "30d"
+    }
+  },
+  {
+    "name": "keep-latest-tags",
+    "action": {"type": "Keep"},
+    "condition": {
+      "tagState": "tagged",
+      "tagPrefixes": ["latest"]
+    }
+  },
+  {
+    "name": "keep-20-recent-per-service",
+    "action": {"type": "Keep"},
+    "mostRecentVersions": {
+      "keepCount": 20
+    }
+  }
+]

@@ -22,7 +22,11 @@ try {
     $service = new VideoGenerationService(new VideoStudioRepository($pdo), new VideoJobRepository($pdo), new VideoTaskDispatcher(), new VideoMediaStorage());
     echo json_encode(['ok' => true] + $service->process($jobId), JSON_UNESCAPED_SLASHES);
 } catch (Throwable $e) {
-    Logger::log('Video worker failed: ' . $e->getMessage(), 'error');
+    $errorId = Logger::exception('video_worker', $e, ['job_id' => $jobId ?? 0]);
     http_response_code(500);
-    echo json_encode(['ok' => false, 'error' => $e->getMessage()], JSON_UNESCAPED_SLASHES);
+    echo json_encode([
+        'ok' => false,
+        'error' => 'Video generation failed.',
+        'error_id' => $errorId,
+    ], JSON_UNESCAPED_SLASHES);
 }

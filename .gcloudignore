@@ -5,6 +5,7 @@
 **/.claude
 **/.codex
 **/.codex-remote-attachments
+**/.codex-*
 **/.idea
 **/.vscode
 **/__pycache__
@@ -26,6 +27,11 @@ platform/storage/world_mothers/*
 artist-site/assets/uploads
 artist-site/assets/tenants
 artist-site/tools/sftp-venv
+artist-site/docs
+artist-site/tests
+artist-site/scripts
+design-system
+AUDITORIA_PROYECTO_ACTUAL.md
 # The image already drops these; uploading them only slows every build.
 output
 tmp
