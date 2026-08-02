@@ -20,6 +20,15 @@ function pub_media_url(?string $file): string
     return $file !== '' ? 'media.php?file=' . rawurlencode($file) : '';
 }
 
+/** Única fuente de moneda: la configuración de la tienda. */
+function pub_store_currency(PDO $pdo, int $userId): string
+{
+    $stmt = $pdo->prepare('SELECT currency FROM artist_site_settings WHERE user_id=? LIMIT 1');
+    $stmt->execute([$userId]);
+    $currency = strtoupper(trim((string)($stmt->fetchColumn() ?: '')));
+    return preg_match('/^[A-Z]{3}$/', $currency) ? $currency : 'EUR';
+}
+
 $csrf = Auth::csrfToken('publication');
 $bilingualService = new BilingualEditorialService($pdo);
 $bilingualEnabled = $bilingualService->isEnabled($userId);
@@ -136,8 +145,11 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && ($_POST['action'] ?? '') === 'save_
         if ($sale || $priceInput !== '') {
             $price = str_replace(',', '.', $priceInput === '' ? '0' : $priceInput);
             if (!is_numeric($price) || (float)$price < 0) throw new RuntimeException(t('Enter a valid artwork price.', 'Ingresá un precio válido para la obra.'));
-            $currency = strtoupper(trim((string)($_POST['sale_currency'] ?? 'EUR')));
-            if (!preg_match('/^[A-Z]{3}$/', $currency)) throw new RuntimeException(t('Currency must use a three-letter ISO code.', 'La moneda debe usar un código ISO de tres letras.'));
+            // La moneda no se decide obra por obra: la tienda tiene una sola y
+            // toda la vitrina la hereda. Cuando se elegía acá, una obra podía
+            // quedar en EUR contra una tienda en USD y la ficha escondía precio
+            // y botón de compra sin decir por qué.
+            $currency = pub_store_currency($pdo, $userId);
             $saleStatus = (string)($_POST['sale_status'] ?? 'draft');
             if (!in_array($saleStatus, ['draft', 'active', 'paused', 'sold_out'], true)) $saleStatus = 'draft';
             $stock = max(0, (int)($_POST['sale_stock'] ?? 0));
@@ -418,9 +430,7 @@ if ($artworkId <= 0) {
     $saleStmt->execute([$userId, $artworkId]);
     $sale = $saleStmt->fetch(PDO::FETCH_ASSOC) ?: null;
     $saleAvailable = $sale ? max(0, (int)$sale['stock_on_hand'] - (int)$sale['stock_reserved']) : 0;
-    $currencyStmt = $pdo->prepare('SELECT currency FROM artist_site_settings WHERE user_id=? LIMIT 1');
-    $currencyStmt->execute([$userId]);
-    $defaultCurrency = strtoupper(trim((string)($currencyStmt->fetchColumn() ?: 'EUR')));
+    $storeCurrency = pub_store_currency($pdo, $userId);
     $constellationStmt = $pdo->prepare('SELECT country FROM artist_site_constellations WHERE user_id=? AND artwork_id=? AND enabled=1 LIMIT 1');
     $constellationStmt->execute([$userId, $artworkId]);
     $constellationCountry = trim((string)($constellationStmt->fetchColumn() ?: ''));
@@ -481,7 +491,7 @@ if ($artworkId <= 0) {
         'selectedCover' => $selectedCover,
         'sale' => $sale,
         'saleAvailable' => $saleAvailable,
-        'defaultCurrency' => $defaultCurrency,
+        'storeCurrency' => $storeCurrency,
         'constellationCountry' => $constellationCountry,
         'finalVideos' => $finalVideos,
         'attachedVideoId' => $attachedVideoId,
@@ -781,7 +791,7 @@ function pub_page_chip(string $status): array
                                     </div>
                                     <label class="pub-field"><?= pub_h(t('Available units', 'Unidades disponibles')) ?><input type="number" min="0" step="1" name="sale_stock" value="<?= (int)$doc['saleAvailable'] ?>"></label>
                                     <label class="pub-field"><?= pub_h(t('Price', 'Precio')) ?><input inputmode="decimal" name="sale_price" value="<?= $doc['sale'] ? pub_h(number_format((int)$doc['sale']['price_minor'] / 100, 2, '.', '')) : '' ?>" placeholder="2500.00"></label>
-                                    <label class="pub-field"><?= pub_h(t('Currency', 'Moneda')) ?><input name="sale_currency" maxlength="3" value="<?= pub_h((string)($doc['sale']['currency'] ?? $doc['defaultCurrency'])) ?>"></label>
+                                    <div class="pub-field"><span><?= pub_h(t('Currency', 'Moneda')) ?></span><input value="<?= pub_h((string)$doc['storeCurrency']) ?>" disabled><small><?= pub_h(t('Set once for the whole store in Site admin → Payments.', 'Se define una sola vez para toda la tienda en Administración del sitio → Pagos.')) ?></small></div>
                                     <label class="pub-field"><?= pub_h(t('Constellation country', 'País de constelación')) ?><input name="constellation_country" value="<?= pub_h($doc['constellationCountry']) ?>" placeholder="<?= pub_h(t('Optional', 'Opcional')) ?>"></label>
                                     <div class="pub-field">
                                         <span><?= pub_h(t('Visibility', 'Visibilidad')) ?></span>

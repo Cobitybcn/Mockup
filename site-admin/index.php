@@ -232,7 +232,7 @@ $sectionLabels = [
                     <div><dt>Visibility</dt><dd><?= sm_h(ucfirst((string)$selected['visibility'])) ?></dd></div>
                     <div><dt>Content source</dt><dd>Artwork Metadata</dd></div>
                 </dl>
-                <a class="primary-action website-content-handoff__link" href="<?= sm_h(SITE_MANAGER_PLATFORM_PREFIX) ?>/artwork.php?id=<?= (int)$selected['artwork_id'] ?>#website-publication">Open artwork website settings</a>
+                <a class="primary-action website-content-handoff__link" href="<?= sm_h(SITE_MANAGER_PLATFORM_PREFIX) ?>/publication.php?id=<?= (int)$selected['artwork_id'] ?>">Open artwork website settings</a>
             </section>
         <?php endif; ?>
 
@@ -353,7 +353,7 @@ $sectionLabels = [
                     <div><dt>Price</dt><dd><?= $selectedVariant ? sm_h(sm_money((int)$selectedVariant['price_minor'], (string)$selectedVariant['currency'])) : 'Not set' ?></dd></div>
                     <div><dt>Available units</dt><dd><?= (int)($selectedVariant['stock_available'] ?? 0) ?></dd></div>
                 </dl>
-                <a class="primary-action website-content-handoff__link" href="<?= sm_h(SITE_MANAGER_PLATFORM_PREFIX) ?>/artwork.php?id=<?= (int)$selectedArtwork['artwork_id'] ?>#website-publication">Open price and availability</a>
+                <a class="primary-action website-content-handoff__link" href="<?= sm_h(SITE_MANAGER_PLATFORM_PREFIX) ?>/publication.php?id=<?= (int)$selectedArtwork['artwork_id'] ?>">Open price and availability</a>
             </section>
         <?php endif; ?>
 
@@ -444,7 +444,7 @@ $sectionLabels = [
             </form>
             <details class="payment-currency-settings">
                 <summary>Store currency · <?= sm_h(strtoupper((string)$settings['currency'])) ?></summary>
-                <form method="post" class="editor-form payment-currency"><input type="hidden" name="csrf" value="<?= sm_h($csrf) ?>"><input type="hidden" name="return_area" value="store"><input type="hidden" name="return_section" value="payments"><label>Store currency<input name="currency" maxlength="3" value="<?= sm_h((string)$settings['currency']) ?>"></label><p class="supporting-copy">Artwork prices and shipping must use this same currency.</p><div class="form-actions"><button name="action" value="save_payments">Save currency</button></div></form>
+                <form method="post" class="editor-form payment-currency"><input type="hidden" name="csrf" value="<?= sm_h($csrf) ?>"><input type="hidden" name="return_area" value="store"><input type="hidden" name="return_section" value="payments"><label>Store currency<input name="currency" maxlength="3" value="<?= sm_h((string)$settings['currency']) ?>"></label><p class="supporting-copy">Every artwork price and shipping rate uses this currency. Changing it re-tags the existing prices in the same act — the figures stay as they are, they are not converted.</p><div class="form-actions"><button name="action" value="save_payments">Save currency</button></div></form>
             </details>
         </section>
 

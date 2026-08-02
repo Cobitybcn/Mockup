@@ -126,6 +126,23 @@ function run_publication_section_tests(): void
         );
     }
 
+    // ————— Moneda: una sola, la de la tienda —————
+    // El precio de la obra no elige moneda. Cuando podía, una obra quedaba en
+    // EUR contra una tienda en USD y la ficha pública escondía precio y botón
+    // de compra sin explicar nada (AppStore::offerForArtwork, is_purchasable).
+    TestHarness::assertTrue(
+        !str_contains($section, 'sale_currency'),
+        'La moneda no se decide obra por obra: el formulario ya no la envía'
+    );
+    TestHarness::assertContains('pub_store_currency', $section, 'El precio guardado hereda la moneda de la tienda');
+    $siteManager = (string)file_get_contents($repoRoot . '/site-admin/app/SiteManagerService.php');
+    TestHarness::assertContains('$currency = $this->storeCurrency($userId);', $siteManager, 'El alta de stock también hereda la moneda de la tienda');
+    TestHarness::assertContains(
+        'UPDATE artist_site_print_variants SET currency=?',
+        $siteManager,
+        'Cambiar la moneda de la tienda re-etiqueta los precios existentes: ninguna obra queda en la moneda vieja'
+    );
+
     // ————— Puerta única: Videos ya no publica al sitio —————
     $videos = (string)file_get_contents($platformRoot . '/videos.php');
     TestHarness::assertTrue(

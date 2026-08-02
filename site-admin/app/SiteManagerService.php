@@ -134,6 +134,19 @@ final class SiteManagerService
         ];
     }
 
+    /**
+     * The store currency is the only one there is. Prices never carry a
+     * currency of their own: one tagged apart from the store stops being
+     * purchasable without saying so.
+     */
+    public function storeCurrency(int $userId): string
+    {
+        $stmt = $this->pdo->prepare('SELECT currency FROM artist_site_settings WHERE user_id=? LIMIT 1');
+        $stmt->execute([$userId]);
+        $currency = strtoupper(trim((string)($stmt->fetchColumn() ?: '')));
+        return preg_match('/^[A-Z]{3}$/', $currency) ? $currency : 'EUR';
+    }
+
     /** @param array<string,mixed> $input */
     public function saveSettings(int $userId, string $section, array $input): void
     {
@@ -167,6 +180,13 @@ final class SiteManagerService
             throw new RuntimeException('Unknown settings section.');
         }
         $this->upsertSettings($userId, $current);
+        if ($section === 'payments') {
+            // Every price follows the store: re-tag the existing ones in the
+            // same act. Amounts are not converted — the figure stays, the
+            // currency changes — but no artwork is left stranded in the old one.
+            $this->pdo->prepare('UPDATE artist_site_print_variants SET currency=?,updated_at=? WHERE user_id=? AND currency<>?')
+                ->execute([(string)$current['currency'], date('c'), $userId, (string)$current['currency']]);
+        }
         $this->log($userId, 'settings.updated', 'settings', $section, ucfirst($section) . ' settings updated.');
     }
 
@@ -570,8 +590,7 @@ final class SiteManagerService
         if (!in_array($mode, ['in_stock', 'made_to_order', 'limited_edition'], true)) $mode = 'in_stock';
         $status = (string)($input['status'] ?? 'draft');
         if (!in_array($status, ['draft', 'active', 'paused', 'sold_out'], true)) $status = 'draft';
-        $currency = strtoupper(trim((string)($input['currency'] ?? 'EUR')));
-        if (!preg_match('/^[A-Z]{3}$/', $currency)) throw new RuntimeException('Currency must use a three-letter ISO code.');
+        $currency = $this->storeCurrency($userId);
         $price = str_replace(',', '.', trim((string)($input['price'] ?? '0')));
         if (!is_numeric($price) || (float)$price < 0) throw new RuntimeException('Enter a valid price.');
         $values = [
