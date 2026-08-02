@@ -12,9 +12,6 @@ $videos = is_array($library['generatedClips'] ?? null) ? $library['generatedClip
 $finals = $repository->finalVideos($userId);
 $projects = $repository->listProjects($userId);
 $csrf = VideoHttp::csrfToken();
-$tiktokConnection = (new TikTokIntegrationService(Database::connection()))->connection($userId, 'artist');
-$tiktokConnected = ($tiktokConnection['status'] ?? '') === 'connected';
-$tiktokRows = (new VideoTikTokPublicationService(Database::connection()))->rowsForUser($userId);
 $artworkOptions = [];
 $finalArtworkOptions = [];
 $seriesOptions = [];
@@ -170,42 +167,6 @@ function videos_artist_site_url(string $slug): string
                                             <span><?= videos_h(t('Publishes to the site from', 'Se publica al sitio desde')) ?> <a href="publication.php<?= (int)($final['canonicalArtworkId'] ?? 0) > 0 ? '?id=' . (int)$final['canonicalArtworkId'] : '' ?>"><?= videos_h(t('Publication', 'Publicación')) ?></a></span>
                                         <?php endif; ?>
                                     </div>
-                                    <?php
-                                    $tiktokRow = $tiktokRows[(int)$final['id']] ?? null;
-                                    $tiktokStatus = (string)($tiktokRow['status'] ?? '');
-                                    $tiktokLabel = match ($tiktokStatus) {
-                                        'published' => t('PUBLISHED ON TIKTOK', 'PUBLICADO EN TIKTOK'),
-                                        'processing', 'queued' => t('SENDING…', 'ENVIANDO…'),
-                                        'failed' => t('RETRY TIKTOK', 'REINTENTAR TIKTOK'),
-                                        default => t('PUBLISH TO TIKTOK', 'PUBLICAR EN TIKTOK'),
-                                    };
-                                    ?>
-                                    <?php if (!$tiktokConnected): ?>
-                                        <p class="videos-final-tiktok-hint"><?= videos_h(t('Connect TikTok to publish this video.', 'Conectá TikTok para publicar este video.')) ?> <a href="connections.php?open=tiktok"><?= videos_h(t('Connect', 'Conectar')) ?></a></p>
-                                    <?php else: ?>
-                                        <?php $tiktokLocked = $tiktokStatus === 'processing' || $tiktokStatus === 'queued'; ?>
-                                        <form class="videos-final-publish videos-final-tiktok" data-final-tiktok-form>
-                                            <input type="hidden" name="csrf" value="<?= videos_h($csrf) ?>">
-                                            <input type="hidden" name="exportId" value="<?= (int)$final['id'] ?>">
-                                            <div class="videos-final-tiktok-caption-row">
-                                                <textarea name="caption" maxlength="2200" rows="3" placeholder="<?= videos_h(t('Caption for TikTok', 'Copy para TikTok')) ?>" aria-label="<?= videos_h(t('TikTok caption', 'Copy de TikTok')) ?>" data-final-tiktok-caption <?= $tiktokLocked ? 'disabled' : '' ?>><?= videos_h((string)($tiktokRow['caption'] ?? '') ?: $projectTitle) ?></textarea>
-                                                <button type="button" class="videos-final-tiktok-suggest" data-final-tiktok-suggest <?= $tiktokLocked ? 'disabled' : '' ?>><?= videos_h(t('Suggest caption & hashtags', 'Sugerir copy y hashtags')) ?></button>
-                                            </div>
-                                            <small class="videos-final-tiktok-counter" data-final-tiktok-counter></small>
-                                            <p class="videos-final-tiktok-hint videos-final-tiktok-privacy-hint"><?= videos_h(t('Posts privately (Only Me) until TikTok approves this app for public posting.', 'Se publica en privado (Solo yo) hasta que TikTok apruebe esta app para publicar en público.')) ?></p>
-                                            <button type="submit" <?= $tiktokLocked ? 'disabled' : '' ?>><?= $tiktokLabel ?></button>
-                                            <small data-final-tiktok-suggest-error hidden></small>
-                                            <small data-final-tiktok-error <?= $tiktokStatus === 'failed' && trim((string)($tiktokRow['error'] ?? '')) !== '' ? '' : 'hidden' ?>><?= videos_h((string)($tiktokRow['error'] ?? '')) ?></small>
-                                        </form>
-                                        <?php if ($tiktokLocked): ?>
-                                            <form class="videos-final-publish videos-final-tiktok-status" data-final-tiktok-status-form>
-                                                <input type="hidden" name="csrf" value="<?= videos_h($csrf) ?>">
-                                                <input type="hidden" name="exportId" value="<?= (int)$final['id'] ?>">
-                                                <button type="submit"><?= videos_h(t('CHECK TIKTOK STATUS', 'VER ESTADO EN TIKTOK')) ?></button>
-                                                <small data-final-tiktok-status-result hidden></small>
-                                            </form>
-                                        <?php endif; ?>
-                                    <?php endif; ?>
                                 </div>
                             </article>
                         <?php endforeach; ?>

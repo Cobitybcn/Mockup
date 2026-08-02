@@ -64,6 +64,15 @@ $expect((int)$stock['stock_on_hand'] === 1 && (int)$stock['stock_reserved'] === 
 $expect((string)$pdo->query('SELECT order_status FROM artist_site_orders WHERE id=' . (int)$first['id'])->fetchColumn() === 'completed', 'Completed order status was not persisted.');
 $expect((string)$pdo->query('SELECT order_status FROM artist_site_orders WHERE id=' . (int)$second['id'])->fetchColumn() === 'cancelled', 'Cancelled order status was not persisted.');
 
+// Switching the store's currency must never make a price disappear from its own
+// page: the amount stands, and it is quoted and charged in the store currency.
+$pdo->prepare('UPDATE artist_site_settings SET currency=? WHERE user_id=?')->execute(['USD', 7]);
+$stale = $store->offerForArtwork(31);
+$expect(!empty($stale['is_purchasable']), 'A price left tagged in the old currency stopped being offered.');
+$expect(strtoupper((string)$stale['currency']) === 'USD', 'The offer was not quoted in the store currency.');
+$third = $store->createOrder($artwork, array_merge($baseInput, ['email'=>'third@example.com','country_code'=>'ES']));
+$expect((string)$pdo->query('SELECT currency FROM artist_site_orders WHERE id=' . (int)$third['id'])->fetchColumn() === 'USD', 'The order was not charged in the store currency.');
+
 if ($failures) {
     foreach ($failures as $failure) fwrite(STDERR, "FAIL: {$failure}\n");
     exit(1);

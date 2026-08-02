@@ -723,29 +723,6 @@ function pub_page_chip(string $status): array
 
                                 <p class="pub-panel-note"><?= pub_h(t('Texts, SEO and captions come from the resolved artwork — they are not edited here. Here you compose what the page shows and how it sells.', 'Los textos, el SEO y los pies vienen de la obra resuelta — acá no se editan. Acá se compone qué muestra la página y cómo vende.')) ?></p>
 
-                                <h3 class="pub-section-title"><?= pub_h(t('Media composition — mockups', 'Composición de media — mockups')) ?></h3>
-                                <p class="pub-section-hint"><?= pub_h(t('The page gallery shows ONLY the included mockups, in the order below — drag them to reorder. With none included, it shows all of them.', 'La galería de la página muestra SOLO los mockups incluidos, en el orden de abajo — arrastralos para reordenar. Sin ninguno incluido, los muestra todos.')) ?></p>
-                                <?php if (!$doc['mediaGrid']): ?>
-                                    <p class="pub-video-empty"><?= pub_h(t('This artwork has no mockups yet.', 'Esta obra todavía no tiene mockups.')) ?></p>
-                                <?php else: ?>
-                                    <div class="pub-media-grid" data-media-grid
-                                        data-label-cover="<?= pub_h(t('Cover', 'Portada')) ?>"
-                                        data-label-lead="<?= pub_h(t('Opens post', 'Abre post')) ?>">
-                                        <?php foreach ($doc['mediaGrid'] as $card): ?>
-                                            <?php $isSelected = in_array($card['id'], $doc['selectionOrder'], true); ?>
-                                            <figure class="pub-media-card <?= $isSelected ? 'is-selected' : '' ?>" data-media-card data-mockup-id="<?= (int)$card['id'] ?>">
-                                                <span class="pub-media-order" data-media-order></span>
-                                                <span class="pub-media-cover" data-media-cover></span>
-                                                <img src="<?= pub_h(pub_media_url($card['file'])) ?>" alt="<?= pub_h($card['label']) ?>" loading="lazy">
-                                                <figcaption><?= pub_h($card['label']) ?></figcaption>
-                                                <button type="button" class="pub-media-toggle" data-media-toggle
-                                                    data-label-add="<?= pub_h(t('Include on page', 'Incluir en la página')) ?>"
-                                                    data-label-remove="<?= pub_h(t('Included · remove', 'Incluido · quitar')) ?>"><?= $isSelected ? pub_h(t('Included · remove', 'Incluido · quitar')) : pub_h(t('Include on page', 'Incluir en la página')) ?></button>
-                                            </figure>
-                                        <?php endforeach; ?>
-                                    </div>
-                                <?php endif; ?>
-
                                 <?php
                                 // Una sola función, una sola línea: estado, archivo y acción
                                 // conviven en la misma fila, sin cajas que compitan.
@@ -781,6 +758,29 @@ function pub_page_chip(string $status): array
                                     <?= $videoAttach('') ?>
                                 <?php endif; ?>
 
+                                <h3 class="pub-section-title"><?= pub_h(t('Media composition — mockups', 'Composición de media — mockups')) ?></h3>
+                                <p class="pub-section-hint"><?= pub_h(t('The page gallery shows ONLY the included mockups, in the order below — drag them to reorder. With none included, it shows all of them.', 'La galería de la página muestra SOLO los mockups incluidos, en el orden de abajo — arrastralos para reordenar. Sin ninguno incluido, los muestra todos.')) ?></p>
+                                <?php if (!$doc['mediaGrid']): ?>
+                                    <p class="pub-video-empty"><?= pub_h(t('This artwork has no mockups yet.', 'Esta obra todavía no tiene mockups.')) ?></p>
+                                <?php else: ?>
+                                    <div class="pub-media-grid" data-media-grid
+                                        data-label-cover="<?= pub_h(t('Cover', 'Portada')) ?>"
+                                        data-label-lead="<?= pub_h(t('Opens post', 'Abre post')) ?>">
+                                        <?php foreach ($doc['mediaGrid'] as $card): ?>
+                                            <?php $isSelected = in_array($card['id'], $doc['selectionOrder'], true); ?>
+                                            <figure class="pub-media-card <?= $isSelected ? 'is-selected' : '' ?>" data-media-card data-mockup-id="<?= (int)$card['id'] ?>">
+                                                <span class="pub-media-order" data-media-order></span>
+                                                <span class="pub-media-cover" data-media-cover></span>
+                                                <img src="<?= pub_h(pub_media_url($card['file'])) ?>" alt="<?= pub_h($card['label']) ?>" loading="lazy">
+                                                <figcaption><?= pub_h($card['label']) ?></figcaption>
+                                                <button type="button" class="pub-media-toggle" data-media-toggle
+                                                    data-label-add="<?= pub_h(t('Include on page', 'Incluir en la página')) ?>"
+                                                    data-label-remove="<?= pub_h(t('Included · remove', 'Incluido · quitar')) ?>"><?= $isSelected ? pub_h(t('Included · remove', 'Incluido · quitar')) : pub_h(t('Include on page', 'Incluir en la página')) ?></button>
+                                            </figure>
+                                        <?php endforeach; ?>
+                                    </div>
+                                <?php endif; ?>
+
                                 <h3 class="pub-section-title"><?= pub_h(t('Price and availability', 'Precio y disponibilidad')) ?></h3>
                                 <div class="pub-sale-grid">
                                     <div class="pub-field">
@@ -795,8 +795,8 @@ function pub_page_chip(string $status): array
                                         </div>
                                     </div>
                                     <label class="pub-field"><?= pub_h(t('Available units', 'Unidades disponibles')) ?><input type="number" min="0" step="1" name="sale_stock" value="<?= (int)$doc['saleAvailable'] ?>"></label>
-                                    <label class="pub-field"><?= pub_h(t('Price', 'Precio')) ?><input inputmode="decimal" name="sale_price" value="<?= $doc['sale'] ? pub_h(number_format((int)$doc['sale']['price_minor'] / 100, 2, '.', '')) : '' ?>" placeholder="2500.00"></label>
-                                    <div class="pub-field"><span><?= pub_h(t('Currency', 'Moneda')) ?></span><input value="<?= pub_h((string)$doc['storeCurrency']) ?>" disabled><small><?= pub_h(t('Set once for the whole store in Site admin → Payments.', 'Se define una sola vez para toda la tienda en Administración del sitio → Pagos.')) ?></small></div>
+                                    <?php // La divisa manda en la tienda: acá sólo se nombra junto al precio, no se edita. ?>
+                                    <label class="pub-field"><?= pub_h(t('Price', 'Precio')) ?> (<?= pub_h((string)$doc['storeCurrency']) ?>)<input inputmode="decimal" name="sale_price" value="<?= $doc['sale'] ? pub_h(number_format((int)$doc['sale']['price_minor'] / 100, 2, '.', '')) : '' ?>" placeholder="2500.00"></label>
                                     <label class="pub-field"><?= pub_h(t('Constellation country', 'País de constelación')) ?><input name="constellation_country" value="<?= pub_h($doc['constellationCountry']) ?>" placeholder="<?= pub_h(t('Optional', 'Opcional')) ?>"></label>
                                     <div class="pub-field">
                                         <span><?= pub_h(t('Visibility', 'Visibilidad')) ?></span>

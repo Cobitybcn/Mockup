@@ -99,10 +99,13 @@ final class AppStore
             if (!$offer) return null;
             $offer['stock_available'] = max(0, (int)$offer['stock_on_hand'] - (int)$offer['stock_reserved']);
             $offer['shipping_rates'] = $this->shippingRates((string)$offer['shipping_rates_json']);
+            // The store currency is the only one there is. A price tagged in an
+            // older one is still the artist's price — reading it as a foreign
+            // currency used to hide the artwork from its own page in silence.
+            $offer['currency'] = strtoupper((string)$offer['store_currency']);
             $offer['is_purchasable'] = (string)$offer['status'] === 'active'
                 && (int)$offer['price_minor'] > 0
-                && (int)$offer['stock_available'] > 0
-                && strtoupper((string)$offer['currency']) === strtoupper((string)$offer['store_currency']);
+                && (int)$offer['stock_available'] > 0;
             return $offer;
         } catch (PDOException) {
             return null;
@@ -163,9 +166,8 @@ final class AppStore
                 || ((int)$variant['stock_on_hand'] - (int)$variant['stock_reserved']) < 1) {
                 throw new RuntimeException('This artwork has just become unavailable.');
             }
-            if (strtoupper((string)$variant['currency']) !== strtoupper((string)$offer['store_currency'])) {
-                throw new RuntimeException('The artwork and shipping currencies must match before an order can be created.');
-            }
+            // Charge in the store's currency, the same one the page quoted.
+            $variant['currency'] = strtoupper((string)$offer['store_currency']);
 
             $settings = $this->pdo->prepare('SELECT shipping_rates_json,shipping_policy FROM artist_site_settings WHERE user_id=? LIMIT 1');
             $settings->execute([(int)$offer['user_id']]);
