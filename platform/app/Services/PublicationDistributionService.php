@@ -18,13 +18,21 @@ declare(strict_types=1);
  */
 final class PublicationDistributionService
 {
-    public const DESTINATIONS = ['pinterest', 'instagram', 'facebook', 'tiktok', 'tiktok_carousel', 'x', 'saatchi'];
+    public const DESTINATIONS = ['pinterest', 'instagram', 'instagram_video', 'facebook', 'facebook_video', 'tiktok', 'tiktok_carousel', 'x', 'saatchi'];
     public const DEFAULT_SERIES_GAP_HOURS = 12;
     private const LIVE_DESTINATIONS = ['pinterest', 'instagram', 'facebook', 'tiktok'];
     private const SERIES_DESTINATIONS = ['instagram', 'facebook'];
     /** TikTok keeps both media on the same destination rows: video at part 0, carousel at part 1. */
     private const TIKTOK_VIDEO_PART = 0;
     private const TIKTOK_CAROUSEL_PART = 1;
+    /**
+     * Meta's video is a fourth act, not a fourth part of the series
+     * (PUBLICACION_DISENO art. 16): it lives on the network's own rows, far
+     * from the series parts (1, 2, 3), so sending the reel never disturbs a
+     * series already published and the series never counts it as one of its own.
+     */
+    private const META_VIDEO_PART = 10;
+    private const META_VIDEO_DESTINATIONS = ['instagram_video' => 'instagram', 'facebook_video' => 'facebook'];
 
     private PublicationProductService $products;
     private PublicationService $publications;
@@ -131,6 +139,11 @@ final class PublicationDistributionService
                 $lastError = '';
                 $lastAttempt = '';
                 foreach ($destinationRows as $part => $row) {
+                    // El reel comparte las filas de la red pero no es parte de
+                    // la serie: contarlo aquí haría que un video fallido dejara
+                    // la serie entera en FALLÓ, y que enviarlo la mostrara
+                    // incompleta (art. 16).
+                    if ((int)$part === self::META_VIDEO_PART) continue;
                     $partStatus = (string)$row['status'];
                     if ($partStatus === 'published') $publishedCount++;
                     if ($partStatus === 'failed') { $failedCount++; $lastError = (string)$row['error']; }
@@ -173,9 +186,13 @@ final class PublicationDistributionService
 
             // TikTok's two media live on the same destination rows; the carousel
             // is surfaced as its own card so each speaks its own vocabulary.
+            // Meta's reel does the same on its network's rows.
             if ($destination === 'tiktok_carousel') {
                 $destinationRows = $rows['tiktok'] ?? [];
                 $row = $destinationRows[self::TIKTOK_CAROUSEL_PART] ?? null;
+            } elseif (isset(self::META_VIDEO_DESTINATIONS[$destination])) {
+                $destinationRows = $rows[self::META_VIDEO_DESTINATIONS[$destination]] ?? [];
+                $row = $destinationRows[self::META_VIDEO_PART] ?? null;
             } else {
                 $row = $destinationRows[self::TIKTOK_VIDEO_PART] ?? null;
             }
@@ -259,6 +276,29 @@ final class PublicationDistributionService
             }
         }
 
+        // The reel is its own act: it only runs when the page actually has a
+        // video, and it never counts as one of the series parts.
+        foreach (self::META_VIDEO_DESTINATIONS as $videoDestination => $channel) {
+            if (!$hasVideo) {
+                $results[$videoDestination] = ['status' => 'skipped', 'detail' => t('no page video', 'sin video de página')];
+                continue;
+            }
+            if ((string)(((array)($states[$channel] ?? []))['connection'] ?? '') !== 'connected') {
+                $results[$videoDestination] = ['status' => 'skipped', 'detail' => t('not connected', 'sin conexión')];
+                continue;
+            }
+            if (in_array((string)(((array)($states[$videoDestination] ?? []))['status'] ?? ''), ['published', 'processing'], true)) {
+                $results[$videoDestination] = ['status' => 'skipped', 'detail' => t('already sent', 'ya enviado')];
+                continue;
+            }
+            try {
+                $this->publish($publicationId, $userId, $videoDestination, $locale);
+                $results[$videoDestination] = ['status' => 'sent', 'detail' => ''];
+            } catch (Throwable $e) {
+                $results[$videoDestination] = ['status' => 'failed', 'detail' => $e->getMessage()];
+            }
+        }
+
         $count = static fn(string $status): int => count(array_filter(
             $results,
             static fn(array $result): bool => $result['status'] === $status
@@ -280,7 +320,8 @@ final class PublicationDistributionService
         if ($destination === 'saatchi') {
             throw new RuntimeException(t('Saatchi Art is uploaded by hand with the manual package.', 'Saatchi Art se carga a mano con el paquete manual.'));
         }
-        if (!in_array($destination, self::LIVE_DESTINATIONS, true)) {
+        $metaVideoChannel = self::META_VIDEO_DESTINATIONS[$destination] ?? '';
+        if ($metaVideoChannel === '' && !in_array($destination, self::LIVE_DESTINATIONS, true)) {
             throw new InvalidArgumentException(t('Unknown destination.', 'Destino desconocido.'));
         }
 
@@ -303,6 +344,32 @@ final class PublicationDistributionService
         $slug = (string)($payload['sources']['page']['slug'] ?? $publication['slug']);
         $link = $this->artistSiteUrl($slug);
         $destinations = (array)($payload['destinations'] ?? []);
+
+        if ($metaVideoChannel !== '') {
+            if ((int)($payload['media']['video']['export_id'] ?? 0) <= 0) {
+                throw new RuntimeException(t('This page has no video to send.', 'Esta página no tiene video para enviar.'));
+            }
+            $request = $this->metaVideoRequest($metaVideoChannel, $payload, $destinations, $locale, $link, $slug);
+            $request['user_id'] = $userId;
+            // The row belongs to the network, at the part the series skips: that
+            // is where states() reads the reel from, and why sending it can
+            // never disturb the series or be counted as one of its parts.
+            try {
+                $result = ($this->transport($destination))($request);
+            } catch (Throwable $e) {
+                $this->record($publicationId, $userId, $metaVideoChannel, self::META_VIDEO_PART, ['locale' => $locale, 'status' => 'failed', 'error' => $e->getMessage(), 'request' => $request, 'fingerprint' => $fingerprint]);
+                throw $e;
+            }
+            $this->record($publicationId, $userId, $metaVideoChannel, self::META_VIDEO_PART, [
+                'locale' => $locale,
+                'status' => (string)($result['status'] ?? 'published'),
+                'external_id' => (string)($result['external_id'] ?? ''),
+                'external_url' => (string)($result['external_url'] ?? ''),
+                'request' => $request,
+                'fingerprint' => $fingerprint,
+            ]);
+            return $this->states($publicationId, $userId)[$destination];
+        }
 
         if (in_array($destination, self::SERIES_DESTINATIONS, true)) {
             $this->publishSeries($publicationId, $userId, $destination, $locale, $payload, $fingerprint, $cover, $link, $slug);
@@ -623,6 +690,8 @@ final class PublicationDistributionService
 
     private function connectionState(string $destination, int $userId): string
     {
+        // El reel no tiene conexión propia: usa la de su red.
+        $destination = self::META_VIDEO_DESTINATIONS[$destination] ?? $destination;
         try {
             $connection = match ($destination) {
                 'pinterest' => (new PinterestIntegrationService($this->pdo))->connection($userId, 'artist'),
@@ -778,6 +847,51 @@ final class PublicationDistributionService
         return $base . '/publication_media.php?slug=' . rawurlencode($slug) . '&file=' . rawurlencode(basename($file));
     }
 
+    /**
+     * Meta fetches the media itself, so the page video has to be reachable
+     * without a session. publication_video_media.php serves exactly the video
+     * the published page shows, and only while that page is public.
+     */
+    private function publicVideoUrl(string $slug): string
+    {
+        $base = rtrim(app_env('APP_PUBLIC_URL', ''), '/');
+        return $base . '/publication_video_media.php?slug=' . rawurlencode($slug);
+    }
+
+    /**
+     * The reel: the same editorial copy the network already uses, carried by the
+     * page video instead of a composition image.
+     */
+    private function metaVideoRequest(string $channel, array $payload, array $destinations, string $locale, string $link, string $slug): array
+    {
+        $series = (array)($destinations[$channel]['series'] ?? []);
+        $block = (array)(((array)($series[0] ?? []))[$locale] ?? []);
+        $draft = $channel === 'instagram'
+            ? [
+                'channel' => 'instagram',
+                'purpose' => 'artist',
+                'description' => (string)($block['composed'] ?? ''),
+                'hashtags' => json_encode((array)($block['hashtags'] ?? []), JSON_UNESCAPED_UNICODE) ?: '[]',
+                'source_type' => 'video',
+            ]
+            : [
+                'channel' => 'facebook',
+                'purpose' => 'artist',
+                'title' => (string)($block['headline'] ?? ''),
+                'description' => (string)($block['composed'] ?? ''),
+                'hashtags' => '[]',
+                'destination_url' => $link,
+                'source_type' => 'video',
+            ];
+
+        return [
+            'draft' => $draft,
+            'video_url' => $this->publicVideoUrl($slug),
+            'slug' => $slug,
+            'part' => self::META_VIDEO_PART,
+        ];
+    }
+
     private function transport(string $destination): callable
     {
         if (is_array($this->transports) && isset($this->transports[$destination])) {
@@ -888,6 +1002,24 @@ final class PublicationDistributionService
                 } else {
                     $result = $publisher->publishDraft($request['draft'], $userId, $urls[0]);
                 }
+                return ['external_id' => (string)($result['id'] ?? ''), 'external_url' => (string)($result['url'] ?? '')];
+            },
+            'facebook_video' => function (array $request): array {
+                if (app_env('META_LIVE_PUBLISH_ENABLED', 'false') !== 'true') {
+                    throw new RuntimeException(t('Live Facebook publishing is not enabled in this environment.', 'La publicación en vivo de Facebook no está habilitada en este entorno.'));
+                }
+                // The publisher already routes a video draft to /videos.
+                $publisher = new MetaPublisher(new MetaIntegrationService($this->pdo));
+                $result = $publisher->publishDraft($request['draft'], (int)$request['user_id'], (string)$request['video_url']);
+                return ['external_id' => (string)($result['id'] ?? ''), 'external_url' => (string)($result['url'] ?? '')];
+            },
+            'instagram_video' => function (array $request): array {
+                if (app_env('INSTAGRAM_LIVE_PUBLISH_ENABLED', 'false') !== 'true') {
+                    throw new RuntimeException(t('Live Instagram publishing is not enabled in this environment.', 'La publicación en vivo de Instagram no está habilitada en este entorno.'));
+                }
+                // A video draft becomes a REELS container and is polled for longer.
+                $publisher = new InstagramPublisher(new InstagramIntegrationService($this->pdo));
+                $result = $publisher->publishDraft($request['draft'], (int)$request['user_id'], (string)$request['video_url']);
                 return ['external_id' => (string)($result['id'] ?? ''), 'external_url' => (string)($result['url'] ?? '')];
             },
             'tiktok' => function (array $request): array {

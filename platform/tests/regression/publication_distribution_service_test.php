@@ -149,6 +149,8 @@ function run_publication_distribution_service_tests(): void
         'tiktok_status' => $capture('tiktok_status'),
         'tiktok_carousel' => $capture('tiktok_carousel'),
         'tiktok_carousel_status' => $capture('tiktok_carousel_status'),
+        'instagram_video' => $capture('instagram_video'),
+        'facebook_video' => $capture('facebook_video'),
         'schedule' => $capture('schedule'),
     ]);
 
@@ -275,6 +277,37 @@ function run_publication_distribution_service_tests(): void
     $refreshed = $service->refreshTikTokStatus($publicationId, $userId);
     TestHarness::assertSame('published', (string)$refreshed['status'], 'consultar estado mapea PUBLISH_COMPLETE a PUBLICADO');
 
+    // ————— Meta: el reel es un cuarto acto, no una parte de la serie —————
+    // La serie de Instagram ya se publicó más arriba; enviar el reel no puede
+    // tocarla, ni contarse entre sus partes, ni compartir su fila.
+    $igSeriesBefore = $service->states($publicationId, $userId)['instagram'];
+    $reelState = $service->publish($publicationId, $userId, 'instagram_video', 'en', []);
+    $igSeriesAfter = $service->states($publicationId, $userId)['instagram'];
+
+    TestHarness::assertSame('published', (string)$reelState['status'], 'el reel de Instagram queda publicado en su propia fila');
+    TestHarness::assertSame(1, count($captured['instagram_video'] ?? []), 'el reel usa el transporte de video, no el de la serie');
+    TestHarness::assertSame('video', (string)$captured['instagram_video'][0]['draft']['source_type'], 'el draft del reel se marca como video: el publisher lo manda como REELS');
+    TestHarness::assertTrue(
+        str_contains((string)$captured['instagram_video'][0]['video_url'], 'publication_video_media.php'),
+        'el reel apunta al video público de la página, que es lo que Meta va a buscar'
+    );
+    TestHarness::assertSame(
+        (int)($igSeriesBefore['published_count'] ?? 0),
+        (int)($igSeriesAfter['published_count'] ?? 0),
+        'la serie de Instagram no suma partes por haber mandado el reel'
+    );
+    TestHarness::assertSame(
+        (string)($igSeriesBefore['status'] ?? ''),
+        (string)($igSeriesAfter['status'] ?? ''),
+        'el estado de la serie de Instagram queda intacto'
+    );
+
+    $fbPhotosBefore = count($captured['facebook'] ?? []);
+    $fbReel = $service->publish($publicationId, $userId, 'facebook_video', 'en', []);
+    TestHarness::assertSame('published', (string)$fbReel['status'], 'el video de Facebook queda publicado en su propia fila');
+    TestHarness::assertSame('video', (string)$captured['facebook_video'][0]['draft']['source_type'], 'el draft de Facebook se marca como video: el publisher usa /videos');
+    TestHarness::assertSame($fbPhotosBefore, count($captured['facebook'] ?? []), 'mandar el video de Facebook no invoca el transporte de fotos');
+
     // ————— TikTok: carrusel y video conviven como dos publicaciones —————
     $videoStateBefore = $service->states($publicationId, $userId)['tiktok'];
     $carouselState = $service->publish($publicationId, $userId, 'tiktok', 'en', ['medium' => 'carousel']);
@@ -321,7 +354,9 @@ function run_publication_distribution_service_tests(): void
     TestHarness::assertSame('sent', (string)$summary['results']['facebook']['status'], 'el acto único dispara la serie de Facebook');
     TestHarness::assertSame('skipped', (string)$summary['results']['instagram']['status'], 'un destino sin conexión se saltea, no rompe');
     TestHarness::assertSame('sent', (string)$summary['results']['tiktok']['status'], 'el acto único dispara TikTok');
-    TestHarness::assertTrue($summary['sent'] === 3 && $summary['skipped'] === 1 && $summary['failed'] === 0, 'el resumen cuenta enviados, salteados y fallidos');
+    TestHarness::assertSame('sent', (string)$summary['results']['facebook_video']['status'], 'el acto único también manda el reel de Facebook cuando la página tiene video');
+    TestHarness::assertSame('skipped', (string)$summary['results']['instagram_video']['status'], 'el reel de una red sin conexión se saltea igual que su serie');
+    TestHarness::assertTrue($summary['sent'] === 4 && $summary['skipped'] === 2 && $summary['failed'] === 0, 'el resumen cuenta enviados, salteados y fallidos, reel incluido');
 
     $repeat = $service->publishAllConnected($publicationId, $userId, 'en');
     TestHarness::assertSame('skipped', (string)$repeat['results']['pinterest']['status'], 'repetir el acto no vuelve a publicar lo ya publicado');
