@@ -860,7 +860,7 @@ function pub_page_chip(string $status): array
                 // se abre solo, para que el resultado nunca quede escondido.
                 $openStep = match ((string)($_GET['dist'] ?? '')) {
                     'pinterest' => 'pinterest',
-                    'instagram', 'facebook', 'settings' => 'social',
+                    'instagram', 'facebook', 'instagram_video', 'facebook_video', 'settings' => 'social',
                     'tiktok', 'tiktok_carousel', 'tiktok_status' => 'tiktok',
                     'saatchi' => 'saatchi',
                     default => '',
@@ -1098,6 +1098,55 @@ function pub_page_chip(string $status): array
                                                 </div>
                                             </div>
                                         <?php endforeach; ?>
+                                        <?php
+                                        // El reel es un acto aparte: se manda solo,
+                                        // sin volver a tocar la serie ya publicada.
+                                        $reelKey = $socialKey . '_video';
+                                        $reelState = (array)($doc['distStates'][$reelKey] ?? []);
+                                        $reelStatus = (string)($reelState['status'] ?? '');
+                                        $pageHasVideo = (int)($productPayload['media']['video']['export_id'] ?? 0);
+                                        ?>
+                                        <?php if ($socialConnected && $pageHasVideo > 0): ?>
+                                            <div class="pub-series-post">
+                                                <div class="pub-series-copy">
+                                                    <span class="pub-product-locale"><?= pub_h(t('Page video', 'Video de la página')) ?></span>
+                                                    <p><?= pub_h($socialKey === 'facebook'
+                                                        ? t('Sent as a video post, on its own — it does not touch the series.', 'Se manda como post de video, aparte — no toca la serie.')
+                                                        : t('Sent as a Reel, on its own — it does not touch the series.', 'Se manda como Reel, aparte — no toca la serie.')) ?></p>
+                                                    <?php if ($reelStatus === 'published'): ?>
+                                                        <span class="pub-series-state">
+                                                            <em class="pub-chip pub-chip--live"><?= pub_h(t('PUBLISHED', 'PUBLICADO')) ?></em>
+                                                            <?php if (($reelState['external_url'] ?? '') !== ''): ?><a href="<?= pub_h((string)$reelState['external_url']) ?>" target="_blank" rel="noopener">→</a><?php endif; ?>
+                                                        </span>
+                                                    <?php else: ?>
+                                                        <?php if ($reelStatus === 'failed' && ($reelState['error'] ?? '') !== ''): ?>
+                                                            <p class="pub-dist-error"><?= pub_h((string)$reelState['error']) ?></p>
+                                                        <?php endif; ?>
+                                                        <form method="post" class="pub-dist-form">
+                                                            <input type="hidden" name="action" value="distribute">
+                                                            <input type="hidden" name="id" value="<?= (int)$doc['artwork']['id'] ?>">
+                                                            <input type="hidden" name="csrf" value="<?= pub_h($csrf) ?>">
+                                                            <input type="hidden" name="destination" value="<?= pub_h($reelKey) ?>">
+                                                            <div class="pub-chip-group" role="radiogroup" aria-label="<?= pub_h(t('Send language', 'Idioma del envío')) ?>">
+                                                                <?php foreach ($localeOptions as $localeOption): ?>
+                                                                    <label class="pub-chip-option">
+                                                                        <input type="radio" name="locale" value="<?= pub_h($localeOption) ?>" <?= $localeOption === $distDefaultLocale ? 'checked' : '' ?>>
+                                                                        <span><?= pub_h($localeTag($localeOption)) ?></span>
+                                                                    </label>
+                                                                <?php endforeach; ?>
+                                                            </div>
+                                                            <label class="pub-dist-confirm">
+                                                                <input type="checkbox" name="confirm" value="yes" required>
+                                                                <span><?= pub_h($socialKey === 'facebook'
+                                                                    ? t('I confirm sending the page video to Facebook', 'Confirmo enviar el video de la página a Facebook')
+                                                                    : t('I confirm sending the page video as a Reel', 'Confirmo enviar el video de la página como Reel')) ?></span>
+                                                            </label>
+                                                            <button type="submit" class="button-link"><?= $reelStatus === 'failed' ? pub_h(t('Retry video', 'Reintentar video')) : pub_h(t('Send video only', 'Enviar solo el video')) ?></button>
+                                                        </form>
+                                                    <?php endif; ?>
+                                                </div>
+                                            </div>
+                                        <?php endif; ?>
                                         <?php if (!$socialConnected): ?>
                                             <p class="pub-product-meta"><a href="connections.php"><?= pub_h(t('Open Connections →', 'Abrir Conexiones →')) ?></a></p>
                                         <?php elseif ((int)($socialState['total_count'] ?? 0) === 0): ?>
