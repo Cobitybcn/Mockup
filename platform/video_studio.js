@@ -41,6 +41,7 @@
         projectTitle: $('[data-project-title]'),
         aspectButtons: $$('[data-project-aspect-ratio]'),
         saveState: $('[data-save-state]'),
+        projectPicker: $('[data-project-picker]'),
         artworkFilter: $('[data-artwork-filter]'),
         seriesFilter: $('[data-series-filter]'),
         catalogRail: $('[data-catalog-rail]'),
@@ -213,6 +214,50 @@
         });
     }
 
+    async function openSavedProject(projectId) {
+        const id = Number(projectId || 0);
+        if (id <= 0 || id === Number(currentProject()?.id || 0)) return;
+        const result = await api({ action: 'project_read', projectId: id });
+        applyStudio(result, true);
+        window.history.replaceState({}, '', `video.php?project=${id}`);
+        toast('Proyecto abierto');
+    }
+
+    async function deleteSavedProject(projectId) {
+        const id = Number(projectId || 0);
+        const project = state.projects.find(item => Number(item.id) === id);
+        if (!project) return;
+        const clipCount = Number(project.generatedClipCount || 0);
+        const detail = clipCount > 0
+            ? ` Sus ${clipCount} video${clipCount === 1 ? '' : 's'} generado${clipCount === 1 ? '' : 's'} permanecerán en Videos.`
+            : '';
+        if (!window.confirm(`¿Eliminar “${project.title || `Video ${id}`}” de Proyectos guardados?${detail}`)) return;
+
+        const result = await queueMutation(() => api({
+            action: 'project_delete',
+            projectId: id,
+            version: project.version,
+        }));
+        state.projects = Array.isArray(result.projects) ? result.projects : [];
+        if (id !== Number(currentProject()?.id || 0)) {
+            renderProjectControls();
+            toast('Proyecto eliminado');
+            return;
+        }
+        const nextProject = state.projects[0] || null;
+        if (nextProject) {
+            const next = await api({ action: 'project_read', projectId: nextProject.id });
+            applyStudio(next, true);
+            window.history.replaceState({}, '', `video.php?project=${nextProject.id}`);
+        } else {
+            state.studio = null;
+            root.dataset.projectId = '';
+            window.history.replaceState({}, '', 'video.php');
+            renderAll();
+        }
+        toast('Proyecto eliminado');
+    }
+
     function artworkMap() {
         const values = new Map();
         [...(state.assets.rootArtworks || []), ...(state.assets.mockups || [])].forEach(asset => {
@@ -240,33 +285,40 @@
 
     function renderProjectControls() {
         const project = currentProject();
+        if (dom.projectPicker) {
+            dom.projectPicker.innerHTML = state.projects.length
+                ? state.projects.map(item => `<option value="${Number(item.id)}"${Number(item.id) === Number(project?.id || 0) ? ' selected' : ''}>${escapeHtml(item.title || `Video ${item.id}`)}</option>`).join('')
+                : '<option value="">No hay proyectos guardados</option>';
+            dom.projectPicker.disabled = state.projects.length === 0;
+        }
         if (dom.projectTitle && document.activeElement !== dom.projectTitle) {
             dom.projectTitle.value = String(project?.title || '');
+            dom.projectTitle.disabled = !project;
         }
         dom.aspectButtons.forEach(button => {
             const selected = String(button.dataset.projectAspectRatio || '') === String(project?.aspectRatio || '9:16');
             button.classList.toggle('is-selected', selected);
             button.setAttribute('aria-pressed', selected ? 'true' : 'false');
+            button.disabled = !project;
         });
+        $$('[data-save-project], [data-delete-project]').forEach(button => { button.disabled = !project; });
 
         const artworks = artworkMap();
-        dom.artworkFilter.innerHTML = '<option value="">Filter by artwork</option>' + [...artworks.entries()].map(([key, artwork]) =>
+        dom.artworkFilter.innerHTML = '<option value="">Filtrar por obra</option>' + [...artworks.entries()].map(([key, artwork]) =>
             `<option value="${escapeHtml(key)}"${String(key) === state.artworkFilter ? ' selected' : ''}>${escapeHtml(artwork.title)}</option>`
         ).join('');
         const series = seriesMap();
-        dom.seriesFilter.innerHTML = '<option value="">Filter by series</option><option value="none">No series</option>' + [...series.entries()].map(([id, title]) =>
+        dom.seriesFilter.innerHTML = '<option value="">Filtrar por serie</option><option value="none">Sin serie</option>' + [...series.entries()].map(([id, title]) =>
             `<option value="${id}"${String(id) === state.seriesFilter ? ' selected' : ''}>${escapeHtml(title)}</option>`
         ).join('');
+
     }
 
     function visibleReferenceAssets() {
         return referenceAssets()
-            // Regenerations remain in history, but the working catalog only
-            // shows the active result of each sequence in this project.
-            .filter(asset => asset.type !== 'generation_job'
-                || (Number(asset.projectId || 0) === Number(currentProject()?.id || 0) && Boolean(asset.active)))
-            .filter(asset => asset.type === 'reference_asset' || !state.artworkFilter || artworkFilterKey(asset) === state.artworkFilter)
-            .filter(asset => asset.type === 'reference_asset' || !state.seriesFilter
+            .filter(asset => asset.type === 'mockup')
+            .filter(asset => !state.artworkFilter || artworkFilterKey(asset) === state.artworkFilter)
+            .filter(asset => !state.seriesFilter
                 || (state.seriesFilter === 'none' ? Number(asset.seriesId || 0) === 0 : Number(asset.seriesId) === Number(state.seriesFilter)))
             .sort((left, right) => {
                 if (Boolean(left.favorite) !== Boolean(right.favorite)) return left.favorite ? -1 : 1;
@@ -284,11 +336,11 @@
                     ? `<img src="${escapeHtml(asset.thumbnailUrl)}" alt="${escapeHtml(asset.artworkTitle || asset.label)}" loading="lazy" draggable="false">`
                     : `<div class="vds-catalog-video-placeholder" aria-hidden="true"><span>▶</span><small>Video</small></div>`}
                 ${asset.type === 'mockup' ? `<button class="vds-favorite media-icon-button media-icon-button--compact media-thumb-action media-thumb-action--right${asset.favorite ? ' active' : ''}" type="button" data-toggle-favorite aria-pressed="${asset.favorite ? 'true' : 'false'}" aria-label="${asset.favorite ? 'Remove from favorites' : 'Add to favorites'}"><svg class="media-action-icon" viewBox="0 0 24 24" aria-hidden="true"><path d="m12 3.7 2.55 5.17 5.71.83-4.13 4.03.97 5.69L12 16.73l-5.1 2.69.97-5.69L3.74 9.7l5.71-.83L12 3.7Z"/></svg></button>` : ''}
-                <div class="vds-catalog-card-copy"><strong>${escapeHtml(asset.contextTitle || asset.label)}</strong><span>${escapeHtml(asset.type === 'reference_asset' ? 'From your computer' : (asset.mediaType === 'video' ? (asset.projectTitle || 'Generated video') : (asset.artworkTitle || 'Reference image')))}</span></div>
-            </article>`).join('') : '<div class="vds-catalog-empty">No references are available for this selection.</div>';
+                <div class="vds-catalog-card-copy"><strong>${escapeHtml(asset.contextTitle || asset.label)}</strong><span>${escapeHtml(asset.artworkTitle || 'Mockup')}</span></div>
+            </article>`).join('') : '<div class="vds-catalog-empty">No hay mockups disponibles para esta selección.</div>';
         dom.catalogHelp.textContent = state.selectedAssetKey
-            ? 'Reference selected. Click the destination where you want to use it, or drag it there.'
-            : 'Drag images into their reference slots. A generated video can continue another sequence from its final frame.';
+            ? 'Mockup seleccionado. Hacé clic en el destino o arrastralo hasta allí.'
+            : 'Arrastrá un mockup a Fotograma inicial, Fotograma final o a otra referencia.';
     }
 
     function defaultGenerationMode() {
@@ -595,7 +647,6 @@
             activeGenerationIds.add(Number(generation.id));
             activeSequenceSources.push(source);
         });
-
         referenceAssets().filter(asset => asset.mediaType === 'video').forEach(asset => {
             sources.set(`${asset.type}:${Number(asset.id)}`, {
                 sourceType: String(asset.type), sourceId: Number(asset.id),
@@ -1807,6 +1858,7 @@
             setupSortables();
         } else {
             destroySortables();
+            if (dom.boardGrid) dom.boardGrid.innerHTML = '<div class="vds-empty-projects"><strong>No hay proyectos guardados</strong><span>Usá Nuevo para crear un proyecto de Video Lab.</span></div>';
         }
         updateGenerationPolling();
     }
@@ -2072,26 +2124,7 @@
             return;
         }
         if (event.target.closest('[data-delete-project]')) {
-            const project = currentProject();
-            if (!project) return;
-            const clipCount = Number(project.generatedClipCount || 0);
-            const detail = clipCount > 0
-                ? ` Its ${clipCount} generated video${clipCount === 1 ? '' : 's'} will remain in Videos.`
-                : '';
-            if (!window.confirm(`Remove “${project.title}” from the workspace?${detail}`)) return;
-            queueMutation(() => api({ action: 'project_delete', projectId: project.id, version: project.version }))
-                .then(async result => {
-                    state.projects = Array.isArray(result.projects) ? result.projects : [];
-                    const nextProject = state.projects[0] || null;
-                    if (nextProject) {
-                        const next = await api({ action: 'project_read', projectId: nextProject.id });
-                        applyStudio(next, true);
-                        window.history.replaceState({}, '', `video.php?project=${nextProject.id}`);
-                    } else {
-                        await createProjectNow();
-                    }
-                    toast('Project removed from workspace');
-                });
+            deleteSavedProject(currentProject()?.id).catch(error => toast(error.message, true));
             return;
         }
         if (event.target.closest('[data-add-sequence]')) { addSequence(); return; }
@@ -2188,6 +2221,10 @@
     });
 
     root.addEventListener('change', event => {
+        if (event.target === dom.projectPicker) {
+            openSavedProject(event.target.value).catch(error => toast(error.message, true));
+            return;
+        }
         if (event.target.matches('[data-timeline-import]')) {
             const file = event.target.files?.[0];
             event.target.value = '';

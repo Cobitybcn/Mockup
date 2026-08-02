@@ -481,7 +481,7 @@ final class VideoStudioRepository
             LEFT JOIN artworks canonical ON canonical.id=ag.canonical_artwork_id AND canonical.user_id=m.user_id
             LEFT JOIN artwork_sheets sh ON sh.id=(SELECT MAX(sh2.id) FROM artwork_sheets sh2 WHERE sh2.user_id=m.user_id AND sh2.canonical_artwork_id=a.id)
             LEFT JOIN artwork_series s ON s.id=COALESCE(m.series_id,canonical.series_id,a.series_id) AND s.user_id=m.user_id
-            WHERE m.user_id=? AND m.mockup_file<>'' ORDER BY m.created_at DESC,m.id DESC LIMIT 300");
+            WHERE m.user_id=? AND m.mockup_file<>'' ORDER BY m.created_at DESC,m.id DESC");
         $mockupStmt->execute([$userId]);
         $mockups = [];
         foreach ($mockupStmt->fetchAll() as $row) {

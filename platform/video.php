@@ -19,14 +19,6 @@ if ($projectId > 0) {
         http_response_code(404);
         exit('Video project not found.');
     }
-} else {
-    $studio = $service->createProject($userId, [
-        'aspectRatio' => '9:16',
-        'targetDurationSeconds' => 24,
-        'projectType' => 'social_clip',
-    ]);
-    $projectId = (int)$studio['project']['id'];
-    $projects = $service->listProjects($userId);
 }
 
 $assets = $service->library($userId);
@@ -73,7 +65,7 @@ function vds_h(mixed $value): string
     <meta name="viewport" content="width=device-width,initial-scale=1">
     <title><?= vds_h(t('Video Lab - Artwork Mockups', 'Video Lab - Artwork Mockups')) ?></title>
     <link rel="stylesheet" href="style.css">
-    <link rel="stylesheet" href="video_studio.css?v=30">
+    <link rel="stylesheet" href="video_studio.css?v=31">
     <link rel="stylesheet" href="media-controls.css?v=2">
 </head>
 <body>
@@ -100,6 +92,10 @@ function vds_h(mixed $value): string
                             </div>
                         </div>
                         <div class="vds-project-controls">
+                            <label class="vds-project-picker">
+                                <span><?= vds_h(t('Existing projects', 'Proyectos existentes')) ?></span>
+                                <select data-project-picker aria-label="<?= vds_h(t('Open an existing project', 'Abrir un proyecto existente')) ?>"></select>
+                            </label>
                             <label class="vds-project-title">
                                 <span><?= vds_h(t('Project name', 'Nombre del proyecto')) ?></span>
                                 <input type="text" maxlength="255" data-project-title aria-label="<?= vds_h(t('Current project name', 'Nombre del proyecto actual')) ?>">
@@ -129,7 +125,7 @@ function vds_h(mixed $value): string
                                 </button>
                                 <button class="vds-project-action vds-project-action--delete" type="button" data-delete-project>
                                     <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 7h16M9 7V4h6v3M7 7l1 13h8l1-13M10 11v5M14 11v5"/></svg>
-                                    <span><?= vds_h(t('Delete', 'Eliminar')) ?></span>
+                                    <span><?= vds_h(t('Delete project', 'Eliminar proyecto')) ?></span>
                                 </button>
                             </div>
                         </div>
@@ -140,7 +136,7 @@ function vds_h(mixed $value): string
                         <div class="vds-catalog-rail" data-catalog-rail aria-label="<?= vds_h(t('Available references', 'Referencias disponibles')) ?>"></div>
                         <button class="vds-rail-arrow vds-rail-arrow--right" type="button" data-scroll-catalog="1" aria-label="<?= vds_h(t('View more references', 'Ver más referencias')) ?>">›</button>
                     </div>
-                    <p class="vds-catalog-help" data-catalog-help><?= vds_h(t('Drag an image or video to Start Frame or End Frame. You can also upload from your computer.', 'Arrastrá una imagen o video a Fotograma inicial o Fotograma final. También podés subir desde tu computadora.')) ?></p>
+                    <p class="vds-catalog-help" data-catalog-help><?= vds_h(t('Drag a mockup to Start Frame, End Frame, or another reference slot.', 'Arrastrá un mockup a Fotograma inicial, Fotograma final o a otra referencia.')) ?></p>
                 </section>
 
                 <section class="vds-sequences" aria-labelledby="vds-sequences-title">
@@ -175,6 +171,6 @@ function vds_h(mixed $value): string
 </div>
 <script type="application/json" id="video-studio-data"><?= json_encode($payload, JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES | JSON_HEX_TAG | JSON_HEX_AMP | JSON_HEX_APOS | JSON_HEX_QUOT) ?></script>
 <script src="assets/vendor/sortablejs/Sortable.min.js?v=1.15.7"></script>
-<script src="video_studio.js?v=40"></script>
+<script src="video_studio.js?v=41"></script>
 </body>
 </html>

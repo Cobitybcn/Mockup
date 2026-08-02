@@ -95,11 +95,12 @@
 
 .vds-project-controls {
     display: grid;
-    grid-template-columns: minmax(260px,330px) auto;
+    grid-template-columns: minmax(210px,260px) minmax(260px,330px) auto;
     align-items: end;
     justify-content: end;
     gap: 10px 14px;
 }
+.vds-project-picker > span,
 .vds-project-title > span {
     display: block;
     margin-bottom: 5px;
@@ -109,6 +110,7 @@
     letter-spacing: .08em;
     text-transform: uppercase;
 }
+.vds-project-picker select { width: 100%; min-height: 38px; padding: 0 34px 0 12px; border: 1px solid var(--vds-line); border-radius: 7px; color: #59534e; background: var(--vds-surface); font: inherit; font-size: 12px; }
 .vds-project-title input { width: 100%; min-height: 38px; }
 .vds-aspect-picker { min-width: 0; margin: 0; padding: 0; border: 0; }
 .vds-aspect-picker legend {
@@ -294,6 +296,9 @@
 .vds-rail-arrow--left { left: -10px; }
 .vds-rail-arrow--right { right: -10px; }
 .vds-catalog-help { margin: 11px 38px 0; color: var(--vds-muted); font-size: 10px; }
+.vds-empty-projects { grid-column: 1 / -1; display: grid; place-items: center; min-height: 190px; gap: 6px; padding: 28px; border: 1px dashed var(--vds-line); border-radius: 8px; color: var(--vds-muted); text-align: center; }
+.vds-empty-projects strong { color: #514b45; font: 500 19px/1.2 Georgia, 'Times New Roman', serif; }
+.vds-empty-projects span { font-size: 10px; }
 .vds-catalog-empty { display: grid; place-items: center; min-height: 250px; padding: 30px; border: 1px dashed var(--vds-line); border-radius: 10px; color: var(--vds-muted); font-size: 11px; text-align: center; }
 
 .vds-sequences { margin-top: 18px; padding: 20px 16px 16px; }

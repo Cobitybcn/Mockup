@@ -233,6 +233,7 @@ try {
     $studioJavascript = (string)file_get_contents(__DIR__ . '/../video_studio.js');
     $studioPage = (string)file_get_contents(__DIR__ . '/../video.php');
     $studioStyles = (string)file_get_contents(__DIR__ . '/../video_studio.css');
+    $studioRepositorySource = (string)file_get_contents(__DIR__ . '/../app/Video/VideoStudioRepository.php');
     $editorPage = (string)file_get_contents(__DIR__ . '/../video_editor.php');
     $videosPage = (string)file_get_contents(__DIR__ . '/../videos.php');
     $videosJavascript = (string)file_get_contents(__DIR__ . '/../videos.js');
@@ -261,7 +262,14 @@ try {
     TestHarness::assertContains("changes: { aspectRatio }", $studioJavascript, 'format icons persist the selected video ratio');
     TestHarness::assertContains('.vds-project-action--save', $studioStyles, 'primary project actions use the approved soft-color treatment');
     TestHarness::assertContains('width: 92px', $studioStyles, 'project actions keep a large square footprint');
-    TestHarness::assertContains('Boolean(asset.active)', $studioJavascript, 'discarded regenerations stay out of the working catalog');
+    TestHarness::assertContains(".filter(asset => asset.type === 'mockup')", $studioJavascript, 'the Video Lab catalog only exposes mockups');
+    TestHarness::assertContains('data-project-picker', $studioPage, 'existing projects are available from a dedicated selector');
+    TestHarness::assertContains('event.target === dom.projectPicker', $studioJavascript, 'selecting a saved project opens it');
+    TestHarness::assertContains('deleteSavedProject(currentProject()?.id)', $studioJavascript, 'the delete action explicitly targets the open project');
+    TestHarness::assertTrue(!str_contains($studioJavascript, "else {\n            await createProjectNow();"), 'deleting the final project does not silently create another numbered project');
+    TestHarness::assertTrue(!str_contains($studioPage, 'data-project-library'), 'projects use one selector instead of a second project panel');
+    TestHarness::assertTrue(!str_contains($studioPage, '$service->createProject'), 'opening an empty Video Lab does not silently create a numbered project');
+    TestHarness::assertTrue(!str_contains($studioRepositorySource, "m.id DESC LIMIT 300\");"), 'the artwork filter receives the complete mockup catalog');
     TestHarness::assertTrue(!str_contains($studioPage, 'data-export-panel'), 'Video Lab no longer renders the multitrack editor');
     TestHarness::assertTrue(!str_contains($studioJavascript, 'data-add-timeline'), 'Video Lab no longer offers multitrack assignment actions');
     TestHarness::assertContains('data-delete-generation', $videosPage, 'Videos exposes permanent deletion for each generated clip');
