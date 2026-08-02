@@ -58,14 +58,6 @@ $payload = [
         'generationStart' => 'video_generation_start.php',
         'generationStatus' => 'video_generation_status.php',
         'referenceUpload' => 'video_reference_upload.php',
-        'exportStart' => 'video_export_start.php',
-        'exportStatus' => 'video_export_status.php',
-        'exportApprove' => 'video_export_approve.php',
-        'musicUpload' => 'video_music_upload.php',
-        'musicUpdate' => 'video_music_update.php',
-        'timelineUpdate' => 'video_timeline_update.php',
-        'timelineImport' => 'video_timeline_import.php',
-        'timelineImportUrl' => 'video_timeline_import_url.php',
     ],
 ];
 
@@ -161,7 +153,6 @@ function vds_h(mixed $value): string
                         <button type="button" data-add-sequence><span aria-hidden="true">＋</span> <?= vds_h(t('Add sequence', 'Agregar secuencia')) ?></button>
                     </header>
                     <div class="vds-board-grid" data-sequence-boards></div>
-                    <section class="vds-montage" aria-labelledby="vds-montage-title" data-export-panel></section>
                 </section>
             </div>
 
@@ -184,6 +175,6 @@ function vds_h(mixed $value): string
 </div>
 <script type="application/json" id="video-studio-data"><?= json_encode($payload, JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES | JSON_HEX_TAG | JSON_HEX_AMP | JSON_HEX_APOS | JSON_HEX_QUOT) ?></script>
 <script src="assets/vendor/sortablejs/Sortable.min.js?v=1.15.7"></script>
-<script src="video_studio.js?v=39"></script>
+<script src="video_studio.js?v=40"></script>
 </body>
 </html>

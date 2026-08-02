@@ -46,7 +46,6 @@
         catalogRail: $('[data-catalog-rail]'),
         catalogHelp: $('[data-catalog-help]'),
         boardGrid: $('[data-sequence-boards]'),
-        exportPanel: $('[data-export-panel]'),
         generationModal: $('[data-generation-modal]'),
         generationSummary: $('[data-generation-summary]'),
         toast: $('[data-video-toast]'),
@@ -285,7 +284,6 @@
                     ? `<img src="${escapeHtml(asset.thumbnailUrl)}" alt="${escapeHtml(asset.artworkTitle || asset.label)}" loading="lazy" draggable="false">`
                     : `<div class="vds-catalog-video-placeholder" aria-hidden="true"><span>▶</span><small>Video</small></div>`}
                 ${asset.type === 'mockup' ? `<button class="vds-favorite media-icon-button media-icon-button--compact media-thumb-action media-thumb-action--right${asset.favorite ? ' active' : ''}" type="button" data-toggle-favorite aria-pressed="${asset.favorite ? 'true' : 'false'}" aria-label="${asset.favorite ? 'Remove from favorites' : 'Add to favorites'}"><svg class="media-action-icon" viewBox="0 0 24 24" aria-hidden="true"><path d="m12 3.7 2.55 5.17 5.71.83-4.13 4.03.97 5.69L12 16.73l-5.1 2.69.97-5.69L3.74 9.7l5.71-.83L12 3.7Z"/></svg></button>` : ''}
-                ${asset.mediaType === 'video' ? `<button class="vds-add-timeline" type="button" data-add-timeline="${escapeHtml(asset.assetKey)}" aria-label="Add ${escapeHtml(asset.label)} to V1">＋ V1</button>` : ''}
                 <div class="vds-catalog-card-copy"><strong>${escapeHtml(asset.contextTitle || asset.label)}</strong><span>${escapeHtml(asset.type === 'reference_asset' ? 'From your computer' : (asset.mediaType === 'video' ? (asset.projectTitle || 'Generated video') : (asset.artworkTitle || 'Reference image')))}</span></div>
             </article>`).join('') : '<div class="vds-catalog-empty">No references are available for this selection.</div>';
         dom.catalogHelp.textContent = state.selectedAssetKey
@@ -446,7 +444,6 @@
                         <span><strong>Drag to continue</strong><small>Its final frame will become the starting image of another sequence.</small></span>
                     </button>
                     ${nextAction}
-                    <button class="vds-use-next" type="button" data-add-timeline="${escapeHtml(assetKey)}">Add to V1</button>
                 </div>
             </div>`;
         }
@@ -1457,42 +1454,6 @@
         commitTimelineDocument(document, successMessage);
     }
 
-    async function importTimelineVideo(file) {
-        if (!file || !currentProject()) return;
-        const body = new FormData();
-        body.append('csrf', state.csrf);
-        body.append('projectId', String(currentProject().id));
-        body.append('version', String(currentProject().version));
-        body.append('video', file);
-        toast('Importing video…');
-        try {
-            // Production requests cannot carry a large video through Cloud Run.
-            // Put it straight in storage and send only its verified object key.
-            const destination = await request(state.endpoints.timelineImportUrl || 'video_timeline_import_url.php', {
-                projectId: currentProject().id,
-                version: currentProject().version,
-                contentType: file.type || 'video/mp4',
-                bytes: file.size,
-            });
-            if (destination.uploadUrl) {
-                toast('Uploading video to storage…');
-                const put = await fetch(destination.uploadUrl, { method:'PUT', body:file, headers:{ 'Content-Type':destination.contentType } });
-                if (!put.ok) throw new Error(`Storage rejected the video (${put.status}).`);
-                body.delete('video');
-                body.append('objectKey', destination.objectKey);
-                body.append('originalName', file.name);
-            }
-            const response = await fetch(state.endpoints.timelineImport || 'video_timeline_import.php', { method:'POST', credentials:'same-origin', body });
-            const data = await response.json().catch(() => ({ ok:false,error:`Import failed (${response.status}).` }));
-            if (!response.ok || !data.ok) throw new Error(data.error || 'The video could not be imported.');
-            if (data.assets) state.assets = data.assets;
-            applyStudio(data);
-            addAssetToTimeline(String(data.importedAssetKey || ''));
-        } catch (error) {
-            toast(error.message || 'The video could not be imported.', true);
-        }
-    }
-
     function moveVideoBlock(index, track, timelineStart) {
         const blocks = timelineBlocks();
         const block = blocks[index];
@@ -1847,9 +1808,7 @@
         } else {
             destroySortables();
         }
-        renderExportPanel();
         updateGenerationPolling();
-        updateExportPolling();
     }
 
     async function assignReference(sceneId, role, assetKey) {
@@ -2072,8 +2031,6 @@
     }
 
     root.addEventListener('click', event => {
-        const addTimeline = event.target.closest('[data-add-timeline]');
-        if (addTimeline) { event.stopPropagation(); addAssetToTimeline(String(addTimeline.dataset.addTimeline || '')); return; }
         const aspectButton = event.target.closest('[data-project-aspect-ratio]');
         if (aspectButton) {
             const project = currentProject();
@@ -2210,21 +2167,6 @@
         const useClipNext = event.target.closest('[data-use-clip-next]');
         if (useClipNext) {
             assignReference(Number(useClipNext.dataset.useClipNext), 'start_frame', String(useClipNext.dataset.assetKey || ''));
-            return;
-        }
-
-        if (event.target.closest('[data-start-export]')) { startExport(); return; }
-        if (event.target.closest('[data-music-clear]')) { updateMusic({ clear: true }, 'Music removed'); return; }
-        const approve = event.target.closest('[data-export-approve]');
-        if (approve) {
-            const result = latestExport();
-            if (!result?.id) return;
-            const wanted = approve.dataset.exportApprove === '1';
-            queueMutation(() => request(state.endpoints.exportApprove || 'video_export_approve.php', {
-                projectId: currentProject().id,
-                exportId: result.id,
-                approved: wanted,
-            }), wanted ? 'Montage marked as finished' : 'Back to draft');
             return;
         }
 
@@ -2406,7 +2348,6 @@
     });
     document.addEventListener('visibilitychange', () => {
         updateGenerationPolling();
-        updateExportPolling();
         if (!document.hidden) refreshLibrary();
     });
     window.addEventListener('focus', refreshLibrary);
