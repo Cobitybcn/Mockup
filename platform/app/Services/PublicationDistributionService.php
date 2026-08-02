@@ -20,8 +20,8 @@ final class PublicationDistributionService
 {
     public const DESTINATIONS = ['pinterest', 'instagram', 'instagram_video', 'facebook', 'facebook_video', 'tiktok', 'tiktok_carousel', 'x', 'saatchi'];
     public const DEFAULT_SERIES_GAP_HOURS = 12;
-    private const LIVE_DESTINATIONS = ['pinterest', 'instagram', 'facebook', 'tiktok'];
-    private const SERIES_DESTINATIONS = ['instagram', 'facebook'];
+    private const LIVE_DESTINATIONS = ['pinterest', 'instagram', 'facebook', 'tiktok', 'x'];
+    private const SERIES_DESTINATIONS = ['instagram', 'facebook', 'x'];
     /** TikTok keeps both media on the same destination rows: video at part 0, carousel at part 1. */
     private const TIKTOK_VIDEO_PART = 0;
     private const TIKTOK_CAROUSEL_PART = 1;
@@ -32,6 +32,8 @@ final class PublicationDistributionService
      * series already published and the series never counts it as one of its own.
      */
     private const META_VIDEO_PART = 10;
+    /** X's post limit; a link always counts as 23 of it. */
+    private const X_LIMIT = 280;
     private const META_VIDEO_DESTINATIONS = ['instagram_video' => 'instagram', 'facebook_video' => 'facebook'];
 
     private PublicationProductService $products;
@@ -314,9 +316,6 @@ final class PublicationDistributionService
     /** One confirmed act per destination step. Series destinations run the cadence. */
     public function publish(int $publicationId, int $userId, string $destination, string $locale, array $options = []): array
     {
-        if ($destination === 'x') {
-            throw new RuntimeException(t('X is a reserved place: no connection and no generated copy yet.', 'X es un lugar reservado: sin conexión ni copy generado todavía.'));
-        }
         if ($destination === 'saatchi') {
             throw new RuntimeException(t('Saatchi Art is uploaded by hand with the manual package.', 'Saatchi Art se carga a mano con el paquete manual.'));
         }
@@ -386,6 +385,7 @@ final class PublicationDistributionService
         $previousResults = $destination === 'pinterest' ? $this->previousItemResults($publicationId, $userId, $destination) : [];
         $request = match (true) {
             $destination === 'pinterest' => $this->pinterestRequest($payload, $destinations, $locale, $link, $slug, $previousResults),
+            $destination === 'x' => $this->xRequest($payload, $destinations, $locale, $link),
             $isCarousel => $this->tiktokCarouselRequest($payload, $destinations, $locale, $slug),
             default => $this->tiktokRequest($payload, $destinations, $locale, $link),
         };
@@ -645,6 +645,21 @@ final class PublicationDistributionService
         if ($images === []) {
             throw new RuntimeException(t('This series part has no images.', 'Esta parte de la serie no tiene imágenes.'));
         }
+        if ($destination === 'x') {
+            $composed = $this->xRequest(
+                ['media' => ['items' => array_map(static fn(string $file): array => ['file' => $file], $images)]],
+                ['x' => [$locale => $block]],
+                $locale,
+                $link
+            );
+            return [
+                'text' => $composed['text'],
+                'link' => $link,
+                'image_files' => $images,
+                'part' => (int)($post['part'] ?? 0),
+                'slug' => $slug,
+            ];
+        }
         if ($destination === 'instagram') {
             $this->assertInstagramRatio($images[0]);
             $draft = [
@@ -698,12 +713,13 @@ final class PublicationDistributionService
                 'facebook' => (new MetaIntegrationService($this->pdo))->connection($userId, 'artist'),
                 'instagram' => (new InstagramIntegrationService($this->pdo))->connection($userId, 'artist'),
                 'tiktok' => (new TikTokIntegrationService($this->pdo))->connection($userId, 'artist'),
+                'x' => (new XIntegrationService($this->pdo))->connection($userId, 'artist'),
                 default => null,
             };
         } catch (Throwable) {
             return 'none';
         }
-        if ($destination === 'x') return 'none';
+        // X now has a connection of its own, like the other networks.
         if ($destination === 'saatchi') return 'manual';
         return ($connection['status'] ?? '') === 'connected' ? 'connected' : 'missing';
     }
@@ -892,6 +908,72 @@ final class PublicationDistributionService
         ];
     }
 
+    /**
+     * X counts every link as 23 characters whatever its real length. What gives
+     * way, in order, is the sentence, then the tags, then — only if the title
+     * alone would still not fit — the title itself. The link never gives way:
+     * without it the post leads nowhere.
+     */
+    private function xRequest(array $payload, array $destinations, string $locale, string $link): array
+    {
+        $block = (array)(((array)($destinations['x'] ?? []))[$locale] ?? []);
+        $title = trim((string)($block['title'] ?? ''));
+        $phrase = trim((string)($block['phrase'] ?? ''));
+        $hashtags = array_slice(array_values(array_filter(array_map('strval', (array)($block['hashtags'] ?? [])))), 0, 2);
+
+        if ($title === '' && $phrase === '') {
+            throw new RuntimeException(t('This artwork has no copy for X yet.', 'Esta obra todavía no tiene copy para X.'));
+        }
+
+        $compose = static function (string $title, string $phrase, array $tags) use ($link): string {
+            $text = $title;
+            if ($phrase !== '') $text .= ($title !== '' ? ' — ' : '') . $phrase;
+            $text .= ($text !== '' ? "
+" : '') . $link;
+            if ($tags !== []) $text .= "
+" . implode(' ', $tags);
+            return $text;
+        };
+        // The measure X applies, not the one the string reports.
+        $counted = static fn(string $text): int => mb_strlen(
+            (string)preg_replace('#https?://\S+#', str_repeat('x', 23), $text)
+        );
+
+        $text = $compose($title, $phrase, $hashtags);
+        if ($counted($text) > self::X_LIMIT && $phrase !== '') {
+            $over = $counted($text) - self::X_LIMIT;
+            $keep = mb_strlen($phrase) - $over - 1;
+            $phrase = $keep > 12 ? self::trimToWord($phrase, $keep) : '';
+            $text = $compose($title, $phrase, $hashtags);
+        }
+        if ($counted($text) > self::X_LIMIT && $hashtags !== []) {
+            $hashtags = [];
+            $text = $compose($title, $phrase, $hashtags);
+        }
+        if ($counted($text) > self::X_LIMIT) {
+            $over = $counted($text) - self::X_LIMIT;
+            $title = self::trimToWord($title, max(1, mb_strlen($title) - $over - 1));
+            $text = $compose($title, $phrase, $hashtags);
+        }
+
+        $images = array_values(array_map(
+            static fn(array $item): string => (string)($item['file'] ?? ''),
+            array_slice((array)($payload['media']['items'] ?? []), 0, 4)
+        ));
+
+        return ['text' => $text, 'link' => $link, 'image_files' => array_values(array_filter($images))];
+    }
+
+    /** Cut on a word boundary and say so, rather than stopping mid-word. */
+    private static function trimToWord(string $value, int $length): string
+    {
+        if (mb_strlen($value) <= $length) return $value;
+        $cut = mb_substr($value, 0, max(1, $length));
+        $lastSpace = mb_strrpos($cut, ' ');
+        if ($lastSpace !== false && $lastSpace > 8) $cut = mb_substr($cut, 0, $lastSpace);
+        return rtrim($cut, " ,;:-—") . '…';
+    }
+
     private function transport(string $destination): callable
     {
         if (is_array($this->transports) && isset($this->transports[$destination])) {
@@ -1020,6 +1102,23 @@ final class PublicationDistributionService
                 // A video draft becomes a REELS container and is polled for longer.
                 $publisher = new InstagramPublisher(new InstagramIntegrationService($this->pdo));
                 $result = $publisher->publishDraft($request['draft'], (int)$request['user_id'], (string)$request['video_url']);
+                return ['external_id' => (string)($result['id'] ?? ''), 'external_url' => (string)($result['url'] ?? '')];
+            },
+            'x' => function (array $request): array {
+                if (app_env('X_LIVE_PUBLISH_ENABLED', 'false') !== 'true') {
+                    throw new RuntimeException(t('Live X publishing is not enabled in this environment.', 'La publicación en vivo de X no está habilitada en este entorno.'));
+                }
+                $paths = [];
+                foreach ((array)($request['image_files'] ?? []) as $file) {
+                    $path = $this->localImagePath((string)$file);
+                    if ($path !== '') $paths[] = $path;
+                }
+                $result = (new XPublisher(new XIntegrationService($this->pdo)))->publishText(
+                    (int)$request['user_id'],
+                    (string)$request['text'],
+                    'artist',
+                    $paths
+                );
                 return ['external_id' => (string)($result['id'] ?? ''), 'external_url' => (string)($result['url'] ?? '')];
             },
             'tiktok' => function (array $request): array {

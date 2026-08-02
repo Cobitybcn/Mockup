@@ -356,7 +356,8 @@ function run_publication_distribution_service_tests(): void
     TestHarness::assertSame('sent', (string)$summary['results']['tiktok']['status'], 'el acto único dispara TikTok');
     TestHarness::assertSame('sent', (string)$summary['results']['facebook_video']['status'], 'el acto único también manda el reel de Facebook cuando la página tiene video');
     TestHarness::assertSame('skipped', (string)$summary['results']['instagram_video']['status'], 'el reel de una red sin conexión se saltea igual que su serie');
-    TestHarness::assertTrue($summary['sent'] === 4 && $summary['skipped'] === 2 && $summary['failed'] === 0, 'el resumen cuenta enviados, salteados y fallidos, reel incluido');
+    TestHarness::assertSame('skipped', (string)$summary['results']['x']['status'], 'X sin conexión se saltea como cualquier otra red');
+    TestHarness::assertTrue($summary['sent'] === 4 && $summary['skipped'] === 3 && $summary['failed'] === 0, 'el resumen cuenta enviados, salteados y fallidos, reel y X incluidos');
 
     $repeat = $service->publishAllConnected($publicationId, $userId, 'en');
     TestHarness::assertSame('skipped', (string)$repeat['results']['pinterest']['status'], 'repetir el acto no vuelve a publicar lo ya publicado');

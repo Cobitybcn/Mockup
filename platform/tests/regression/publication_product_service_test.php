@@ -137,8 +137,17 @@ function run_publication_product_service_tests(): void
     // ————— EN faltante no bloquea —————
     TestHarness::assertSame('missing', (string)$payload['sources']['mockups']['72']['en']['status'], 'un mockup sin adaptación entra con estado missing, sin bloquear');
     TestHarness::assertSame('Second cap ES pub', (string)$payload['media']['items'][1]['es']['caption'], 'el ítem usa el caption publicado de su propio editorial');
-    TestHarness::assertSame('x', array_keys($payload['destinations'])[4] ?? '', 'X mantiene su lugar reservado');
-    TestHarness::assertTrue($payload['destinations']['x'] === null, 'X no lleva copy: placeholder sin conexión');
+    TestHarness::assertSame('x', array_keys($payload['destinations'])[4] ?? '', 'X mantiene su lugar en el producto');
+    // X dejó de ser un placeholder: tiene presupuesto propio de 280, no un
+    // recorte del copy de otra red.
+    $xEs = (array)($payload['destinations']['x']['es'] ?? []);
+    TestHarness::assertTrue(trim((string)($xEs['title'] ?? '')) !== '', 'X lleva el título de la obra sin abreviar');
+    TestHarness::assertTrue(count((array)($xEs['hashtags'] ?? [])) <= 2, 'X lleva como mucho dos etiquetas');
+    foreach ((array)($xEs['hashtags'] ?? []) as $tag) {
+        TestHarness::assertTrue(str_starts_with((string)$tag, '#') && !str_contains((string)$tag, ' '), 'cada etiqueta de X sale con # y sin espacios');
+    }
+    TestHarness::assertTrue(!str_contains((string)($xEs['phrase'] ?? ''), "
+"), 'la frase de X es una sola línea');
 
     // ————— Series sociales 3×3 —————
     $fakeItems = static fn(int $n): array => array_map(static fn(int $i): array => ['n' => $i], range(1, $n));

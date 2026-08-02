@@ -121,7 +121,7 @@ final class PublicationProductService
                 )),
                 'cover_index' => 0,
             ],
-            'x' => null,
+            'x' => $this->xBlock($universalTitle, $artworkByLocale),
             'saatchi' => $this->saatchiBlock($artworkByLocale, $mediaItems, $workingLocale, $adaptationLocales),
         ];
         foreach ($locales as $locale) {
@@ -235,6 +235,25 @@ final class PublicationProductService
                     'alts' => array_values(array_map(static fn(array $i): string => (string)($i[$locale]['alt_text'] ?? ''), $group)),
                 ];
             }
+            // X sigue la misma serie, con su propio presupuesto: cada post
+            // lleva el grupo de imágenes de su parte y una frase que entra en
+            // 280 junto al enlace y las etiquetas.
+            $xPost = ['part' => $igPost['part'], 'lead_key' => $igPost['lead_key'], 'images' => $igPost['images'], 'opens_with' => $igPost['opens_with']];
+            foreach ($locales as $locale) {
+                $xBase = (array)(($destinations['x'] ?? [])[$locale] ?? []);
+                $leadX = (array)($lead['social'][$locale]['instagram'] ?? []);
+                $scene = MockupSocialContentService::text($leadX['caption'] ?? '');
+                $xPost[$locale] = [
+                    'title' => (string)($xBase['title'] ?? ''),
+                    // El post 1 presenta la obra; los siguientes abren con su escena.
+                    'phrase' => self::xFirstSentence($artworkFirst
+                        ? (string)($xBase['phrase'] ?? '')
+                        : ($scene !== '' ? $scene : (string)($xBase['phrase'] ?? ''))),
+                    'hashtags' => (array)($xBase['hashtags'] ?? []),
+                ];
+            }
+            $destinations['x']['series'][] = $xPost;
+
             $destinations['instagram']['series'][] = $igPost;
             $destinations['facebook']['series'][] = $fbPost;
         }
@@ -537,6 +556,64 @@ final class PublicationProductService
     }
 
     /** @param array<string,array> $artworkByLocale */
+    /**
+     * X gets its own budget rather than a trimmed version of another network's
+     * copy: 280 characters, of which the link always costs 23 no matter how long
+     * it is. What survives is the artwork's name, one sentence, and two tags.
+     *
+     * The link itself is added by the adapter, which is the only place that
+     * knows the published page's address.
+     *
+     * @param array<string,array<string,mixed>> $artworkByLocale
+     * @return array<string,array{title:string,phrase:string,hashtags:list<string>}>
+     */
+    private function xBlock(string $universalTitle, array $artworkByLocale): array
+    {
+        $block = [];
+        foreach ($artworkByLocale as $locale => $fields) {
+            $title = trim($universalTitle) !== '' ? trim($universalTitle) : trim((string)($fields['seo_title'] ?? ''));
+            $source = trim((string)($fields['short_description'] ?? ''));
+            if ($source === '') $source = trim((string)($fields['description'] ?? ''));
+
+            $phrase = self::xFirstSentence($source);
+
+            $block[$locale] = [
+                'title' => $title,
+                'phrase' => $phrase,
+                'hashtags' => self::xHashtags((string)($fields['tags'] ?? '')),
+            ];
+        }
+        return $block;
+    }
+
+    /** One sentence: X has no room for a paragraph, and none for a fragment. */
+    private static function xFirstSentence(string $source): string
+    {
+        $source = trim($source);
+        if (preg_match('/^(.+?[.!?])(\s|$)/u', $source, $match) === 1) {
+            return trim($match[1]);
+        }
+        return $source;
+    }
+
+    /** Two tags, in X's shape: no spaces, no punctuation, first letters raised. */
+    private static function xHashtags(string $tags): array
+    {
+        $out = [];
+        foreach (preg_split('/[,;]+/', $tags) ?: [] as $tag) {
+            $words = preg_split('/\s+/', trim($tag)) ?: [];
+            $clean = '';
+            foreach ($words as $word) {
+                $word = preg_replace('/[^\pL\pN]/u', '', $word) ?? '';
+                if ($word !== '') $clean .= mb_convert_case(mb_strtolower($word), MB_CASE_TITLE, 'UTF-8');
+            }
+            if ($clean === '' || mb_strlen($clean) > 24) continue;
+            $out[] = '#' . $clean;
+            if (count($out) === 2) break;
+        }
+        return $out;
+    }
+
     private function saatchiBlock(array $artworkByLocale, array $mediaItems, string $workingLocale, array $adaptationLocales): array
     {
         $keywordLocale = $adaptationLocales[0] ?? $workingLocale;

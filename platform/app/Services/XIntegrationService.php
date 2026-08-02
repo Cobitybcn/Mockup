@@ -314,7 +314,7 @@ final class XIntegrationService
     /** @return list<string> */
     private function scopes(): array
     {
-        $configured = app_env('X_SCOPES', 'tweet.write tweet.read users.read offline.access');
+        $configured = app_env('X_SCOPES', 'tweet.write tweet.read users.read media.write offline.access');
         return array_values(array_unique(array_filter(array_map('trim', preg_split('/[\s,]+/', $configured) ?: []))));
     }
 

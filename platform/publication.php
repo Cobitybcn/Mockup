@@ -545,6 +545,11 @@ function pub_dist_chip(string $destination, array $state): array
             'failed' => ['pub-chip pub-chip--pending', t('FAILED', 'FALLÓ')],
             default => ['pub-chip', t('Not sent yet', 'Sin enviar')],
         },
+        'x' => match ($status) {
+            'published' => ['pub-chip pub-chip--live', t('PUBLISHED', 'PUBLICADO')],
+            'failed' => ['pub-chip pub-chip--pending', t('FAILED', 'FALLÓ')],
+            default => ['pub-chip', t('Not sent yet', 'Sin enviar')],
+        },
         'saatchi' => match ($status) {
             'listed' => ['pub-chip pub-chip--live', t('LISTED', 'LISTADO')],
             'uploaded' => ['pub-chip pub-chip--ok', t('UPLOADED BY HAND', 'CARGADO A MANO')],
@@ -583,7 +588,7 @@ function pub_page_chip(string $status): array
     <title><?= pub_h(t('Publication - Artwork Mockups', 'Publicación - Artwork Mockups')) ?></title>
     <link rel="stylesheet" href="style.css">
     <link rel="stylesheet" href="ui-catalog.css">
-    <link rel="stylesheet" href="publication.css?v=17">
+    <link rel="stylesheet" href="publication.css?v=18">
 </head>
 <body>
 <div class="app-shell">
@@ -860,7 +865,7 @@ function pub_page_chip(string $status): array
                 // se abre solo, para que el resultado nunca quede escondido.
                 $openStep = match ((string)($_GET['dist'] ?? '')) {
                     'pinterest' => 'pinterest',
-                    'instagram', 'facebook', 'instagram_video', 'facebook_video', 'settings' => 'social',
+                    'instagram', 'facebook', 'instagram_video', 'facebook_video', 'x', 'settings' => 'social',
                     'tiktok', 'tiktok_carousel', 'tiktok_status' => 'tiktok',
                     'saatchi' => 'saatchi',
                     default => '',
@@ -1043,7 +1048,7 @@ function pub_page_chip(string $status): array
                         <?php else: ?>
                             <p class="pub-panel-note"><?= pub_h(t('«Publish spaced series» is one act: part 1 goes out now, the rest is scheduled with the gap — each post carries the editorial copy of its lead image.', '«Publicar serie espaciada» es un solo acto: la parte 1 sale ahora, el resto queda programado con el lapso — cada post lleva el copy editorial de su imagen líder.')) ?></p>
                             <div class="pub-product-grid">
-                                <?php foreach (['facebook', 'instagram'] as $socialKey): ?>
+                                <?php foreach (['facebook', 'instagram', 'x'] as $socialKey): ?>
                                     <?php
                                     $socialState = (array)($doc['distStates'][$socialKey] ?? []);
                                     $socialConnected = ($socialState['connection'] ?? '') === 'connected';
@@ -1056,7 +1061,7 @@ function pub_page_chip(string $status): array
                                     ?>
                                     <article class="pub-product-card">
                                         <div class="pub-dist-head">
-                                            <h3><?= $socialKey === 'facebook' ? 'Facebook' : 'Instagram' ?></h3>
+                                            <h3><?= $socialKey === 'facebook' ? 'Facebook' : ($socialKey === 'x' ? 'X' : 'Instagram') ?></h3>
                                             <span class="pub-dist-chips">
                                                 <?php if ($socialConnected): ?><em class="pub-chip pub-chip--ok"><?= pub_h(t('Connected', 'Conectado')) ?></em>
                                                 <?php else: ?><em class="pub-chip pub-chip--pending"><?= pub_h(t('Not connected', 'Sin conexión')) ?></em><?php endif; ?>
@@ -1079,7 +1084,9 @@ function pub_page_chip(string $status): array
                                                 </div>
                                                 <div class="pub-series-copy">
                                                     <span class="pub-product-locale"><?= pub_h(t('Post', 'Post')) ?> <?= $postPart ?></span>
-                                                    <p><?= pub_h((string)($postBlock['composed'] ?? ($postBlock['headline'] ?? ''))) ?></p>
+                                                    <p><?= pub_h($socialKey === 'x'
+                                                        ? trim((string)($postBlock['title'] ?? '') . (trim((string)($postBlock['phrase'] ?? '')) !== '' ? ' — ' . (string)$postBlock['phrase'] : ''))
+                                                        : (string)($postBlock['composed'] ?? ($postBlock['headline'] ?? ''))) ?></p>
                                                     <span class="pub-series-state">
                                                         <?php if ($partStatus === 'published'): ?>
                                                             <em class="pub-chip pub-chip--live"><?= pub_h(t('PUBLISHED', 'PUBLICADO')) ?></em>
@@ -1173,7 +1180,7 @@ function pub_page_chip(string $status): array
                                                 </div>
                                                 <label class="pub-dist-confirm">
                                                     <input type="checkbox" name="confirm" value="yes" required>
-                                                    <span><?= pub_h(t('I confirm publishing the spaced series on', 'Confirmo publicar la serie espaciada en')) ?> <?= $socialKey === 'facebook' ? 'Facebook' : 'Instagram' ?></span>
+                                                    <span><?= pub_h(t('I confirm publishing the spaced series on', 'Confirmo publicar la serie espaciada en')) ?> <?= $socialKey === 'facebook' ? 'Facebook' : ($socialKey === 'x' ? 'X' : 'Instagram') ?></span>
                                                 </label>
                                                 <button type="submit" class="button-link"><?= pub_h(t('Publish spaced series', 'Publicar serie espaciada')) ?></button>
                                             </form>
@@ -1181,10 +1188,6 @@ function pub_page_chip(string $status): array
                                     </article>
                                 <?php endforeach; ?>
 
-                                <article class="pub-product-card pub-product-card--inert">
-                                    <h3>X</h3>
-                                    <p class="pub-product-meta"><?= pub_h(t('Reserved place — no connection and no generated copy yet.', 'Lugar reservado — sin conexión ni copy generado todavía.')) ?></p>
-                                </article>
                             </div>
                         <?php endif; ?>
                     </div>
@@ -1313,7 +1316,7 @@ function pub_page_chip(string $status): array
                     <?php
                     // El control por paso se conserva; esto es el acto único que
                     // dispara todo lo conectado, cada destino con su mecánica.
-                    $allDestinations = ['pinterest' => 'Pinterest', 'facebook' => 'Facebook', 'instagram' => 'Instagram', 'tiktok' => 'TikTok'];
+                    $allDestinations = ['pinterest' => 'Pinterest', 'facebook' => 'Facebook', 'instagram' => 'Instagram', 'tiktok' => 'TikTok', 'x' => 'X'];
                     $connectedNames = [];
                     $disconnectedNames = [];
                     foreach ($allDestinations as $key => $name) {
