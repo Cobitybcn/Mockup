@@ -1,13 +1,17 @@
 # Dockerfile.web
 FROM php:8.2.32-apache-bookworm
 
-# Install system dependencies and PHP mysql extensions
+# Install system dependencies and PHP mysql extensions.
+# ffmpeg belongs here as well as in the worker: the web tier reads the duration
+# of an uploaded track or video, samples its waveform and cuts poster frames, and
+# without the binary every one of those refuses the file for the wrong reason.
 RUN apt-get update && apt-get install -y --no-install-recommends \
     libzip-dev \
     libcurl4-openssl-dev \
     libonig-dev \
     zip \
     unzip \
+    ffmpeg \
     python3 \
     python3-pip \
     libpng-dev \
