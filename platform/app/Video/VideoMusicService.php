@@ -241,6 +241,7 @@ final class VideoMusicService
             'width' => null,
             'height' => null,
             'durationSeconds' => $duration,
+            'hasAudio' => true,
         ];
     }
 }

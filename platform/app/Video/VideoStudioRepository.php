@@ -291,8 +291,8 @@ final class VideoStudioRepository
     public function createReferenceAsset(int $userId, array $asset): int
     {
         $stmt = $this->pdo->prepare('INSERT INTO video_reference_assets
-            (user_id,file_path,original_name,mime_type,media_type,byte_size,width,height,created_at)
-            VALUES (?,?,?,?,?,?,?,?,?)');
+            (user_id,file_path,original_name,mime_type,media_type,byte_size,width,height,duration_seconds,has_audio,created_at)
+            VALUES (?,?,?,?,?,?,?,?,?,?,?)');
         $stmt->execute([
             $userId,
             (string)$asset['filePath'],
@@ -302,6 +302,8 @@ final class VideoStudioRepository
             (int)$asset['byteSize'],
             $asset['width'] ?? null,
             $asset['height'] ?? null,
+            $asset['durationSeconds'] ?? null,
+            !empty($asset['hasAudio']) ? 1 : 0,
             date('c'),
         ]);
         return (int)$this->pdo->lastInsertId();
@@ -602,6 +604,8 @@ final class VideoStudioRepository
                 'status' => 'available',
                 'mimeType' => (string)$row['mime_type'],
                 'byteSize' => (int)$row['byte_size'],
+                'durationSeconds' => (float)($row['duration_seconds'] ?? 0),
+                'hasAudio' => (bool)($row['has_audio'] ?? false),
                 'createdAt' => (string)$row['created_at'],
             ];
         }
@@ -912,8 +916,16 @@ final class VideoStudioRepository
     private function decodeTimeline(mixed $stored): ?array
     {
         if (!is_string($stored) || trim($stored) === '') return null;
-        $blocks = json_decode($stored, true);
-        if (!is_array($blocks)) return null;
+        $decoded = json_decode($stored, true);
+        if (!is_array($decoded)) return null;
+        if (isset($decoded['videoBlocks']) || isset($decoded['audioBlocks'])) {
+            return [
+                'schemaVersion' => 2,
+                'videoBlocks' => array_values(array_filter((array)($decoded['videoBlocks'] ?? []), 'is_array')),
+                'audioBlocks' => array_values(array_filter((array)($decoded['audioBlocks'] ?? []), 'is_array')),
+            ];
+        }
+        $blocks = $decoded;
         $clean = [];
         foreach ($blocks as $block) {
             if (!is_array($block)) continue;
@@ -1024,6 +1036,9 @@ final class VideoStudioRepository
             'error' => (string)$row['error'],
             'previewUrl' => (string)$row['output_path'] !== '' ? 'video_media.php?export_id=' . (int)$row['id'] : '',
             'thumbnailUrl' => trim((string)($snapshot['thumbnailPath'] ?? '')) !== '' ? 'video_media.php?export_id=' . (int)$row['id'] . '&thumbnail=1' : '',
+            'projectVersion' => (int)($snapshot['projectVersion'] ?? 0),
+            'kind' => (string)($snapshot['kind'] ?? ''),
+            'approvedAt' => (string)($snapshot['approvedAt'] ?? ''),
             'createdAt' => (string)$row['created_at'],
             'updatedAt' => (string)$row['updated_at'],
         ];

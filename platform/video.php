@@ -64,6 +64,8 @@ $payload = [
         'musicUpload' => 'video_music_upload.php',
         'musicUpdate' => 'video_music_update.php',
         'timelineUpdate' => 'video_timeline_update.php',
+        'timelineImport' => 'video_timeline_import.php',
+        'timelineImportUrl' => 'video_timeline_import_url.php',
     ],
 ];
 
@@ -79,7 +81,7 @@ function vds_h(mixed $value): string
     <meta name="viewport" content="width=device-width,initial-scale=1">
     <title><?= vds_h(t('Video Lab - Artwork Mockups', 'Video Lab - Artwork Mockups')) ?></title>
     <link rel="stylesheet" href="style.css">
-    <link rel="stylesheet" href="video_studio.css?v=28">
+    <link rel="stylesheet" href="video_studio.css?v=29">
     <link rel="stylesheet" href="media-controls.css?v=2">
 </head>
 <body>
@@ -182,6 +184,6 @@ function vds_h(mixed $value): string
 </div>
 <script type="application/json" id="video-studio-data"><?= json_encode($payload, JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES | JSON_HEX_TAG | JSON_HEX_AMP | JSON_HEX_APOS | JSON_HEX_QUOT) ?></script>
 <script src="assets/vendor/sortablejs/Sortable.min.js?v=1.15.7"></script>
-<script src="video_studio.js?v=35"></script>
+<script src="video_studio.js?v=36"></script>
 </body>
 </html>

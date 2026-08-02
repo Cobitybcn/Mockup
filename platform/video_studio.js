@@ -32,6 +32,7 @@
         pxs: 18,
         playhead: 0,
         selectedBlock: -1,
+        selectedAudioBlock: -1,
     };
 
     const $ = (selector, context = root) => context.querySelector(selector);
@@ -280,6 +281,7 @@
                     ? `<img src="${escapeHtml(asset.thumbnailUrl)}" alt="${escapeHtml(asset.artworkTitle || asset.label)}" loading="lazy" draggable="false">`
                     : `<div class="vds-catalog-video-placeholder" aria-hidden="true"><span>▶</span><small>Video</small></div>`}
                 ${asset.type === 'mockup' ? `<button class="vds-favorite media-icon-button media-icon-button--compact media-thumb-action media-thumb-action--right${asset.favorite ? ' active' : ''}" type="button" data-toggle-favorite aria-pressed="${asset.favorite ? 'true' : 'false'}" aria-label="${asset.favorite ? 'Remove from favorites' : 'Add to favorites'}"><svg class="media-action-icon" viewBox="0 0 24 24" aria-hidden="true"><path d="m12 3.7 2.55 5.17 5.71.83-4.13 4.03.97 5.69L12 16.73l-5.1 2.69.97-5.69L3.74 9.7l5.71-.83L12 3.7Z"/></svg></button>` : ''}
+                ${asset.mediaType === 'video' ? `<button class="vds-add-timeline" type="button" data-add-timeline="${escapeHtml(asset.assetKey)}" aria-label="Add ${escapeHtml(asset.label)} to V1">＋ V1</button>` : ''}
                 <div class="vds-catalog-card-copy"><strong>${escapeHtml(asset.contextTitle || asset.label)}</strong><span>${escapeHtml(asset.type === 'reference_asset' ? 'From your computer' : (asset.mediaType === 'video' ? (asset.projectTitle || 'Generated video') : (asset.artworkTitle || 'Reference image')))}</span></div>
             </article>`).join('') : '<div class="vds-catalog-empty">No references are available for this selection.</div>';
         dom.catalogHelp.textContent = state.selectedAssetKey
@@ -440,6 +442,7 @@
                         <span><strong>Drag to continue</strong><small>Its final frame will become the starting image of another sequence.</small></span>
                     </button>
                     ${nextAction}
+                    <button class="vds-use-next" type="button" data-add-timeline="${escapeHtml(assetKey)}">Add to V1</button>
                 </div>
             </div>`;
         }
@@ -586,9 +589,38 @@
             });
         });
 
+        referenceAssets().filter(asset => asset.mediaType === 'video').forEach(asset => {
+            sources.set(`${asset.type}:${Number(asset.id)}`, {
+                sourceType: String(asset.type), sourceId: Number(asset.id),
+                name: String(asset.label || 'Imported video'), thumbnailUrl: String(asset.thumbnailUrl || ''),
+                length: Number(asset.durationSeconds || 0), hasAudio: Boolean(asset.hasAudio),
+            });
+        });
         const stored = currentProject()?.timeline;
+        if (stored && Array.isArray(stored.videoBlocks)) {
+            return stored.videoBlocks.reduce((blocks, block) => {
+                const sourceType = String(block.sourceType || 'generation_job');
+                const sourceId = Number(block.sourceId || block.generationId || 0);
+                const source = sources.get(sourceType === 'generation_job' ? sourceId : `${sourceType}:${sourceId}`);
+                if (!source) return blocks;
+                const start = Math.max(0, Number(block.sourceStart) || 0);
+                let end = Number(block.sourceEnd) || source.length;
+                if (source.length > 0) end = Math.min(end, source.length);
+                if (end - start >= MIN_BLOCK_SECONDS) blocks.push({
+                    ...source, ...block, sourceType, sourceId,
+                    start, end, track: Math.max(1, Math.min(3, Number(block.track) || 1)),
+                    timelineStart: Math.max(0, Number(block.timelineStart) || 0),
+                });
+                return blocks;
+            }, []);
+        }
         if (!Array.isArray(stored) || stored.length === 0) {
-            return [...sources.values()].map(source => ({ ...source, start: 0, end: source.length }));
+            let at = 0;
+            return [...sources.values()].filter(source => source.sourceType !== 'reference_asset').map((source, index) => {
+                const block = { ...source, id: `v-${source.generationId}-${index}`, sourceType: 'generation_job', sourceId: source.generationId, start: 0, end: source.length, track: 1, timelineStart: at, enabled: true, linkGroup: '' };
+                at += source.length;
+                return block;
+            });
         }
         // A clip regenerated since the cut was made no longer exists under that
         // id, and its block quietly leaves rather than breaking the montage.
@@ -598,7 +630,7 @@
             const start = Math.max(0, Number(block.startSeconds) || 0);
             let end = Number(block.endSeconds) || 0;
             if (end <= 0 || end > source.length) end = source.length;
-            if (end - start >= MIN_BLOCK_SECONDS) blocks.push({ ...source, start, end });
+            if (end - start >= MIN_BLOCK_SECONDS) blocks.push({ ...source, id: `v-${source.generationId}-${blocks.length}`, sourceType: 'generation_job', sourceId: source.generationId, start, end, track: 1, timelineStart: blocks.reduce((sum, item) => sum + blockSeconds(item), 0), enabled: true, linkGroup: '' });
             return blocks;
         }, []);
     }
@@ -608,7 +640,12 @@
     }
 
     function videoSeconds() {
-        return timelineBlocks().reduce((total, block) => total + blockSeconds(block), 0);
+        return timelineBlocks().reduce((total, block) => Math.max(total, Number(block.timelineStart || 0) + blockSeconds(block)), 0);
+    }
+
+    function audioBlocks() {
+        const stored = currentProject()?.timeline;
+        return stored && Array.isArray(stored.audioBlocks) ? stored.audioBlocks : [];
     }
 
     const pad = value => String(Math.floor(value)).padStart(2, '0');
@@ -662,16 +699,19 @@
      * nudge of the level would tear down the montage <video> mid-playback.
      */
     function cutSignature() {
-        return timelineBlocks().map(block => `${block.generationId}:${block.start}:${block.end}`).join(',')
-            + `|${state.selectedBlock}`;
+        return timelineBlocks().map(block => `${block.id}:${block.sourceType}:${block.sourceId}:${block.track}:${block.timelineStart}:${block.start}:${block.end}`).join(',')
+            + `|a:${audioBlocks().map(block => `${block.id}:${block.track}:${block.timelineStart}:${block.sourceStart}:${block.sourceEnd}:${block.linkGroup}`).join(',')}`
+            + `|${state.selectedBlock}|${state.selectedAudioBlock}`;
     }
 
     function panelSignature() {
         const result = latestExport();
         const music = musicOf();
+        const stale = Boolean(result?.previewUrl) && Number(result.projectVersion || 0) !== Number(currentProject()?.version || 0);
         return [
             currentProject()?.id,
-            result?.id, result?.status, result?.previewUrl, result?.approvedAt,
+            currentProject()?.version,
+            result?.id, result?.status, result?.previewUrl, result?.approvedAt, result?.projectVersion,
             scenes().map(scene => `${scene.id}:${sceneSeconds(scene)}`).join(','),
             music?.assetId || 0,
             renderedScenes().length,
@@ -703,14 +743,14 @@
         const pending = exportPending();
         const total = videoSeconds();
 
-        const monitor = result?.previewUrl
+        const monitor = result?.previewUrl && !stale
             ? `<video class="vds-monitor-video" src="${escapeHtml(result.previewUrl)}"${
                 result.thumbnailUrl ? ` poster="${escapeHtml(result.thumbnailUrl)}"` : ''
               } preload="metadata" playsinline data-montage-video></video>`
             : `<div class="vds-monitor-empty"><strong>${pending ? 'Building the montage' : 'No montage yet'}</strong><small>${
                 ready === 0
                     ? 'Generate a sequence first.'
-                    : pending ? 'It will appear here when it finishes.' : 'Join the sequences to see it here.'
+                    : stale ? 'The timeline changed. Rebuild the montage to preview the current cut.' : pending ? 'It will appear here when it finishes.' : 'Join the sequences to see it here.'
               }</small></div>`;
 
         const failure = String(result?.status || '') === 'failed' && String(result?.error || '').trim()
@@ -731,15 +771,18 @@
                         <button class="vds-nle-tool" type="button" data-cut-duplicate title="Duplicate the selected clip">Duplicate</button>
                         <button class="vds-nle-tool" type="button" data-cut-remove title="Take the selected clip off V1">Remove</button>
                         <button class="vds-nle-tool" type="button" data-cut-reset title="Back to whole sequences, in order">Reset</button>
+                        <button class="vds-nle-tool" type="button" data-unlink-selected title="Detach linked audio">Unlink audio</button>
                     </div>
                 </header>
                 <div class="vds-nle-grid">
-                    <div class="vds-nle-gutter"><span></span><span>V1</span><span>A1</span></div>
+                    <div class="vds-nle-gutter"><span></span><span>V3</span><span>V2</span><span>V1</span><span>A1</span><span>A2</span></div>
                     <div class="vds-nle-scroll" data-timeline-scroll>
                         <div class="vds-nle-lane" data-timeline-lane>
                             <div class="vds-nle-ruler" data-timeline-ruler><div class="vds-nle-work" data-timeline-work></div></div>
-                            <div class="vds-nle-row vds-nle-row--v" data-track-video></div>
-                            <div class="vds-nle-row vds-nle-row--a" data-track-audio>${music ? `
+                            <div class="vds-nle-row vds-nle-row--v" data-track-video="3" data-drop-track="video:3"></div>
+                            <div class="vds-nle-row vds-nle-row--v" data-track-video="2" data-drop-track="video:2"></div>
+                            <div class="vds-nle-row vds-nle-row--v" data-track-video="1" data-drop-track="video:1"></div>
+                            <div class="vds-nle-row vds-nle-row--a" data-track-audio="1" data-drop-track="audio:1">${music ? `
                                 <div class="vds-nle-clip vds-nle-clip--a" data-music-clip>
                                     <div class="vds-nle-clip-label"><span>${escapeHtml(music.label || 'Music')}</span><em>fx</em></div>
                                     <div class="vds-nle-bed"></div>
@@ -759,6 +802,7 @@
                                     <input type="file" accept="audio/*" data-music-file${state.musicUploading ? ' disabled' : ''}>
                                 </label>`}
                             </div>
+                            <div class="vds-nle-row vds-nle-row--a" data-track-audio="2" data-drop-track="audio:2"></div>
                             <div class="vds-nle-end" data-timeline-end></div>
                             <div class="vds-nle-cti" data-timeline-cti></div>
                         </div>
@@ -781,6 +825,7 @@
             <aside class="vds-nle-pane vds-nle-inspector">
                 <h3>Montage</h3>
                 <div class="vds-nle-kv"><span>Sequences</span><b>${ready} · ${clockTime(total)} · ${escapeHtml(currentProject().aspectRatio || '9:16')}</b></div>
+                <label class="vds-nle-file"><span>Import video to V1</span><input type="file" accept="video/mp4,video/quicktime,video/webm" data-timeline-import></label>
                 ${missing > 0 ? `<p class="vds-nle-note">${missing === 1 ? 'One sequence has nothing generated and stays out of the cut.' : `${missing} sequences have nothing generated and stay out of the cut.`}</p>` : ''}
                 ${music ? `
                 <div class="vds-nle-kv"><span>Track A1</span><b>${escapeHtml(music.label || 'Music')}</b></div>
@@ -794,8 +839,9 @@
                 <div class="vds-nle-line"><span>Music in</span><output data-out-offset></output></div>
                 <p class="vds-nle-note">Level is the white line over the clip — drag it up or down. The diamonds at each end open the fades.</p>` : `
                 <p class="vds-nle-note">Add a track on A1 and it plays across the whole montage, ending with the picture.</p>`}
-                ${result?.previewUrl ? `<div class="vds-nle-line"><span>Result</span><output>${clockTime(result.durationSeconds || 0)} · ${Math.round((result.bytes || 0) / 1048576)} MB</output></div>` : ''}
-                ${result?.previewUrl && String(result.kind || '') === 'final' ? (
+                ${result?.previewUrl ? `<div class="vds-nle-line"><span>${stale ? 'Previous render' : 'Result'}</span><output>${clockTime(result.durationSeconds || 0)} · ${Math.round((result.bytes || 0) / 1048576)} MB</output></div>` : ''}
+                ${stale ? '<p class="vds-nle-error"><strong>Render out of date</strong><span>Rebuild before downloading or marking this edit as finished.</span></p>' : ''}
+                ${result?.previewUrl && !stale && String(result.kind || '') === 'final' ? (
                     result.approvedAt
                         ? `<div class="vds-nle-line"><span>Finished</span><output>in Videos</output></div>
                            <button class="vds-nle-btn" type="button" data-export-approve="0">Take back to draft</button>`
@@ -806,7 +852,7 @@
                     pending ? 'Building…' : result?.previewUrl ? 'Rebuild montage' : 'Join sequences'
                 }</button>
                 ${ready === 0 ? '<p class="vds-nle-note">Generate a sequence before joining.</p>' : ''}
-                ${result?.previewUrl ? `<div class="vds-nle-two">
+                ${result?.previewUrl && !stale ? `<div class="vds-nle-two">
                     <a class="vds-nle-btn" href="${escapeHtml(result.previewUrl)}&download=1">Download MP4</a>
                     <a class="vds-nle-btn" href="videos.php">Open Videos</a>
                 </div>` : ''}
@@ -821,8 +867,8 @@
     function buildTimeline() {
         const total = videoSeconds();
         const ruler = $('[data-timeline-ruler]');
-        const row = $('[data-track-video]');
-        if (!ruler || !row) return;
+        const rows = $$('[data-track-video]');
+        if (!ruler || rows.length !== 3) return;
 
         [...ruler.querySelectorAll('b,i')].forEach(node => node.remove());
         const major = state.pxs > 40 ? 2 : state.pxs > 22 ? 5 : 10;
@@ -839,8 +885,7 @@
             ruler.append(tick);
         }
 
-        row.innerHTML = '';
-        let at = 0;
+        rows.forEach(row => { row.innerHTML = ''; });
         timelineBlocks().forEach((block, index) => {
             const seconds = blockSeconds(block);
             // A block that no longer runs the whole clip says so, so a cut is
@@ -851,13 +896,33 @@
             if (trimmed) clip.classList.add('is-trimmed');
             if (index === state.selectedBlock) clip.classList.add('is-selected');
             clip.dataset.blockIndex = String(index);
-            clip.style.left = `${at * state.pxs}px`;
+            clip.style.left = `${Number(block.timelineStart || 0) * state.pxs}px`;
             clip.style.width = `${seconds * state.pxs}px`;
+            clip.draggable = true;
+            clip.dataset.blockId = String(block.id || '');
             clip.innerHTML =
-                `<div class="vds-nle-clip-label"><span>${escapeHtml(block.name)}</span><em>${seconds.toFixed(1)}s</em></div>` +
+                `<span class="vds-trim vds-trim--in" data-trim="in" aria-hidden="true"></span><div class="vds-nle-clip-label"><span>${escapeHtml(block.name)}</span><em>V${block.track} · ${seconds.toFixed(1)}s</em></div>` +
+                `<span class="vds-trim vds-trim--out" data-trim="out" aria-hidden="true"></span>` +
                 (block.thumbnailUrl ? `<img src="${escapeHtml(block.thumbnailUrl)}" alt="" draggable="false">` : '');
-            row.append(clip);
-            at += seconds;
+            const row = $(`[data-track-video="${block.track}"]`);
+            row?.append(clip);
+        });
+
+        $$('[data-track-audio]').forEach(row => {
+            [...row.querySelectorAll('[data-audio-block]')].forEach(node => node.remove());
+        });
+        audioBlocks().forEach((block, audioIndex) => {
+                const seconds = Math.max(0, Number(block.sourceEnd || 0) - Number(block.sourceStart || 0));
+                const clip = document.createElement('div');
+                clip.className = 'vds-nle-clip vds-nle-clip--a vds-nle-clip--imported';
+                if (audioIndex === state.selectedAudioBlock) clip.classList.add('is-selected');
+                clip.dataset.audioBlock = String(block.id || '');
+                clip.dataset.audioIndex = String(audioIndex);
+                clip.draggable = true;
+                clip.style.left = `${Number(block.timelineStart || 0) * state.pxs}px`;
+                clip.style.width = `${seconds * state.pxs}px`;
+                clip.innerHTML = `<span class="vds-trim vds-trim--in" data-audio-trim="in" aria-hidden="true"></span><div class="vds-nle-clip-label"><span>${block.linkGroup ? 'Audio vinculado' : 'Audio independiente'}</span><em>A${Number(block.track || 1)} · ${seconds.toFixed(1)}s</em></div><span class="vds-trim vds-trim--out" data-audio-trim="out" aria-hidden="true"></span>`;
+                $(`[data-track-audio="${Math.max(1, Math.min(2, Number(block.track) || 1))}"]`)?.append(clip);
         });
 
         if (dom.exportPanel) dom.exportPanel.dataset.cut = cutSignature();
@@ -975,7 +1040,7 @@
         const work = $('[data-timeline-work]');
         if (work) work.style.width = `${total * state.pxs}px`;
 
-        const height = 24 + LANE.videoHeight + LANE.audioHeight;
+        const height = 24 + LANE.videoHeight * 3 + LANE.audioHeight * 2;
         const end = $('[data-timeline-end]');
         if (end) { end.style.left = `${total * state.pxs}px`; end.style.height = `${height}px`; }
         const cti = $('[data-timeline-cti]');
@@ -996,7 +1061,9 @@
         const scroll = $('[data-timeline-scroll]');
         const lane = $('[data-timeline-lane]');
         const video = $('[data-montage-video]');
-        const audio = musicOf() ? ensureMusicAudio() : null;
+        // The program monitor is an exported MP4 and already contains its mix.
+        // Playing the loose music element here would reproduce the same track twice.
+        const audio = null;
         if (!lane) return;
 
         const seek = seconds => {
@@ -1108,16 +1175,75 @@
 
         // A clip has to be picked before it can be duplicated or removed, and
         // clicking the empty part of V1 puts the selection down again.
-        $('[data-track-video]')?.addEventListener('pointerdown', event => {
+        $$('[data-track-video]').forEach(row => row.addEventListener('pointerdown', event => {
             const clip = event.target.closest('[data-block-index]');
             state.selectedBlock = clip ? Number(clip.dataset.blockIndex) : -1;
+            state.selectedAudioBlock = -1;
+            if (clip && event.target.closest('[data-trim]')) { beginTrim(event, Number(clip.dataset.blockIndex), String(event.target.dataset.trim)); return; }
             buildTimeline();
+        }));
+
+        $$('[data-track-video]').forEach(row => {
+            row.addEventListener('dragstart', event => {
+                const clip = event.target.closest('[data-block-index]');
+                if (!clip || event.target.closest('[data-trim]')) { event.preventDefault(); return; }
+                clip.classList.add('is-dragging');
+                event.dataTransfer?.setData('application/x-vds-block-index', String(clip.dataset.blockIndex));
+            });
+            row.addEventListener('dragend', event => event.target.closest('[data-block-index]')?.classList.remove('is-dragging'));
+            row.addEventListener('dragover', event => { event.preventDefault(); row.classList.add('is-drop-target'); });
+            row.addEventListener('dragleave', () => row.classList.remove('is-drop-target'));
+            row.addEventListener('drop', event => {
+                event.preventDefault(); row.classList.remove('is-drop-target');
+                const laneBounds = lane.getBoundingClientRect();
+                const at = Math.max(0, (event.clientX - laneBounds.left) / laneScale(lane) / state.pxs);
+                const index = Number(event.dataTransfer?.getData('application/x-vds-block-index'));
+                if (Number.isInteger(index) && index >= 0) moveVideoBlock(index, Number(row.dataset.trackVideo), at);
+            });
+        });
+
+        $$('[data-track-audio]').forEach(row => {
+            row.addEventListener('pointerdown', event => {
+                const clip = event.target.closest('[data-audio-index]');
+                if (!clip) return;
+                state.selectedAudioBlock = Number(clip.dataset.audioIndex);
+                state.selectedBlock = -1;
+                if (event.target.closest('[data-audio-trim]')) {
+                    beginAudioTrim(event, state.selectedAudioBlock, String(event.target.dataset.audioTrim));
+                    return;
+                }
+                buildTimeline();
+            });
+            row.addEventListener('dragstart', event => {
+                const clip = event.target.closest('[data-audio-index]');
+                if (!clip || event.target.closest('[data-audio-trim]')) { event.preventDefault(); return; }
+                const index = Number(clip.dataset.audioIndex);
+                if (audioBlocks()[index]?.linkGroup) {
+                    event.preventDefault();
+                    sayOnTimeline('Desliga el audio antes de moverlo por separado.');
+                    return;
+                }
+                clip.classList.add('is-dragging');
+                event.dataTransfer?.setData('application/x-vds-audio-index', String(index));
+            });
+            row.addEventListener('dragend', event => event.target.closest('[data-audio-index]')?.classList.remove('is-dragging'));
+            row.addEventListener('dragover', event => { event.preventDefault(); row.classList.add('is-drop-target'); });
+            row.addEventListener('dragleave', () => row.classList.remove('is-drop-target'));
+            row.addEventListener('drop', event => {
+                event.preventDefault(); row.classList.remove('is-drop-target');
+                const index = Number(event.dataTransfer?.getData('application/x-vds-audio-index'));
+                if (!Number.isInteger(index) || index < 0) return;
+                const laneBounds = lane.getBoundingClientRect();
+                const at = Math.max(0, (event.clientX - laneBounds.left) / laneScale(lane) / state.pxs);
+                moveAudioBlock(index, Number(row.dataset.trackAudio), at);
+            });
         });
 
         $('[data-cut-split]')?.addEventListener('click', splitAtPlayhead);
         $('[data-cut-duplicate]')?.addEventListener('click', duplicateSelectedBlock);
         $('[data-cut-remove]')?.addEventListener('click', removeSelectedBlock);
         $('[data-cut-reset]')?.addEventListener('click', resetTimeline);
+        $('[data-unlink-selected]')?.addEventListener('click', unlinkSelectedBlock);
 
         if (video) {
             video.addEventListener('timeupdate', () => {
@@ -1262,25 +1388,170 @@
      * not what changed, so a montage can never end up half edited.
      */
     function commitTimeline(blocks, successMessage) {
+        const document = {
+            schemaVersion: 2,
+            videoBlocks: blocks.map(block => ({
+                id: String(block.id || `v-${Date.now()}-${Math.random().toString(36).slice(2,7)}`),
+                sourceType: String(block.sourceType || 'generation_job'),
+                sourceId: Number(block.sourceId || block.generationId || 0),
+                track: Math.max(1, Math.min(3, Number(block.track) || 1)),
+                timelineStart: Number(Number(block.timelineStart || 0).toFixed(3)),
+                sourceStart: Number(Number(block.start || block.sourceStart || 0).toFixed(3)),
+                sourceEnd: Number(Number(block.end || block.sourceEnd || 0).toFixed(3)),
+                enabled: block.enabled !== false,
+                linkGroup: String(block.linkGroup || ''),
+            })),
+            audioBlocks: audioBlocks().map(audio => {
+                const linked = blocks.find(block => block.linkGroup && String(block.linkGroup) === String(audio.linkGroup));
+                return linked ? { ...audio, timelineStart:Number(linked.timelineStart||0), sourceStart:Number(linked.start||0), sourceEnd:Number(linked.end||0) } : { ...audio };
+            }),
+        };
+        commitTimelineDocument(document, successMessage);
+    }
+
+    async function importTimelineVideo(file) {
+        if (!file || !currentProject()) return;
+        const body = new FormData();
+        body.append('csrf', state.csrf);
+        body.append('projectId', String(currentProject().id));
+        body.append('version', String(currentProject().version));
+        body.append('video', file);
+        toast('Importing video…');
+        try {
+            // Production requests cannot carry a large video through Cloud Run.
+            // Put it straight in storage and send only its verified object key.
+            const destination = await request(state.endpoints.timelineImportUrl || 'video_timeline_import_url.php', {
+                projectId: currentProject().id,
+                version: currentProject().version,
+                contentType: file.type || 'video/mp4',
+                bytes: file.size,
+            });
+            if (destination.uploadUrl) {
+                toast('Uploading video to storage…');
+                const put = await fetch(destination.uploadUrl, { method:'PUT', body:file, headers:{ 'Content-Type':destination.contentType } });
+                if (!put.ok) throw new Error(`Storage rejected the video (${put.status}).`);
+                body.delete('video');
+                body.append('objectKey', destination.objectKey);
+                body.append('originalName', file.name);
+            }
+            const response = await fetch(state.endpoints.timelineImport || 'video_timeline_import.php', { method:'POST', credentials:'same-origin', body });
+            const data = await response.json().catch(() => ({ ok:false,error:`Import failed (${response.status}).` }));
+            if (!response.ok || !data.ok) throw new Error(data.error || 'The video could not be imported.');
+            if (data.assets) state.assets = data.assets;
+            applyStudio(data);
+            addAssetToTimeline(String(data.importedAssetKey || ''));
+        } catch (error) {
+            toast(error.message || 'The video could not be imported.', true);
+        }
+    }
+
+    function moveVideoBlock(index, track, timelineStart) {
+        const blocks = timelineBlocks();
+        const block = blocks[index];
+        if (!block) return;
+        const delta = Math.max(0, timelineStart) - Number(block.timelineStart || 0);
+        block.track = Math.max(1, Math.min(3, Number(track) || 1));
+        block.timelineStart = Math.max(0, timelineStart);
+        const timeline = currentProject()?.timeline;
+        if (block.linkGroup && timeline && Array.isArray(timeline.audioBlocks)) {
+            const document = {
+                schemaVersion: 2,
+                videoBlocks: blocks.map(item => ({ id:item.id,sourceType:item.sourceType,sourceId:item.sourceId,track:item.track,timelineStart:item.timelineStart,sourceStart:item.start,sourceEnd:item.end,enabled:item.enabled!==false,linkGroup:item.linkGroup||'' })),
+                audioBlocks: timeline.audioBlocks.map(item => String(item.linkGroup) === String(block.linkGroup) ? { ...item, timelineStart: Math.max(0, Number(item.timelineStart || 0) + delta) } : item),
+            };
+            return commitTimelineDocument(document, `Clip moved to V${block.track}`);
+        }
+        commitTimeline(blocks, `Clip moved to V${block.track}`);
+    }
+
+    function moveAudioBlock(index, track, timelineStart) {
+        const audio = audioBlocks().map(block => ({ ...block }));
+        const block = audio[index];
+        if (!block) return;
+        if (block.linkGroup) return sayOnTimeline('Desliga el audio antes de moverlo por separado.');
+        block.track = Math.max(1, Math.min(2, Number(track) || 1));
+        block.timelineStart = Number(Math.max(0, timelineStart).toFixed(3));
+        commitTimelineDocument({
+            schemaVersion: 2,
+            videoBlocks: timelineBlocks().map(item => ({ id:item.id,sourceType:item.sourceType,sourceId:item.sourceId,track:item.track,timelineStart:item.timelineStart,sourceStart:item.start,sourceEnd:item.end,enabled:item.enabled!==false,linkGroup:item.linkGroup||'' })),
+            audioBlocks: audio,
+        }, `Audio moved to A${block.track}`);
+    }
+
+    function beginTrim(event, index, edge) {
+        const blocks = timelineBlocks();
+        const block = blocks[index];
+        if (!block) return;
+        event.preventDefault(); event.stopPropagation();
+        const handle = event.target;
+        handle.setPointerCapture(event.pointerId);
+        const originX = event.clientX;
+        const original = { start:block.start, end:block.end, timelineStart:block.timelineStart };
+        const move = e => {
+            const delta = (e.clientX - originX) / laneScale($('[data-timeline-lane]')) / state.pxs;
+            if (edge === 'in') {
+                block.start = Math.max(0, Math.min(original.end - MIN_BLOCK_SECONDS, original.start + delta));
+                block.timelineStart = Math.max(0, original.timelineStart + (block.start - original.start));
+            } else {
+                block.end = Math.max(original.start + MIN_BLOCK_SECONDS, Math.min(block.length, original.end + delta));
+            }
+        };
+        const done = () => {
+            handle.removeEventListener('pointermove', move); handle.removeEventListener('pointerup', done); handle.removeEventListener('pointercancel', done);
+            commitTimeline(blocks, 'Clip trimmed');
+        };
+        handle.addEventListener('pointermove', move); handle.addEventListener('pointerup', done); handle.addEventListener('pointercancel', done);
+    }
+
+    function beginAudioTrim(event, index, edge) {
+        const audio = audioBlocks().map(block => ({ ...block }));
+        const block = audio[index];
+        if (!block) return;
+        event.preventDefault(); event.stopPropagation();
+        if (block.linkGroup) return sayOnTimeline('Desliga el audio antes de recortarlo por separado.');
+        const handle = event.target;
+        handle.setPointerCapture(event.pointerId);
+        const originX = event.clientX;
+        const original = { sourceStart:Number(block.sourceStart || 0), sourceEnd:Number(block.sourceEnd || 0), timelineStart:Number(block.timelineStart || 0) };
+        const move = e => {
+            const delta = (e.clientX - originX) / laneScale($('[data-timeline-lane]')) / state.pxs;
+            if (edge === 'in') {
+                block.sourceStart = Math.max(0, Math.min(original.sourceEnd - MIN_BLOCK_SECONDS, original.sourceStart + delta));
+                block.timelineStart = Math.max(0, original.timelineStart + (block.sourceStart - original.sourceStart));
+            } else {
+                block.sourceEnd = Math.max(original.sourceStart + MIN_BLOCK_SECONDS, original.sourceEnd + Math.min(0, delta));
+            }
+        };
+        const done = () => {
+            handle.removeEventListener('pointermove', move); handle.removeEventListener('pointerup', done); handle.removeEventListener('pointercancel', done);
+            commitTimelineDocument({
+                schemaVersion: 2,
+                videoBlocks: timelineBlocks().map(item => ({ id:item.id,sourceType:item.sourceType,sourceId:item.sourceId,track:item.track,timelineStart:item.timelineStart,sourceStart:item.start,sourceEnd:item.end,enabled:item.enabled!==false,linkGroup:item.linkGroup||'' })),
+                audioBlocks: audio,
+            }, 'Audio trimmed');
+        };
+        handle.addEventListener('pointermove', move); handle.addEventListener('pointerup', done); handle.addEventListener('pointercancel', done);
+    }
+
+    function commitTimelineDocument(document, successMessage) {
         const project = currentProject();
         if (!project) return;
         // Kept so a refused cut can put the line back where it was, instead of
         // leaving the screen showing an edit the montage never took.
         const previous = project.timeline;
         const previousSelection = state.selectedBlock;
-        project.timeline = blocks.map(block => ({
-            generationId: block.generationId,
-            startSeconds: Number(block.start.toFixed(3)),
-            endSeconds: Number(block.end.toFixed(3)),
-        }));
+        const previousAudioSelection = state.selectedAudioBlock;
+        project.timeline = document;
         buildTimeline();
         queueMutation(() => request(state.endpoints.timelineUpdate || 'video_timeline_update.php', {
             projectId: project.id,
             version: project.version,
-            blocks: project.timeline,
+            videoBlocks: project.timeline.videoBlocks,
+            audioBlocks: project.timeline.audioBlocks,
         }), successMessage).catch(() => {
             project.timeline = previous;
             state.selectedBlock = previousSelection;
+            state.selectedAudioBlock = previousAudioSelection;
             buildTimeline();
         });
     }
@@ -1292,22 +1563,56 @@
 
     /** Splits whichever block the playhead is standing in, at that exact point. */
     function splitAtPlayhead() {
+        if (state.selectedAudioBlock >= 0) {
+            const audio = audioBlocks().map(block => ({ ...block }));
+            const block = audio[state.selectedAudioBlock];
+            if (!block) return;
+            if (block.linkGroup) return sayOnTimeline('Corta el video vinculado o desliga primero el audio.');
+            const into = state.playhead - Number(block.timelineStart || 0);
+            const seconds = Number(block.sourceEnd || 0) - Number(block.sourceStart || 0);
+            if (into < MIN_BLOCK_SECONDS || seconds - into < MIN_BLOCK_SECONDS) return sayOnTimeline('Coloca el cabezal dentro del audio, lejos de sus bordes, para cortarlo.');
+            const cutAt = Number(block.sourceStart || 0) + into;
+            audio.splice(state.selectedAudioBlock, 1,
+                { ...block, sourceEnd:cutAt },
+                { ...block, id:`a-${Date.now()}-${Math.random().toString(36).slice(2,7)}`,sourceStart:cutAt,timelineStart:Number(block.timelineStart||0)+into }
+            );
+            return commitTimelineDocument({
+                schemaVersion:2,
+                videoBlocks:timelineBlocks().map(item=>({id:item.id,sourceType:item.sourceType,sourceId:item.sourceId,track:item.track,timelineStart:item.timelineStart,sourceStart:item.start,sourceEnd:item.end,enabled:item.enabled!==false,linkGroup:item.linkGroup||''})),
+                audioBlocks:audio,
+            }, 'Audio cut');
+        }
         const blocks = timelineBlocks();
-        let at = 0;
-        for (let index = 0; index < blocks.length; index++) {
-            const seconds = blockSeconds(blocks[index]);
-            const into = state.playhead - at;
+        const order = state.selectedBlock >= 0 ? [state.selectedBlock, ...blocks.map((_, i) => i).filter(i => i !== state.selectedBlock)] : blocks.map((_, i) => i);
+        for (const index of order) {
+            const block = blocks[index];
+            const seconds = blockSeconds(block);
+            const into = state.playhead - Number(block.timelineStart || 0);
             if (into >= MIN_BLOCK_SECONDS && seconds - into >= MIN_BLOCK_SECONDS) {
-                const cutAt = blocks[index].start + into;
+                const cutAt = block.start + into;
+                const secondGroup = block.linkGroup ? `link-${Date.now()}-${Math.random().toString(36).slice(2,7)}` : '';
                 blocks.splice(index, 1,
-                    { ...blocks[index], end: cutAt },
-                    { ...blocks[index], start: cutAt }
+                    { ...block, end: cutAt },
+                    { ...block, id: `v-${Date.now()}-${Math.random().toString(36).slice(2,7)}`, linkGroup: secondGroup, start: cutAt, timelineStart: Number(block.timelineStart || 0) + into }
                 );
                 state.selectedBlock = index;
+                if (block.linkGroup) {
+                    const audio = audioBlocks();
+                    const linked = audio.find(item => String(item.linkGroup) === String(block.linkGroup));
+                    if (linked) {
+                        const splitAudio = audio.filter(item => item !== linked);
+                        splitAudio.push({ ...linked, sourceEnd:cutAt });
+                        splitAudio.push({ ...linked, id:`a-${Date.now()}-${Math.random().toString(36).slice(2,7)}`,linkGroup:secondGroup,timelineStart:Number(block.timelineStart||0)+into,sourceStart:cutAt });
+                        return commitTimelineDocument({
+                            schemaVersion:2,
+                            videoBlocks:blocks.map(item=>({id:item.id,sourceType:item.sourceType,sourceId:item.sourceId,track:item.track,timelineStart:item.timelineStart,sourceStart:item.start,sourceEnd:item.end,enabled:item.enabled!==false,linkGroup:item.linkGroup||''})),
+                            audioBlocks:splitAudio,
+                        }, 'Clip and linked audio cut');
+                    }
+                }
                 commitTimeline(blocks, 'Clip cut');
                 return;
             }
-            at += seconds;
         }
         sayOnTimeline('Put the playhead inside a clip, away from its edges, to cut it.');
     }
@@ -1316,18 +1621,43 @@
         const blocks = timelineBlocks();
         const block = blocks[state.selectedBlock];
         if (!block) { sayOnTimeline('Click a clip on V1 first, then duplicate it.'); return; }
-        blocks.splice(state.selectedBlock + 1, 0, { ...block });
+        const newGroup = block.linkGroup ? `link-${Date.now()}-${Math.random().toString(36).slice(2,7)}` : '';
+        blocks.splice(state.selectedBlock + 1, 0, { ...block, id: `v-${Date.now()}-${Math.random().toString(36).slice(2,7)}`, linkGroup:newGroup, timelineStart: Number(block.timelineStart || 0) + blockSeconds(block) });
         state.selectedBlock += 1;
-        commitTimeline(blocks, 'Clip duplicated');
+        const document = {
+            schemaVersion:2,
+            videoBlocks:blocks.map(item=>({id:item.id,sourceType:item.sourceType,sourceId:item.sourceId,track:item.track,timelineStart:item.timelineStart,sourceStart:item.start,sourceEnd:item.end,enabled:item.enabled!==false,linkGroup:item.linkGroup||''})),
+            audioBlocks:audioBlocks().map(item=>String(item.linkGroup)===String(block.linkGroup)&&newGroup?{...item,id:`a-${Date.now()}-${Math.random().toString(36).slice(2,7)}`,linkGroup:newGroup,timelineStart:Number(item.timelineStart||0)+blockSeconds(block)}:{...item}),
+        };
+        commitTimelineDocument(document, 'Clip duplicated');
     }
 
     function removeSelectedBlock() {
+        if (state.selectedAudioBlock >= 0) {
+            const audio = audioBlocks().map(block => ({ ...block }));
+            const removed = audio[state.selectedAudioBlock];
+            if (!removed) return;
+            if (removed.linkGroup) return sayOnTimeline('Desliga el audio antes de eliminarlo por separado.');
+            audio.splice(state.selectedAudioBlock, 1);
+            state.selectedAudioBlock = Math.min(state.selectedAudioBlock, audio.length - 1);
+            return commitTimelineDocument({
+                schemaVersion:2,
+                videoBlocks:timelineBlocks().map(item=>({id:item.id,sourceType:item.sourceType,sourceId:item.sourceId,track:item.track,timelineStart:item.timelineStart,sourceStart:item.start,sourceEnd:item.end,enabled:item.enabled!==false,linkGroup:item.linkGroup||''})),
+                audioBlocks:audio,
+            }, 'Audio removed');
+        }
         const blocks = timelineBlocks();
         if (!blocks[state.selectedBlock]) { sayOnTimeline('Click a clip on V1 first, then remove it.'); return; }
         if (blocks.length === 1) { sayOnTimeline('A montage needs at least one clip on V1.'); return; }
+        const removed = blocks[state.selectedBlock];
         blocks.splice(state.selectedBlock, 1);
         state.selectedBlock = Math.max(0, state.selectedBlock - 1);
-        commitTimeline(blocks, 'Clip removed');
+        const document = {
+            schemaVersion:2,
+            videoBlocks:blocks.map(item=>({id:item.id,sourceType:item.sourceType,sourceId:item.sourceId,track:item.track,timelineStart:item.timelineStart,sourceStart:item.start,sourceEnd:item.end,enabled:item.enabled!==false,linkGroup:item.linkGroup||''})),
+            audioBlocks:audioBlocks().filter(item=>!removed.linkGroup||String(item.linkGroup)!==String(removed.linkGroup)).map(item=>({...item})),
+        };
+        commitTimelineDocument(document, 'Clip removed');
     }
 
     /** Hands V1 back to the sequences as they were generated. */
@@ -1337,12 +1667,51 @@
         const previous = project.timeline;
         project.timeline = null;
         state.selectedBlock = -1;
+        state.selectedAudioBlock = -1;
         buildTimeline();
         queueMutation(() => request(state.endpoints.timelineUpdate || 'video_timeline_update.php', {
             projectId: project.id,
             version: project.version,
             reset: true,
         }), 'Cut cleared').catch(() => { project.timeline = previous; buildTimeline(); });
+    }
+
+    function addAssetToTimeline(assetKey, track = 1, timelineStart = null) {
+        const asset = assetByKey(assetKey);
+        if (!asset || asset.mediaType !== 'video') return toast('Select a video clip first.', true);
+        const length = Number(asset.durationSeconds || 0);
+        if (!(length >= MIN_BLOCK_SECONDS)) return toast('The video duration is unavailable. Upload it again to use it on the timeline.', true);
+        const blocks = timelineBlocks();
+        const at = timelineStart === null ? videoSeconds() : Math.max(0, Number(timelineStart) || 0);
+        const linkGroup = asset.hasAudio ? `link-${Date.now()}-${Math.random().toString(36).slice(2,7)}` : '';
+        const id = `v-${Date.now()}-${Math.random().toString(36).slice(2,7)}`;
+        blocks.push({ id, sourceType: String(asset.type), sourceId: Number(asset.id), name: asset.label, thumbnailUrl: asset.thumbnailUrl || '', length, start: 0, end: length, track, timelineStart: at, enabled: true, linkGroup, hasAudio: Boolean(asset.hasAudio) });
+        const document = {
+            schemaVersion: 2,
+            videoBlocks: blocks.map(block => ({ id:block.id,sourceType:block.sourceType,sourceId:block.sourceId,track:block.track,timelineStart:block.timelineStart,sourceStart:block.start,sourceEnd:block.end,enabled:block.enabled!==false,linkGroup:block.linkGroup||'' })),
+            audioBlocks: audioBlocks().map(block => ({ ...block })),
+        };
+        if (asset.hasAudio) document.audioBlocks.push({ id:`a-${Date.now()}-${Math.random().toString(36).slice(2,7)}`,sourceType:String(asset.type),sourceId:Number(asset.id),track:1,timelineStart:at,sourceStart:0,sourceEnd:length,enabled:true,volume:1,linkGroup });
+        state.selectedBlock = blocks.length - 1;
+        state.selectedAudioBlock = -1;
+        commitTimelineDocument(document, asset.hasAudio ? 'Video and linked audio added' : 'Video added to V1');
+    }
+
+    function unlinkSelectedBlock() {
+        const videoBlock = timelineBlocks()[state.selectedBlock];
+        const audioBlock = audioBlocks()[state.selectedAudioBlock];
+        const block = videoBlock || audioBlock;
+        if (!block || !block.linkGroup) return sayOnTimeline('Selecciona un clip con audio vinculado primero.');
+        const project = currentProject();
+        const timeline = project?.timeline;
+        if (!timeline || !Array.isArray(timeline.videoBlocks)) return;
+        const group = block.linkGroup;
+        const document = {
+            ...timeline,
+            videoBlocks: timeline.videoBlocks.map(item => String(item.linkGroup) === String(group) ? { ...item, linkGroup: '' } : item),
+            audioBlocks: (timeline.audioBlocks || []).map(item => String(item.linkGroup) === String(group) ? { ...item, linkGroup: '' } : item),
+        };
+        commitTimelineDocument(document, 'Audio unlinked');
     }
 
     function startExport() {
@@ -1655,6 +2024,8 @@
     }
 
     root.addEventListener('click', event => {
+        const addTimeline = event.target.closest('[data-add-timeline]');
+        if (addTimeline) { event.stopPropagation(); addAssetToTimeline(String(addTimeline.dataset.addTimeline || '')); return; }
         const aspectButton = event.target.closest('[data-project-aspect-ratio]');
         if (aspectButton) {
             const project = currentProject();
@@ -1827,6 +2198,12 @@
     });
 
     root.addEventListener('change', event => {
+        if (event.target.matches('[data-timeline-import]')) {
+            const file = event.target.files?.[0];
+            event.target.value = '';
+            importTimelineVideo(file);
+            return;
+        }
         if (event.target.matches('[data-music-file]')) {
             const file = event.target.files?.[0];
             event.target.value = '';

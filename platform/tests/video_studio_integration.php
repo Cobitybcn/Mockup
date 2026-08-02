@@ -259,6 +259,16 @@ try {
     TestHarness::assertContains("changes: { aspectRatio }", $studioJavascript, 'format icons persist the selected video ratio');
     TestHarness::assertContains('.vds-project-action--save', $studioStyles, 'primary project actions use the approved soft-color treatment');
     TestHarness::assertContains('width: 92px', $studioStyles, 'project actions keep a large square footprint');
+    TestHarness::assertContains('data-track-video="3"', $studioJavascript, 'the editor exposes V3');
+    TestHarness::assertContains('data-track-video="2"', $studioJavascript, 'the editor exposes V2');
+    TestHarness::assertContains('data-track-video="1"', $studioJavascript, 'the editor exposes V1');
+    TestHarness::assertContains('data-track-audio="2"', $studioJavascript, 'the editor exposes A2');
+    TestHarness::assertContains('data-unlink-selected', $studioJavascript, 'linked imported audio can be detached');
+    TestHarness::assertContains('moveAudioBlock', $studioJavascript, 'detached audio can move independently between A1 and A2');
+    TestHarness::assertContains('beginAudioTrim', $studioJavascript, 'detached audio has independent trim controls');
+    TestHarness::assertContains('timelineImportUrl', $studioPage, 'large timeline imports bypass the Cloud Run request limit');
+    TestHarness::assertContains('const audio = null;', $studioJavascript, 'the rendered monitor never plays a second loose music track');
+    TestHarness::assertContains('Render out of date', $studioJavascript, 'an old export is visibly separated from the current cut');
     TestHarness::assertContains('data-generated-clip', $studioJavascript, 'generated results expose a direct drag source');
     TestHarness::assertContains('data-use-clip-next', $studioJavascript, 'generated results expose a one-click next-sequence action');
     TestHarness::assertContains('data-continuation-frame-preview', $studioJavascript, 'an explicit continuation previews the frame that will actually be sent');

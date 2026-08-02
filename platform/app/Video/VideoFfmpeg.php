@@ -64,6 +64,19 @@ final class VideoFfmpeg
         }
     }
 
+    public static function hasAudio(string $mediaPath): bool
+    {
+        try {
+            $output = self::run([
+                self::ffprobeBinary(), '-v', 'error', '-select_streams', 'a:0',
+                '-show_entries', 'stream=index', '-of', 'csv=p=0', $mediaPath,
+            ], false);
+            return trim($output) !== '';
+        } catch (Throwable) {
+            return false;
+        }
+    }
+
     /** @param list<string> $arguments */
     public static function run(array $arguments, bool $requireOutput = true): string
     {

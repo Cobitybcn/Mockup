@@ -50,8 +50,30 @@ final class VideoExportBuilder
             }
 
             $output = $directory . DIRECTORY_SEPARATOR . 'export.mp4';
-            $this->join($normalized, $durations, $snapshot['scenes'], $output, ($snapshot['kind'] ?? 'final') === 'preview', $music);
+            if (is_array($snapshot['multitrack'] ?? null)) {
+                $audioFiles = [];
+                foreach (array_values((array)($snapshot['multitrack']['audioBlocks'] ?? [])) as $index => $block) {
+                    $path = $directory . DIRECTORY_SEPARATOR . sprintf('audio_source_%03d.media', $index);
+                    $this->storage->materializeObject((string)$block['outputPath'], $path);
+                    $audioFiles[] = $path;
+                }
+                $this->joinMultitrack(
+                    $normalized, $durations, (array)$snapshot['scenes'],
+                    $audioFiles, (array)($snapshot['multitrack']['audioBlocks'] ?? []),
+                    $output, ($snapshot['kind'] ?? 'final') === 'preview', $music, $width, $height
+                );
+            } else {
+                $this->join($normalized, $durations, $snapshot['scenes'], $output, ($snapshot['kind'] ?? 'final') === 'preview', $music);
+            }
             if (!is_file($output) || filesize($output) < 1024) throw new RuntimeException('FFmpeg did not create a valid MP4 export.');
+            $duration = VideoFfmpeg::duration($output);
+            $expected = 0.0;
+            foreach ((array)($snapshot['multitrack']['videoBlocks'] ?? []) as $block) {
+                $expected = max($expected, (float)($block['timelineStart'] ?? 0) + (float)($block['durationSeconds'] ?? 0));
+            }
+            if ($expected > 0 && abs($duration - $expected) > 0.35) {
+                throw new RuntimeException(sprintf('The exported duration (%.2fs) does not match the timeline (%.2fs).', $duration, $expected));
+            }
             $key = sprintf('video/exports/%d/%d/export_%d.mp4', (int)$export['user_id'], (int)$export['video_project_id'], (int)$export['id']);
             if (!StorageService::uploadFile($key, $output)) throw new RuntimeException('Could not store the MP4 export.');
 
@@ -64,7 +86,6 @@ final class VideoExportBuilder
                 if (StorageService::uploadFile($candidate, $poster)) $thumbnailKey = $candidate;
             }
 
-            $duration = VideoFfmpeg::duration($output);
             return ['path' => $key, 'durationSeconds' => $duration, 'bytes' => filesize($output) ?: 0, 'thumbnailPath' => $thumbnailKey];
         } finally {
             $this->removeDirectory($directory);
@@ -151,6 +172,100 @@ final class VideoExportBuilder
         );
         VideoFfmpeg::run($arguments);
     }
+
+    private function joinMultitrack(
+        array $videoFiles,
+        array $durations,
+        array $videoBlocks,
+        array $audioFiles,
+        array $audioBlocks,
+        string $output,
+        bool $preview,
+        ?array $music,
+        int $width,
+        int $height
+    ): void {
+        $total = 0.0;
+        foreach ($videoBlocks as $index => $block) {
+            $total = max($total, (float)($block['timelineStart'] ?? 0) + (float)($durations[$index] ?? $block['durationSeconds'] ?? 0));
+        }
+        $total = max(0.2, $total);
+
+        $arguments = [VideoFfmpeg::binary(), '-y'];
+        foreach ($videoFiles as $file) array_push($arguments, '-i', $file);
+        foreach ($audioFiles as $index => $file) {
+            $block = $audioBlocks[$index] ?? [];
+            array_push($arguments, '-ss', sprintf('%.3F', max(0.0, (float)($block['sourceStart'] ?? 0))));
+            array_push($arguments, '-t', sprintf('%.3F', max(0.2, (float)($block['durationSeconds'] ?? 0.2))), '-i', $file);
+        }
+        $musicIndex = count($videoFiles) + count($audioFiles);
+        if ($music !== null) {
+            $offset = (float)($music['offsetSeconds'] ?? 0);
+            if ($offset < 0) array_push($arguments, '-ss', sprintf('%.3F', -$offset));
+            array_push($arguments, '-i', (string)$music['localPath']);
+        }
+
+        $filter = [];
+        $filter[] = sprintf('color=c=black:s=%dx%d:r=30:d=%.3F[base]', $width, $height, $total);
+        $order = array_keys($videoBlocks);
+        usort($order, static function (int $a, int $b) use ($videoBlocks): int {
+            $track = ((int)($videoBlocks[$a]['track'] ?? 1)) <=> ((int)($videoBlocks[$b]['track'] ?? 1));
+            return $track !== 0 ? $track : $a <=> $b;
+        });
+        $previous = '[base]';
+        foreach ($order as $step => $inputIndex) {
+            $block = $videoBlocks[$inputIndex];
+            $start = max(0.0, (float)($block['timelineStart'] ?? 0));
+            $end = $start + (float)($durations[$inputIndex] ?? $block['durationSeconds'] ?? 0);
+            $filter[] = sprintf('[%d:v]setpts=PTS-STARTPTS+%.3F/TB[mv%d]', $inputIndex, $start, $step);
+            $out = '[vo' . $step . ']';
+            $filter[] = sprintf("%s[mv%d]overlay=eof_action=pass:shortest=0:enable='between(t,%.3F,%.3F)'%s", $previous, $step, $start, $end, $out);
+            $previous = $out;
+        }
+        $filter[] = $previous . 'format=yuv420p[v]';
+
+        $audioLabels = [];
+        foreach ($audioFiles as $index => $_) {
+            $block = $audioBlocks[$index] ?? [];
+            $input = count($videoFiles) + $index;
+            $delay = (int)round(max(0.0, (float)($block['timelineStart'] ?? 0)) * 1000);
+            $volume = max(0.0, min(4.0, (float)($block['volume'] ?? 1)));
+            $label = '[ma' . $index . ']';
+            $filter[] = sprintf('[%d:a]asetpts=PTS-STARTPTS,adelay=%d:all=1,apad,atrim=0:%.3F,volume=%.3F%s', $input, $delay, $total, $volume, $label);
+            $audioLabels[] = $label;
+        }
+        if ($music !== null) {
+            $offset = (float)($music['offsetSeconds'] ?? 0);
+            $delay = (int)round(max(0.0, min($offset, $total)) * 1000);
+            $volume = max(0.0, min(4.0, (float)($music['volume'] ?? 1)));
+            $chain = sprintf('[%d:a]asetpts=PTS-STARTPTS', $musicIndex);
+            if ($delay > 0) $chain .= sprintf(',adelay=%d:all=1', $delay);
+            $chain .= sprintf(',apad,atrim=0:%.3F,volume=%.3F', $total, $volume);
+            $fadeIn = max(0.0, min((float)($music['fadeInSeconds'] ?? 0), $total));
+            $fadeOut = max(0.0, min((float)($music['fadeOutSeconds'] ?? 0), $total));
+            if ($fadeIn > 0.01) $chain .= sprintf(',afade=t=in:st=%.3F:d=%.3F', max(0.0, $offset), $fadeIn);
+            if ($fadeOut > 0.01) $chain .= sprintf(',afade=t=out:st=%.3F:d=%.3F', max(0.0, $total - $fadeOut), $fadeOut);
+            $filter[] = $chain . '[music]';
+            $audioLabels[] = '[music]';
+        }
+        if ($audioLabels === []) {
+            array_push($arguments, '-f', 'lavfi', '-t', sprintf('%.3F', $total), '-i', 'anullsrc=channel_layout=stereo:sample_rate=48000');
+            $audioMap = (count($videoFiles) + count($audioFiles) + ($music !== null ? 1 : 0)) . ':a';
+        } elseif (count($audioLabels) === 1) {
+            $filter[] = $audioLabels[0] . 'anull[a]';
+            $audioMap = '[a]';
+        } else {
+            $filter[] = implode('', $audioLabels) . 'amix=inputs=' . count($audioLabels) . ':duration=longest:normalize=0,atrim=0:' . sprintf('%.3F', $total) . '[a]';
+            $audioMap = '[a]';
+        }
+
+        $crf = $preview ? '25' : '20';
+        array_push($arguments, '-filter_complex', implode(';', $filter), '-map', '[v]', '-map', $audioMap,
+            '-t', sprintf('%.3F', $total), '-c:v', 'libx264', '-preset', 'medium', '-crf', $crf,
+            '-pix_fmt', 'yuv420p', '-c:a', 'aac', '-b:a', '192k', '-movflags', '+faststart', $output);
+        VideoFfmpeg::run($arguments);
+    }
+
 
     private function dimensions(string $aspect): array
     {

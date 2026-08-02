@@ -23,8 +23,8 @@ final class VideoExportService
         // The cut list decides what gets joined. Without one the montage is
         // still every generated sequence, whole and in order; a sequence with
         // nothing generated is simply not part of it either way.
-        $timeline = $this->jobs->cutTimeline($userId, $projectId, $project['timeline'] ?? null);
-        if ($timeline === []) throw new DomainException('Generate at least one sequence before building the montage.');
+        $timeline = $this->jobs->renderTimeline($userId, $projectId, $project['timeline'] ?? null);
+        if ($timeline['videoBlocks'] === []) throw new DomainException('Add at least one video clip before building the montage.');
         $pending = $this->jobs->pendingExport($userId, $projectId);
         if ($pending) return $this->payload($userId, $projectId, (int)$pending['id']);
 
@@ -39,11 +39,11 @@ final class VideoExportService
                     'kind' => $kind,
                     'projectVersion' => $version,
                     'createdAt' => date('c'),
-                    'scenes' => $timeline,
+                    'scenes' => $timeline['videoBlocks'],
+                    'multitrack' => $timeline,
                     'music' => $project['music'] ?? null,
                 ],
             ]);
-            $this->studio->touchProject($userId, $projectId, $version);
             $pdo->commit();
         } catch (Throwable $e) {
             if ($pdo->inTransaction()) $pdo->rollBack();

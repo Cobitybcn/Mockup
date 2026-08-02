@@ -176,6 +176,7 @@ final class VideoReferenceUploadService
             'width' => $width,
             'height' => $height,
             'durationSeconds' => $durationSeconds,
+            'hasAudio' => $mediaType === 'video' && VideoFfmpeg::hasAudio($path),
         ];
     }
 

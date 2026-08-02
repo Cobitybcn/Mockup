@@ -309,6 +309,9 @@ final class VideoJobRepository
      */
     public function cutTimeline(int $userId, int $projectId, ?array $blocks): array
     {
+        if (isset($blocks['videoBlocks']) || isset($blocks['audioBlocks'])) {
+            return $this->renderTimeline($userId, $projectId, $blocks)['videoBlocks'];
+        }
         $whole = [];
         $usable = [];
         foreach ($this->exportTimeline($userId, $projectId) as $scene) {
@@ -341,6 +344,80 @@ final class VideoJobRepository
             $cut[] = $source;
         }
         return $cut;
+    }
+
+    /**
+     * Resolve the saved editor document to immutable storage paths for export.
+     * @return array{schemaVersion:int,videoBlocks:list<array<string,mixed>>,audioBlocks:list<array<string,mixed>>}
+     */
+    public function renderTimeline(int $userId, int $projectId, ?array $timeline): array
+    {
+        if (!is_array($timeline) || (!isset($timeline['videoBlocks']) && !isset($timeline['audioBlocks']))) {
+            $at = 0.0;
+            $video = [];
+            foreach ($this->cutTimeline($userId, $projectId, $timeline) as $index => $scene) {
+                $duration = (float)$scene['durationSeconds'];
+                $video[] = $scene + [
+                    'id' => 'v-' . (int)$scene['generationId'] . '-' . $index,
+                    'sourceType' => 'generation_job', 'sourceId' => (int)$scene['generationId'],
+                    'track' => 1, 'timelineStart' => $at, 'sourceStart' => (float)($scene['startSeconds'] ?? 0),
+                    'sourceEnd' => (float)($scene['startSeconds'] ?? 0) + $duration, 'enabled' => true,
+                    'volume' => 1.0, 'linkGroup' => '', 'hasAudio' => false,
+                ];
+                $at += $duration;
+            }
+            return ['schemaVersion' => 2, 'videoBlocks' => $video, 'audioBlocks' => []];
+        }
+
+        $generationStmt = $this->pdo->prepare("SELECT j.id,j.output_path,j.generated_duration_seconds,s.duration_seconds,
+                s.transition_out_type,s.transition_out_duration_seconds
+            FROM video_generation_jobs j INNER JOIN video_scenes s ON s.id=j.video_scene_id
+            INNER JOIN video_projects p ON p.id=s.video_project_id
+            WHERE p.id=? AND p.user_id=? AND j.status='succeeded'");
+        $generationStmt->execute([$projectId, $userId]);
+        $sources = [];
+        foreach ($generationStmt->fetchAll() as $row) {
+            $sources['generation_job:' . (int)$row['id']] = [
+                'outputPath' => (string)$row['output_path'],
+                'durationSeconds' => (float)($row['generated_duration_seconds'] ?: $row['duration_seconds']),
+                'hasAudio' => false,
+                'transition' => ['type' => (string)$row['transition_out_type'], 'durationSeconds' => (float)$row['transition_out_duration_seconds']],
+            ];
+        }
+        $assetStmt = $this->pdo->prepare("SELECT id,file_path,duration_seconds,has_audio FROM video_reference_assets
+            WHERE user_id=? AND media_type='video'");
+        $assetStmt->execute([$userId]);
+        foreach ($assetStmt->fetchAll() as $row) {
+            $sources['reference_asset:' . (int)$row['id']] = [
+                'outputPath' => (string)$row['file_path'], 'durationSeconds' => (float)($row['duration_seconds'] ?? 0),
+                'hasAudio' => (bool)($row['has_audio'] ?? false),
+            ];
+        }
+
+        $resolve = static function (array $block, string $kind) use ($sources): ?array {
+            if (array_key_exists('enabled', $block) && !$block['enabled']) return null;
+            $type = (string)($block['sourceType'] ?? 'generation_job');
+            $id = (int)($block['sourceId'] ?? $block['generationId'] ?? 0);
+            $source = $sources[$type . ':' . $id] ?? null;
+            if (!is_array($source) || $source['outputPath'] === '') return null;
+            $start = max(0.0, (float)($block['sourceStart'] ?? 0));
+            $end = min((float)$source['durationSeconds'], (float)($block['sourceEnd'] ?? 0));
+            if ($end - $start < 0.2) return null;
+            $transition = $source['transition'] ?? ['type' => 'cut', 'durationSeconds' => 0.0];
+            if ($end < (float)$source['durationSeconds'] - 0.01) $transition = ['type' => 'cut', 'durationSeconds' => 0.0];
+            return array_merge($source, $block, [
+                'sourceType' => $type, 'sourceId' => $id, 'startSeconds' => $start,
+                'endSeconds' => $end, 'durationSeconds' => $end - $start,
+                'timelineStart' => max(0.0, (float)($block['timelineStart'] ?? 0)),
+                'track' => (int)($block['track'] ?? 1), 'kind' => $kind,
+                'transition' => $transition,
+            ]);
+        };
+        $video = [];
+        foreach ((array)($timeline['videoBlocks'] ?? []) as $block) if (is_array($block) && ($item = $resolve($block, 'video'))) $video[] = $item;
+        $audio = [];
+        foreach ((array)($timeline['audioBlocks'] ?? []) as $block) if (is_array($block) && ($item = $resolve($block, 'audio')) && $item['hasAudio']) $audio[] = $item;
+        return ['schemaVersion' => 2, 'videoBlocks' => $video, 'audioBlocks' => $audio];
     }
 
     public function pendingExport(int $userId, int $projectId): ?array
