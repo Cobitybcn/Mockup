@@ -109,6 +109,8 @@ try {
     $cut = $jobs->cutTimeline($userId,$projectId,$studioRepository->findProject($userId,$projectId)['timeline']);
     TestHarness::assertSame(3,count($cut),'a cut list can use one clip more than once');
     TestHarness::assertTrue(abs((float)$cut[1]['startSeconds'] - $middle) < 0.01,'a split block keeps its in point');
+    TestHarness::assertSame('cut',(string)$cut[0]['transition']['type'],'a block that stops mid-take is followed by a straight cut');
+    TestHarness::assertSame('cross_dissolve',(string)$cut[1]['transition']['type'],'a block that runs to the end of its take keeps the transition');
     TestHarness::assertTrue(
         abs(array_sum(array_map(static fn(array $b): float => (float)$b['durationSeconds'], $cut)) - ($firstLength + $middle)) < 0.05,
         'the montage lasts as long as the blocks it is made of'

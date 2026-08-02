@@ -332,6 +332,12 @@ final class VideoJobRepository
             $source['startSeconds'] = round($start, 3);
             $source['endSeconds'] = round($end, 3);
             $source['durationSeconds'] = round($end - $start, 3);
+            // A transition was authored for the end of a sequence. A block that
+            // stops before that end is a cut in the middle of a take, and
+            // dissolving there would soften an edit nobody asked to soften.
+            if ($length > 0 && $end < $length - 0.01) {
+                $source['transition'] = ['type' => 'cut', 'durationSeconds' => 0.0];
+            }
             $cut[] = $source;
         }
         return $cut;
