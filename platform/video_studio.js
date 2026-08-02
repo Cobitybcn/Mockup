@@ -31,6 +31,7 @@
         musicAudio: null,
         pxs: 18,
         playhead: 0,
+        selectedBlock: -1,
     };
 
     const $ = (selector, context = root) => context.querySelector(selector);
@@ -562,8 +563,52 @@
         return Number(scene.active_generation?.durationSeconds || scene.durationSeconds || 0);
     }
 
+    // Below this a block is too short to see, let alone to cut again.
+    const MIN_BLOCK_SECONDS = 0.2;
+
+    /**
+     * What V1 is actually made of. A project that has never been cut has no
+     * stored list, and then the montage still means every generated sequence,
+     * whole and in order — the same thing it meant before any of this.
+     *
+     * A block is a pair of times over a clip, so splitting makes two blocks out
+     * of one and duplicating adds another over the same clip. Nothing is copied.
+     */
+    function timelineBlocks() {
+        const sources = new Map();
+        renderedScenes().forEach((scene, index) => {
+            const generation = scene.active_generation;
+            sources.set(Number(generation.id), {
+                generationId: Number(generation.id),
+                name: `Sequence ${index + 1}`,
+                thumbnailUrl: String(generation.thumbnailUrl || ''),
+                length: sceneSeconds(scene),
+            });
+        });
+
+        const stored = currentProject()?.timeline;
+        if (!Array.isArray(stored) || stored.length === 0) {
+            return [...sources.values()].map(source => ({ ...source, start: 0, end: source.length }));
+        }
+        // A clip regenerated since the cut was made no longer exists under that
+        // id, and its block quietly leaves rather than breaking the montage.
+        return stored.reduce((blocks, block) => {
+            const source = sources.get(Number(block.generationId));
+            if (!source) return blocks;
+            const start = Math.max(0, Number(block.startSeconds) || 0);
+            let end = Number(block.endSeconds) || 0;
+            if (end <= 0 || end > source.length) end = source.length;
+            if (end - start >= MIN_BLOCK_SECONDS) blocks.push({ ...source, start, end });
+            return blocks;
+        }, []);
+    }
+
+    function blockSeconds(block) {
+        return Math.max(0, Number(block.end) - Number(block.start));
+    }
+
     function videoSeconds() {
-        return renderedScenes().reduce((total, scene) => total + sceneSeconds(scene), 0);
+        return timelineBlocks().reduce((total, block) => total + blockSeconds(block), 0);
     }
 
     const pad = value => String(Math.floor(value)).padStart(2, '0');
@@ -616,6 +661,11 @@
      * The panel is rebuilt only when its shape changes. Re-rendering on every
      * nudge of the level would tear down the montage <video> mid-playback.
      */
+    function cutSignature() {
+        return timelineBlocks().map(block => `${block.generationId}:${block.start}:${block.end}`).join(',')
+            + `|${state.selectedBlock}`;
+    }
+
     function panelSignature() {
         const result = latestExport();
         const music = musicOf();
@@ -638,7 +688,12 @@
             return;
         }
         const signature = panelSignature();
-        if (dom.exportPanel.dataset.signature === signature) { layoutTimeline(); return; }
+        if (dom.exportPanel.dataset.signature === signature) {
+            // Recutting must redraw V1, but it must not rebuild the whole panel:
+            // that would replace the monitor and stop whatever is playing.
+            if (dom.exportPanel.dataset.cut !== cutSignature()) buildTimeline(); else layoutTimeline();
+            return;
+        }
         dom.exportPanel.dataset.signature = signature;
 
         const result = latestExport();
@@ -669,7 +724,15 @@
             </section>
 
             <section class="vds-nle-pane vds-nle-timeline">
-                <header class="vds-nle-head"><span>Timeline · ${escapeHtml(currentProject().title || 'Montage')}</span></header>
+                <header class="vds-nle-head">
+                    <span>Timeline · ${escapeHtml(currentProject().title || 'Montage')}</span>
+                    <div class="vds-nle-tools">
+                        <button class="vds-nle-tool" type="button" data-cut-split title="Cut the clip under the playhead">Cut</button>
+                        <button class="vds-nle-tool" type="button" data-cut-duplicate title="Duplicate the selected clip">Duplicate</button>
+                        <button class="vds-nle-tool" type="button" data-cut-remove title="Take the selected clip off V1">Remove</button>
+                        <button class="vds-nle-tool" type="button" data-cut-reset title="Back to whole sequences, in order">Reset</button>
+                    </div>
+                </header>
                 <div class="vds-nle-grid">
                     <div class="vds-nle-gutter"><span></span><span>V1</span><span>A1</span></div>
                     <div class="vds-nle-scroll" data-timeline-scroll>
@@ -704,6 +767,7 @@
                 <footer class="vds-nle-foot">
                     <span class="vds-nle-hint" data-timeline-hint></span>
                     <div class="vds-nle-transport">
+                        <button class="vds-nle-icon" type="button" data-montage-home aria-label="Back to the start"><svg viewBox="0 0 16 16"><path d="M3 2h2v12H3zm11 0v12l-8-6z"/></svg></button>
                         <button class="vds-nle-icon" type="button" data-montage-step="-1" aria-label="Previous frame"><svg viewBox="0 0 16 16"><path d="M12 2v12l-8-6z"/></svg></button>
                         <button class="vds-nle-icon vds-nle-icon--play" type="button" data-montage-play aria-label="Play"><svg viewBox="0 0 16 16" data-play-icon><path d="M4 2l9 6-9 6z"/></svg></button>
                         <button class="vds-nle-icon" type="button" data-montage-step="1" aria-label="Next frame"><svg viewBox="0 0 16 16"><path d="M4 2v12l8-6z"/></svg></button>
@@ -777,20 +841,26 @@
 
         row.innerHTML = '';
         let at = 0;
-        renderedScenes().forEach((scene, index) => {
-            const seconds = sceneSeconds(scene);
-            const frame = String(scene.active_generation?.thumbnailUrl || '');
+        timelineBlocks().forEach((block, index) => {
+            const seconds = blockSeconds(block);
+            // A block that no longer runs the whole clip says so, so a cut is
+            // legible on the line instead of only in the durations.
+            const trimmed = block.start > 0.001 || block.end < block.length - 0.001;
             const clip = document.createElement('div');
             clip.className = 'vds-nle-clip vds-nle-clip--v';
+            if (trimmed) clip.classList.add('is-trimmed');
+            if (index === state.selectedBlock) clip.classList.add('is-selected');
+            clip.dataset.blockIndex = String(index);
             clip.style.left = `${at * state.pxs}px`;
             clip.style.width = `${seconds * state.pxs}px`;
             clip.innerHTML =
-                `<div class="vds-nle-clip-label"><span>Sequence ${index + 1}</span><em>${seconds.toFixed(1)}s</em></div>` +
-                (frame ? `<img src="${escapeHtml(frame)}" alt="" draggable="false">` : '');
+                `<div class="vds-nle-clip-label"><span>${escapeHtml(block.name)}</span><em>${seconds.toFixed(1)}s</em></div>` +
+                (block.thumbnailUrl ? `<img src="${escapeHtml(block.thumbnailUrl)}" alt="" draggable="false">` : '');
             row.append(clip);
             at += seconds;
         });
 
+        if (dom.exportPanel) dom.exportPanel.dataset.cut = cutSignature();
         drawWaveform();
         layoutTimeline();
     }
@@ -1031,6 +1101,23 @@
         $$('[data-montage-step]').forEach(button => button.addEventListener('click', () => {
             seek(state.playhead + Number(button.dataset.montageStep) / 24);
         }));
+        $('[data-montage-home]')?.addEventListener('click', () => {
+            if (video && !video.paused) video.pause();
+            seek(0);
+        });
+
+        // A clip has to be picked before it can be duplicated or removed, and
+        // clicking the empty part of V1 puts the selection down again.
+        $('[data-track-video]')?.addEventListener('pointerdown', event => {
+            const clip = event.target.closest('[data-block-index]');
+            state.selectedBlock = clip ? Number(clip.dataset.blockIndex) : -1;
+            buildTimeline();
+        });
+
+        $('[data-cut-split]')?.addEventListener('click', splitAtPlayhead);
+        $('[data-cut-duplicate]')?.addEventListener('click', duplicateSelectedBlock);
+        $('[data-cut-remove]')?.addEventListener('click', removeSelectedBlock);
+        $('[data-cut-reset]')?.addEventListener('click', resetTimeline);
 
         if (video) {
             video.addEventListener('timeupdate', () => {
@@ -1168,6 +1255,94 @@
             version: currentProject().version,
             ...changes,
         }), successMessage);
+    }
+
+    /**
+     * Cutting is a whole-list operation: the server is told what V1 is now,
+     * not what changed, so a montage can never end up half edited.
+     */
+    function commitTimeline(blocks, successMessage) {
+        const project = currentProject();
+        if (!project) return;
+        // Kept so a refused cut can put the line back where it was, instead of
+        // leaving the screen showing an edit the montage never took.
+        const previous = project.timeline;
+        const previousSelection = state.selectedBlock;
+        project.timeline = blocks.map(block => ({
+            generationId: block.generationId,
+            startSeconds: Number(block.start.toFixed(3)),
+            endSeconds: Number(block.end.toFixed(3)),
+        }));
+        buildTimeline();
+        queueMutation(() => request(state.endpoints.timelineUpdate || 'video_timeline_update.php', {
+            projectId: project.id,
+            version: project.version,
+            blocks: project.timeline,
+        }), successMessage).catch(() => {
+            project.timeline = previous;
+            state.selectedBlock = previousSelection;
+            buildTimeline();
+        });
+    }
+
+    function sayOnTimeline(message) {
+        const hint = $('[data-timeline-hint]');
+        if (hint) hint.textContent = message;
+    }
+
+    /** Splits whichever block the playhead is standing in, at that exact point. */
+    function splitAtPlayhead() {
+        const blocks = timelineBlocks();
+        let at = 0;
+        for (let index = 0; index < blocks.length; index++) {
+            const seconds = blockSeconds(blocks[index]);
+            const into = state.playhead - at;
+            if (into >= MIN_BLOCK_SECONDS && seconds - into >= MIN_BLOCK_SECONDS) {
+                const cutAt = blocks[index].start + into;
+                blocks.splice(index, 1,
+                    { ...blocks[index], end: cutAt },
+                    { ...blocks[index], start: cutAt }
+                );
+                state.selectedBlock = index;
+                commitTimeline(blocks, 'Clip cut');
+                return;
+            }
+            at += seconds;
+        }
+        sayOnTimeline('Put the playhead inside a clip, away from its edges, to cut it.');
+    }
+
+    function duplicateSelectedBlock() {
+        const blocks = timelineBlocks();
+        const block = blocks[state.selectedBlock];
+        if (!block) { sayOnTimeline('Click a clip on V1 first, then duplicate it.'); return; }
+        blocks.splice(state.selectedBlock + 1, 0, { ...block });
+        state.selectedBlock += 1;
+        commitTimeline(blocks, 'Clip duplicated');
+    }
+
+    function removeSelectedBlock() {
+        const blocks = timelineBlocks();
+        if (!blocks[state.selectedBlock]) { sayOnTimeline('Click a clip on V1 first, then remove it.'); return; }
+        if (blocks.length === 1) { sayOnTimeline('A montage needs at least one clip on V1.'); return; }
+        blocks.splice(state.selectedBlock, 1);
+        state.selectedBlock = Math.max(0, state.selectedBlock - 1);
+        commitTimeline(blocks, 'Clip removed');
+    }
+
+    /** Hands V1 back to the sequences as they were generated. */
+    function resetTimeline() {
+        const project = currentProject();
+        if (!project) return;
+        const previous = project.timeline;
+        project.timeline = null;
+        state.selectedBlock = -1;
+        buildTimeline();
+        queueMutation(() => request(state.endpoints.timelineUpdate || 'video_timeline_update.php', {
+            projectId: project.id,
+            version: project.version,
+            reset: true,
+        }), 'Cut cleared').catch(() => { project.timeline = previous; buildTimeline(); });
     }
 
     function startExport() {

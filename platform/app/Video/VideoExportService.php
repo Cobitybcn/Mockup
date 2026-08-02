@@ -17,14 +17,13 @@ final class VideoExportService
         if ((int)$project['version'] !== $version) throw new DomainException('This project changed. Reload before exporting.');
         $kind = strtolower(trim($kind));
         if (!in_array($kind, ['preview','final'], true)) throw new InvalidArgumentException('Invalid export type.');
-        $timeline = $this->jobs->exportTimeline($userId, $projectId);
-        if ($timeline === []) throw new InvalidArgumentException('Add scenes before exporting.');
-        // A sequence with nothing generated is simply not part of the cut. Only
-        // an empty project has nothing to join.
-        $timeline = array_values(array_filter(
-            $timeline,
-            static fn(array $scene): bool => $scene['generationId'] !== null && $scene['outputPath'] !== ''
-        ));
+        if ($this->jobs->exportTimeline($userId, $projectId) === []) {
+            throw new InvalidArgumentException('Add scenes before exporting.');
+        }
+        // The cut list decides what gets joined. Without one the montage is
+        // still every generated sequence, whole and in order; a sequence with
+        // nothing generated is simply not part of it either way.
+        $timeline = $this->jobs->cutTimeline($userId, $projectId, $project['timeline'] ?? null);
         if ($timeline === []) throw new DomainException('Generate at least one sequence before building the montage.');
         $pending = $this->jobs->pendingExport($userId, $projectId);
         if ($pending) return $this->payload($userId, $projectId, (int)$pending['id']);

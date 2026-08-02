@@ -299,6 +299,44 @@ final class VideoJobRepository
         ], $stmt->fetchAll());
     }
 
+    /**
+     * The cut list: one entry per block, each pointing at a generated clip with
+     * its own in and out points. Without a stored list the montage still means
+     * every generated sequence, whole and in order.
+     *
+     * @param list<array{generationId:int,startSeconds:float,endSeconds:float}>|null $blocks
+     * @return list<array<string,mixed>>
+     */
+    public function cutTimeline(int $userId, int $projectId, ?array $blocks): array
+    {
+        $whole = [];
+        $usable = [];
+        foreach ($this->exportTimeline($userId, $projectId) as $scene) {
+            if ($scene['generationId'] === null || $scene['outputPath'] === '') continue;
+            $scene['startSeconds'] = 0.0;
+            $scene['endSeconds'] = 0.0;
+            $whole[] = $scene;
+            $usable[(int)$scene['generationId']] = $scene;
+        }
+        if ($blocks === null) return $whole;
+
+        $cut = [];
+        foreach ($blocks as $block) {
+            $source = $usable[(int)($block['generationId'] ?? 0)] ?? null;
+            if ($source === null) continue;
+            $length = (float)($source['generatedDurationSeconds'] ?: $source['durationSeconds']);
+            $start = max(0.0, (float)($block['startSeconds'] ?? 0));
+            $end = (float)($block['endSeconds'] ?? 0);
+            if ($end <= 0 || ($length > 0 && $end > $length)) $end = $length;
+            if ($end - $start < 0.2) continue;
+            $source['startSeconds'] = round($start, 3);
+            $source['endSeconds'] = round($end, 3);
+            $source['durationSeconds'] = round($end - $start, 3);
+            $cut[] = $source;
+        }
+        return $cut;
+    }
+
     public function pendingExport(int $userId, int $projectId): ?array
     {
         $stmt = $this->pdo->prepare("SELECT * FROM video_exports WHERE user_id=? AND video_project_id=? AND status IN ('queued','processing') ORDER BY id DESC LIMIT 1");

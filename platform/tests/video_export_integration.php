@@ -93,6 +93,46 @@ try {
 
     $timeline = $jobs->exportTimeline($userId,$projectId);
     TestHarness::assertSame(2,count($timeline),'the export snapshot contains each generated scene');
+
+    // Cutting: the first sequence is split in two and the second dropped, so the
+    // montage becomes three blocks over two clips — one of them used twice.
+    $timelineService = new VideoTimelineService($studioRepository, $jobs);
+    $firstClip = $timeline[0];
+    $firstLength = (float)($firstClip['generatedDurationSeconds'] ?: $firstClip['durationSeconds']);
+    $middle = round($firstLength / 2, 3);
+    $projectVersion = (int)$studioRepository->findProject($userId,$projectId)['version'];
+    $timelineService->update($userId,$projectId,$projectVersion,['blocks'=>[
+        ['generationId'=>$firstClip['generationId'],'startSeconds'=>0,'endSeconds'=>$middle],
+        ['generationId'=>$firstClip['generationId'],'startSeconds'=>$middle,'endSeconds'=>$firstLength],
+        ['generationId'=>$firstClip['generationId'],'startSeconds'=>0,'endSeconds'=>$middle],
+    ]]);
+    $cut = $jobs->cutTimeline($userId,$projectId,$studioRepository->findProject($userId,$projectId)['timeline']);
+    TestHarness::assertSame(3,count($cut),'a cut list can use one clip more than once');
+    TestHarness::assertTrue(abs((float)$cut[1]['startSeconds'] - $middle) < 0.01,'a split block keeps its in point');
+    TestHarness::assertTrue(
+        abs(array_sum(array_map(static fn(array $b): float => (float)$b['durationSeconds'], $cut)) - ($firstLength + $middle)) < 0.05,
+        'the montage lasts as long as the blocks it is made of'
+    );
+
+    // A block asking for more of a clip than exists is trimmed, not trusted.
+    $projectVersion = (int)$studioRepository->findProject($userId,$projectId)['version'];
+    $timelineService->update($userId,$projectId,$projectVersion,['blocks'=>[
+        ['generationId'=>$firstClip['generationId'],'startSeconds'=>0,'endSeconds'=>$firstLength * 10],
+    ]]);
+    $overrun = $jobs->cutTimeline($userId,$projectId,$studioRepository->findProject($userId,$projectId)['timeline']);
+    TestHarness::assertTrue(
+        count($overrun) === 1 && (float)$overrun[0]['endSeconds'] <= $firstLength + 0.01,
+        'a block cannot claim more of a clip than was generated'
+    );
+
+    // Clearing the cut hands the montage back to the whole sequences.
+    $projectVersion = (int)$studioRepository->findProject($userId,$projectId)['version'];
+    $timelineService->update($userId,$projectId,$projectVersion,['reset'=>true]);
+    TestHarness::assertSame(
+        2,
+        count($jobs->cutTimeline($userId,$projectId,$studioRepository->findProject($userId,$projectId)['timeline'])),
+        'clearing the cut restores every sequence, whole'
+    );
     $exportId = $jobs->createExport([
         'user_id'=>$userId,'project_id'=>$projectId,'aspect_ratio'=>'16:9',
         'snapshot'=>['kind'=>'preview','projectVersion'=>$version,'createdAt'=>date('c'),'scenes'=>$timeline],
@@ -125,6 +165,8 @@ try {
     $objectKeys[] = (string)($finalRow['output_path'] ?? '');
     if (!empty($snapshot['thumbnailPath'])) $objectKeys[] = (string)$snapshot['thumbnailPath'];
 
+    // Cutting the montage bumped the project, so delete against what it is now.
+    $version = (int)$studioRepository->findProject($userId,$projectId)['version'];
     $deleted = $studio->deleteProject($userId,$projectId,$version);
     TestHarness::assertTrue(
         count(array_filter($deleted['projects'], static fn(array $project): bool => (int)$project['id'] === $projectId)) === 0,

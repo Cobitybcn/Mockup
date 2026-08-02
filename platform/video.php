@@ -63,6 +63,7 @@ $payload = [
         'exportApprove' => 'video_export_approve.php',
         'musicUpload' => 'video_music_upload.php',
         'musicUpdate' => 'video_music_update.php',
+        'timelineUpdate' => 'video_timeline_update.php',
     ],
 ];
 

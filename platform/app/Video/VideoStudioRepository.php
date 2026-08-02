@@ -870,6 +870,7 @@ final class VideoStudioRepository
             'status' => (string)$row['status'],
             'masterVolume' => (float)$row['master_volume'],
             'music' => $this->normalizeProjectMusic($row),
+            'timeline' => $this->decodeTimeline($row['timeline_json'] ?? null),
             'version' => (int)$row['version'],
             'sceneCount' => (int)($row['scene_count'] ?? 0),
             'generatedClipCount' => (int)($row['generated_clip_count'] ?? 0),
@@ -900,6 +901,31 @@ final class VideoStudioRepository
             'durationSeconds' => (float)($row['music_duration_seconds'] ?? 0),
             'peaks' => $this->decodePeaks($row['music_peaks_json'] ?? null),
         ];
+    }
+
+    /**
+     * The cut list, or null when the project has never been cut — which still
+     * means "every sequence, whole and in order", not "an empty montage".
+     *
+     * @return list<array{generationId:int,startSeconds:float,endSeconds:float}>|null
+     */
+    private function decodeTimeline(mixed $stored): ?array
+    {
+        if (!is_string($stored) || trim($stored) === '') return null;
+        $blocks = json_decode($stored, true);
+        if (!is_array($blocks)) return null;
+        $clean = [];
+        foreach ($blocks as $block) {
+            if (!is_array($block)) continue;
+            $generationId = (int)($block['generationId'] ?? 0);
+            if ($generationId <= 0) continue;
+            $clean[] = [
+                'generationId' => $generationId,
+                'startSeconds' => round(max(0.0, (float)($block['startSeconds'] ?? 0)), 3),
+                'endSeconds' => round(max(0.0, (float)($block['endSeconds'] ?? 0)), 3),
+            ];
+        }
+        return $clean === [] ? null : $clean;
     }
 
     /** @return list<float> */

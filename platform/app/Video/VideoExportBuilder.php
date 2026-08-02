@@ -24,10 +24,18 @@ final class VideoExportBuilder
                 $requested = max(0.5, (float)$scene['durationSeconds']);
                 $crf = (string)(($snapshot['kind'] ?? 'final') === 'preview' ? 25 : 20);
                 $filter = sprintf('scale=%d:%d:force_original_aspect_ratio=decrease,pad=%d:%d:(ow-iw)/2:(oh-ih)/2:color=black,fps=30,format=yuv420p', $width,$height,$width,$height);
-                VideoFfmpeg::run([
-                    VideoFfmpeg::binary(),'-y','-i',$source,'-t',(string)$requested,'-an','-vf',$filter,
-                    '-c:v','libx264','-preset','medium','-crf',$crf,'-movflags','+faststart',$target,
-                ]);
+
+                // A block can be a fragment of its clip, and several blocks can be
+                // fragments of the same one. Seeking before the input keeps that
+                // cheap even when the piece sits late in the source.
+                $arguments = [VideoFfmpeg::binary(),'-y'];
+                $from = max(0.0, (float)($scene['startSeconds'] ?? 0));
+                if ($from > 0.001) array_push($arguments, '-ss', sprintf('%.3F', $from));
+                array_push($arguments,
+                    '-i',$source,'-t',(string)$requested,'-an','-vf',$filter,
+                    '-c:v','libx264','-preset','medium','-crf',$crf,'-movflags','+faststart',$target
+                );
+                VideoFfmpeg::run($arguments);
                 if (!is_file($target) || filesize($target) < 1024) throw new RuntimeException('FFmpeg could not normalize a scene clip.');
                 $actual = VideoFfmpeg::duration($target);
                 $normalized[] = $target;
