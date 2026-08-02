@@ -108,7 +108,10 @@ final class XPublisher
             CURLOPT_RETURNTRANSFER => true,
             CURLOPT_TIMEOUT => 60,
             CURLOPT_HTTPHEADER => ['Authorization: Bearer '.$accessToken],
-            CURLOPT_POSTFIELDS => ['media' => new CURLFile($path, $mime, basename($path))],
+            // X's v2 upload endpoint refuses the file outright without this —
+            // every image in a post fails the same way, silently, until it is
+            // set. There is no video path here, so it is always a still image.
+            CURLOPT_POSTFIELDS => ['media' => new CURLFile($path, $mime, basename($path)), 'media_category' => 'tweet_image'],
         ]);
         $body = curl_exec($handle);
         $status = (int)curl_getinfo($handle, CURLINFO_RESPONSE_CODE);
