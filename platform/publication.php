@@ -1111,8 +1111,12 @@ function pub_page_chip(string $status): array
                                         $reelState = (array)($doc['distStates'][$reelKey] ?? []);
                                         $reelStatus = (string)($reelState['status'] ?? '');
                                         $pageHasVideo = (int)($productPayload['media']['video']['export_id'] ?? 0);
+                                        // Only Meta has a video destination today (PublicationDistributionService::
+                                        // META_VIDEO_DESTINATIONS). X takes images only — offering this button for
+                                        // it drew a form whose destination the backend has never recognized.
+                                        $reelSupported = in_array($socialKey, ['facebook', 'instagram'], true);
                                         ?>
-                                        <?php if ($socialConnected && $pageHasVideo > 0): ?>
+                                        <?php if ($reelSupported && $socialConnected && $pageHasVideo > 0): ?>
                                             <div class="pub-series-post">
                                                 <div class="pub-series-copy">
                                                     <span class="pub-product-locale"><?= pub_h(t('Page video', 'Video de la página')) ?></span>
