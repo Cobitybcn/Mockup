@@ -48,7 +48,111 @@ final class VideoFinalUploadService
         return $this->upload($userId, $projectId, $file, $canonicalId);
     }
 
+    /**
+     * Where the browser should PUT a finished video, and under what name. The
+     * file goes straight to the bucket: Cloud Run refuses a request over 32 MiB,
+     * which every real final video exceeds.
+     *
+     * @return array{uploadUrl:string,objectKey:string,contentType:string}|null
+     *         null when there is no bucket, so the caller posts the file instead.
+     */
+    public function signedDestination(int $userId, int $projectId, string $fileName, string $contentType, int $bytes): ?array
+    {
+        if ($bytes > self::MAX_BYTES) throw new InvalidArgumentException('El video final puede ocupar hasta 500 MB.');
+        if ($bytes <= 0) throw new InvalidArgumentException('El video está vacío.');
+        $extension = self::TYPES[strtolower(trim($contentType))] ?? null;
+        if ($extension === null) throw new InvalidArgumentException('Usa un video MP4, MOV o WebM.');
+        if (!$this->studio->findProject($userId, $projectId)) throw new OutOfBoundsException('Proyecto de video no encontrado.');
+
+        $key = sprintf('storage/video/finals/%d/%d/%s.%s', $userId, $projectId, bin2hex(random_bytes(16)), $extension);
+        $url = StorageService::getSignedUploadUrl($key, strtolower(trim($contentType)));
+        return $url === null ? null : ['uploadUrl' => $url, 'objectKey' => $key, 'contentType' => strtolower(trim($contentType))];
+    }
+
+    /**
+     * Register a video the browser already placed in the bucket. It is probed
+     * over a signed URL rather than downloaded: the container's temp space is
+     * memory, and a finished video would sit in it whole.
+     */
+    public function attachObject(int $userId, int $projectId, string $objectKey, string $originalName, int $artworkId = 0): array
+    {
+        $expectedPrefix = sprintf('storage/video/finals/%d/', $userId);
+        if (!str_starts_with($objectKey, $expectedPrefix)) {
+            throw new InvalidArgumentException('El archivo recibido no es válido.');
+        }
+        $bytes = StorageService::objectSize($objectKey);
+        if ($bytes === null || $bytes <= 0) throw new InvalidArgumentException('La subida no llegó completa. Intentá de nuevo.');
+        if ($bytes > self::MAX_BYTES) {
+            StorageService::delete($objectKey);
+            throw new InvalidArgumentException('El video final puede ocupar hasta 500 MB.');
+        }
+
+        // ffprobe reads the object where it lies — a signed URL in the cloud, the
+        // file itself on a local install — so a large video is never pulled into
+        // the container's memory-backed temp space just to be measured.
+        $readable = StorageService::isGcsActive()
+            ? (string)(StorageService::getSignedUrl($objectKey, 30) ?? '')
+            : (new VideoMediaStorage())->localObjectPath($objectKey);
+        if ($readable === '' || (!StorageService::isGcsActive() && !is_file($readable))) {
+            StorageService::delete($objectKey);
+            throw new RuntimeException('No se pudo leer el video subido.');
+        }
+        $duration = VideoFfmpeg::duration($readable);
+        if ($duration <= 0) {
+            // Nothing ffprobe recognises as video: reject it and keep the bucket clean.
+            StorageService::delete($objectKey);
+            throw new InvalidArgumentException('El archivo no es un video que podamos leer. Usa MP4, MOV o WebM.');
+        }
+
+        $name = basename(str_replace('\\', '/', $originalName));
+        $name = trim((string)preg_replace('/[\x00-\x1F\x7F]+/u', '', $name));
+
+        return $this->register($userId, $projectId, $artworkId, [
+            'source' => $readable,
+            'objectKey' => $objectKey,
+            'bytes' => $bytes,
+            'duration' => $duration,
+            'name' => mb_substr($name !== '' ? $name : 'Video final', 0, 255),
+        ]);
+    }
+
     public function upload(int $userId, int $projectId, array $file, int $artworkId = 0): array
+    {
+        // register() resolves the project and artwork; this only has to reject a
+        // bad file before it is worth uploading anything.
+        $upload = $this->inspect($file);
+        $outputKey = sprintf(
+            'storage/video/finals/%d/%d/%s.%s',
+            $userId,
+            $projectId,
+            bin2hex(random_bytes(16)),
+            $upload['extension']
+        );
+        if (!StorageService::uploadFile($outputKey, $upload['path'])) {
+            throw new RuntimeException('No se pudo guardar el video final.');
+        }
+
+        try {
+            return $this->register($userId, $projectId, $artworkId, [
+                'source' => $upload['path'],
+                'objectKey' => $outputKey,
+                'bytes' => $upload['bytes'],
+                'duration' => $upload['duration'],
+                'name' => $upload['name'],
+            ]);
+        } catch (Throwable $e) {
+            StorageService::delete($outputKey);
+            throw $e;
+        }
+    }
+
+    /**
+     * Shared tail of both routes: the video is already in the bucket, so all that
+     * is left is a poster frame and the row that makes it a final video.
+     *
+     * @param array{source:string,objectKey:string,bytes:int,duration:float,name:string} $media
+     */
+    private function register(int $userId, int $projectId, int $artworkId, array $media): array
     {
         $project = $this->studio->findProject($userId, $projectId);
         if (!$project) throw new OutOfBoundsException('Proyecto de video no encontrado.');
@@ -56,31 +160,26 @@ final class VideoFinalUploadService
         if ($artworkId <= 0) throw new InvalidArgumentException('Selecciona la obra correspondiente al video final.');
         $artwork = $this->studio->artworkIdentity($userId, $artworkId);
         if (!$artwork) throw new OutOfBoundsException('Obra no encontrada.');
-        $upload = $this->inspect($file);
-        $idToken = bin2hex(random_bytes(16));
-        $outputKey = sprintf('storage/video/finals/%d/%d/%s.%s', $userId, $projectId, $idToken, $upload['extension']);
-        $thumbnailKey = sprintf('storage/video/finals/%d/%d/%s.jpg', $userId, $projectId, $idToken);
-        $thumbnail = sys_get_temp_dir() . DIRECTORY_SEPARATOR . 'artworkmockups-final-' . $idToken . '.jpg';
+
+        $thumbnailKey = (string)preg_replace('/\.[a-z0-9]+$/i', '.jpg', $media['objectKey']);
+        $thumbnail = sys_get_temp_dir() . DIRECTORY_SEPARATOR . 'artworkmockups-final-' . bin2hex(random_bytes(8)) . '.jpg';
         $storedThumbnail = '';
 
         try {
-            if (!StorageService::uploadFile($outputKey, $upload['path'])) {
-                throw new RuntimeException('No se pudo guardar el video final.');
-            }
-            if (VideoFfmpeg::thumbnail($upload['path'], $thumbnail) && StorageService::uploadFile($thumbnailKey, $thumbnail)) {
+            if (VideoFfmpeg::thumbnail($media['source'], $thumbnail) && StorageService::uploadFile($thumbnailKey, $thumbnail)) {
                 $storedThumbnail = $thumbnailKey;
             }
             $exportId = $this->jobs->createUploadedFinal([
                 'user_id' => $userId,
                 'project_id' => $projectId,
                 'aspect_ratio' => (string)$project['aspectRatio'],
-                'output_path' => $outputKey,
-                'duration_seconds' => $upload['duration'],
-                'bytes' => $upload['bytes'],
+                'output_path' => $media['objectKey'],
+                'duration_seconds' => $media['duration'],
+                'bytes' => $media['bytes'],
                 'snapshot' => [
                     'kind' => 'uploaded_final',
                     'source' => 'desktop',
-                    'originalName' => $upload['name'],
+                    'originalName' => $media['name'],
                     'thumbnailPath' => $storedThumbnail,
                     'artworkId' => (int)$artwork['canonicalArtworkId'],
                     'artworkGroupId' => (int)$artwork['artworkGroupId'],
@@ -88,7 +187,6 @@ final class VideoFinalUploadService
                 ],
             ]);
         } catch (Throwable $e) {
-            StorageService::delete($outputKey);
             if ($storedThumbnail !== '') StorageService::delete($storedThumbnail);
             throw $e;
         } finally {

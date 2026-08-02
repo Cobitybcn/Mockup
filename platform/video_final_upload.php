@@ -12,10 +12,23 @@ VideoHttp::handle(static function (): array {
     if (!$user) VideoHttp::respond(['ok' => false, 'error' => 'Your session expired. Sign in again and retry the upload.'], 401);
     FeatureAccess::requireJson($user, FeatureAccess::VIDEO_MANAGE, 'Video Lab');
     VideoHttp::verifyCsrf(['csrf' => (string)($_POST['csrf'] ?? '')]);
-    $file = $_FILES['video'] ?? null;
-    if (!is_array($file)) throw new InvalidArgumentException('Select a final video.');
     $repository = new VideoStudioRepository(Database::connection());
     $service = new VideoFinalUploadService($repository, new VideoJobRepository($repository->pdo()));
+
+    // The browser puts large files in the bucket itself and sends only the key.
+    $objectKey = trim((string)($_POST['objectKey'] ?? ''));
+    if ($objectKey !== '') {
+        return $service->attachObject(
+            (int)$user['id'],
+            (int)($_POST['projectId'] ?? 0),
+            $objectKey,
+            (string)($_POST['originalName'] ?? ''),
+            (int)($_POST['artworkId'] ?? 0)
+        );
+    }
+
+    $file = $_FILES['video'] ?? null;
+    if (!is_array($file)) throw new InvalidArgumentException('Select a final video.');
     return $service->upload(
         (int)$user['id'],
         (int)($_POST['projectId'] ?? 0),

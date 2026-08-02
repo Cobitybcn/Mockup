@@ -346,7 +346,7 @@ function videos_artist_site_url(string $slug): string
                         <option value=""><?= videos_h(t('Select project', 'Seleccionar proyecto')) ?></option>
                         <?php foreach ($projects as $project): ?><option value="<?= (int)$project['id'] ?>"><?= videos_h($project['title']) ?></option><?php endforeach; ?>
                     </select></label>
-                    <label class="videos-upload-file"><span><?= videos_h(t('File', 'Archivo')) ?></span><input type="file" name="video" accept="video/mp4,video/quicktime,video/webm" required><small><?= videos_h(t('MP4, MOV, or WebM · maximum 500 MB', 'MP4, MOV o WebM · máximo 500 MB')) ?></small></label>
+                    <label class="videos-upload-file"><span><?= videos_h(t('File', 'Archivo')) ?></span><input type="file" name="video" accept="video/mp4,video/quicktime,video/webm" required><small><?= videos_h(t('MP4, MOV, or WebM · up to 500 MB · uploaded straight to storage', 'MP4, MOV o WebM · hasta 500 MB · se sube directo al almacenamiento')) ?></small></label>
                     <p data-final-upload-error role="alert" hidden></p>
                     <footer><button type="button" class="button-link secondary" data-close-final-upload><?= videos_h(t('Cancel', 'Cancelar')) ?></button><button type="submit" class="button-link"><?= videos_h(t('Upload video', 'Subir video')) ?></button></footer>
                 </form>
@@ -354,6 +354,6 @@ function videos_artist_site_url(string $slug): string
         </div>
     </main>
 </div>
-<script src="videos.js?v=12"></script>
+<script src="videos.js?v=13"></script>
 </body>
 </html>

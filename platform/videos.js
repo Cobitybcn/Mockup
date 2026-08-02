@@ -16,6 +16,19 @@
     const uploadForm = uploadModal?.querySelector('[data-final-upload-form]');
     const uploadError = uploadModal?.querySelector('[data-final-upload-error]');
 
+    async function postJson(endpoint, payload) {
+        const response = await fetch(endpoint, {
+            method: 'POST',
+            credentials: 'same-origin',
+            headers: { 'Content-Type': 'application/json', 'Accept': 'application/json', 'X-Requested-With': 'XMLHttpRequest' },
+            body: JSON.stringify({ csrf: uploadForm?.querySelector('[name="csrf"]')?.value || '', ...payload }),
+        });
+        const data = await response.json().catch(() => null);
+        if (data === null) throw new Error(`The server answered ${response.status} without a reason. Reload the page and try again.`);
+        if (!response.ok || !data.ok) throw new Error(data.error || `The request failed (${response.status}).`);
+        return data;
+    }
+
     function applyFilters() {
         const artworkId = String(artworkFilter?.value || '');
         const seriesId = String(seriesFilter?.value || '');
@@ -98,12 +111,40 @@
         if (submit) { submit.disabled = true; submit.textContent = 'Subiendo…'; }
         if (uploadError) uploadError.hidden = true;
         try {
+            const form = new FormData(uploadForm);
+            const file = form.get('video');
+
+            // Cloud Run refuses a request over 32 MiB, which a finished video
+            // passes easily. Ask for a place in the bucket and put it there
+            // directly; the server then only needs the key.
+            if (file instanceof File && file.size > 0) {
+                const destination = await postJson('video_final_upload_url.php', {
+                    projectId: form.get('projectId'),
+                    fileName: file.name,
+                    contentType: file.type || 'video/mp4',
+                    bytes: file.size,
+                });
+                if (destination.uploadUrl) {
+                    if (submit) submit.textContent = 'Subiendo al almacenamiento…';
+                    const put = await fetch(destination.uploadUrl, {
+                        method: 'PUT',
+                        body: file,
+                        headers: { 'Content-Type': destination.contentType },
+                    });
+                    if (!put.ok) throw new Error(`El almacenamiento rechazó el archivo (${put.status}).`);
+                    form.delete('video');
+                    form.set('objectKey', destination.objectKey);
+                    form.set('originalName', file.name);
+                    if (submit) submit.textContent = 'Registrando…';
+                }
+            }
+
             // RequestSecurity guards this endpoint and answers in plain text
             // unless the request states it wants JSON — without this its reason
             // arrives as an unreadable body.
             const response = await fetch('video_final_upload.php', {
                 method: 'POST',
-                body: new FormData(uploadForm),
+                body: form,
                 credentials: 'same-origin',
                 headers: { 'Accept': 'application/json', 'X-Requested-With': 'XMLHttpRequest' },
             });

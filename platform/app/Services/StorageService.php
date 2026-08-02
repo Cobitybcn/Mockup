@@ -157,6 +157,59 @@ class StorageService
         return copy($sourceFilePath, $localPath);
     }
 
+    /**
+     * A URL the browser can PUT straight to, so a large file never travels
+     * through the container. Cloud Run caps an ordinary request at 32 MiB, which
+     * a finished video passes easily.
+     *
+     * Returns null when the bucket is not configured, and the caller is expected
+     * to fall back to an ordinary upload.
+     */
+    public static function getSignedUploadUrl(string $targetPath, string $contentType, int $minutes = 30): ?string
+    {
+        if (!self::init()) {
+            return null;
+        }
+        try {
+            $bucket = self::$storageClient->bucket(self::$bucketName);
+            return $bucket->object(self::normalizePath($targetPath))->signedUrl(
+                new DateTime('+' . $minutes . ' minutes'),
+                [
+                    'version' => 'v4',
+                    'method' => 'PUT',
+                    'contentType' => $contentType,
+                ]
+            );
+        } catch (Throwable $e) {
+            Logger::log('Error signing GCS upload URL: ' . $e->getMessage(), 'error');
+            return null;
+        }
+    }
+
+    /** Size in bytes of a stored object, or null when it is not there. */
+    public static function objectSize(string $targetPath): ?int
+    {
+        if (self::init()) {
+            try {
+                $object = self::$storageClient->bucket(self::$bucketName)->object(self::normalizePath($targetPath));
+                if (!$object->exists()) {
+                    return null;
+                }
+                return (int)($object->info()['size'] ?? 0);
+            } catch (Throwable $e) {
+                Logger::log('Error reading GCS object size: ' . $e->getMessage(), 'error');
+                return null;
+            }
+        }
+
+        $localPath = self::localPath($targetPath);
+        if (!is_file($localPath)) {
+            return null;
+        }
+        $bytes = filesize($localPath);
+        return $bytes === false ? null : (int)$bytes;
+    }
+
     public static function downloadFile(string $targetPath, string $destFilePath): bool
     {
         if (self::init()) {
