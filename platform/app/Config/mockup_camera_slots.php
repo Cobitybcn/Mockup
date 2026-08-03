@@ -892,8 +892,13 @@ PROMPT,
 ];
 $skipCustomCameraSlots = !empty($skipCustomCameraSlots);
 $customCameraSlotsPath = __DIR__ . '/mockup_camera_slots_custom.php';
-if (!$skipCustomCameraSlots && is_file($customCameraSlotsPath)) {
-    $customCameraSlots = require $customCameraSlotsPath;
+if (!$skipCustomCameraSlots) {
+    // Lo guardado desde Camera Boards vive en app_settings; el archivo es solo la
+    // semilla versionada para cuando la base todavia no tiene nada.
+    $customCameraSlots = class_exists('CameraSlotsStore') ? CameraSlotsStore::load() : null;
+    if ($customCameraSlots === null && is_file($customCameraSlotsPath)) {
+        $customCameraSlots = require $customCameraSlotsPath;
+    }
     if (is_array($customCameraSlots)) {
         foreach ((array)($customCameraSlots['slots'] ?? []) as $customCameraSlotId => $customCameraSlot) {
             if (is_string($customCameraSlotId) && is_array($customCameraSlot)) {

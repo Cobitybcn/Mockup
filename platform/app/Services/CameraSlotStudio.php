@@ -51,13 +51,21 @@ final class CameraSlotStudio
      */
     public function customCameraConfig(): array
     {
-        $customPath = $this->customConfigPath();
-        if (!is_file($customPath)) {
-            return ['sets' => [], 'slots' => [], 'scene_board' => [], 'scene_boards' => []];
+        $vacio = ['sets' => [], 'slots' => [], 'scene_board' => [], 'scene_boards' => []];
+
+        // Misma precedencia que el merge del config: primero lo guardado en la base,
+        // el archivo solo como semilla. Leer del archivo aca perderia cada edicion
+        // anterior, porque guardar es leer-modificar-escribir.
+        $loaded = CameraSlotsStore::load();
+        if ($loaded === null) {
+            $customPath = $this->customConfigPath();
+            if (!is_file($customPath)) {
+                return $vacio;
+            }
+            $loaded = require $customPath;
         }
-        $loaded = require $customPath;
         if (!is_array($loaded)) {
-            return ['sets' => [], 'slots' => [], 'scene_board' => [], 'scene_boards' => []];
+            return $vacio;
         }
         return [
             'sets' => is_array($loaded['sets'] ?? null) ? $loaded['sets'] : [],
@@ -847,14 +855,9 @@ final class CameraSlotStudio
         $custom['slots'] = is_array($custom['slots'] ?? null) ? $custom['slots'] : [];
         $custom['scene_board'] = is_array($custom['scene_board'] ?? null) ? $custom['scene_board'] : [];
         $custom['scene_boards'] = is_array($custom['scene_boards'] ?? null) ? $custom['scene_boards'] : [];
-        $contents = "<?php\n"
-            . "declare(strict_types=1);\n\n"
-            . "return " . var_export($custom, true) . ";\n";
-        $contents = preg_replace('/[ \t]+$/m', '', $contents) ?? $contents;
-
-        if (file_put_contents($this->customConfigPath(), $contents) === false) {
-            throw new RuntimeException('No se pudo guardar la configuración custom de cámaras.');
-        }
+        // A la base, no al filesystem: el disco del contenedor es efimero y en cada
+        // despliegue se perdian las ediciones de camaras sin ningun aviso.
+        CameraSlotsStore::save($custom);
     }
 
     /**
