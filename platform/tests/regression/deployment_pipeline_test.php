@@ -7,6 +7,7 @@ function run_deployment_pipeline_regression_tests(): void
     $cloudBuild = (string) file_get_contents($root . '/cloudbuild.ci.yaml');
     $preflightBuild = (string) file_get_contents($root . '/cloudbuild.preflight.yaml');
     $webDockerfile = (string) file_get_contents($root . '/Dockerfile.web');
+    TestHarness::assertContains('machineType: E2_MEDIUM', $cloudBuild, 'production builds use the baseline worker that does not wait for scarce high-CPU capacity');
     $webDeploy = (string) file_get_contents($root . '/deploy_web.ps1');
     $workerDeploy = (string) file_get_contents($root . '/deploy_worker.ps1');
     $setupScript = (string) file_get_contents($root . '/scripts/setup_cloud_build_cicd.ps1');
