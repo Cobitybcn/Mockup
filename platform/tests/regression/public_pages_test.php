@@ -28,6 +28,8 @@ function run_public_pages_regression_tests(): void {
         'TikTok upload chunk count follows the API floor rule and folds the remainder into the final chunk'
     );
     TestHarness::assertContains('$tiktokAccountLabel',$connections,'connected TikTok accounts remain clearly identified when username is unavailable');
+    TestHarness::assertContains("elseif (\$action === 'disconnect_tiktok')",$connections,'the TikTok disconnect button is handled by the connections controller');
+    TestHarness::assertContains("\$tiktokService->disconnect(\$userId, 'artist')",$connections,'disconnecting TikTok clears the artist connection through the integration service');
     TestHarness::assertContains("authorizationUrl(\$userId, 'artist')",$connections,'artist Pinterest connections use the official OAuth flow');
     TestHarness::assertContains("authorizationUrl(\$userId, 'platform')",$connections,'platform Pinterest connections can repeat the OAuth flow');
     TestHarness::assertContains('Artwork Mockups administrative accounts',$connections,'the official Pinterest review identity is presented before optional artist accounts');

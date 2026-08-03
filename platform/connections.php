@@ -47,6 +47,9 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         } elseif ($action === 'connect_tiktok') {
             header('Location: ' . $tiktokService->authorizationUrl($userId, 'artist'));
             exit;
+        } elseif ($action === 'disconnect_tiktok') {
+            $tiktokService->disconnect($userId, 'artist');
+            $_SESSION['connections_notice'] = t('TikTok was disconnected.', 'TikTok fue desconectado.');
         } elseif ($action === 'connect_x') {
             header('Location: ' . $xService->authorizationUrl($userId, 'artist'));
             exit;
