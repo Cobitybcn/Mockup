@@ -10,7 +10,7 @@ OAuth state is random, session-bound, single-use, and expires after ten minutes.
 
 ## Artwork Mockups production identity
 
-The platform Pinterest identity is **Artworks Mockups (`@artworkmockups`)**. The deployed platform app ID is `1589233`. App `1589266` belongs exclusively to Maurizio Valch and must be stored as his account-specific developer app; it must never replace the platform environment configuration.
+The platform Pinterest identity is **Artworks Mockups (`@artworkmockups`)**. The deployed platform app ID is `1589233`. App `1589266` belongs exclusively to Maurizio Valch and must be stored as his account-specific developer app; it must never replace the platform environment configuration. App `1589266` received Standard access on 2026-08-03 and uses the Production API after a fresh Production OAuth authorization.
 
 The Social Media Board lets administrators choose between the platform and artist Pinterest identities. When the platform connection is available, it is the administrator default; the selected purpose is preserved in the draft, scheduled job, and worker publication. Non-administrators can only use their own `artist` connection.
 
@@ -26,6 +26,12 @@ For the first controlled Pin:
 4. Publish one Pin and verify its external ID/link while signed into `@artworkmockups`.
 5. Do not enable normal batches or scheduled Pinterest publication until that result is verified.
 6. After Pinterest grants the public access tier, repeat one controlled public Pin before normal publishing.
+
+Sandbox publication records remain visible as historical results, but never close the
+Production step. In the artwork Publication panel, load the real boards from the currently
+connected artist account, choose one explicitly, and confirm the Production send. A new
+board selection is a new destination; retrying the same environment and board skips Pins
+that already have an external ID.
 
 ## Safe production migration
 

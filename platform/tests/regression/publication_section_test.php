@@ -64,7 +64,9 @@ function run_publication_section_tests(): void
     TestHarness::assertContains("confirm'] ?? '') !== 'yes'", $section, 'Cada envío exige confirmación explícita antes de publicar');
     TestHarness::assertContains('PINS PUBLICADOS', $section, 'Pinterest habla con su propio vocabulario de estado (serie de pins)');
     TestHarness::assertContains('data-copy-text', $section, 'El paquete Saatchi vive al lado de la acción, con copiar por campo');
-    TestHarness::assertContains('createBoard', (string)file_get_contents($platformRoot . '/app/Services/PublicationDistributionService.php'), 'El tablero de Pinterest se resuelve o se crea solo — nunca lo elige el artista');
+    TestHarness::assertContains('name="board_id"', $section, 'Pinterest muestra los tableros reales como elección visible antes del envío');
+    TestHarness::assertContains('requires_republish', $section, 'Un resultado Sandbox no cierra el envío pendiente de Production');
+    TestHarness::assertContains("'api_environment' => \$apiEnvironment", (string)file_get_contents($platformRoot . '/app/Services/PublicationDistributionService.php'), 'Cada envío de Pinterest queda ligado a su entorno API');
 
     // ————— Cinco pasos por importancia (enmienda 2026-07-31) —————
     $stepOrder = [

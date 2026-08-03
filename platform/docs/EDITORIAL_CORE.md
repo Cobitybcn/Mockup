@@ -319,6 +319,14 @@ Interior"), nunca placeholders rígidos ("Main Sales Mockup"). Figura humana par
 ninguna, u opcional de pie — masculina 1,80 m / femenina 1,55 m. Principio rector: **la obra
 determina el espacio, no el espacio a la obra.**
 
+### Cap. 6 — El destino operativo no es contenido editorial (enmienda 2026-08-03)
+
+Las sugerencias editoriales de tablero de Pinterest orientan, pero no deciden el destino.
+Antes de publicar, el artista elige de forma visible un tablero real de la cuenta conectada.
+Cambiar de Sandbox a Production o elegir otro tablero habilita un nuevo envío explícito sin
+confundir los Pins anteriores con los del entorno o tablero actual. Los IDs de Sandbox nunca
+constituyen evidencia de publicación en Production.
+
 ---
 
 ## LIBRO VI — Flujo y estados

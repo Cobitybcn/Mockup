@@ -38,6 +38,12 @@ gobernando `EDITORIAL_CORE.md`; este documento no lo pisa.
    distribución leen SIEMPRE el producto al día. Generar la proyección no es aprobar nada:
    publicar=aprobar ocurre únicamente en el Paso 1.
 
+   **Pinterest: destino explícito** (enmienda 2026-08-03): el producto puede sugerir un
+   tablero, pero el artista elige visualmente uno de los tableros reales de la cuenta antes
+   del envío. Los resultados quedan ligados al entorno API y al tablero: un resultado de
+   Sandbox no cierra Production, y elegir otro tablero permite un nuevo acto confirmado sin
+   duplicar los Pins que ya existen en el mismo entorno y tablero.
+
    **Cadencia de las series sociales** (misma enmienda): «Publicar serie espaciada» es un solo
    acto — la parte 1 sale al momento y las siguientes se programan con un lapso default de
    **12 horas** (cubre husos horarios), ajustable UNA vez por usuario, nunca por obra. El
@@ -124,7 +130,7 @@ gobernando `EDITORIAL_CORE.md`; este documento no lo pisa.
   suman los datos comerciales y se compone la media (videos y mockups seleccionados). Con
   Website configurado y publicado se abren redes y marketplaces: proceso editorial universal
   servido de la memoria → producto terminado único → distribución por adaptador.
-- Seis adaptadores, cada uno con su mecánica propia: Pinterest (1 imagen + tablero + link),
+- Seis adaptadores, cada uno con su mecánica propia: Pinterest (1 imagen + tablero elegido + link),
   Instagram (imagen/carrusel **y Reel**), Facebook (imagen/carrusel **y video**), TikTok (video
   con audio propio vía Direct Post; carrusel nativo con mecánica de audio a definir), X (lugar
   reservado, sin conexión), Saatchi Art (paquete manual: 4+ imágenes con caption, 12 keywords ≤20 caracteres
@@ -135,5 +141,6 @@ gobernando `EDITORIAL_CORE.md`; este documento no lo pisa.
   imagen <50. Ningún campo del sitio entra en ese presupuesto, así que el paso 2 no reusa los
   textos de la página: los recibe generados para Saatchi. El título se compone
   `TÍTULO - cola SEO` con la cola calculada por obra, y si no entra, viaja el título solo.
-- Tableros, campañas y estudios anteriores: descartados como base. Solo se asumen las
-  conexiones y el CORE editorial.
+- Campañas y estudios anteriores: descartados como base. Solo se asumen las conexiones y el
+  CORE editorial. Los tableros reales de Pinterest se leen desde la cuenta conectada para que
+  el artista elija el destino; no se reutiliza el tablero como fuente editorial.

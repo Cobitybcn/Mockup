@@ -140,7 +140,7 @@ function run_publication_distribution_service_tests(): void
                 ? ['key' => $key, 'external_id' => '', 'external_url' => '', 'error' => 'pin rejected']
                 : ['key' => $key, 'external_id' => 'pin-' . $key, 'external_url' => 'https://www.pinterest.com/pin/pin-' . $key . '/', 'error' => ''];
         }
-        return ['items' => $results, 'external_id' => 'board-resolved'];
+        return ['items' => $results, 'external_id' => (string)($request['board_id'] ?? 'board-resolved'), 'board_name' => (string)($request['board_name'] ?? 'Tablero Uno')];
     };
     $service = new PublicationDistributionService($pdo, $productService, $publicationService, [
         'pinterest' => $pinterestFake,
@@ -193,20 +193,21 @@ function run_publication_distribution_service_tests(): void
     }
     TestHarness::assertTrue($badLocale, 'un idioma fuera del producto se rechaza — un envío, un idioma');
 
-    // ————— Pinterest: serie completa de pins, tablero auto-resuelto, reintento parcial —————
+    // ————— Pinterest: serie completa, tablero elegido y reintento por entorno/tablero —————
     $pinFailKeys['keys'] = ['13'];
-    $pinState = $service->publish($publicationId, $userId, 'pinterest', 'en', []);
+    $pinState = $service->publish($publicationId, $userId, 'pinterest', 'en', ['board_id' => 'board-selected']);
     $pinRequest = $captured['pinterest'][0];
     TestHarness::assertSame(4, count($pinRequest['items']), 'un solo acto publica la serie completa: un pin por imagen de la composición');
     TestHarness::assertSame('Pin EN', (string)$pinRequest['items'][0]['title'], 'cada pin lleva el copy editorial de SU imagen');
     TestHarness::assertSame('Pin EN segundo', (string)$pinRequest['items'][1]['title'], 'el segundo pin lleva su propio título, no el de la portada');
     TestHarness::assertSame('Alt EN', (string)$pinRequest['items'][0]['alt_text'], 'cada pin lleva el alt de su imagen en el idioma elegido');
-    TestHarness::assertSame('Tablero Uno', (string)$pinRequest['board_name'], 'el tablero lo resuelve el sistema desde la sugerencia editorial — nunca el artista');
+    TestHarness::assertSame('board-selected', (string)$pinRequest['board_id'], 'el tablero elegido por el artista viaja como destino explícito');
+    TestHarness::assertSame('production', (string)$pinRequest['api_environment'], 'el envío guarda el entorno API junto al destino');
     TestHarness::assertTrue(str_contains((string)$pinRequest['link'], 'strata-dist'), 'los pins enlazan a la página de la obra en el sitio del artista');
     TestHarness::assertSame('partial', (string)$pinState['status'], 'un pin rechazado deja la serie en PARCIAL');
     TestHarness::assertTrue($pinState['published_count'] === 3 && $pinState['total_count'] === 4, 'el estado muestra 3/4 pins publicados');
     $pinFailKeys['keys'] = [];
-    $retryPinState = $service->publish($publicationId, $userId, 'pinterest', 'en', []);
+    $retryPinState = $service->publish($publicationId, $userId, 'pinterest', 'en', ['board_id' => 'board-selected']);
     $retryRequest = $captured['pinterest'][1];
     TestHarness::assertSame(1, count($retryRequest['items']), 'el reintento SOLO repite los pins fallidos — jamás duplica los publicados');
     TestHarness::assertSame('13', (string)$retryRequest['items'][0]['key'], 'el reintento apunta exactamente al pin que falló');
@@ -354,7 +355,8 @@ function run_publication_distribution_service_tests(): void
     $pdo->exec('DELETE FROM publication_distributions');
     $pdo->exec("UPDATE instagram_connections SET status='disconnected'");
     $summary = $service->publishAllConnected($publicationId, $userId, 'en');
-    TestHarness::assertSame('sent', (string)$summary['results']['pinterest']['status'], 'el acto único dispara Pinterest');
+    TestHarness::assertSame('skipped', (string)$summary['results']['pinterest']['status'], 'el atajo global deja Pinterest para el paso que exige elegir tablero');
+    TestHarness::assertTrue(str_contains((string)$summary['results']['pinterest']['detail'], 'tablero') || str_contains((string)$summary['results']['pinterest']['detail'], 'board'), 'el resumen explica dónde elegir el tablero de Pinterest');
     TestHarness::assertSame('sent', (string)$summary['results']['facebook']['status'], 'el acto único dispara la serie de Facebook');
     TestHarness::assertSame('skipped', (string)$summary['results']['instagram']['status'], 'un destino sin conexión se saltea, no rompe');
     TestHarness::assertSame('sent', (string)$summary['results']['tiktok']['status'], 'el acto único dispara TikTok');
@@ -362,7 +364,7 @@ function run_publication_distribution_service_tests(): void
     TestHarness::assertSame('skipped', (string)$summary['results']['instagram_video']['status'], 'el reel de una red sin conexión se saltea igual que su serie');
     TestHarness::assertSame('skipped', (string)$summary['results']['x']['status'], 'X sin conexión se saltea como cualquier otra red');
     TestHarness::assertSame('skipped', (string)$summary['results']['x_video']['status'], 'el reel de X sin conexión se saltea igual que su serie');
-    TestHarness::assertTrue($summary['sent'] === 4 && $summary['skipped'] === 4 && $summary['failed'] === 0, 'el resumen cuenta enviados, salteados y fallidos, reel y X incluidos');
+    TestHarness::assertTrue($summary['sent'] === 3 && $summary['skipped'] === 5 && $summary['failed'] === 0, 'el resumen cuenta enviados, salteados y fallidos, Pinterest explícito, reel y X incluidos');
 
     $repeat = $service->publishAllConnected($publicationId, $userId, 'en');
     TestHarness::assertSame('skipped', (string)$repeat['results']['pinterest']['status'], 'repetir el acto no vuelve a publicar lo ya publicado');
