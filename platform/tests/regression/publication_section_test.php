@@ -111,6 +111,10 @@ function run_publication_section_tests(): void
     TestHarness::assertContains('uploadForArtwork', $uploadService, 'adjuntar un video no obliga al artista a pensar en proyectos');
 
     $publisher = (string)file_get_contents($platformRoot . '/app/Services/TikTokPublisher.php');
+    $videoTikTokService = (string)file_get_contents($platformRoot . '/app/Services/VideoTikTokPublicationService.php');
+    TestHarness::assertContains("require_once dirname(__DIR__) . '/Video/VideoMediaStorage.php'", $videoTikTokService, 'el envío de video TikTok carga su almacenamiento antes de utilizarlo');
+    TestHarness::assertContains("if (!in_array('SELF_ONLY', \$creator['privacyOptions'], true))", $publisher, 'el video TikTok exige que la cuenta permita publicación privada');
+    TestHarness::assertTrue(!str_contains($publisher, "\$creator['privacyOptions'][0]"), 'TikTok nunca reemplaza SELF_ONLY por una visibilidad más amplia');
     TestHarness::assertContains('MEDIA_UPLOAD', $publisher, 'el carrusel usa Creator\'s Draft para que el artista elija la música');
     TestHarness::assertContains('PULL_FROM_URL', $publisher, 'TikTok descarga las fotos: la única vía documentada para carrusel');
     TestHarness::assertContains("'video.upload'", $publisher, 'el carrusel pide su propio scope, distinto del de video');

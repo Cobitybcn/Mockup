@@ -52,12 +52,10 @@ final class TikTokPublisher
         }
         $context = $this->integration->publishingContext($userId, $purpose);
         $creator = $this->creatorInfo($userId, $purpose);
-        $privacyLevel = in_array('SELF_ONLY', $creator['privacyOptions'], true)
-            ? 'SELF_ONLY'
-            : (string)($creator['privacyOptions'][0] ?? '');
-        if ($privacyLevel === '') {
-            throw new RuntimeException('TikTok no devolvió niveles de privacidad disponibles para esta cuenta.');
+        if (!in_array('SELF_ONLY', $creator['privacyOptions'], true)) {
+            throw new RuntimeException('TikTok no habilitó la opción privada SELF_ONLY para esta cuenta.');
         }
+        $privacyLevel = 'SELF_ONLY';
         $chunkSize = min($videoSize, 10 * 1024 * 1024);
         $totalChunkCount = max(1, intdiv($videoSize, $chunkSize));
 

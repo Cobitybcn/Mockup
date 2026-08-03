@@ -1,6 +1,8 @@
 <?php
 declare(strict_types=1);
 
+require_once dirname(__DIR__) . '/Video/VideoMediaStorage.php';
+
 final class VideoTikTokPublicationService
 {
     public function __construct(private readonly PDO $pdo) {}
