@@ -72,7 +72,8 @@ function run_publication_section_tests(): void
     TestHarness::assertContains('published_item_keys', $section, 'Los Pines exitosos quedan bloqueados individualmente en un reintento parcial');
     TestHarness::assertContains('pub-pin-card--error', $section, 'Pinterest muestra el fallo junto a la tarjeta exacta');
     TestHarness::assertContains('rejected_board_ids', $section, 'Los tableros Sandbox rechazados dejan de aparecer en los selectores Production');
-    TestHarness::assertContains('verified_board_ids', $section, 'Production ofrece únicamente tableros confirmados por Pins exitosos');
+    TestHarness::assertContains('publicationBoards', $section, 'Production ofrece su catálogo actual sin exigir Pins anteriores');
+    TestHarness::assertContains('allowed_board_ids', $section, 'El backend valida cada selector contra el mismo catálogo Production visible');
     TestHarness::assertContains('GET_LOCK', (string)file_get_contents($platformRoot . '/app/Services/PublicationDistributionService.php'), 'Dos sesiones concurrentes serializan el envío antes de llamar a Pinterest');
     TestHarness::assertContains('form="pinterestPublishForm"', $section, 'Los selectores de cada tarjeta pertenecen al acto confirmado de Pinterest');
     TestHarness::assertContains('requires_republish', $section, 'Un resultado Sandbox no cierra el envío pendiente de Production');

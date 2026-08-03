@@ -252,6 +252,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && in_array((string)($_POST['action'] 
             }
             $medium = (string)($_POST['medium'] ?? 'video');
             $requestedDestination = (string)($_POST['destination'] ?? '');
+            $pinAllowedBoardIds = [];
             if ($requestedDestination === 'pinterest') {
                 Auth::start();
                 $expectedPublishToken = (string)($_SESSION['pinterest_publish_tokens'][$artworkId] ?? '');
@@ -262,6 +263,10 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && in_array((string)($_POST['action'] 
                         'This Pinterest publication was already submitted or expired. Reload the page before trying again.',
                         'Este envío a Pinterest ya fue enviado o venció. Recargá la página antes de volver a intentar.'
                     ));
+                }
+                foreach ((new PinterestIntegrationService($pdo))->publicationBoards($userId, 'artist') as $selectableBoard) {
+                    $selectableBoardId = trim((string)($selectableBoard['id'] ?? ''));
+                    if ($selectableBoardId !== '') $pinAllowedBoardIds[] = $selectableBoardId;
                 }
             }
             $pinBoards = [];
@@ -278,6 +283,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && in_array((string)($_POST['action'] 
                 (string)($_POST['locale'] ?? ''),
                 [
                     'board_ids' => $pinBoards,
+                    'allowed_board_ids' => $pinAllowedBoardIds,
                     'link' => $pinLink,
                     'medium' => $medium,
                 ]
@@ -998,23 +1004,18 @@ function pub_page_chip(string $status): array
                             $pinBoards = [];
                             $pinBoardsError = '';
                             $pinEnvironment = (string)($pinState['current_environment'] ?? '');
+                            $pinRejectedBoardIds = array_map('strval', (array)($pinState['rejected_board_ids'] ?? []));
                             if ($pinConnected) {
                                 try {
-                                    $pinBoards = (new PinterestIntegrationService($pdo))->boards($userId, 'artist');
+                                    $pinBoards = (new PinterestIntegrationService($pdo))->publicationBoards($userId, 'artist', $pinRejectedBoardIds);
                                 } catch (Throwable $pinBoardsException) {
                                     $pinBoardsError = $pinBoardsException->getMessage();
                                 }
                             }
                             $pinPreviousBoardIds = !empty($pinState['requires_republish']) ? [] : (array)($pinState['board_ids'] ?? []);
                             $pinItemErrors = (array)($pinState['item_errors'] ?? []);
-                            $pinRejectedBoardIds = array_map('strval', (array)($pinState['rejected_board_ids'] ?? []));
-                            $pinVerifiedBoardIds = array_map('strval', (array)($pinState['verified_board_ids'] ?? []));
                             $pinPublishedItemKeys = array_fill_keys(array_map('strval', (array)($pinState['published_item_keys'] ?? [])), true);
-                            $pinAvailableBoards = array_values(array_filter(
-                                $pinBoards,
-                                static fn(array $board): bool => !in_array((string)($board['id'] ?? ''), $pinRejectedBoardIds, true)
-                                    && ($pinVerifiedBoardIds === [] || in_array((string)($board['id'] ?? ''), $pinVerifiedBoardIds, true))
-                            ));
+                            $pinAvailableBoards = $pinBoards;
                             $pinRecommendedBoardId = '';
                             foreach ($pinAvailableBoards as $pinBoardCandidate) {
                                 if (strcasecmp(trim((string)($pinBoardCandidate['name'] ?? '')), $pinBoardName) === 0) {
@@ -1045,8 +1046,8 @@ function pub_page_chip(string $status): array
                             <?php if ($pinRejectedBoardIds !== []): ?>
                                 <p class="pub-panel-note"><strong><?= pub_h(t('Sandbox boards removed.', 'Tableros Sandbox retirados.')) ?></strong> <?= pub_h(t('Pinterest rejected these destinations in Production; they are no longer offered in the selectors.', 'Pinterest rechazó esos destinos en Production; ya no aparecen en los selectores.')) ?></p>
                             <?php endif; ?>
-                            <?php if ($pinVerifiedBoardIds !== [] && !$pinSeriesComplete): ?>
-                                <p class="pub-panel-note"><strong><?= pub_h(t('Verified Production boards only.', 'Solo tableros verificados en Production.')) ?></strong> <?= pub_h(t('The selectors exclude Sandbox, deleted, and unconfirmed destinations returned by Pinterest.', 'Los selectores excluyen destinos Sandbox, eliminados o no confirmados que devuelve Pinterest.')) ?></p>
+                            <?php if (!$pinSeriesComplete): ?>
+                                <p class="pub-panel-note"><strong><?= pub_h(t('Production boards.', 'Tableros de Production.')) ?></strong> <?= pub_h(t('The selectors exclude Pinterest system destinations and boards rejected as Sandbox.', 'Los selectores excluyen destinos internos de Pinterest y tableros rechazados como Sandbox.')) ?></p>
                             <?php endif; ?>
                             <div class="pub-pin-strip" aria-label="<?= pub_h(t('Pin series preview', 'Vista previa de la serie de pins')) ?>">
                                 <?php foreach ($mediaItemsPayload as $pinItem): ?>
@@ -1101,7 +1102,7 @@ function pub_page_chip(string $status): array
                             <?php elseif ($pinSeriesComplete): ?>
                                 <p class="pub-panel-note"><strong><?= pub_h(t('Series complete.', 'Serie completa.')) ?></strong> <?= pub_h(t('Published Pins are locked and cannot be sent again from the normal workflow.', 'Los Pines publicados quedan bloqueados y no pueden volver a enviarse desde el flujo normal.')) ?></p>
                             <?php elseif ($pinAvailableBoards === []): ?>
-                                <p class="pub-product-meta"><?= pub_h(t('No verified Production boards are available. Open Pinterest, confirm the boards, and reconnect before publishing.', 'No hay tableros verificados de Production disponibles. Abrí Pinterest, confirmá los tableros y reconectá antes de publicar.')) ?></p>
+                                <p class="pub-product-meta"><?= pub_h(t('No eligible Production boards are available. Create a public board on Pinterest or reconnect before publishing.', 'No hay tableros elegibles de Production. Creá un tablero público en Pinterest o reconectá antes de publicar.')) ?></p>
                             <?php else: ?>
                                 <form method="post" class="pub-dist-form" id="pinterestPublishForm">
                                     <input type="hidden" name="action" value="distribute">

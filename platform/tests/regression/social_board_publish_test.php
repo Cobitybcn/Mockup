@@ -196,7 +196,8 @@ if (!str_contains($boardController, "['platform', 'artist']")
     || !str_contains($boardController, 'data-default-destination="website"')
     || !str_contains($boardService, 'pinterestPurpose')
     || !str_contains($boardService, '$drafts->create($mockupId, $user, $purpose')
-    || !str_contains($boardsEndpoint, "\$_GET['purpose']")) {
+    || !str_contains($boardsEndpoint, "\$_GET['purpose']")
+    || !str_contains($boardsEndpoint, 'publicationBoards')) {
     fwrite(STDERR, "FAIL: Pinterest platform and artist identities are not preserved from board selection to publication.\n");
     exit(1);
 }

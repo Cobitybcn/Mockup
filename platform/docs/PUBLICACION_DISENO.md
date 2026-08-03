@@ -43,9 +43,9 @@ gobernando `EDITORIAL_CORE.md`; este documento no lo pisa.
    tableros reales de la cuenta antes del envío. Como la cuenta puede tener muchos tableros y
    la decisión se repite por imagen, se usa un `<select>` compacto dentro de cada tarjeta —
    excepción explícita al art. III.13 solicitada por el artista. Cada resultado queda ligado
-   al entorno API, a la imagen y a su tablero. En Production, el selector cruza la lista API
-   con evidencia histórica de Pins exitosos de la cuenta: no ofrece tableros Sandbox,
-   eliminados, de sistema o aún no confirmados.
+   al entorno API, a la imagen y a su tablero. En Production, el selector usa la lista de la
+   API Production y retira destinos internos de Pinterest y IDs ya rechazados como Sandbox.
+   No exige un Pin anterior: también ofrece tableros Production nuevos todavía vacíos.
    La serie presenta un solo campo visible **Enlace de destino para los Pins**, precargado con
    la página pública de la obra: se verifica o edita una vez y se aplica a todas las imágenes.
    Un Pin exitoso queda bloqueado: editar el tablero o el enlace, repetir el formulario o

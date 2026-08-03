@@ -323,11 +323,13 @@ determina el espacio, no el espacio a la obra.**
 
 Las sugerencias editoriales de tablero de Pinterest orientan, pero no deciden el destino.
 Antes de publicar, el artista elige junto a **cada imagen** un tablero real de la cuenta
-conectada: una serie puede distribuir sus Pins entre tableros distintos. En Production, un
-tablero solo se considera elegible cuando un Pin Production exitoso lo confirmó; el listado
-remoto por sí solo no es autoridad porque puede conservar destinos Sandbox, eliminados o de
-sistema. Esa evidencia pertenece a la cuenta y rige todas sus obras. Los IDs de Sandbox nunca
-constituyen evidencia de publicación en Production.
+conectada: una serie puede distribuir sus Pins entre tableros distintos. En Production, son
+elegibles los tableros devueltos por la API Production de esa conexión, excepto los destinos
+internos de Pinterest (por ejemplo Guardado rápido y Products) y los IDs que Production ya
+rechazó como Sandbox. Haber publicado antes en un tablero NO es requisito: un tablero nuevo
+puede elegirse antes de recibir su primer Pin. El perfil visual no es autoridad de entorno,
+porque Pinterest también hace visibles allí los tableros creados en Sandbox. Los IDs de
+Sandbox nunca constituyen evidencia de publicación en Production.
 
 La serie muestra además un único enlace de destino, precargado con la página pública de la
 obra y editable antes del primer envío. Ese enlace gobierna los diez Pins porque todos

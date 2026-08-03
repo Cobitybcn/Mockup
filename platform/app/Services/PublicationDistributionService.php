@@ -509,6 +509,10 @@ final class PublicationDistributionService
             $boardEvidence = $this->pinterestBoardEvidence($userId, $pinterestEnvironment);
             $pinterestRejectedBoardIds = $boardEvidence['rejected_ids'];
             $verifiedBoardIds = $boardEvidence['verified_ids'];
+            $allowedBoardIds = array_values(array_unique(array_filter(array_map(
+                static fn($boardId): string => trim((string)$boardId),
+                (array)($options['allowed_board_ids'] ?? [])
+            ))));
             foreach ((array)($options['board_ids'] ?? []) as $itemKey => $boardId) {
                 $itemKey = trim((string)$itemKey);
                 $boardId = trim((string)$boardId);
@@ -523,10 +527,12 @@ final class PublicationDistributionService
                         'Un tablero seleccionado pertenece a Pinterest Sandbox. Recargá y elegí otro en los Pins marcados.'
                     ));
                 }
-                if ($verifiedBoardIds !== [] && !in_array($boardId, $verifiedBoardIds, true)) {
+                $isAllowedByCatalog = $allowedBoardIds !== [] && in_array($boardId, $allowedBoardIds, true);
+                $isAllowedByPriorSuccess = $allowedBoardIds === [] && in_array($boardId, $verifiedBoardIds, true);
+                if (!$isAllowedByCatalog && !$isAllowedByPriorSuccess && ($allowedBoardIds !== [] || $verifiedBoardIds !== [])) {
                     throw new RuntimeException(t(
-                        'This board has not been confirmed by a successful Production Pin. Reload and choose a verified board.',
-                        'Este tablero no fue confirmado por un Pin exitoso en Production. Recargá y elegí un tablero verificado.'
+                        'This board is not available in the current Pinterest Production catalog. Reload and choose another board.',
+                        'Este tablero no está disponible en el catálogo Production actual de Pinterest. Recargá y elegí otro.'
                     ));
                 }
             }

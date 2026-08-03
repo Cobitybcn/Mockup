@@ -228,15 +228,19 @@ function run_publication_distribution_service_tests(): void
     try {
         $service->publish($publicationId, $userId, 'pinterest', 'en', ['board_ids' => $unverifiedBoardIds]);
     } catch (RuntimeException $e) {
-        $unverifiedAgain = str_contains($e->getMessage(), 'verificado') || str_contains($e->getMessage(), 'verified');
+        $unverifiedAgain = str_contains($e->getMessage(), 'catálogo') || str_contains($e->getMessage(), 'catalog');
     }
-    TestHarness::assertTrue($unverifiedAgain, 'cuando ya existe evidencia Production el backend rechaza tableros no confirmados del listado remoto');
+    TestHarness::assertTrue($unverifiedAgain, 'sin catálogo actual el backend no acepta un tablero nuevo arbitrario');
     $pinFailKeys['keys'] = [];
-    $pinBoardIds['13'] = 'board-a';
-    $retryPinState = $service->publish($publicationId, $userId, 'pinterest', 'en', ['board_ids' => ['13' => 'board-a']]);
+    $pinBoardIds['13'] = 'board-c';
+    $retryPinState = $service->publish($publicationId, $userId, 'pinterest', 'en', [
+        'board_ids' => ['13' => 'board-c'],
+        'allowed_board_ids' => ['board-a', 'board-b', 'board-c'],
+    ]);
     $retryRequest = $captured['pinterest'][1];
     TestHarness::assertSame(1, count($retryRequest['items']), 'el reintento SOLO repite los pins fallidos — jamás duplica los publicados');
     TestHarness::assertSame('13', (string)$retryRequest['items'][0]['key'], 'el reintento apunta exactamente al pin que falló');
+    TestHarness::assertSame('board-c', (string)$retryRequest['items'][0]['board_id'], 'un tablero nuevo devuelto por Production puede recibir su primer Pin');
     TestHarness::assertTrue($retryPinState['status'] === 'published' && $retryPinState['error'] === '', 'la serie completa queda PINS PUBLICADOS y el error desaparece (IV.16)');
     TestHarness::assertTrue($retryPinState['published_count'] === 4 && $retryPinState['total_count'] === 4, 'el estado final muestra 4/4 pins');
     TestHarness::assertSame([12, 13, 14, 15], (array)$retryPinState['published_item_keys'], 'el estado expone exactamente qué tarjetas quedan cerradas');
@@ -247,6 +251,23 @@ function run_publication_distribution_service_tests(): void
     $changedLink = 'https://mauriziovalch.com/artworks/destino-revisado/';
     $service->publish($publicationId, $userId, 'pinterest', 'en', ['board_ids' => $pinBoardIds, 'link' => $changedLink]);
     TestHarness::assertSame(2, count($captured['pinterest']), 'cambiar el enlace después del éxito tampoco invoca Pinterest');
+
+    TestHarness::assertTrue(
+        !PinterestIntegrationService::isPublicationBoardEligible(['id' => 'system-1', 'name' => 'Guardado rápido']),
+        'Guardado rápido es un destino interno de Pinterest, no un tablero editorial'
+    );
+    TestHarness::assertTrue(
+        !PinterestIntegrationService::isPublicationBoardEligible(['id' => 'system-2', 'name' => 'Products']),
+        'Products es un destino interno de Pinterest, no un tablero creado por el artista'
+    );
+    TestHarness::assertTrue(
+        PinterestIntegrationService::isPublicationBoardEligible(['id' => 'new-board', 'name' => 'Statement Abstract Art for Modern Interiors']),
+        'un tablero Production nuevo es elegible aunque todavía no tenga Pins'
+    );
+    TestHarness::assertTrue(
+        !PinterestIntegrationService::isPublicationBoardEligible(['id' => 'sandbox-board', 'name' => 'Vertical Modern Abstract Wall Art'], ['sandbox-board']),
+        'un ID rechazado como Sandbox se excluye aunque su nombre sea editorial'
+    );
 
     // ————— Series sociales: parte 1 ahora, el resto programado con el lapso —————
     TestHarness::assertSame(12, $service->seriesGapHours($userId), 'el lapso default de la cadencia es 12 horas');

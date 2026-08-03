@@ -30,7 +30,13 @@ try {
     }
 
     $boards = [];
-    foreach ($service->boards($userId, $purpose) as $board) {
+    $rejectedBoardIds = [];
+    if ($purpose === 'artist') {
+        $environment = $service->apiEnvironment($userId, $purpose);
+        $rejectedBoardIds = (new PublicationDistributionService(Database::connection()))
+            ->pinterestBoardEvidence($userId, $environment)['rejected_ids'];
+    }
+    foreach ($service->publicationBoards($userId, $purpose, $rejectedBoardIds) as $board) {
         $id = trim((string)($board['id'] ?? ''));
         $name = trim((string)($board['name'] ?? ''));
         if ($id === '' || $name === '') continue;

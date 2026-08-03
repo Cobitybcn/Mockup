@@ -194,6 +194,40 @@ final class PinterestIntegrationService
         return $items;
     }
 
+    /**
+     * Boards eligible for ordinary artwork publication.
+     *
+     * Pinterest exposes internal destinations such as Quick Save and Products
+     * through /boards even though the artist did not create them as editorial
+     * boards. The Production API remains the environment authority; this
+     * filter only removes those system destinations and IDs already rejected
+     * by Production as Sandbox.
+     *
+     * @param list<string> $rejectedBoardIds
+     * @return list<array>
+     */
+    public function publicationBoards(int $userId, string $purpose = 'artist', array $rejectedBoardIds = []): array
+    {
+        return array_values(array_filter(
+            $this->boards($userId, $purpose),
+            static fn(array $board): bool => self::isPublicationBoardEligible($board, $rejectedBoardIds)
+        ));
+    }
+
+    /** @param list<string> $rejectedBoardIds */
+    public static function isPublicationBoardEligible(array $board, array $rejectedBoardIds = []): bool
+    {
+        $id = trim((string)($board['id'] ?? ''));
+        $name = trim((string)($board['name'] ?? ''));
+        if ($id === '' || $name === '' || in_array($id, array_map('strval', $rejectedBoardIds), true)) return false;
+
+        $normalized = mb_strtolower($name, 'UTF-8');
+        $normalized = strtr($normalized, ['á'=>'a','é'=>'e','í'=>'i','ó'=>'o','ú'=>'u','ü'=>'u']);
+        $normalized = preg_replace('/[^a-z0-9]+/u', ' ', $normalized) ?? '';
+        $normalized = trim(preg_replace('/\s+/', ' ', $normalized) ?? '');
+        return !in_array($normalized, ['quick save', 'quick saves', 'guardado rapido', 'products', 'productos'], true);
+    }
+
     public function sections(int $userId,string $purpose,string $boardId): array
     {
         $this->assertPurposeAllowed($userId,$purpose);if($boardId==='')return [];[$token,$apiBase]=$this->boardReadCredentials($userId,$purpose);$items=[];$bookmark=null;
