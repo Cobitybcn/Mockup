@@ -245,12 +245,18 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && in_array((string)($_POST['action'] 
                 throw new RuntimeException(t('Confirm the send before publishing.', 'Confirmá el envío antes de publicar.'));
             }
             $medium = (string)($_POST['medium'] ?? 'video');
+            $pinBoards = [];
+            foreach ((array)($_POST['pin_boards'] ?? []) as $pinKey => $pinBoardId) {
+                $pinKey = trim((string)$pinKey);
+                $pinBoardId = trim((string)$pinBoardId);
+                if (preg_match('/^[0-9]+$/', $pinKey) && $pinBoardId !== '') $pinBoards[$pinKey] = $pinBoardId;
+            }
             $state = $distribution->publish(
                 (int)$publication['id'],
                 $userId,
                 (string)($_POST['destination'] ?? ''),
                 (string)($_POST['locale'] ?? ''),
-                ['board_id' => trim((string)($_POST['board_id'] ?? '')), 'medium' => $medium]
+                ['board_ids' => $pinBoards, 'medium' => $medium]
             );
             $flag = (string)($_POST['destination'] ?? '');
             if ($flag === 'tiktok' && $medium === 'carousel') $flag = 'tiktok_carousel';
@@ -591,7 +597,7 @@ function pub_page_chip(string $status): array
     <title><?= pub_h(t('Publication - Artwork Mockups', 'Publicación - Artwork Mockups')) ?></title>
     <link rel="stylesheet" href="style.css">
     <link rel="stylesheet" href="ui-catalog.css">
-    <link rel="stylesheet" href="publication.css?v=18">
+    <link rel="stylesheet" href="publication.css?v=19">
 </head>
 <body>
 <div class="app-shell">
@@ -975,25 +981,27 @@ function pub_page_chip(string $status): array
                                     $pinBoardsError = $pinBoardsException->getMessage();
                                 }
                             }
-                            $pinSelectedBoardId = !empty($pinState['requires_republish']) ? '' : trim((string)($pinState['board_id'] ?? ''));
-                            if ($pinSelectedBoardId === '') {
-                                foreach ($pinBoards as $pinBoardCandidate) {
-                                    if (strcasecmp(trim((string)($pinBoardCandidate['name'] ?? '')), $pinBoardName) === 0) {
-                                        $pinSelectedBoardId = (string)($pinBoardCandidate['id'] ?? '');
-                                        break;
-                                    }
+                            $pinPreviousBoardIds = !empty($pinState['requires_republish']) ? [] : (array)($pinState['board_ids'] ?? []);
+                            $pinRecommendedBoardId = '';
+                            foreach ($pinBoards as $pinBoardCandidate) {
+                                if (strcasecmp(trim((string)($pinBoardCandidate['name'] ?? '')), $pinBoardName) === 0) {
+                                    $pinRecommendedBoardId = (string)($pinBoardCandidate['id'] ?? '');
+                                    break;
                                 }
                             }
-                            if ($pinSelectedBoardId === '' && isset($pinBoards[0])) {
-                                $pinSelectedBoardId = (string)($pinBoards[0]['id'] ?? '');
-                            }
+                            if ($pinRecommendedBoardId === '' && isset($pinBoards[0])) $pinRecommendedBoardId = (string)($pinBoards[0]['id'] ?? '');
+                            $pinCanChooseBoards = $pinConnected && $pinBoardsError === '' && $pinBoards !== [];
                             ?>
-                            <p class="pub-panel-note"><?= pub_h(t('Publishes', 'Publica')) ?> <strong><?= count($mediaItemsPayload) ?> <?= pub_h(t('pins', 'pins')) ?></strong> — <?= pub_h(t('one per composition image, each with its own editorial copy. Choose the real destination board below; the editorial suggestion is', 'uno por imagen de la composición, cada uno con su copy editorial propio. Elegí abajo el tablero real de destino; la sugerencia editorial es')) ?> «<?= pub_h($pinBoardName) ?>».</p>
+                            <p class="pub-panel-note"><?= pub_h(t('Publishes', 'Publica')) ?> <strong><?= count($mediaItemsPayload) ?> <?= pub_h(t('pins', 'pins')) ?></strong> — <?= pub_h(t('one per composition image, each with its own editorial copy and destination board. Choose the board on every Pin; the editorial suggestion is', 'uno por imagen de la composición, cada uno con su copy editorial propio y su tablero de destino. Elegí el tablero en cada Pin; la sugerencia editorial es')) ?> «<?= pub_h($pinBoardName) ?>».</p>
                             <?php if (!empty($pinState['requires_republish'])): ?>
                                 <p class="pub-panel-note"><strong><?= pub_h(t('Production publication pending.', 'Publicación en Production pendiente.')) ?></strong> <?= pub_h(t('The visible result belongs to Sandbox and will not be reused as a Production Pin.', 'El resultado visible pertenece a Sandbox y no se reutilizará como Pin de Production.')) ?></p>
                             <?php endif; ?>
                             <div class="pub-pin-strip" aria-label="<?= pub_h(t('Pin series preview', 'Vista previa de la serie de pins')) ?>">
                                 <?php foreach ($mediaItemsPayload as $pinItem): ?>
+                                    <?php
+                                    $pinItemKey = (string)((int)($pinItem['mockup_sheet_id'] ?? 0));
+                                    $pinItemBoardId = trim((string)($pinPreviousBoardIds[$pinItemKey] ?? '')) ?: $pinRecommendedBoardId;
+                                    ?>
                                     <figure class="pub-pin-card">
                                         <img src="<?= pub_h(pub_media_url((string)($pinItem['file'] ?? ''))) ?>" alt="" loading="lazy">
                                         <?php
@@ -1006,11 +1014,22 @@ function pub_page_chip(string $status): array
                                             <strong><?= pub_h((string)($pinCopy['title'] ?? '')) ?></strong>
                                             <p><?= pub_h((string)($pinCopy['description'] ?? '')) ?></p>
                                         </div>
+                                        <?php if ($pinCanChooseBoards): ?>
+                                            <label class="pub-pin-board">
+                                                <span><?= pub_h(t('Board', 'Tablero')) ?></span>
+                                                <select name="pin_boards[<?= pub_h($pinItemKey) ?>]" form="pinterestPublishForm" required>
+                                                    <?php foreach ($pinBoards as $pinBoard): ?>
+                                                        <?php $pinBoardId = (string)($pinBoard['id'] ?? ''); ?>
+                                                        <option value="<?= pub_h($pinBoardId) ?>" <?= $pinBoardId === $pinItemBoardId ? 'selected' : '' ?>><?= pub_h((string)($pinBoard['name'] ?? t('Untitled', 'Sin título'))) ?></option>
+                                                    <?php endforeach; ?>
+                                                </select>
+                                            </label>
+                                        <?php endif; ?>
                                     </figure>
                                 <?php endforeach; ?>
                             </div>
                             <?php if ((int)($pinState['total_count'] ?? 0) > 0): ?>
-                                <p class="pub-product-meta"><small><?= (int)$pinState['published_count'] ?>/<?= (int)$pinState['total_count'] ?> <?= pub_h(t('pins published', 'pins publicados')) ?><?= ($pinState['api_environment'] ?? '') !== '' ? ' · ' . pub_h(strtoupper((string)$pinState['api_environment'])) : '' ?><?= ($pinState['board_name'] ?? '') !== '' ? ' · ' . pub_h((string)$pinState['board_name']) : '' ?></small>
+                                <p class="pub-product-meta"><small><?= (int)$pinState['published_count'] ?>/<?= (int)$pinState['total_count'] ?> <?= pub_h(t('pins published', 'pins publicados')) ?><?= ($pinState['api_environment'] ?? '') !== '' ? ' · ' . pub_h(strtoupper((string)$pinState['api_environment'])) : '' ?><?= (array)($pinState['board_names'] ?? []) !== [] ? ' · ' . count((array)$pinState['board_names']) . ' ' . pub_h(t('boards', 'tableros')) : '' ?></small>
                                 <?php if (($pinState['external_url'] ?? '') !== ''): ?> · <a href="<?= pub_h((string)$pinState['external_url']) ?>" target="_blank" rel="noopener"><?= pub_h(t('View pin →', 'Ver pin →')) ?></a><?php endif; ?></p>
                             <?php endif; ?>
                             <?php if (($pinState['status'] ?? '') === 'failed' || ($pinState['status'] ?? '') === 'partial'): ?>
@@ -1023,23 +1042,12 @@ function pub_page_chip(string $status): array
                             <?php elseif ($pinBoards === []): ?>
                                 <p class="pub-product-meta"><?= pub_h(t('No boards were found in the connected Pinterest account. Create one on Pinterest and reload this step.', 'No se encontraron tableros en la cuenta de Pinterest conectada. Creá uno en Pinterest y recargá este paso.')) ?></p>
                             <?php else: ?>
-                                <form method="post" class="pub-dist-form">
+                                <form method="post" class="pub-dist-form" id="pinterestPublishForm">
                                     <input type="hidden" name="action" value="distribute">
                                     <input type="hidden" name="id" value="<?= (int)$doc['artwork']['id'] ?>">
                                     <input type="hidden" name="csrf" value="<?= pub_h($csrf) ?>">
                                     <input type="hidden" name="destination" value="pinterest">
-                                    <div>
-                                        <p class="pub-product-meta"><strong><?= pub_h(t('Destination board', 'Tablero de destino')) ?></strong> · <?= pub_h(strtoupper($pinEnvironment ?: 'production')) ?></p>
-                                        <div class="pub-chip-group" role="radiogroup" aria-label="<?= pub_h(t('Destination board', 'Tablero de destino')) ?>">
-                                            <?php foreach ($pinBoards as $pinBoard): ?>
-                                                <?php $pinBoardId = (string)($pinBoard['id'] ?? ''); ?>
-                                                <label class="pub-chip-option">
-                                                    <input type="radio" name="board_id" value="<?= pub_h($pinBoardId) ?>" <?= $pinBoardId === $pinSelectedBoardId ? 'checked' : '' ?> required>
-                                                    <span><?= pub_h((string)($pinBoard['name'] ?? t('Untitled', 'Sin título'))) ?></span>
-                                                </label>
-                                            <?php endforeach; ?>
-                                        </div>
-                                    </div>
+                                    <p class="pub-product-meta"><strong><?= pub_h(t('One board per Pin', 'Un tablero por Pin')) ?></strong> · <?= pub_h(strtoupper($pinEnvironment ?: 'production')) ?></p>
                                     <div class="pub-chip-group" role="radiogroup" aria-label="<?= pub_h(t('Send language', 'Idioma del envío')) ?>">
                                         <?php foreach ($localeOptions as $localeOption): ?>
                                             <label class="pub-chip-option">

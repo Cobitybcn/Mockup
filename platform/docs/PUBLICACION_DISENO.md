@@ -38,11 +38,13 @@ gobernando `EDITORIAL_CORE.md`; este documento no lo pisa.
    distribución leen SIEMPRE el producto al día. Generar la proyección no es aprobar nada:
    publicar=aprobar ocurre únicamente en el Paso 1.
 
-   **Pinterest: destino explícito** (enmienda 2026-08-03): el producto puede sugerir un
-   tablero, pero el artista elige visualmente uno de los tableros reales de la cuenta antes
-   del envío. Los resultados quedan ligados al entorno API y al tablero: un resultado de
-   Sandbox no cierra Production, y elegir otro tablero permite un nuevo acto confirmado sin
-   duplicar los Pins que ya existen en el mismo entorno y tablero.
+   **Pinterest: destino explícito por Pin** (enmienda corregida 2026-08-03): el producto
+   puede sugerir un tablero, pero el artista elige junto a cada Thumbnail Card uno de los
+   tableros reales de la cuenta antes del envío. Como la cuenta puede tener muchos tableros y
+   la decisión se repite por imagen, se usa un `<select>` compacto dentro de cada tarjeta —
+   excepción explícita al art. III.13 solicitada por el artista. Cada resultado queda ligado
+   al entorno API, a la imagen y a su tablero: Sandbox no cierra Production, y cambiar el
+   tablero de una imagen reenvía solo ese Pin sin duplicar los demás.
 
    **Cadencia de las series sociales** (misma enmienda): «Publicar serie espaciada» es un solo
    acto — la parte 1 sale al momento y las siguientes se programan con un lapso default de
@@ -95,7 +97,9 @@ gobernando `EDITORIAL_CORE.md`; este documento no lo pisa.
     acciones secundarias discretas.
 13. **Prohibido `<select>` donde quepa elección visible.** Elegir video o mockups es con
     tarjetas visuales; elegir destinos es con fichas visibles que muestran su estado — no un
-    desplegable.
+    desplegable. **Excepción Pinterest por Pin (2026-08-03):** cada Thumbnail Card conserva
+    su imagen y lleva un selector compacto de tablero porque la misma elección se repite en
+    una serie horizontal y la lista real puede ser extensa.
 14. **TikTok: dos medios que conviven** (enmienda 2026-07-31). El Paso 5 publica **video** y
     **carrusel de imágenes** como dos publicaciones distintas de TikTok — publicar una jamás
     bloquea ni reemplaza a la otra. Sin video en la página, el carrusel sigue disponible: TikTok
@@ -130,7 +134,7 @@ gobernando `EDITORIAL_CORE.md`; este documento no lo pisa.
   suman los datos comerciales y se compone la media (videos y mockups seleccionados). Con
   Website configurado y publicado se abren redes y marketplaces: proceso editorial universal
   servido de la memoria → producto terminado único → distribución por adaptador.
-- Seis adaptadores, cada uno con su mecánica propia: Pinterest (1 imagen + tablero elegido + link),
+- Seis adaptadores, cada uno con su mecánica propia: Pinterest (cada imagen + su tablero elegido + link),
   Instagram (imagen/carrusel **y Reel**), Facebook (imagen/carrusel **y video**), TikTok (video
   con audio propio vía Direct Post; carrusel nativo con mecánica de audio a definir), X (lugar
   reservado, sin conexión), Saatchi Art (paquete manual: 4+ imágenes con caption, 12 keywords ≤20 caracteres

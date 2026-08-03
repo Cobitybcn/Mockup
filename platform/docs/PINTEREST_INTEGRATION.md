@@ -29,9 +29,9 @@ For the first controlled Pin:
 
 Sandbox publication records remain visible as historical results, but never close the
 Production step. In the artwork Publication panel, load the real boards from the currently
-connected artist account, choose one explicitly, and confirm the Production send. A new
-board selection is a new destination; retrying the same environment and board skips Pins
-that already have an external ID.
+connected artist account, choose a board beside every Pin, and confirm the Production send.
+Changing one Pin's board is a new destination only for that image; retrying the same
+environment and per-Pin assignments skips Pins that already have an external ID.
 
 ## Safe production migration
 

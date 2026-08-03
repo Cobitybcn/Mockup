@@ -193,6 +193,10 @@ details.pub-panel > summary:hover { background: var(--surface-soft); }
 .pub-pin-copy { display: grid; gap: 3px; }
 .pub-pin-copy strong { color: var(--ink); font-family: var(--font-serif); font-size: 13px; line-height: 1.25; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; }
 .pub-pin-copy p { margin: 0; color: var(--muted); font-size: 12px; line-height: 1.45; display: -webkit-box; -webkit-line-clamp: 3; -webkit-box-orient: vertical; overflow: hidden; }
+.pub-pin-board { display: grid; gap: 4px; margin-top: auto; color: var(--muted); font-size: 13px; }
+.pub-pin-board span { font-size: 11px; font-weight: 700; letter-spacing: .06em; text-transform: uppercase; }
+.pub-pin-board select { width: 100%; min-height: 38px; padding: 7px 28px 7px 9px; border: 1px solid var(--line-dark); border-radius: 2px; background: #fff; color: var(--ink); font: 13px/1.35 var(--font-sans); }
+.pub-pin-board select:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
 
 /* Step 4: spaced series posts */
 .pub-gap-form { display: flex; align-items: center; gap: 8px; }

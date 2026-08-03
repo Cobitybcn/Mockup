@@ -322,10 +322,11 @@ determina el espacio, no el espacio a la obra.**
 ### Cap. 6 — El destino operativo no es contenido editorial (enmienda 2026-08-03)
 
 Las sugerencias editoriales de tablero de Pinterest orientan, pero no deciden el destino.
-Antes de publicar, el artista elige de forma visible un tablero real de la cuenta conectada.
-Cambiar de Sandbox a Production o elegir otro tablero habilita un nuevo envío explícito sin
-confundir los Pins anteriores con los del entorno o tablero actual. Los IDs de Sandbox nunca
-constituyen evidencia de publicación en Production.
+Antes de publicar, el artista elige junto a **cada imagen** un tablero real de la cuenta
+conectada: una serie puede distribuir sus Pins entre tableros distintos. Cambiar de Sandbox a
+Production o cambiar el tablero de un Pin habilita un nuevo envío explícito de ese Pin sin
+confundir los resultados anteriores con los del entorno o destino actual. Los IDs de Sandbox
+nunca constituyen evidencia de publicación en Production.
 
 ---
 

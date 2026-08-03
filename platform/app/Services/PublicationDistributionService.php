@@ -206,19 +206,22 @@ final class PublicationDistributionService
             $totalCount = 0;
             $pinterestEnvironment = '';
             $pinterestCurrentEnvironment = '';
-            $pinterestBoardId = '';
-            $pinterestBoardName = '';
+            $pinterestBoardIds = [];
+            $pinterestBoardNames = [];
             $pinterestRequiresRepublish = false;
             if ($destination === 'pinterest' && is_array($row)) {
                 $decodedPayload = json_decode((string)($row['payload_json'] ?? ''), true);
                 foreach ((array)($decodedPayload['results'] ?? []) as $itemResult) {
                     $totalCount++;
                     if (trim((string)($itemResult['external_id'] ?? '')) !== '') $publishedCount++;
+                    $itemKey = trim((string)($itemResult['key'] ?? ''));
+                    $itemBoardId = trim((string)($itemResult['board_id'] ?? $decodedPayload['board_id'] ?? ''));
+                    $itemBoardName = trim((string)($itemResult['board_name'] ?? $decodedPayload['board_name'] ?? ''));
+                    if ($itemKey !== '' && $itemBoardId !== '') $pinterestBoardIds[$itemKey] = $itemBoardId;
+                    if ($itemBoardName !== '') $pinterestBoardNames[$itemBoardName] = true;
                 }
                 $pinterestEnvironment = $this->recordedPinterestEnvironment((array)$decodedPayload);
                 $pinterestCurrentEnvironment = $this->pinterestEnvironment($userId);
-                $pinterestBoardId = trim((string)($decodedPayload['board_id'] ?? $row['external_id'] ?? ''));
-                $pinterestBoardName = trim((string)($decodedPayload['board_name'] ?? ''));
                 $pinterestRequiresRepublish = $totalCount > 0
                     && $pinterestEnvironment !== ''
                     && $pinterestEnvironment !== $pinterestCurrentEnvironment;
@@ -237,8 +240,8 @@ final class PublicationDistributionService
                 'parts' => [],
                 'api_environment' => $pinterestEnvironment,
                 'current_environment' => $pinterestCurrentEnvironment,
-                'board_id' => $pinterestBoardId,
-                'board_name' => $pinterestBoardName,
+                'board_ids' => $pinterestBoardIds,
+                'board_names' => array_keys($pinterestBoardNames),
                 'requires_republish' => $pinterestRequiresRepublish,
             ];
         }
@@ -275,14 +278,14 @@ final class PublicationDistributionService
                 }
                 $currentEnvironment = (string)($state['current_environment'] ?? '');
                 $recordedEnvironment = (string)($state['api_environment'] ?? '');
-                $boardId = $currentEnvironment !== '' && $currentEnvironment === $recordedEnvironment
-                    ? trim((string)($state['board_id'] ?? ''))
-                    : '';
-                if ($boardId === '') {
+                $boardIds = $currentEnvironment !== '' && $currentEnvironment === $recordedEnvironment
+                    ? (array)($state['board_ids'] ?? [])
+                    : [];
+                if ($boardIds === []) {
                     $results[$destination] = ['status' => 'skipped', 'detail' => t('choose a board in the Pinterest step', 'elegí un tablero en el paso Pinterest')];
                     continue;
                 }
-                $options['board_id'] = $boardId;
+                $options['board_ids'] = $boardIds;
             } elseif ($destination === 'tiktok') {
                 // The page video is the natural TikTok post; without one the
                 // carousel keeps the channel alive.
@@ -417,12 +420,21 @@ final class PublicationDistributionService
         $transportKey = $isCarousel ? 'tiktok_carousel' : $destination;
 
         $pinterestEnvironment = $destination === 'pinterest' ? $this->pinterestEnvironment($userId) : '';
-        $pinterestBoardId = $destination === 'pinterest' ? trim((string)($options['board_id'] ?? '')) : '';
+        $pinterestBoardIds = [];
+        if ($destination === 'pinterest') {
+            foreach ((array)($options['board_ids'] ?? []) as $itemKey => $boardId) {
+                $itemKey = trim((string)$itemKey);
+                $boardId = trim((string)$boardId);
+                if ($itemKey !== '' && $boardId !== '') $pinterestBoardIds[$itemKey] = $boardId;
+            }
+            $legacyBoardId = trim((string)($options['board_id'] ?? ''));
+            if ($pinterestBoardIds === [] && $legacyBoardId !== '') $pinterestBoardIds['*'] = $legacyBoardId;
+        }
         $previousResults = $destination === 'pinterest'
-            ? $this->previousItemResults($publicationId, $userId, $destination, $pinterestEnvironment, $pinterestBoardId)
+            ? $this->previousItemResults($publicationId, $userId, $destination, $pinterestEnvironment)
             : [];
         $request = match (true) {
-            $destination === 'pinterest' => $this->pinterestRequest($payload, $destinations, $locale, $link, $slug, $previousResults, $pinterestEnvironment, $pinterestBoardId),
+            $destination === 'pinterest' => $this->pinterestRequest($payload, $destinations, $locale, $link, $slug, $previousResults, $pinterestEnvironment, $pinterestBoardIds),
             $destination === 'x' => $this->xRequest($payload, $destinations, $locale, $link),
             $isCarousel => $this->tiktokCarouselRequest($payload, $destinations, $locale, $slug),
             default => $this->tiktokRequest($payload, $destinations, $locale, $link),
@@ -449,10 +461,6 @@ final class PublicationDistributionService
                 if (trim((string)($itemResult['external_url'] ?? '')) !== '') { $firstUrl = (string)$itemResult['external_url']; break; }
             }
             $request['results'] = array_values($merged);
-            if ($destination === 'pinterest') {
-                $request['board_id'] = trim((string)($result['external_id'] ?? $request['board_id'] ?? ''));
-                $request['board_name'] = trim((string)($result['board_name'] ?? $request['board_name'] ?? ''));
-            }
             $this->record($publicationId, $userId, $destination, self::TIKTOK_VIDEO_PART, [
                 'locale' => $locale,
                 'status' => $status,
@@ -797,12 +805,12 @@ final class PublicationDistributionService
 
     /**
      * One confirmed act publishes the WHOLE pin series — one pin per
-     * composition image, each with its own editorial copy. The editorial
-     * suggestion recommends a board; the artist's visible selection decides it.
+     * composition image, each with its own editorial copy and board. The
+     * editorial suggestion recommends; the artist decides beside every image.
      *
      * @param array<string,array> $previousResults keyed by item key; already-published pins are skipped on retry
      */
-    private function pinterestRequest(array $payload, array $destinations, string $locale, string $link, string $slug, array $previousResults, string $apiEnvironment, string $boardId): array
+    private function pinterestRequest(array $payload, array $destinations, string $locale, string $link, string $slug, array $previousResults, string $apiEnvironment, array $boardIds): array
     {
         $block = (array)($destinations['pinterest'][$locale] ?? []);
         $boardName = trim((string)(((array)($block['board_suggestions'] ?? []))[0] ?? ''));
@@ -811,10 +819,18 @@ final class PublicationDistributionService
         $items = [];
         foreach ((array)($payload['media']['items'] ?? []) as $mediaItem) {
             $key = (string)((int)($mediaItem['mockup_sheet_id'] ?? 0));
-            if (trim((string)($previousResults[$key]['external_id'] ?? '')) !== '') continue; // already pinned
+            $boardId = trim((string)($boardIds[$key] ?? $boardIds['*'] ?? ''));
+            if ($boardId === '') {
+                throw new RuntimeException(t('Choose a Pinterest board for every Pin.', 'Elegí un tablero de Pinterest para cada Pin.'));
+            }
+            $previousBoardId = trim((string)($previousResults[$key]['board_id'] ?? ''));
+            if (trim((string)($previousResults[$key]['external_id'] ?? '')) !== ''
+                && $previousBoardId !== ''
+                && hash_equals($previousBoardId, $boardId)) continue;
             $itemPinterest = (array)($mediaItem['social'][$locale]['pinterest'] ?? []);
             $items[] = [
                 'key' => $key,
+                'board_id' => $boardId,
                 'title' => MockupSocialContentService::text($itemPinterest['title'] ?? '', (string)($block['title'] ?? '')),
                 'description' => MockupSocialContentService::text($itemPinterest['description'] ?? '', (string)($block['description'] ?? '')),
                 'alt_text' => (string)($mediaItem[$locale]['alt_text'] ?? ''),
@@ -826,8 +842,8 @@ final class PublicationDistributionService
         }
         return [
             'items' => $items,
-            'board_id' => $boardId,
-            'board_name' => $boardName,
+            'board_suggestion' => $boardName,
+            'board_ids' => $boardIds,
             'api_environment' => $apiEnvironment,
             'link' => $link,
             'slug' => $slug,
@@ -835,7 +851,7 @@ final class PublicationDistributionService
     }
 
     /** @return array<string,array> previous per-item results keyed by item key */
-    private function previousItemResults(int $publicationId, int $userId, string $destination, string $apiEnvironment, string $boardId): array
+    private function previousItemResults(int $publicationId, int $userId, string $destination, string $apiEnvironment): array
     {
         try {
             $stmt = $this->pdo->prepare('SELECT payload_json,external_id FROM publication_distributions WHERE publication_id=? AND user_id=? AND destination=? AND part=0 LIMIT 1');
@@ -847,12 +863,15 @@ final class PublicationDistributionService
         }
         if (!is_array($decoded) || $this->recordedPinterestEnvironment($decoded) !== $apiEnvironment) return [];
         $recordedBoardId = trim((string)($decoded['board_id'] ?? $row['external_id'] ?? ''));
-        if ($boardId !== '' && $recordedBoardId !== '' && !hash_equals($recordedBoardId, $boardId)) return [];
         $results = [];
         foreach ((array)($decoded['results'] ?? []) as $result) {
             if (!is_array($result)) continue;
             $key = (string)($result['key'] ?? '');
-            if ($key !== '') $results[$key] = $result;
+            if ($key !== '') {
+                if (trim((string)($result['board_id'] ?? '')) === '' && $recordedBoardId !== '') $result['board_id'] = $recordedBoardId;
+                if (trim((string)($result['board_name'] ?? '')) === '' && trim((string)($decoded['board_name'] ?? '')) !== '') $result['board_name'] = (string)$decoded['board_name'];
+                $results[$key] = $result;
+            }
         }
         return $results;
     }
@@ -1096,43 +1115,33 @@ final class PublicationDistributionService
                 }
                 $pinterest = new PinterestIntegrationService($this->pdo);
                 $userId = (int)$request['user_id'];
-                // An explicit board id comes from the visible Publication step.
-                // The automatic suggestion remains only for legacy/orchestrated
-                // calls that do not yet carry a selection.
-                $boardName = (string)$request['board_name'];
-                $requestedBoardId = trim((string)($request['board_id'] ?? ''));
-                $boardId = '';
+                $availableBoards = [];
                 try {
                     foreach ($pinterest->boards($userId, 'artist') as $board) {
-                        if ($requestedBoardId !== '' && hash_equals((string)($board['id'] ?? ''), $requestedBoardId)) {
-                            $boardId = (string)($board['id'] ?? '');
-                            $boardName = (string)($board['name'] ?? $boardName);
-                            break;
-                        }
-                        if ($requestedBoardId === '' && strcasecmp((string)($board['name'] ?? ''), $boardName) === 0) {
-                            $boardId = (string)($board['id'] ?? '');
-                            $boardName = (string)($board['name'] ?? $boardName);
-                            break;
-                        }
+                        $boardId = trim((string)($board['id'] ?? ''));
+                        if ($boardId !== '') $availableBoards[$boardId] = trim((string)($board['name'] ?? ''));
                     }
-                } catch (Throwable) {
-                    $boardId = '';
-                }
-                if ($requestedBoardId !== '' && $boardId === '') {
-                    throw new RuntimeException(t('Choose a board from the connected Pinterest account.', 'Elegí un tablero de la cuenta de Pinterest conectada.'));
-                }
-                if ($boardId === '') {
-                    $created = $pinterest->createBoard($userId, $boardName, 'artist');
-                    $boardId = (string)($created['id'] ?? '');
-                }
-                if ($boardId === '') {
-                    throw new RuntimeException(t('The Pinterest board could not be resolved.', 'No se pudo resolver el tablero de Pinterest.'));
+                } catch (Throwable $boardError) {
+                    throw new RuntimeException(t('Pinterest boards could not be loaded.', 'No se pudieron cargar los tableros de Pinterest.') . ' ' . $boardError->getMessage());
                 }
 
                 $base = rtrim(app_env('APP_PUBLIC_URL', ''), '/');
                 $useUrl = str_starts_with(strtolower($base), 'https://');
                 $results = [];
                 foreach ((array)$request['items'] as $item) {
+                    $boardId = trim((string)($item['board_id'] ?? ''));
+                    $boardName = (string)($availableBoards[$boardId] ?? '');
+                    if ($boardId === '' || $boardName === '') {
+                        $results[] = [
+                            'key' => (string)($item['key'] ?? ''),
+                            'board_id' => $boardId,
+                            'board_name' => '',
+                            'external_id' => '',
+                            'external_url' => '',
+                            'error' => t('Choose a board from the connected Pinterest account.', 'Elegí un tablero de la cuenta de Pinterest conectada.'),
+                        ];
+                        continue;
+                    }
                     try {
                         $variant = ['title' => (string)$item['title'], 'description' => (string)$item['description']];
                         $pinItem = ['alt_text' => (string)$item['alt_text']];
@@ -1151,15 +1160,18 @@ final class PublicationDistributionService
                         $live = (string)($request['api_environment'] ?? 'production') !== 'sandbox';
                         $results[] = [
                             'key' => (string)$item['key'],
+                            'board_id' => $boardId,
+                            'board_name' => $boardName,
                             'external_id' => $pinId,
                             'external_url' => $pinId !== '' && $live ? 'https://www.pinterest.com/pin/' . rawurlencode($pinId) . '/' : '',
                             'error' => '',
                         ];
                     } catch (Throwable $pinError) {
-                        $results[] = ['key' => (string)$item['key'], 'external_id' => '', 'external_url' => '', 'error' => $pinError->getMessage()];
+                        $results[] = ['key' => (string)$item['key'], 'board_id' => $boardId, 'board_name' => $boardName, 'external_id' => '', 'external_url' => '', 'error' => $pinError->getMessage()];
                     }
                 }
-                return ['items' => $results, 'external_id' => $boardId, 'board_name' => $boardName];
+                $firstBoardId = trim((string)($results[0]['board_id'] ?? ''));
+                return ['items' => $results, 'external_id' => $firstBoardId];
             },
             'facebook' => function (array $request): array {
                 if (app_env('META_LIVE_PUBLISH_ENABLED', 'false') !== 'true') {
