@@ -66,9 +66,14 @@ function run_publication_section_tests(): void
     TestHarness::assertContains('data-copy-text', $section, 'El paquete Saatchi vive al lado de la acción, con copiar por campo');
     TestHarness::assertContains('name="pin_boards[', $section, 'Cada Pin muestra su propio selector de tablero antes del envío');
     TestHarness::assertContains('name="pin_link"', $section, 'Pinterest muestra un único enlace de destino para toda la serie');
-    TestHarness::assertContains('name="force_republish"', $section, 'El artista puede declarar que eliminó los Pins y republicar toda la serie');
+    TestHarness::assertTrue(!str_contains($section, 'name="force_republish"'), 'El flujo normal no ofrece una republicación completa capaz de duplicar Pins');
+    TestHarness::assertContains('pinterest_publish_token', $section, 'Cada envío Pinterest usa un token de un solo uso contra dobles POST');
+    TestHarness::assertContains('$pinSeriesComplete', $section, 'Una serie completa se bloquea y pierde su CTA de publicación');
+    TestHarness::assertContains('published_item_keys', $section, 'Los Pines exitosos quedan bloqueados individualmente en un reintento parcial');
     TestHarness::assertContains('pub-pin-card--error', $section, 'Pinterest muestra el fallo junto a la tarjeta exacta');
     TestHarness::assertContains('rejected_board_ids', $section, 'Los tableros Sandbox rechazados dejan de aparecer en los selectores Production');
+    TestHarness::assertContains('verified_board_ids', $section, 'Production ofrece únicamente tableros confirmados por Pins exitosos');
+    TestHarness::assertContains('GET_LOCK', (string)file_get_contents($platformRoot . '/app/Services/PublicationDistributionService.php'), 'Dos sesiones concurrentes serializan el envío antes de llamar a Pinterest');
     TestHarness::assertContains('form="pinterestPublishForm"', $section, 'Los selectores de cada tarjeta pertenecen al acto confirmado de Pinterest');
     TestHarness::assertContains('requires_republish', $section, 'Un resultado Sandbox no cierra el envío pendiente de Production');
     TestHarness::assertContains("'api_environment' => \$apiEnvironment", (string)file_get_contents($platformRoot . '/app/Services/PublicationDistributionService.php'), 'Cada envío de Pinterest queda ligado a su entorno API');

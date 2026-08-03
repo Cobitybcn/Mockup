@@ -323,18 +323,22 @@ determina el espacio, no el espacio a la obra.**
 
 Las sugerencias editoriales de tablero de Pinterest orientan, pero no deciden el destino.
 Antes de publicar, el artista elige junto a **cada imagen** un tablero real de la cuenta
-conectada: una serie puede distribuir sus Pins entre tableros distintos. Cambiar de Sandbox a
-Production o cambiar el tablero de un Pin habilita un nuevo envío explícito de ese Pin sin
-confundir los resultados anteriores con los del entorno o destino actual. Los IDs de Sandbox
-nunca constituyen evidencia de publicación en Production.
+conectada: una serie puede distribuir sus Pins entre tableros distintos. En Production, un
+tablero solo se considera elegible cuando un Pin Production exitoso lo confirmó; el listado
+remoto por sí solo no es autoridad porque puede conservar destinos Sandbox, eliminados o de
+sistema. Esa evidencia pertenece a la cuenta y rige todas sus obras. Los IDs de Sandbox nunca
+constituyen evidencia de publicación en Production.
 
 La serie muestra además un único enlace de destino, precargado con la página pública de la
-obra y editable antes del envío. Ese enlace gobierna los diez Pins porque todos distribuyen la
-misma obra; cambiarlo habilita un nuevo envío explícito. Si los Pins fueron eliminados fuera de
-Artwork Mockups, el artista puede declarar ese hecho y republicar la serie completa.
+obra y editable antes del primer envío. Ese enlace gobierna los diez Pins porque todos
+distribuyen la misma obra. Un Pin que ya posee ID externo queda inmutable dentro del flujo
+normal: cambiar un tablero, cambiar el enlace, repetir el POST o abrir la pantalla en paralelo
+no autoriza otro Pin. La serie completa pierde su acción de publicación; solo los fallidos
+conservan selector y reintento. Una reconciliación excepcional por borrado externo es una
+operación separada del flujo normal y exige identificar previamente los IDs afectados.
 Un tablero que Pinterest rechaza explícitamente por pertenecer a Sandbox deja de ser un
 destino elegible en Production. El fallo se muestra junto a cada imagen afectada y el sistema
-conserva ese descarte para no volver a proponer el mismo tablero en el siguiente intento.
+conserva ese descarte para no volver a proponer el mismo tablero en ninguna obra de la cuenta.
 
 ---
 

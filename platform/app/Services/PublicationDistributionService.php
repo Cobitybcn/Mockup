@@ -210,7 +210,9 @@ final class PublicationDistributionService
             $pinterestBoardNames = [];
             $pinterestDestinationLink = '';
             $pinterestItemErrors = [];
+            $pinterestPublishedItemKeys = [];
             $pinterestRejectedBoardIds = [];
+            $pinterestVerifiedBoardIds = [];
             $pinterestRequiresRepublish = false;
             if ($destination === 'pinterest' && is_array($row)) {
                 $decodedPayload = json_decode((string)($row['payload_json'] ?? ''), true);
@@ -220,7 +222,11 @@ final class PublicationDistributionService
                 }
                 foreach ((array)($decodedPayload['results'] ?? []) as $itemResult) {
                     $totalCount++;
-                    if (trim((string)($itemResult['external_id'] ?? '')) !== '') $publishedCount++;
+                    if (trim((string)($itemResult['external_id'] ?? '')) !== '') {
+                        $publishedCount++;
+                        $publishedItemKey = trim((string)($itemResult['key'] ?? ''));
+                        if ($publishedItemKey !== '') $pinterestPublishedItemKeys[$publishedItemKey] = true;
+                    }
                     $itemKey = trim((string)($itemResult['key'] ?? ''));
                     $itemBoardId = trim((string)($itemResult['board_id'] ?? $decodedPayload['board_id'] ?? ''));
                     $itemBoardName = trim((string)($itemResult['board_name'] ?? $decodedPayload['board_name'] ?? ''));
@@ -237,6 +243,11 @@ final class PublicationDistributionService
                 $pinterestRequiresRepublish = $totalCount > 0
                     && $pinterestEnvironment !== ''
                     && $pinterestEnvironment !== $pinterestCurrentEnvironment;
+            }
+            if ($destination === 'pinterest') {
+                $boardEvidence = $this->pinterestBoardEvidence($userId, $pinterestCurrentEnvironment ?: 'production');
+                $pinterestVerifiedBoardIds = $boardEvidence['verified_ids'];
+                foreach ($boardEvidence['rejected_ids'] as $rejectedBoardId) $pinterestRejectedBoardIds[$rejectedBoardId] = true;
             }
             $states[$destination] = [
                 'status' => $status,
@@ -256,7 +267,9 @@ final class PublicationDistributionService
                 'board_names' => array_keys($pinterestBoardNames),
                 'destination_link' => $pinterestDestinationLink,
                 'item_errors' => $pinterestItemErrors,
+                'published_item_keys' => array_keys($pinterestPublishedItemKeys),
                 'rejected_board_ids' => array_keys($pinterestRejectedBoardIds),
+                'verified_board_ids' => $pinterestVerifiedBoardIds,
                 'requires_republish' => $pinterestRequiresRepublish,
             ];
             if ($destination === 'pinterest' && array_filter($pinterestItemErrors, fn(string $error): bool => $this->isPinterestSandboxBoardError($error)) !== []) {
@@ -372,6 +385,48 @@ final class PublicationDistributionService
     /** One confirmed act per destination step. Series destinations run the cadence. */
     public function publish(int $publicationId, int $userId, string $destination, string $locale, array $options = []): array
     {
+        if ($destination !== 'pinterest') {
+            return $this->publishUnlocked($publicationId, $userId, $destination, $locale, $options);
+        }
+
+        $lockName = 'am:pin:' . $userId . ':' . $publicationId;
+        $lockAcquired = false;
+        $driver = (string)$this->pdo->getAttribute(PDO::ATTR_DRIVER_NAME);
+        try {
+            $lockStmt = $this->pdo->prepare('SELECT GET_LOCK(?, 15)');
+            $lockStmt->execute([$lockName]);
+            $lockAcquired = (int)$lockStmt->fetchColumn() === 1;
+        } catch (Throwable $e) {
+            // SQLite is used by the regression suite and has no advisory locks.
+            // Production is MySQL; failing to acquire its lock must fail closed.
+            if ($driver === 'mysql') throw new RuntimeException(t(
+                'Pinterest publication could not be locked safely. Try again.',
+                'No se pudo bloquear con seguridad el envío a Pinterest. Intentá de nuevo.'
+            ), 0, $e);
+        }
+        if ($driver === 'mysql' && !$lockAcquired) {
+            throw new RuntimeException(t(
+                'Another Pinterest publication is still running. Wait for it to finish and reload.',
+                'Otro envío a Pinterest todavía está en curso. Esperá a que termine y recargá.'
+            ));
+        }
+
+        try {
+            return $this->publishUnlocked($publicationId, $userId, $destination, $locale, $options);
+        } finally {
+            if ($lockAcquired) {
+                try {
+                    $releaseStmt = $this->pdo->prepare('SELECT RELEASE_LOCK(?)');
+                    $releaseStmt->execute([$lockName]);
+                } catch (Throwable) {
+                    // MySQL releases connection-scoped locks on disconnect.
+                }
+            }
+        }
+    }
+
+    private function publishUnlocked(int $publicationId, int $userId, string $destination, string $locale, array $options = []): array
+    {
         if ($destination === 'saatchi') {
             throw new RuntimeException(t('Saatchi Art is uploaded by hand with the manual package.', 'Saatchi Art se carga a mano con el paquete manual.'));
         }
@@ -451,7 +506,9 @@ final class PublicationDistributionService
         $pinterestBoardIds = [];
         $pinterestRejectedBoardIds = [];
         if ($destination === 'pinterest') {
-            $pinterestRejectedBoardIds = $this->previousPinterestRejectedBoardIds($publicationId, $userId, $pinterestEnvironment);
+            $boardEvidence = $this->pinterestBoardEvidence($userId, $pinterestEnvironment);
+            $pinterestRejectedBoardIds = $boardEvidence['rejected_ids'];
+            $verifiedBoardIds = $boardEvidence['verified_ids'];
             foreach ((array)($options['board_ids'] ?? []) as $itemKey => $boardId) {
                 $itemKey = trim((string)$itemKey);
                 $boardId = trim((string)$boardId);
@@ -466,9 +523,15 @@ final class PublicationDistributionService
                         'Un tablero seleccionado pertenece a Pinterest Sandbox. Recargá y elegí otro en los Pins marcados.'
                     ));
                 }
+                if ($verifiedBoardIds !== [] && !in_array($boardId, $verifiedBoardIds, true)) {
+                    throw new RuntimeException(t(
+                        'This board has not been confirmed by a successful Production Pin. Reload and choose a verified board.',
+                        'Este tablero no fue confirmado por un Pin exitoso en Production. Recargá y elegí un tablero verificado.'
+                    ));
+                }
             }
         }
-        $previousResults = $destination === 'pinterest' && empty($options['force_republish'])
+        $previousResults = $destination === 'pinterest'
             ? $this->previousItemResults($publicationId, $userId, $destination, $pinterestEnvironment)
             : [];
         $request = match (true) {
@@ -479,6 +542,13 @@ final class PublicationDistributionService
         };
         $request['user_id'] = $userId;
         if ($destination === 'pinterest') $request['rejected_board_ids'] = $pinterestRejectedBoardIds;
+
+        // A completed Pin is immutable in the ordinary publish/retry path. If
+        // every item already has an external id there is no network operation
+        // to perform, which also makes repeated and concurrent submissions safe.
+        if ($destination === 'pinterest' && (array)($request['items'] ?? []) === [] && $previousResults !== []) {
+            return $this->states($publicationId, $userId)[$destination];
+        }
 
         try {
             $result = ($this->transport($transportKey))($request);
@@ -863,17 +933,11 @@ final class PublicationDistributionService
         $items = [];
         foreach ((array)($payload['media']['items'] ?? []) as $mediaItem) {
             $key = (string)((int)($mediaItem['mockup_sheet_id'] ?? 0));
+            if (trim((string)($previousResults[$key]['external_id'] ?? '')) !== '') continue;
             $boardId = trim((string)($boardIds[$key] ?? $boardIds['*'] ?? ''));
             if ($boardId === '') {
                 throw new RuntimeException(t('Choose a Pinterest board for every Pin.', 'Elegí un tablero de Pinterest para cada Pin.'));
             }
-            $previousBoardId = trim((string)($previousResults[$key]['board_id'] ?? ''));
-            $previousDestination = trim((string)($previousResults[$key]['destination_url'] ?? ''));
-            if (trim((string)($previousResults[$key]['external_id'] ?? '')) !== ''
-                && $previousBoardId !== ''
-                && hash_equals($previousBoardId, $boardId)
-                && $previousDestination !== ''
-                && hash_equals($previousDestination, $link)) continue;
             $itemPinterest = (array)($mediaItem['social'][$locale]['pinterest'] ?? []);
             $items[] = [
                 'key' => $key,
@@ -925,28 +989,44 @@ final class PublicationDistributionService
         return $results;
     }
 
-    /** @return list<string> boards Pinterest has conclusively rejected as Sandbox in this Production series */
-    private function previousPinterestRejectedBoardIds(int $publicationId, int $userId, string $apiEnvironment): array
+    /**
+     * Account-wide board evidence for one API environment.
+     *
+     * Pinterest's board listing can retain Sandbox, deleted, or system boards.
+     * A successful Pin is the only conclusive evidence that a board accepts
+     * Production publication. Rejections are also global to the account so a
+     * bad destination cannot reappear on the next artwork.
+     *
+     * @return array{verified_ids:list<string>,rejected_ids:list<string>}
+     */
+    public function pinterestBoardEvidence(int $userId, string $apiEnvironment = 'production'): array
     {
         try {
-            $stmt = $this->pdo->prepare('SELECT payload_json FROM publication_distributions WHERE publication_id=? AND user_id=? AND destination=? AND part=0 LIMIT 1');
-            $stmt->execute([$publicationId, $userId, 'pinterest']);
-            $decoded = json_decode((string)($stmt->fetchColumn() ?: ''), true);
+            $stmt = $this->pdo->prepare("SELECT payload_json FROM publication_distributions WHERE user_id=? AND destination='pinterest' AND part=0");
+            $stmt->execute([$userId]);
+            $payloads = $stmt->fetchAll(PDO::FETCH_COLUMN);
         } catch (Throwable) {
-            return [];
+            return ['verified_ids' => [], 'rejected_ids' => []];
         }
-        if (!is_array($decoded) || $this->recordedPinterestEnvironment($decoded) !== $apiEnvironment) return [];
-        $ids = [];
-        foreach ((array)($decoded['rejected_board_ids'] ?? []) as $boardId) {
-            $boardId = trim((string)$boardId);
-            if ($boardId !== '') $ids[$boardId] = true;
+        $verified = [];
+        $rejected = [];
+        foreach ($payloads as $payloadJson) {
+            $decoded = json_decode((string)$payloadJson, true);
+            if (!is_array($decoded) || $this->recordedPinterestEnvironment($decoded) !== $apiEnvironment) continue;
+            foreach ((array)($decoded['rejected_board_ids'] ?? []) as $boardId) {
+                $boardId = trim((string)$boardId);
+                if ($boardId !== '') $rejected[$boardId] = true;
+            }
+            foreach ((array)($decoded['results'] ?? []) as $result) {
+                if (!is_array($result)) continue;
+                $boardId = trim((string)($result['board_id'] ?? $decoded['board_id'] ?? ''));
+                if ($boardId === '') continue;
+                if (trim((string)($result['external_id'] ?? '')) !== '') $verified[$boardId] = true;
+                if ($this->isPinterestSandboxBoardError((string)($result['error'] ?? ''))) $rejected[$boardId] = true;
+            }
         }
-        foreach ((array)($decoded['results'] ?? []) as $result) {
-            if (!is_array($result) || !$this->isPinterestSandboxBoardError((string)($result['error'] ?? ''))) continue;
-            $boardId = trim((string)($result['board_id'] ?? ''));
-            if ($boardId !== '') $ids[$boardId] = true;
-        }
-        return array_keys($ids);
+        foreach (array_keys($verified) as $boardId) unset($rejected[$boardId]);
+        return ['verified_ids' => array_keys($verified), 'rejected_ids' => array_keys($rejected)];
     }
 
     private function isPinterestSandboxBoardError(string $error): bool

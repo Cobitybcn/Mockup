@@ -43,15 +43,18 @@ gobernando `EDITORIAL_CORE.md`; este documento no lo pisa.
    tableros reales de la cuenta antes del envío. Como la cuenta puede tener muchos tableros y
    la decisión se repite por imagen, se usa un `<select>` compacto dentro de cada tarjeta —
    excepción explícita al art. III.13 solicitada por el artista. Cada resultado queda ligado
-   al entorno API, a la imagen y a su tablero: Sandbox no cierra Production, y cambiar el
-   tablero de una imagen reenvía solo ese Pin sin duplicar los demás.
+   al entorno API, a la imagen y a su tablero. En Production, el selector cruza la lista API
+   con evidencia histórica de Pins exitosos de la cuenta: no ofrece tableros Sandbox,
+   eliminados, de sistema o aún no confirmados.
    La serie presenta un solo campo visible **Enlace de destino para los Pins**, precargado con
    la página pública de la obra: se verifica o edita una vez y se aplica a todas las imágenes.
-   Cuando el artista eliminó los Pins directamente en Pinterest, una confirmación separada
-   permite ignorar los IDs históricos y volver a publicar la serie completa.
+   Un Pin exitoso queda bloqueado: editar el tablero o el enlace, repetir el formulario o
+   enviarlo en paralelo no lo republica. Una serie completa ya no presenta CTA de envío; en
+   estado parcial solo los Pines fallidos conservan selector y acción de reintento.
    Si Pinterest identifica un tablero como Sandbox durante un envío Production, ese destino
-   se retira de todos los selectores de la obra y cada Thumbnail Card fallida recibe feedback
-   local. Los Pins aceptados permanecen cerrados; el reintento actúa solo sobre los fallidos.
+   se retira de todos los selectores de todas las obras de la cuenta y cada Thumbnail Card
+   fallida recibe feedback local. Los Pins aceptados permanecen cerrados; el reintento actúa
+   solo sobre los fallidos.
 
    **Cadencia de las series sociales** (misma enmienda): «Publicar serie espaciada» es un solo
    acto — la parte 1 sale al momento y las siguientes se programan con un lapso default de

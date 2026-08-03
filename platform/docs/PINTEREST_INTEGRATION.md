@@ -28,13 +28,15 @@ For the first controlled Pin:
 6. After Pinterest grants the public access tier, repeat one controlled public Pin before normal publishing.
 
 Sandbox publication records remain visible as historical results, but never close the
-Production step. In the artwork Publication panel, load the real boards from the currently
-connected artist account, choose a board beside every Pin, and confirm the Production send.
-Changing one Pin's board is a new destination only for that image; retrying the same
-environment and per-Pin assignments skips Pins that already have an external ID.
+Production step. In the artwork Publication panel, load the boards from the connected artist
+account and intersect them with account-wide successful Production Pin evidence. Pinterest's
+board listing is not sufficient authority because it can retain Sandbox, deleted, or system
+destinations. Choose one verified board beside every pending Pin and confirm the Production
+send. A Pin with an external ID is immutable in the normal workflow; repeated, parallel, or
+edited submissions skip it unconditionally.
 The Publication panel also exposes the single artwork landing URL applied to the whole Pin
-series. If Pins were deleted directly on Pinterest, the artist can explicitly republish the
-complete series instead of trusting the stored external IDs.
+series before its first send. Completed series expose no publication CTA. External deletion
+and duplicate cleanup are reconciliation operations outside the normal publication form.
 
 ## Safe production migration
 

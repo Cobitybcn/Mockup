@@ -211,6 +211,9 @@ function run_publication_distribution_service_tests(): void
     TestHarness::assertTrue($pinState['published_count'] === 3 && $pinState['total_count'] === 4, 'el estado muestra 3/4 pins publicados');
     TestHarness::assertTrue(str_contains((string)$pinState['destination_link'], 'strata-dist'), 'el estado conserva el enlace común visible para la serie');
     TestHarness::assertSame(['board-sandbox'], (array)$pinState['rejected_board_ids'], 'el tablero que Pinterest identifica como Sandbox queda retirado de Production');
+    $boardEvidence = $service->pinterestBoardEvidence($userId, 'production');
+    TestHarness::assertSame(['board-a', 'board-b'], (array)$boardEvidence['verified_ids'], 'solo un Pin Production exitoso verifica un tablero para las próximas obras');
+    TestHarness::assertSame(['board-sandbox'], (array)$boardEvidence['rejected_ids'], 'el rechazo Sandbox queda como evidencia global de la cuenta');
     TestHarness::assertTrue(isset($pinState['item_errors']['13']), 'el fallo queda asociado a la Thumbnail Card exacta');
     $rejectedAgain = false;
     try {
@@ -219,29 +222,31 @@ function run_publication_distribution_service_tests(): void
         $rejectedAgain = str_contains($e->getMessage(), 'Sandbox');
     }
     TestHarness::assertTrue($rejectedAgain, 'el backend impide reenviar un tablero Sandbox ya rechazado aunque llegue desde una página antigua');
+    $unverifiedAgain = false;
+    $unverifiedBoardIds = $pinBoardIds;
+    $unverifiedBoardIds['13'] = 'board-c';
+    try {
+        $service->publish($publicationId, $userId, 'pinterest', 'en', ['board_ids' => $unverifiedBoardIds]);
+    } catch (RuntimeException $e) {
+        $unverifiedAgain = str_contains($e->getMessage(), 'verificado') || str_contains($e->getMessage(), 'verified');
+    }
+    TestHarness::assertTrue($unverifiedAgain, 'cuando ya existe evidencia Production el backend rechaza tableros no confirmados del listado remoto');
     $pinFailKeys['keys'] = [];
-    $pinBoardIds['13'] = 'board-c';
-    $retryPinState = $service->publish($publicationId, $userId, 'pinterest', 'en', ['board_ids' => $pinBoardIds]);
+    $pinBoardIds['13'] = 'board-a';
+    $retryPinState = $service->publish($publicationId, $userId, 'pinterest', 'en', ['board_ids' => ['13' => 'board-a']]);
     $retryRequest = $captured['pinterest'][1];
     TestHarness::assertSame(1, count($retryRequest['items']), 'el reintento SOLO repite los pins fallidos — jamás duplica los publicados');
     TestHarness::assertSame('13', (string)$retryRequest['items'][0]['key'], 'el reintento apunta exactamente al pin que falló');
     TestHarness::assertTrue($retryPinState['status'] === 'published' && $retryPinState['error'] === '', 'la serie completa queda PINS PUBLICADOS y el error desaparece (IV.16)');
     TestHarness::assertTrue($retryPinState['published_count'] === 4 && $retryPinState['total_count'] === 4, 'el estado final muestra 4/4 pins');
-    $pinBoardIds['14'] = 'board-d';
+    TestHarness::assertSame([12, 13, 14, 15], (array)$retryPinState['published_item_keys'], 'el estado expone exactamente qué tarjetas quedan cerradas');
+    $pinBoardIds['14'] = 'board-a';
     $changedBoardState = $service->publish($publicationId, $userId, 'pinterest', 'en', ['board_ids' => $pinBoardIds]);
-    $changedBoardRequest = $captured['pinterest'][2];
-    TestHarness::assertSame(1, count($changedBoardRequest['items']), 'cambiar el tablero de un Pin reenvía solo ese Pin');
-    TestHarness::assertSame('14', (string)$changedBoardRequest['items'][0]['key'], 'la reasignación queda ligada a la imagen correcta');
-    TestHarness::assertSame('board-d', (string)$changedBoardRequest['items'][0]['board_id'], 'el nuevo tablero viaja en el Pin reasignado');
-    TestHarness::assertSame('published', (string)$changedBoardState['status'], 'la reasignación individual conserva completa la serie');
+    TestHarness::assertSame(2, count($captured['pinterest']), 'cambiar un selector después del éxito no invoca Pinterest ni crea duplicados');
+    TestHarness::assertSame('published', (string)$changedBoardState['status'], 'la serie completa permanece cerrada');
     $changedLink = 'https://mauriziovalch.com/artworks/destino-revisado/';
     $service->publish($publicationId, $userId, 'pinterest', 'en', ['board_ids' => $pinBoardIds, 'link' => $changedLink]);
-    $changedLinkRequest = $captured['pinterest'][3];
-    TestHarness::assertSame(4, count($changedLinkRequest['items']), 'cambiar el enlace común vuelve a enviar todos los Pins de la obra');
-    TestHarness::assertSame([$changedLink, $changedLink, $changedLink, $changedLink], array_column($changedLinkRequest['items'], 'destination_url'), 'el enlace visible viaja idéntico en los diez Pins');
-    $service->publish($publicationId, $userId, 'pinterest', 'en', ['board_ids' => $pinBoardIds, 'link' => $changedLink, 'force_republish' => true]);
-    $forceRequest = $captured['pinterest'][4];
-    TestHarness::assertSame(4, count($forceRequest['items']), 'si los Pins fueron eliminados externamente, la confirmación explícita republica la serie completa');
+    TestHarness::assertSame(2, count($captured['pinterest']), 'cambiar el enlace después del éxito tampoco invoca Pinterest');
 
     // ————— Series sociales: parte 1 ahora, el resto programado con el lapso —————
     TestHarness::assertSame(12, $service->seriesGapHours($userId), 'el lapso default de la cadencia es 12 horas');
