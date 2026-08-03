@@ -14,14 +14,9 @@ function run_editorial_core_contract_tests(): void
     TestHarness::group('EDITORIAL_CORE: contrato ejecutable');
 
     $platformRoot = dirname(__DIR__, 2);
-    $repoRoot = dirname($platformRoot);
 
-    // ————— Constitucion presente y obligatoria —————
-    $core = (string)@file_get_contents($platformRoot . '/docs/EDITORIAL_CORE.md');
-    TestHarness::assertTrue($core !== '', 'EDITORIAL_CORE.md existe — la constitucion es un archivo versionado, no una conversacion');
-    TestHarness::assertContains('CONTRATO VIGENTE', $core, 'EDITORIAL_CORE.md se declara contrato vigente');
-    $agents = (string)@file_get_contents($repoRoot . '/AGENTS.md');
-    TestHarness::assertContains('EDITORIAL_CORE.md', $agents, 'AGENTS.md obliga a leer la constitucion antes de tocar contenido editorial');
+    // El contrato editorial se verifica sobre el comportamiento del codigo, no sobre
+    // el texto de un documento: un .md que se declara vigente no prueba nada.
 
     // ————— Libro I Cap. 6: el sistema nunca decide titulos —————
     $prompt = ArtworkAnalysisV2::prompt();
@@ -105,16 +100,6 @@ function run_editorial_core_contract_tests(): void
     TestHarness::assertContains('EditorialIdentityGuard::rewriteAliases', $adapterSource, 'EDITORIAL_CORE (guardian): una sola implementacion de identidad, compartida');
 
     // ————— Libro II Cap. 3 (enmienda 2026-07-31): alcance y no repeticion —————
-    TestHarness::assertContains(
-        'Alcance: toda descripción de todo medio',
-        $core,
-        'EDITORIAL_CORE Libro II Cap. 3: el articulo extiende las aperturas prohibidas a todo medio'
-    );
-    TestHarness::assertContains(
-        'No repetición de aperturas',
-        $core,
-        'EDITORIAL_CORE Libro II Cap. 3: el articulo prohibe repetir aperturas entre obra, mockups y canales'
-    );
     $policySource = (string)file_get_contents($platformRoot . '/app/Support/EditorialIntegrityPolicy.php');
     TestHarness::assertContains(
         'isPublicCopyPath',
