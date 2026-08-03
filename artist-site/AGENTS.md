@@ -1,6 +1,10 @@
 \# AGENTS.md — Maurizio Valch Website
 
-
+> **Alcance y autoridad.** Este archivo es dirección de marca, contenido y SEO del sitio
+> público. **No** manda sobre el código: si algo acá contradice lo que hace producción, manda
+> producción (ver `AGENTS.md` en la raíz y `ACTA_DE_CIMIENTOS.md`). Verificá contra el código
+> antes de "corregir" algo por lo que diga este texto. Escrito antes del 2026-08-03; puede
+> tener partes vencidas.
 
 This is the official website for Maurizio Valch, a contemporary abstract painter.
 
@@ -22,7 +26,10 @@ Pinterest = main visual traffic source, discovery engine, and aesthetic distribu
 
 
 
-Saatchi Art = external validation and algorithmic signal. It is not the main sales channel. Links to Saatchi Art must be secondary and discreet.
+Saatchi Art = external validation and algorithmic signal, **and the primary per-artwork CTA
+when a listing exists** (decisión del artista, 2026-07-28). Producción ya funciona así: con
+listing, «Buy on Saatchi Art» se renderiza como botón primario y «Acquire» / «Ask the studio»
+quedan secundarios; sin listing, «Acquire» pasa a primario. No lo cambies sin pedido explícito.
 
 
 
@@ -478,19 +485,12 @@ Primary CTAs must favor direct contact:
 
 
 
-Saatchi Art CTAs must be secondary and discreet:
+Con listing de Saatchi, «Buy on Saatchi Art» ES el CTA principal de la obra, y «Acquire from
+the studio» / «Ask the studio» lo acompañan como secundarios. Sin listing, «Acquire this work»
+toma el lugar principal.
 
-
-
-\* View external listing on Saatchi Art
-
-\* Also listed on Saatchi Art
-
-\* View on Saatchi Art
-
-
-
-Never make “Buy on Saatchi Art” the main CTA.
+Esta sección decía lo contrario («never make it the main CTA») hasta el 2026-08-03: quedó
+desactualizada frente a la decisión del artista del 2026-07-28, que producción ya implementa.
 
 
 

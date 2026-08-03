@@ -1,52 +1,54 @@
-# Artwork Mockups
+# Artwork Mockups — reglas de trabajo
 
-Antes de realizar cualquier tarea, lee este archivo completo.
+## 1. La fuente de verdad es producción
 
-Este AGENTS.md aplica a todo el repo, incluidos `platform/`, `site-admin/` y `artist-site/`. No tienen ni necesitan su propio AGENTS.md para reglas visuales (`artist-site/AGENTS.md` cubre solo estrategia de marca/SEO, no UI).
+Lo que corre y funciona hoy en la interfaz del artista y del admin son los cimientos.
+Ningún cambio puede romperlos.
 
-Si la tarea afecta la interfaz de usuario, lee estos documentos **en este orden, completos, sin saltarte ninguno**:
+Cuando una fuente contradiga a otra, este es el orden: **producción → tests → código →
+documentos**. Un documento nunca gana. Si un `.md` de este repo dice algo distinto de lo
+que hace el código, el documento está viejo.
 
-1. `design-system/00_STUDIO_PROTOCOL.md` — qué es y qué no es la app.
-2. `design-system/01_VISUAL_LANGUAGE.md` — vocabulario visual conceptual.
-3. `design-system/02_COMPONENTS.md` — reglas de cada componente reutilizable (Decision Block, Thumbnail Card, Workspace Panel, Toolbar, Badge, Counter, etc.). **Obligatorio antes de tocar cualquier panel.**
-4. `design-system/03_INTERACTION_PATTERNS.md` — cómo se trabaja en la app (drag, boards, asignación visual).
-5. `design-system/04_FORBIDDEN_PATTERNS.md` — lo que nunca debe aparecer (dashboards, KPIs, Bootstrap Admin, glassmorphism exagerado, etc.).
-6. `design-system/UI_PREFERENCES.md` — preferencias heredadas (formularios, paneles, tipografía) cuando una referencia específica no dice nada.
-7. Busca la referencia visual más parecida dentro de `design-system/references/`, revisa su `screenshot.png` y su `notes.md`.
-8. Si el problema es un patrón recurrente (panel, tarjeta, header, carrusel, acción primaria...), revisa también `design-system/MASTER_PATTERNS/` — son las invariantes y prohibiciones específicas de ese patrón.
+`ACTA_DE_CIMIENTOS.md` describe qué hace el sistema hoy y dónde está cada guardia. Es el
+punto de partida para entender el proyecto, no una orden.
 
-No diseñes una interfaz nueva cuando ya exista una referencia o Master Pattern similar. Una nueva funcionalidad no justifica un nuevo diseño.
+## 2. La ley ejecutable son los tests
 
-## Contenido editorial: constitución obligatoria
+`platform/tests/run_regression_tests.php` gatea cada despliegue y es lo único que
+verifica de verdad las reglas del sistema (identidad editorial, distribución, planes,
+migraciones, hardening). Debe quedar en verde.
 
-Si la tarea toca análisis o generación de contenido editorial (obra, serie, mockup, notas de
-estudio, SEO, social, títulos, adaptación de idioma), lee **completo** antes de tocar nada:
+Una regla que importa se escribe como test, no como párrafo. Si una regla solo existe en
+prosa, no existe.
 
-- `platform/docs/EDITORIAL_CORE.md` — el contrato vigente del motor editorial.
+## 3. Alcance de una tarea
 
-Reglas no negociables: los prompts se **derivan** de sus artículos (un prompt manuscrito jamás
-es autoridad); toda mejora se hace como enmienda (artículo → código → test), nunca como parche
-suelto; la suite `platform/tests/regression/editorial_core_contract_test.php` debe seguir en
-verde — el preflight rechaza cualquier cambio que la rompa.
+Hacé lo que se pidió y nada más. En particular, **ninguna auditoría, diagnóstico o
+reparación local autoriza por sí sola** commit, push, migración, despliegue, borrado ni
+escritura hacia servicios externos. Cada una de esas acciones se pide explícitamente.
 
-Si una pantalla está marcada `DO NOT TOUCH` o `PASS` en `design-system/audits/VISUAL_CONSISTENCY_MATRIX.md`, no la rediseñes salvo que la tarea lo pida explícitamente.
+Antes de dar algo por roto, verificalo contra producción o contra git. Deducir del código
+que algo falla no alcanza: en este repo esa deducción ya falló varias veces.
 
-Aplica siempre estas preferencias:
+## 4. Cómo llega un cambio a producción
 
-- Áreas para escribir amplias y cómodas.
-- Texto principal de tamaño cómodo, similar al usado en ChatGPT.
-- Paneles desplegables plegados por defecto cuando sea posible.
-- Botones principales de acción con colores pastel suaves, apariencia elegante y gran presencia visual.
-- Reutilizar componentes existentes antes de crear otros nuevos.
+Rama `codex/*` → preflight → revisión → squash merge a `main`. El push a `main` dispara
+Cloud Build, que corre los tests, aplica migraciones si las hay, despliega sin tráfico,
+hace smoke y recién entonces promueve.
 
-## Cierre obligatorio en producción
+Nunca commits sueltos a `main`: cada commit aceptado ahí es una release inmutable.
 
-Salvo que el usuario pida explícitamente trabajar solo en localhost, una modificación terminada no se considera entregada hasta:
+## 5. Cosas que rompen todo
 
-1. ejecutar las verificaciones proporcionales al cambio;
-2. desplegar el servicio de producción afectado (`mockups-web`, `mockups-worker` o ambos);
-3. comprobar que la nueva revisión está lista y recibe el 100% del tráfico;
-4. persistir el código correspondiente en `main`;
-5. informar el identificador de la revisión publicada.
+- Editar una migración ya aplicada: el checksum falla y **cae cada request**. Las
+  migraciones son inmutables; los cambios van en una nueva.
+- Tocar `app/Config/mockup_camera_slots_custom.php` esperando que persista: se reescribe
+  en cada despliegue.
+- Borrar un fixture de `tests/fixtures/`: el arnés lo regenera y el test pasa vacío.
 
-No responder “listo” basándose únicamente en el resultado local.
+## 6. Documentación histórica
+
+El resto de los `.md` del repo (`platform/docs/`, `design-system/`, handoffs) es material
+de referencia y contexto. Puede estar desactualizado o contradecirse entre sí: no tiene
+autoridad y no hay obligación de leerlo antes de trabajar. Consultalo si ayuda; verificá
+contra el código antes de actuar sobre lo que diga.

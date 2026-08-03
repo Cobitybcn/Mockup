@@ -16,9 +16,7 @@ function run_publication_section_tests(): void
     $platformRoot = dirname(__DIR__, 2);
     $repoRoot = dirname($platformRoot);
 
-    // ————— Contrato de diseño vigente —————
-    $contract = (string)@file_get_contents($platformRoot . '/docs/PUBLICACION_DISENO.md');
-    TestHarness::assertContains('VIGENTE', $contract, 'PUBLICACION_DISENO.md está declarado vigente');
+    // La sección se verifica sobre su código, no sobre el texto de un documento.
 
     // ————— La sección existe con sus tres paneles y la compuerta —————
     $section = (string)file_get_contents($platformRoot . '/publication.php');
