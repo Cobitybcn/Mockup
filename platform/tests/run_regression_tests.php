@@ -55,6 +55,7 @@ require_once __DIR__ . '/regression/artist_domain_verification_test.php';
 require_once __DIR__ . '/regression/deployment_pipeline_test.php';
 require_once __DIR__ . '/regression/public_artist_showcase_test.php';
 require_once __DIR__ . '/regression/video_media_range_test.php';
+require_once __DIR__ . '/regression/camera_slots_persistence_test.php';
 
 run_root_artwork_regression_tests();
 run_seo_filename_regression_tests();
@@ -98,5 +99,36 @@ run_artist_domain_verification_tests();
 run_deployment_pipeline_regression_tests();
 run_public_artist_showcase_tests();
 run_video_media_range_regression_tests();
+run_camera_slots_persistence_tests();
 
-exit(TestHarness::summary());
+// Scripts procedurales autocontenidos (SQLite en memoria, sin red). Declaran sus
+// propios stubs (Auth, ANALYSIS_DIR, ...), asi que no pueden incluirse en este
+// proceso: se ejecutan cada uno en su propio proceso PHP. Fallan con exit != 0.
+$standaloneFailed = 0;
+foreach ([
+    'mockup_editorial_content_test',
+    'pinterest_batch_service_test',
+    'mockup_pinterest_draft_test',
+    'pinterest_connection_purpose_test',
+    'meta_publication_services_test',
+    'social_campaign_meta_bridge_test',
+    'social_campaign_pinterest_bridge_test',
+    'social_board_publish_test',
+    'publication_service_smoke_test',
+] as $standaloneTest) {
+    $output = [];
+    $code = 1;
+    exec(
+        escapeshellarg(PHP_BINARY) . ' ' . escapeshellarg(__DIR__ . '/regression/' . $standaloneTest . '.php') . ' 2>&1',
+        $output,
+        $code
+    );
+    if ($code === 0) {
+        echo '[PASS] ' . $standaloneTest . "\n";
+        continue;
+    }
+    $standaloneFailed++;
+    echo '[FAIL] ' . $standaloneTest . "\n" . implode("\n", $output) . "\n";
+}
+
+exit(TestHarness::summary() === 0 && $standaloneFailed === 0 ? 0 : 1);
