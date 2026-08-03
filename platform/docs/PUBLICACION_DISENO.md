@@ -49,6 +49,9 @@ gobernando `EDITORIAL_CORE.md`; este documento no lo pisa.
    la página pública de la obra: se verifica o edita una vez y se aplica a todas las imágenes.
    Cuando el artista eliminó los Pins directamente en Pinterest, una confirmación separada
    permite ignorar los IDs históricos y volver a publicar la serie completa.
+   Si Pinterest identifica un tablero como Sandbox durante un envío Production, ese destino
+   se retira de todos los selectores de la obra y cada Thumbnail Card fallida recibe feedback
+   local. Los Pins aceptados permanecen cerrados; el reintento actúa solo sobre los fallidos.
 
    **Cadencia de las series sociales** (misma enmienda): «Publicar serie espaciada» es un solo
    acto — la parte 1 sale al momento y las siguientes se programan con un lapso default de

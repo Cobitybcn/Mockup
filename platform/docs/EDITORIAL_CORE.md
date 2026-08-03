@@ -332,6 +332,9 @@ La serie muestra además un único enlace de destino, precargado con la página 
 obra y editable antes del envío. Ese enlace gobierna los diez Pins porque todos distribuyen la
 misma obra; cambiarlo habilita un nuevo envío explícito. Si los Pins fueron eliminados fuera de
 Artwork Mockups, el artista puede declarar ese hecho y republicar la serie completa.
+Un tablero que Pinterest rechaza explícitamente por pertenecer a Sandbox deja de ser un
+destino elegible en Production. El fallo se muestra junto a cada imagen afectada y el sistema
+conserva ese descarte para no volver a proponer el mismo tablero en el siguiente intento.
 
 ---
 

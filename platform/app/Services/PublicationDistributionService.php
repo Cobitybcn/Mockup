@@ -209,9 +209,15 @@ final class PublicationDistributionService
             $pinterestBoardIds = [];
             $pinterestBoardNames = [];
             $pinterestDestinationLink = '';
+            $pinterestItemErrors = [];
+            $pinterestRejectedBoardIds = [];
             $pinterestRequiresRepublish = false;
             if ($destination === 'pinterest' && is_array($row)) {
                 $decodedPayload = json_decode((string)($row['payload_json'] ?? ''), true);
+                foreach ((array)($decodedPayload['rejected_board_ids'] ?? []) as $rejectedBoardId) {
+                    $rejectedBoardId = trim((string)$rejectedBoardId);
+                    if ($rejectedBoardId !== '') $pinterestRejectedBoardIds[$rejectedBoardId] = true;
+                }
                 foreach ((array)($decodedPayload['results'] ?? []) as $itemResult) {
                     $totalCount++;
                     if (trim((string)($itemResult['external_id'] ?? '')) !== '') $publishedCount++;
@@ -221,6 +227,9 @@ final class PublicationDistributionService
                     if ($itemKey !== '' && $itemBoardId !== '') $pinterestBoardIds[$itemKey] = $itemBoardId;
                     if ($itemBoardName !== '') $pinterestBoardNames[$itemBoardName] = true;
                     if ($pinterestDestinationLink === '') $pinterestDestinationLink = trim((string)($itemResult['destination_url'] ?? ''));
+                    $itemError = trim((string)($itemResult['error'] ?? ''));
+                    if ($itemKey !== '' && $itemError !== '') $pinterestItemErrors[$itemKey] = $itemError;
+                    if ($itemBoardId !== '' && $this->isPinterestSandboxBoardError($itemError)) $pinterestRejectedBoardIds[$itemBoardId] = true;
                 }
                 if ($pinterestDestinationLink === '') $pinterestDestinationLink = trim((string)($decodedPayload['link'] ?? ''));
                 $pinterestEnvironment = $this->recordedPinterestEnvironment((array)$decodedPayload);
@@ -246,8 +255,16 @@ final class PublicationDistributionService
                 'board_ids' => $pinterestBoardIds,
                 'board_names' => array_keys($pinterestBoardNames),
                 'destination_link' => $pinterestDestinationLink,
+                'item_errors' => $pinterestItemErrors,
+                'rejected_board_ids' => array_keys($pinterestRejectedBoardIds),
                 'requires_republish' => $pinterestRequiresRepublish,
             ];
+            if ($destination === 'pinterest' && array_filter($pinterestItemErrors, fn(string $error): bool => $this->isPinterestSandboxBoardError($error)) !== []) {
+                $states[$destination]['error'] = t(
+                    'Some Pins point to Sandbox boards. Choose another board on the marked cards.',
+                    'Algunos Pins apuntan a tableros Sandbox. Elegí otro tablero en las tarjetas marcadas.'
+                );
+            }
         }
         return $states;
     }
@@ -432,7 +449,9 @@ final class PublicationDistributionService
 
         $pinterestEnvironment = $destination === 'pinterest' ? $this->pinterestEnvironment($userId) : '';
         $pinterestBoardIds = [];
+        $pinterestRejectedBoardIds = [];
         if ($destination === 'pinterest') {
+            $pinterestRejectedBoardIds = $this->previousPinterestRejectedBoardIds($publicationId, $userId, $pinterestEnvironment);
             foreach ((array)($options['board_ids'] ?? []) as $itemKey => $boardId) {
                 $itemKey = trim((string)$itemKey);
                 $boardId = trim((string)$boardId);
@@ -440,6 +459,14 @@ final class PublicationDistributionService
             }
             $legacyBoardId = trim((string)($options['board_id'] ?? ''));
             if ($pinterestBoardIds === [] && $legacyBoardId !== '') $pinterestBoardIds['*'] = $legacyBoardId;
+            foreach ($pinterestBoardIds as $boardId) {
+                if (in_array($boardId, $pinterestRejectedBoardIds, true)) {
+                    throw new RuntimeException(t(
+                        'A selected board belongs to Pinterest Sandbox. Reload and choose another board on the marked Pins.',
+                        'Un tablero seleccionado pertenece a Pinterest Sandbox. Recargá y elegí otro en los Pins marcados.'
+                    ));
+                }
+            }
         }
         $previousResults = $destination === 'pinterest' && empty($options['force_republish'])
             ? $this->previousItemResults($publicationId, $userId, $destination, $pinterestEnvironment)
@@ -451,6 +478,7 @@ final class PublicationDistributionService
             default => $this->tiktokRequest($payload, $destinations, $locale, $link),
         };
         $request['user_id'] = $userId;
+        if ($destination === 'pinterest') $request['rejected_board_ids'] = $pinterestRejectedBoardIds;
 
         try {
             $result = ($this->transport($transportKey))($request);
@@ -463,6 +491,10 @@ final class PublicationDistributionService
             $merged = $previousResults;
             foreach ((array)$result['items'] as $itemResult) {
                 $merged[(string)($itemResult['key'] ?? '')] = $itemResult;
+                if ($destination === 'pinterest' && $this->isPinterestSandboxBoardError((string)($itemResult['error'] ?? ''))) {
+                    $rejectedBoardId = trim((string)($itemResult['board_id'] ?? ''));
+                    if ($rejectedBoardId !== '') $pinterestRejectedBoardIds[] = $rejectedBoardId;
+                }
             }
             $published = array_filter($merged, static fn(array $r): bool => trim((string)($r['external_id'] ?? '')) !== '');
             $errors = array_filter(array_map(static fn(array $r): string => trim((string)($r['error'] ?? '')), $merged));
@@ -472,6 +504,7 @@ final class PublicationDistributionService
                 if (trim((string)($itemResult['external_url'] ?? '')) !== '') { $firstUrl = (string)$itemResult['external_url']; break; }
             }
             $request['results'] = array_values($merged);
+            if ($destination === 'pinterest') $request['rejected_board_ids'] = array_values(array_unique($pinterestRejectedBoardIds));
             $this->record($publicationId, $userId, $destination, self::TIKTOK_VIDEO_PART, [
                 'locale' => $locale,
                 'status' => $status,
@@ -890,6 +923,36 @@ final class PublicationDistributionService
             }
         }
         return $results;
+    }
+
+    /** @return list<string> boards Pinterest has conclusively rejected as Sandbox in this Production series */
+    private function previousPinterestRejectedBoardIds(int $publicationId, int $userId, string $apiEnvironment): array
+    {
+        try {
+            $stmt = $this->pdo->prepare('SELECT payload_json FROM publication_distributions WHERE publication_id=? AND user_id=? AND destination=? AND part=0 LIMIT 1');
+            $stmt->execute([$publicationId, $userId, 'pinterest']);
+            $decoded = json_decode((string)($stmt->fetchColumn() ?: ''), true);
+        } catch (Throwable) {
+            return [];
+        }
+        if (!is_array($decoded) || $this->recordedPinterestEnvironment($decoded) !== $apiEnvironment) return [];
+        $ids = [];
+        foreach ((array)($decoded['rejected_board_ids'] ?? []) as $boardId) {
+            $boardId = trim((string)$boardId);
+            if ($boardId !== '') $ids[$boardId] = true;
+        }
+        foreach ((array)($decoded['results'] ?? []) as $result) {
+            if (!is_array($result) || !$this->isPinterestSandboxBoardError((string)($result['error'] ?? ''))) continue;
+            $boardId = trim((string)($result['board_id'] ?? ''));
+            if ($boardId !== '') $ids[$boardId] = true;
+        }
+        return array_keys($ids);
+    }
+
+    private function isPinterestSandboxBoardError(string $error): bool
+    {
+        $error = strtolower($error);
+        return str_contains($error, 'pinterest code 15') && str_contains($error, 'sandbox board');
     }
 
     private function tiktokRequest(array $payload, array $destinations, string $locale, string $link): array

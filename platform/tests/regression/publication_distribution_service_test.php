@@ -139,7 +139,7 @@ function run_publication_distribution_service_tests(): void
             $boardId = (string)($item['board_id'] ?? '');
             $destinationUrl = (string)($item['destination_url'] ?? '');
             $results[] = in_array($key, $pinFailKeys['keys'], true)
-                ? ['key' => $key, 'board_id' => $boardId, 'board_name' => 'Board ' . $boardId, 'destination_url' => $destinationUrl, 'external_id' => '', 'external_url' => '', 'error' => 'pin rejected']
+                ? ['key' => $key, 'board_id' => $boardId, 'board_name' => 'Board ' . $boardId, 'destination_url' => $destinationUrl, 'external_id' => '', 'external_url' => '', 'error' => 'Pinterest API error. Pinterest code 15: Cannot add non-sandbox pins on sandbox boards.']
                 : ['key' => $key, 'board_id' => $boardId, 'board_name' => 'Board ' . $boardId, 'destination_url' => $destinationUrl, 'external_id' => 'pin-' . $key, 'external_url' => 'https://www.pinterest.com/pin/pin-' . $key . '/', 'error' => ''];
         }
         return ['items' => $results, 'external_id' => (string)($results[0]['board_id'] ?? '')];
@@ -196,7 +196,7 @@ function run_publication_distribution_service_tests(): void
     TestHarness::assertTrue($badLocale, 'un idioma fuera del producto se rechaza — un envío, un idioma');
 
     // ————— Pinterest: un tablero por Pin y reintento granular por entorno/tablero —————
-    $pinBoardIds = ['12' => 'board-a', '13' => 'board-a', '14' => 'board-b', '15' => 'board-b'];
+    $pinBoardIds = ['12' => 'board-a', '13' => 'board-sandbox', '14' => 'board-b', '15' => 'board-b'];
     $pinFailKeys['keys'] = ['13'];
     $pinState = $service->publish($publicationId, $userId, 'pinterest', 'en', ['board_ids' => $pinBoardIds]);
     $pinRequest = $captured['pinterest'][0];
@@ -204,25 +204,35 @@ function run_publication_distribution_service_tests(): void
     TestHarness::assertSame('Pin EN', (string)$pinRequest['items'][0]['title'], 'cada pin lleva el copy editorial de SU imagen');
     TestHarness::assertSame('Pin EN segundo', (string)$pinRequest['items'][1]['title'], 'el segundo pin lleva su propio título, no el de la portada');
     TestHarness::assertSame('Alt EN', (string)$pinRequest['items'][0]['alt_text'], 'cada pin lleva el alt de su imagen en el idioma elegido');
-    TestHarness::assertSame(['board-a', 'board-a', 'board-b', 'board-b'], array_column($pinRequest['items'], 'board_id'), 'cada Pin lleva el tablero elegido junto a su propia imagen');
+    TestHarness::assertSame(['board-a', 'board-sandbox', 'board-b', 'board-b'], array_column($pinRequest['items'], 'board_id'), 'cada Pin lleva el tablero elegido junto a su propia imagen');
     TestHarness::assertSame('production', (string)$pinRequest['api_environment'], 'el envío guarda el entorno API junto al destino');
     TestHarness::assertTrue(str_contains((string)$pinRequest['link'], 'strata-dist'), 'los pins enlazan a la página de la obra en el sitio del artista');
     TestHarness::assertSame('partial', (string)$pinState['status'], 'un pin rechazado deja la serie en PARCIAL');
     TestHarness::assertTrue($pinState['published_count'] === 3 && $pinState['total_count'] === 4, 'el estado muestra 3/4 pins publicados');
     TestHarness::assertTrue(str_contains((string)$pinState['destination_link'], 'strata-dist'), 'el estado conserva el enlace común visible para la serie');
+    TestHarness::assertSame(['board-sandbox'], (array)$pinState['rejected_board_ids'], 'el tablero que Pinterest identifica como Sandbox queda retirado de Production');
+    TestHarness::assertTrue(isset($pinState['item_errors']['13']), 'el fallo queda asociado a la Thumbnail Card exacta');
+    $rejectedAgain = false;
+    try {
+        $service->publish($publicationId, $userId, 'pinterest', 'en', ['board_ids' => $pinBoardIds]);
+    } catch (RuntimeException $e) {
+        $rejectedAgain = str_contains($e->getMessage(), 'Sandbox');
+    }
+    TestHarness::assertTrue($rejectedAgain, 'el backend impide reenviar un tablero Sandbox ya rechazado aunque llegue desde una página antigua');
     $pinFailKeys['keys'] = [];
+    $pinBoardIds['13'] = 'board-c';
     $retryPinState = $service->publish($publicationId, $userId, 'pinterest', 'en', ['board_ids' => $pinBoardIds]);
     $retryRequest = $captured['pinterest'][1];
     TestHarness::assertSame(1, count($retryRequest['items']), 'el reintento SOLO repite los pins fallidos — jamás duplica los publicados');
     TestHarness::assertSame('13', (string)$retryRequest['items'][0]['key'], 'el reintento apunta exactamente al pin que falló');
     TestHarness::assertTrue($retryPinState['status'] === 'published' && $retryPinState['error'] === '', 'la serie completa queda PINS PUBLICADOS y el error desaparece (IV.16)');
     TestHarness::assertTrue($retryPinState['published_count'] === 4 && $retryPinState['total_count'] === 4, 'el estado final muestra 4/4 pins');
-    $pinBoardIds['14'] = 'board-c';
+    $pinBoardIds['14'] = 'board-d';
     $changedBoardState = $service->publish($publicationId, $userId, 'pinterest', 'en', ['board_ids' => $pinBoardIds]);
     $changedBoardRequest = $captured['pinterest'][2];
     TestHarness::assertSame(1, count($changedBoardRequest['items']), 'cambiar el tablero de un Pin reenvía solo ese Pin');
     TestHarness::assertSame('14', (string)$changedBoardRequest['items'][0]['key'], 'la reasignación queda ligada a la imagen correcta');
-    TestHarness::assertSame('board-c', (string)$changedBoardRequest['items'][0]['board_id'], 'el nuevo tablero viaja en el Pin reasignado');
+    TestHarness::assertSame('board-d', (string)$changedBoardRequest['items'][0]['board_id'], 'el nuevo tablero viaja en el Pin reasignado');
     TestHarness::assertSame('published', (string)$changedBoardState['status'], 'la reasignación individual conserva completa la serie');
     $changedLink = 'https://mauriziovalch.com/artworks/destino-revisado/';
     $service->publish($publicationId, $userId, 'pinterest', 'en', ['board_ids' => $pinBoardIds, 'link' => $changedLink]);

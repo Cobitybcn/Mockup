@@ -603,7 +603,7 @@ function pub_page_chip(string $status): array
     <title><?= pub_h(t('Publication - Artwork Mockups', 'Publicación - Artwork Mockups')) ?></title>
     <link rel="stylesheet" href="style.css">
     <link rel="stylesheet" href="ui-catalog.css">
-    <link rel="stylesheet" href="publication.css?v=20">
+    <link rel="stylesheet" href="publication.css?v=21">
 </head>
 <body>
 <div class="app-shell">
@@ -988,15 +988,21 @@ function pub_page_chip(string $status): array
                                 }
                             }
                             $pinPreviousBoardIds = !empty($pinState['requires_republish']) ? [] : (array)($pinState['board_ids'] ?? []);
+                            $pinItemErrors = (array)($pinState['item_errors'] ?? []);
+                            $pinRejectedBoardIds = array_map('strval', (array)($pinState['rejected_board_ids'] ?? []));
+                            $pinAvailableBoards = array_values(array_filter(
+                                $pinBoards,
+                                static fn(array $board): bool => !in_array((string)($board['id'] ?? ''), $pinRejectedBoardIds, true)
+                            ));
                             $pinRecommendedBoardId = '';
-                            foreach ($pinBoards as $pinBoardCandidate) {
+                            foreach ($pinAvailableBoards as $pinBoardCandidate) {
                                 if (strcasecmp(trim((string)($pinBoardCandidate['name'] ?? '')), $pinBoardName) === 0) {
                                     $pinRecommendedBoardId = (string)($pinBoardCandidate['id'] ?? '');
                                     break;
                                 }
                             }
-                            if ($pinRecommendedBoardId === '' && isset($pinBoards[0])) $pinRecommendedBoardId = (string)($pinBoards[0]['id'] ?? '');
-                            $pinCanChooseBoards = $pinConnected && $pinBoardsError === '' && $pinBoards !== [];
+                            if ($pinRecommendedBoardId === '' && isset($pinAvailableBoards[0])) $pinRecommendedBoardId = (string)($pinAvailableBoards[0]['id'] ?? '');
+                            $pinCanChooseBoards = $pinConnected && $pinBoardsError === '' && $pinAvailableBoards !== [];
                             $pinDefaultLink = rtrim(app_env('ARTIST_WEBSITE_CATALOG_URL', 'https://mauriziovalch.com/artworks'), '/')
                                 . '/' . rawurlencode((string)($productPayload['sources']['page']['slug'] ?? '')) . '/';
                             $pinDestinationLink = !empty($pinState['requires_republish'])
@@ -1012,13 +1018,19 @@ function pub_page_chip(string $status): array
                             <?php if (!empty($pinState['requires_republish'])): ?>
                                 <p class="pub-panel-note"><strong><?= pub_h(t('Production publication pending.', 'Publicación en Production pendiente.')) ?></strong> <?= pub_h(t('The visible result belongs to Sandbox and will not be reused as a Production Pin.', 'El resultado visible pertenece a Sandbox y no se reutilizará como Pin de Production.')) ?></p>
                             <?php endif; ?>
+                            <?php if ($pinRejectedBoardIds !== []): ?>
+                                <p class="pub-panel-note"><strong><?= pub_h(t('Sandbox boards removed.', 'Tableros Sandbox retirados.')) ?></strong> <?= pub_h(t('Pinterest rejected these destinations in Production; they are no longer offered in the selectors.', 'Pinterest rechazó esos destinos en Production; ya no aparecen en los selectores.')) ?></p>
+                            <?php endif; ?>
                             <div class="pub-pin-strip" aria-label="<?= pub_h(t('Pin series preview', 'Vista previa de la serie de pins')) ?>">
                                 <?php foreach ($mediaItemsPayload as $pinItem): ?>
                                     <?php
                                     $pinItemKey = (string)((int)($pinItem['mockup_sheet_id'] ?? 0));
-                                    $pinItemBoardId = trim((string)($pinPreviousBoardIds[$pinItemKey] ?? '')) ?: $pinRecommendedBoardId;
+                                    $pinItemBoardId = trim((string)($pinPreviousBoardIds[$pinItemKey] ?? ''));
+                                    if ($pinItemBoardId === '' || in_array($pinItemBoardId, $pinRejectedBoardIds, true)) $pinItemBoardId = $pinRecommendedBoardId;
+                                    $pinItemError = trim((string)($pinItemErrors[$pinItemKey] ?? ''));
+                                    $pinSandboxError = str_contains(strtolower($pinItemError), 'pinterest code 15') && str_contains(strtolower($pinItemError), 'sandbox board');
                                     ?>
-                                    <figure class="pub-pin-card">
+                                    <figure class="pub-pin-card <?= $pinSandboxError ? 'pub-pin-card--error' : '' ?>">
                                         <img src="<?= pub_h(pub_media_url((string)($pinItem['file'] ?? ''))) ?>" alt="" loading="lazy">
                                         <?php
                                         // El preview muestra lo que realmente va a salir: un
@@ -1034,12 +1046,15 @@ function pub_page_chip(string $status): array
                                             <label class="pub-pin-board">
                                                 <span><?= pub_h(t('Board', 'Tablero')) ?></span>
                                                 <select name="pin_boards[<?= pub_h($pinItemKey) ?>]" form="pinterestPublishForm" required>
-                                                    <?php foreach ($pinBoards as $pinBoard): ?>
+                                                    <?php foreach ($pinAvailableBoards as $pinBoard): ?>
                                                         <?php $pinBoardId = (string)($pinBoard['id'] ?? ''); ?>
                                                         <option value="<?= pub_h($pinBoardId) ?>" <?= $pinBoardId === $pinItemBoardId ? 'selected' : '' ?>><?= pub_h((string)($pinBoard['name'] ?? t('Untitled', 'Sin título'))) ?></option>
                                                     <?php endforeach; ?>
                                                 </select>
                                             </label>
+                                        <?php endif; ?>
+                                        <?php if ($pinSandboxError): ?>
+                                            <small class="pub-pin-card-error"><?= pub_h(t('This Pin was assigned to a Sandbox board. Choose another destination.', 'Este Pin estaba asignado a un tablero Sandbox. Elegí otro destino.')) ?></small>
                                         <?php endif; ?>
                                     </figure>
                                 <?php endforeach; ?>
@@ -1055,7 +1070,7 @@ function pub_page_chip(string $status): array
                                 <p class="pub-product-meta"><a href="connections.php"><?= pub_h(t('Open Connections →', 'Abrir Conexiones →')) ?></a></p>
                             <?php elseif ($pinBoardsError !== ''): ?>
                                 <p class="pub-dist-error"><?= pub_h($pinBoardsError) ?></p>
-                            <?php elseif ($pinBoards === []): ?>
+                            <?php elseif ($pinAvailableBoards === []): ?>
                                 <p class="pub-product-meta"><?= pub_h(t('No boards were found in the connected Pinterest account. Create one on Pinterest and reload this step.', 'No se encontraron tableros en la cuenta de Pinterest conectada. Creá uno en Pinterest y recargá este paso.')) ?></p>
                             <?php else: ?>
                                 <form method="post" class="pub-dist-form" id="pinterestPublishForm">
