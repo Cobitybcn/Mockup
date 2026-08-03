@@ -32,6 +32,9 @@ Production step. In the artwork Publication panel, load the real boards from the
 connected artist account, choose a board beside every Pin, and confirm the Production send.
 Changing one Pin's board is a new destination only for that image; retrying the same
 environment and per-Pin assignments skips Pins that already have an external ID.
+The Publication panel also exposes the single artwork landing URL applied to the whole Pin
+series. If Pins were deleted directly on Pinterest, the artist can explicitly republish the
+complete series instead of trusting the stored external IDs.
 
 ## Safe production migration
 

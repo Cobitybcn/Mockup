@@ -251,12 +251,18 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && in_array((string)($_POST['action'] 
                 $pinBoardId = trim((string)$pinBoardId);
                 if (preg_match('/^[0-9]+$/', $pinKey) && $pinBoardId !== '') $pinBoards[$pinKey] = $pinBoardId;
             }
+            $pinLink = trim((string)($_POST['pin_link'] ?? ''));
             $state = $distribution->publish(
                 (int)$publication['id'],
                 $userId,
                 (string)($_POST['destination'] ?? ''),
                 (string)($_POST['locale'] ?? ''),
-                ['board_ids' => $pinBoards, 'medium' => $medium]
+                [
+                    'board_ids' => $pinBoards,
+                    'link' => $pinLink,
+                    'force_republish' => (string)($_POST['force_republish'] ?? '') === 'yes',
+                    'medium' => $medium,
+                ]
             );
             $flag = (string)($_POST['destination'] ?? '');
             if ($flag === 'tiktok' && $medium === 'carousel') $flag = 'tiktok_carousel';
@@ -597,7 +603,7 @@ function pub_page_chip(string $status): array
     <title><?= pub_h(t('Publication - Artwork Mockups', 'Publicación - Artwork Mockups')) ?></title>
     <link rel="stylesheet" href="style.css">
     <link rel="stylesheet" href="ui-catalog.css">
-    <link rel="stylesheet" href="publication.css?v=19">
+    <link rel="stylesheet" href="publication.css?v=20">
 </head>
 <body>
 <div class="app-shell">
@@ -991,8 +997,18 @@ function pub_page_chip(string $status): array
                             }
                             if ($pinRecommendedBoardId === '' && isset($pinBoards[0])) $pinRecommendedBoardId = (string)($pinBoards[0]['id'] ?? '');
                             $pinCanChooseBoards = $pinConnected && $pinBoardsError === '' && $pinBoards !== [];
+                            $pinDefaultLink = rtrim(app_env('ARTIST_WEBSITE_CATALOG_URL', 'https://mauriziovalch.com/artworks'), '/')
+                                . '/' . rawurlencode((string)($productPayload['sources']['page']['slug'] ?? '')) . '/';
+                            $pinDestinationLink = !empty($pinState['requires_republish'])
+                                ? $pinDefaultLink
+                                : (trim((string)($pinState['destination_link'] ?? '')) ?: $pinDefaultLink);
                             ?>
                             <p class="pub-panel-note"><?= pub_h(t('Publishes', 'Publica')) ?> <strong><?= count($mediaItemsPayload) ?> <?= pub_h(t('pins', 'pins')) ?></strong> — <?= pub_h(t('one per composition image, each with its own editorial copy and destination board. Choose the board on every Pin; the editorial suggestion is', 'uno por imagen de la composición, cada uno con su copy editorial propio y su tablero de destino. Elegí el tablero en cada Pin; la sugerencia editorial es')) ?> «<?= pub_h($pinBoardName) ?>».</p>
+                            <label class="pub-pin-link">
+                                <span><?= pub_h(t('Destination link for all Pins', 'Enlace de destino para los Pins')) ?></span>
+                                <input type="url" name="pin_link" value="<?= pub_h($pinDestinationLink) ?>" form="pinterestPublishForm" inputmode="url" autocomplete="url" required>
+                                <small><?= pub_h(t('The ten Pins lead to this artwork page.', 'Los diez Pins conducen a esta página de la obra.')) ?></small>
+                            </label>
                             <?php if (!empty($pinState['requires_republish'])): ?>
                                 <p class="pub-panel-note"><strong><?= pub_h(t('Production publication pending.', 'Publicación en Production pendiente.')) ?></strong> <?= pub_h(t('The visible result belongs to Sandbox and will not be reused as a Production Pin.', 'El resultado visible pertenece a Sandbox y no se reutilizará como Pin de Production.')) ?></p>
                             <?php endif; ?>
@@ -1060,6 +1076,12 @@ function pub_page_chip(string $status): array
                                         <input type="checkbox" name="confirm" value="yes" required>
                                         <span><?= pub_h(t('I confirm publishing the pin series now', 'Confirmo publicar ahora la serie de pins')) ?></span>
                                     </label>
+                                    <?php if ((int)($pinState['published_count'] ?? 0) > 0): ?>
+                                        <label class="pub-dist-confirm">
+                                            <input type="checkbox" name="force_republish" value="yes">
+                                            <span><?= pub_h(t('The previous Pins were deleted on Pinterest: publish the complete series again', 'Los Pins anteriores fueron eliminados en Pinterest: volver a publicar la serie completa')) ?></span>
+                                        </label>
+                                    <?php endif; ?>
                                     <button type="submit" class="button-link"><?= !empty($pinState['requires_republish']) ? pub_h(t('Publish Pins in Production', 'Publicar Pins en Production')) : (($pinState['status'] ?? '') === 'partial' ? pub_h(t('Retry missing pins', 'Reintentar pins faltantes')) : (($pinState['status'] ?? '') === 'published' ? pub_h(t('Publish to selected board', 'Publicar en el tablero elegido')) : pub_h(t('Publish Pins', 'Publicar Pins')))) ?></button>
                                 </form>
                             <?php endif; ?>

@@ -328,6 +328,11 @@ Production o cambiar el tablero de un Pin habilita un nuevo envío explícito de
 confundir los resultados anteriores con los del entorno o destino actual. Los IDs de Sandbox
 nunca constituyen evidencia de publicación en Production.
 
+La serie muestra además un único enlace de destino, precargado con la página pública de la
+obra y editable antes del envío. Ese enlace gobierna los diez Pins porque todos distribuyen la
+misma obra; cambiarlo habilita un nuevo envío explícito. Si los Pins fueron eliminados fuera de
+Artwork Mockups, el artista puede declarar ese hecho y republicar la serie completa.
+
 ---
 
 ## LIBRO VI — Flujo y estados

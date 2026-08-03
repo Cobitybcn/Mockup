@@ -45,6 +45,10 @@ gobernando `EDITORIAL_CORE.md`; este documento no lo pisa.
    excepción explícita al art. III.13 solicitada por el artista. Cada resultado queda ligado
    al entorno API, a la imagen y a su tablero: Sandbox no cierra Production, y cambiar el
    tablero de una imagen reenvía solo ese Pin sin duplicar los demás.
+   La serie presenta un solo campo visible **Enlace de destino para los Pins**, precargado con
+   la página pública de la obra: se verifica o edita una vez y se aplica a todas las imágenes.
+   Cuando el artista eliminó los Pins directamente en Pinterest, una confirmación separada
+   permite ignorar los IDs históricos y volver a publicar la serie completa.
 
    **Cadencia de las series sociales** (misma enmienda): «Publicar serie espaciada» es un solo
    acto — la parte 1 sale al momento y las siguientes se programan con un lapso default de

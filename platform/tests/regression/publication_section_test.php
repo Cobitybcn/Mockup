@@ -65,6 +65,8 @@ function run_publication_section_tests(): void
     TestHarness::assertContains('PINS PUBLICADOS', $section, 'Pinterest habla con su propio vocabulario de estado (serie de pins)');
     TestHarness::assertContains('data-copy-text', $section, 'El paquete Saatchi vive al lado de la acción, con copiar por campo');
     TestHarness::assertContains('name="pin_boards[', $section, 'Cada Pin muestra su propio selector de tablero antes del envío');
+    TestHarness::assertContains('name="pin_link"', $section, 'Pinterest muestra un único enlace de destino para toda la serie');
+    TestHarness::assertContains('name="force_republish"', $section, 'El artista puede declarar que eliminó los Pins y republicar toda la serie');
     TestHarness::assertContains('form="pinterestPublishForm"', $section, 'Los selectores de cada tarjeta pertenecen al acto confirmado de Pinterest');
     TestHarness::assertContains('requires_republish', $section, 'Un resultado Sandbox no cierra el envío pendiente de Production');
     TestHarness::assertContains("'api_environment' => \$apiEnvironment", (string)file_get_contents($platformRoot . '/app/Services/PublicationDistributionService.php'), 'Cada envío de Pinterest queda ligado a su entorno API');

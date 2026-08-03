@@ -137,9 +137,10 @@ function run_publication_distribution_service_tests(): void
         foreach ((array)$request['items'] as $item) {
             $key = (string)$item['key'];
             $boardId = (string)($item['board_id'] ?? '');
+            $destinationUrl = (string)($item['destination_url'] ?? '');
             $results[] = in_array($key, $pinFailKeys['keys'], true)
-                ? ['key' => $key, 'board_id' => $boardId, 'board_name' => 'Board ' . $boardId, 'external_id' => '', 'external_url' => '', 'error' => 'pin rejected']
-                : ['key' => $key, 'board_id' => $boardId, 'board_name' => 'Board ' . $boardId, 'external_id' => 'pin-' . $key, 'external_url' => 'https://www.pinterest.com/pin/pin-' . $key . '/', 'error' => ''];
+                ? ['key' => $key, 'board_id' => $boardId, 'board_name' => 'Board ' . $boardId, 'destination_url' => $destinationUrl, 'external_id' => '', 'external_url' => '', 'error' => 'pin rejected']
+                : ['key' => $key, 'board_id' => $boardId, 'board_name' => 'Board ' . $boardId, 'destination_url' => $destinationUrl, 'external_id' => 'pin-' . $key, 'external_url' => 'https://www.pinterest.com/pin/pin-' . $key . '/', 'error' => ''];
         }
         return ['items' => $results, 'external_id' => (string)($results[0]['board_id'] ?? '')];
     };
@@ -208,6 +209,7 @@ function run_publication_distribution_service_tests(): void
     TestHarness::assertTrue(str_contains((string)$pinRequest['link'], 'strata-dist'), 'los pins enlazan a la página de la obra en el sitio del artista');
     TestHarness::assertSame('partial', (string)$pinState['status'], 'un pin rechazado deja la serie en PARCIAL');
     TestHarness::assertTrue($pinState['published_count'] === 3 && $pinState['total_count'] === 4, 'el estado muestra 3/4 pins publicados');
+    TestHarness::assertTrue(str_contains((string)$pinState['destination_link'], 'strata-dist'), 'el estado conserva el enlace común visible para la serie');
     $pinFailKeys['keys'] = [];
     $retryPinState = $service->publish($publicationId, $userId, 'pinterest', 'en', ['board_ids' => $pinBoardIds]);
     $retryRequest = $captured['pinterest'][1];
@@ -222,6 +224,14 @@ function run_publication_distribution_service_tests(): void
     TestHarness::assertSame('14', (string)$changedBoardRequest['items'][0]['key'], 'la reasignación queda ligada a la imagen correcta');
     TestHarness::assertSame('board-c', (string)$changedBoardRequest['items'][0]['board_id'], 'el nuevo tablero viaja en el Pin reasignado');
     TestHarness::assertSame('published', (string)$changedBoardState['status'], 'la reasignación individual conserva completa la serie');
+    $changedLink = 'https://mauriziovalch.com/artworks/destino-revisado/';
+    $service->publish($publicationId, $userId, 'pinterest', 'en', ['board_ids' => $pinBoardIds, 'link' => $changedLink]);
+    $changedLinkRequest = $captured['pinterest'][3];
+    TestHarness::assertSame(4, count($changedLinkRequest['items']), 'cambiar el enlace común vuelve a enviar todos los Pins de la obra');
+    TestHarness::assertSame([$changedLink, $changedLink, $changedLink, $changedLink], array_column($changedLinkRequest['items'], 'destination_url'), 'el enlace visible viaja idéntico en los diez Pins');
+    $service->publish($publicationId, $userId, 'pinterest', 'en', ['board_ids' => $pinBoardIds, 'link' => $changedLink, 'force_republish' => true]);
+    $forceRequest = $captured['pinterest'][4];
+    TestHarness::assertSame(4, count($forceRequest['items']), 'si los Pins fueron eliminados externamente, la confirmación explícita republica la serie completa');
 
     // ————— Series sociales: parte 1 ahora, el resto programado con el lapso —————
     TestHarness::assertSame(12, $service->seriesGapHours($userId), 'el lapso default de la cadencia es 12 horas');

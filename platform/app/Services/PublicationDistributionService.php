@@ -208,6 +208,7 @@ final class PublicationDistributionService
             $pinterestCurrentEnvironment = '';
             $pinterestBoardIds = [];
             $pinterestBoardNames = [];
+            $pinterestDestinationLink = '';
             $pinterestRequiresRepublish = false;
             if ($destination === 'pinterest' && is_array($row)) {
                 $decodedPayload = json_decode((string)($row['payload_json'] ?? ''), true);
@@ -219,7 +220,9 @@ final class PublicationDistributionService
                     $itemBoardName = trim((string)($itemResult['board_name'] ?? $decodedPayload['board_name'] ?? ''));
                     if ($itemKey !== '' && $itemBoardId !== '') $pinterestBoardIds[$itemKey] = $itemBoardId;
                     if ($itemBoardName !== '') $pinterestBoardNames[$itemBoardName] = true;
+                    if ($pinterestDestinationLink === '') $pinterestDestinationLink = trim((string)($itemResult['destination_url'] ?? ''));
                 }
+                if ($pinterestDestinationLink === '') $pinterestDestinationLink = trim((string)($decodedPayload['link'] ?? ''));
                 $pinterestEnvironment = $this->recordedPinterestEnvironment((array)$decodedPayload);
                 $pinterestCurrentEnvironment = $this->pinterestEnvironment($userId);
                 $pinterestRequiresRepublish = $totalCount > 0
@@ -242,6 +245,7 @@ final class PublicationDistributionService
                 'current_environment' => $pinterestCurrentEnvironment,
                 'board_ids' => $pinterestBoardIds,
                 'board_names' => array_keys($pinterestBoardNames),
+                'destination_link' => $pinterestDestinationLink,
                 'requires_republish' => $pinterestRequiresRepublish,
             ];
         }
@@ -377,6 +381,13 @@ final class PublicationDistributionService
         $cover = (array)($payload['media']['items'][0] ?? []);
         $slug = (string)($payload['sources']['page']['slug'] ?? $publication['slug']);
         $link = $this->artistSiteUrl($slug);
+        if ($destination === 'pinterest' && trim((string)($options['link'] ?? '')) !== '') {
+            $candidateLink = trim((string)$options['link']);
+            if (!filter_var($candidateLink, FILTER_VALIDATE_URL) || strtolower((string)parse_url($candidateLink, PHP_URL_SCHEME)) !== 'https') {
+                throw new InvalidArgumentException(t('The Pinterest destination must be a valid HTTPS URL.', 'El destino de Pinterest debe ser una URL HTTPS válida.'));
+            }
+            $link = $candidateLink;
+        }
         $destinations = (array)($payload['destinations'] ?? []);
 
         if ($metaVideoChannel !== '') {
@@ -430,7 +441,7 @@ final class PublicationDistributionService
             $legacyBoardId = trim((string)($options['board_id'] ?? ''));
             if ($pinterestBoardIds === [] && $legacyBoardId !== '') $pinterestBoardIds['*'] = $legacyBoardId;
         }
-        $previousResults = $destination === 'pinterest'
+        $previousResults = $destination === 'pinterest' && empty($options['force_republish'])
             ? $this->previousItemResults($publicationId, $userId, $destination, $pinterestEnvironment)
             : [];
         $request = match (true) {
@@ -824,13 +835,17 @@ final class PublicationDistributionService
                 throw new RuntimeException(t('Choose a Pinterest board for every Pin.', 'Elegí un tablero de Pinterest para cada Pin.'));
             }
             $previousBoardId = trim((string)($previousResults[$key]['board_id'] ?? ''));
+            $previousDestination = trim((string)($previousResults[$key]['destination_url'] ?? ''));
             if (trim((string)($previousResults[$key]['external_id'] ?? '')) !== ''
                 && $previousBoardId !== ''
-                && hash_equals($previousBoardId, $boardId)) continue;
+                && hash_equals($previousBoardId, $boardId)
+                && $previousDestination !== ''
+                && hash_equals($previousDestination, $link)) continue;
             $itemPinterest = (array)($mediaItem['social'][$locale]['pinterest'] ?? []);
             $items[] = [
                 'key' => $key,
                 'board_id' => $boardId,
+                'destination_url' => $link,
                 'title' => MockupSocialContentService::text($itemPinterest['title'] ?? '', (string)($block['title'] ?? '')),
                 'description' => MockupSocialContentService::text($itemPinterest['description'] ?? '', (string)($block['description'] ?? '')),
                 'alt_text' => (string)($mediaItem[$locale]['alt_text'] ?? ''),
@@ -870,6 +885,7 @@ final class PublicationDistributionService
             if ($key !== '') {
                 if (trim((string)($result['board_id'] ?? '')) === '' && $recordedBoardId !== '') $result['board_id'] = $recordedBoardId;
                 if (trim((string)($result['board_name'] ?? '')) === '' && trim((string)($decoded['board_name'] ?? '')) !== '') $result['board_name'] = (string)$decoded['board_name'];
+                if (trim((string)($result['destination_url'] ?? '')) === '' && trim((string)($decoded['link'] ?? '')) !== '') $result['destination_url'] = (string)$decoded['link'];
                 $results[$key] = $result;
             }
         }
@@ -1146,11 +1162,11 @@ final class PublicationDistributionService
                         $variant = ['title' => (string)$item['title'], 'description' => (string)$item['description']];
                         $pinItem = ['alt_text' => (string)$item['alt_text']];
                         if ($useUrl) {
-                            $payload = (new PinterestPublisher())->imagePinPayload($variant, $pinItem, $boardId, $request['link'], $this->publicImageUrl($request['slug'], (string)$item['image_file']));
+                            $payload = (new PinterestPublisher())->imagePinPayload($variant, $pinItem, $boardId, (string)$item['destination_url'], $this->publicImageUrl($request['slug'], (string)$item['image_file']));
                         } else {
                             $path = $this->localImagePath((string)$item['image_file']);
                             if ($path === '') throw new RuntimeException(t('Image unavailable', 'Imagen no disponible') . ': ' . basename((string)$item['image_file']));
-                            $payload = (new PinterestPublisher())->imageBase64PinPayload($variant, $pinItem, $boardId, $request['link'], $path);
+                            $payload = (new PinterestPublisher())->imageBase64PinPayload($variant, $pinItem, $boardId, (string)$item['destination_url'], $path);
                         }
                         $created = $pinterest->createPin($userId, $payload, 'artist');
                         $pinId = (string)($created['id'] ?? '');
@@ -1162,12 +1178,13 @@ final class PublicationDistributionService
                             'key' => (string)$item['key'],
                             'board_id' => $boardId,
                             'board_name' => $boardName,
+                            'destination_url' => (string)$item['destination_url'],
                             'external_id' => $pinId,
                             'external_url' => $pinId !== '' && $live ? 'https://www.pinterest.com/pin/' . rawurlencode($pinId) . '/' : '',
                             'error' => '',
                         ];
                     } catch (Throwable $pinError) {
-                        $results[] = ['key' => (string)$item['key'], 'board_id' => $boardId, 'board_name' => $boardName, 'external_id' => '', 'external_url' => '', 'error' => $pinError->getMessage()];
+                        $results[] = ['key' => (string)$item['key'], 'board_id' => $boardId, 'board_name' => $boardName, 'destination_url' => (string)$item['destination_url'], 'external_id' => '', 'external_url' => '', 'error' => $pinError->getMessage()];
                     }
                 }
                 $firstBoardId = trim((string)($results[0]['board_id'] ?? ''));
