@@ -29,6 +29,13 @@ $checks = [
     [substr_count($cloudBuild, 'BUILD_ID="$BUILD_ID"') === 2, 'Cloud Build ID is substituted before shell substring expansion'],
     [str_contains($dockerIgnore, 'assets/uploads/') && str_contains($cloudIgnore, 'assets/uploads/'), 'runtime uploads never enter build contexts'],
     [str_contains($dockerIgnore, 'assets/tenants/') && str_contains($cloudIgnore, 'assets/tenants/'), 'tenant runtime data never enters build contexts'],
+    // Hasta 2026-08-03 el sitio mostraba los warnings de PHP al visitante, con la ruta
+    // absoluta del servidor. La plataforma ya tenia display_errors apagado; este no.
+    [str_contains($dockerfile, 'display_errors = Off'), 'visitors never see PHP errors'],
+    [str_contains($dockerfile, 'log_errors = On') && str_contains($dockerfile, 'error_log = /dev/stderr'), 'PHP errors are logged instead of printed'],
+    [str_contains($cloudBuild, 'display_errors = Off'), 'the image smoke test verifies error display on the real artifact'],
+    // views/ son plantillas sin contexto propio: pedirlas por HTTP fatalea a la vista.
+    [str_contains((string)file_get_contents($root . '/.htaccess'), 'views'), 'view templates are not served over HTTP'],
 ];
 
 foreach ($checks as [$passed, $description]) {

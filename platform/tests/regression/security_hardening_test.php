@@ -24,25 +24,11 @@ function run_security_hardening_regression_tests(): void
         'los directorios internos de site-admin tambien estan denegados (su suite no es ejecutable por HTTP)'
     );
 
-    // El sitio publico del artista: plantillas muertas servibles y errores de PHP
-    // visibles al visitante (filtraban la ruta absoluta del servidor).
-    $artistHtaccess = (string)file_get_contents($repositoryRoot . '/artist-site/.htaccess');
-    TestHarness::assertContains(
-        'views',
-        $artistHtaccess,
-        'artist-site/views no se sirve: son plantillas sin contexto que fatalean al pedirlas directo'
-    );
-    $artistDockerfile = (string)file_get_contents($repositoryRoot . '/artist-site/Dockerfile');
-    TestHarness::assertContains(
-        'display_errors = Off',
-        $artistDockerfile,
-        'el sitio del artista no muestra errores de PHP al visitante (la plataforma ya lo hacia)'
-    );
-    TestHarness::assertContains(
-        'log_errors = On',
-        $artistDockerfile,
-        'los errores del sitio del artista se registran en vez de mostrarse'
-    );
+    // El hardening del sitio del artista (display_errors, views/) NO se verifica aca:
+    // la imagen web solo copia 15 archivos sueltos de artist-site, sin .htaccess ni
+    // Dockerfile, asi que dentro del contenedor esas rutas no existen. Vive en
+    // artist-site/tests/deployment_hardening_test.php y, sobre el artefacto real,
+    // en el paso image-smoke de artist-site/cloudbuild.hardening.yaml.
     TestHarness::assertContains(
         'SetEnvIf Request_URI "^/(?:platform/)?(?:create_scenes_wait|mockup_combinations_review)\\.php$" artwork_same_origin_frame=1',
         $apache,
