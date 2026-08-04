@@ -622,9 +622,18 @@ final class PublicationProductService
             $keywords = self::saatchiKeywords((string)($artworkByLocale[$workingLocale]['tags'] ?? ''));
             $keywordLocale = $workingLocale;
         }
+        // Saatchi mide en caracteres y sus topes son duros. Si la obra ya tiene
+        // sus campos propios se usan; si no —contenido anterior a la enmienda del
+        // 2026-08-01— se cae al texto del sitio, que los excede y hay que recortar
+        // a mano. Nunca se trunca aca: cortar parte una frase al medio.
+        $title = [];
         $description = [];
+        $caption = [];
         foreach ($artworkByLocale as $locale => $fields) {
-            $description[$locale] = (string)($fields['description'] ?? '');
+            $title[$locale] = trim((string)($fields['saatchi_title'] ?? ''));
+            $propia = trim((string)($fields['saatchi_description'] ?? ''));
+            $description[$locale] = $propia !== '' ? $propia : (string)($fields['description'] ?? '');
+            $caption[$locale] = trim((string)($fields['saatchi_caption'] ?? ''));
         }
         $images = [];
         foreach ($mediaItems as $item) {
@@ -641,7 +650,9 @@ final class PublicationProductService
         return [
             'keywords' => $keywords,
             'keywords_locale' => $keywordLocale,
+            'title' => $title,
             'description' => $description,
+            'caption' => $caption,
             'images' => $images,
         ];
     }

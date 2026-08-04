@@ -22,6 +22,8 @@ require_once __DIR__ . '/Support/Display.php';
 require_once __DIR__ . '/Support/PublicSlug.php';
 require_once __DIR__ . '/Support/PromptSettings.php';
 require_once __DIR__ . '/Support/CameraSlotsStore.php';
+require_once __DIR__ . '/Support/ArtworkDimensions.php';
+require_once __DIR__ . '/Support/MeasurementCitations.php';
 require_once __DIR__ . '/Support/RootArtworkCropper.php';
 require_once __DIR__ . '/Support/ManualArtworkFrameCropper.php';
 require_once __DIR__ . '/Support/ProviderSettings.php';

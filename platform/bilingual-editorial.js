@@ -440,6 +440,28 @@
         setState('Título guardado', 'saved');
     };
 
+    const saveDimensions = async (element) => {
+        const raw = element.innerText.trim();
+        const previous = element.dataset.savedDimensions || '';
+        if (raw === previous) return;
+        const body = new FormData();
+        body.append('csrf', csrf);
+        body.append('action', 'save_dimensions');
+        body.append('entity_type', entityType);
+        body.append('entity_id', entityId);
+        body.append('dimensions', raw);
+        setState('Guardando medidas…');
+        const response = await fetch(endpoint, {method: 'POST', body, headers: {'Accept': 'application/json'}});
+        const result = await response.json();
+        if (!response.ok || !result.ok) {
+            element.textContent = previous;
+            throw new Error(result.error || 'No se pudieron guardar las medidas.');
+        }
+        element.textContent = result.dimensions;
+        element.dataset.savedDimensions = result.dimensions;
+        setState('Medidas guardadas', 'saved');
+    };
+
     const schedule = (key, callback) => {
         clearTimeout(timers.get(key));
         timers.set(key, setTimeout(() => callback().catch((error) => setState(error.message, 'error')), 900));
@@ -459,9 +481,15 @@
         title.dataset.savedTitle = title.innerText.trim();
     });
 
+    editor.querySelectorAll('[data-artwork-dimensions]').forEach((dimensions) => {
+        dimensions.dataset.savedDimensions = dimensions.innerText.trim();
+    });
+
     editor.addEventListener('focusout', (event) => {
         const title = event.target.closest('[data-universal-title]');
         if (title) saveTitle(title).catch((error) => setState(error.message, 'error'));
+        const dimensions = event.target.closest('[data-artwork-dimensions]');
+        if (dimensions) saveDimensions(dimensions).catch((error) => setState(error.message, 'error'));
     });
 
     editor.addEventListener('toggle', (event) => {
@@ -483,6 +511,16 @@
         if (title && event.key === 'Enter') {
             event.preventDefault();
             title.blur();
+        }
+        const dimensions = event.target.closest('[data-artwork-dimensions]');
+        if (dimensions && event.key === 'Enter') {
+            event.preventDefault();
+            dimensions.blur();
+        }
+        if (dimensions && event.key === 'Escape') {
+            event.preventDefault();
+            dimensions.textContent = dimensions.dataset.savedDimensions || '';
+            dimensions.blur();
         }
     });
 

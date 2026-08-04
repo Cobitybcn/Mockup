@@ -56,6 +56,9 @@ require_once __DIR__ . '/regression/deployment_pipeline_test.php';
 require_once __DIR__ . '/regression/public_artist_showcase_test.php';
 require_once __DIR__ . '/regression/video_media_range_test.php';
 require_once __DIR__ . '/regression/camera_slots_persistence_test.php';
+require_once __DIR__ . '/regression/artwork_dimensions_test.php';
+require_once __DIR__ . '/regression/measurement_citations_test.php';
+require_once __DIR__ . '/regression/saatchi_fields_test.php';
 
 run_root_artwork_regression_tests();
 run_seo_filename_regression_tests();
@@ -100,6 +103,9 @@ run_deployment_pipeline_regression_tests();
 run_public_artist_showcase_tests();
 run_video_media_range_regression_tests();
 run_camera_slots_persistence_tests();
+run_artwork_dimensions_tests();
+run_measurement_citations_tests();
+run_saatchi_fields_tests();
 
 // Scripts procedurales autocontenidos (SQLite en memoria, sin red). Declaran sus
 // propios stubs (Auth, ANALYSIS_DIR, ...), asi que no pueden incluirse en este

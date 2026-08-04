@@ -1665,7 +1665,8 @@ function published_dimensions(array $artwork): string
     $format = static fn(float $value): string => rtrim(rtrim(number_format($value, 1, '.', ''), '0'), '.');
     $cm = $format((float)$width) . ' × ' . $format((float)$height) . ' cm';
     $in = $format((float)$width / 2.54) . ' × ' . $format((float)$height / 2.54) . ' in';
-    return $cm . ' / ' . $in;
+    // Pulgadas primero: el mercado al que apunta el sitio es el estadounidense.
+    return $in . ' / ' . $cm;
 }
 
 function render_published_constellation_map(array $soldLocations, array $items): void

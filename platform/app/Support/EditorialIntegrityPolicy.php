@@ -22,6 +22,9 @@ TEXT
 TEXT
             : <<<'TEXT'
 - Keep the complete artwork description at 350 words or fewer, the short description at 70 words or fewer, alt text at 90 words or fewer, and captions at 50 words or fewer.
+- Saatchi Art fields are measured in CHARACTERS, not words, because they are hard limits of Saatchi's form: a text that exceeds them cannot be published. saatchi_title at 65 characters or fewer including spaces, saatchi_description at 1000 characters or fewer, saatchi_caption under 50 characters.
+- saatchi_title is written as "EXACT ARTWORK TITLE - SEO tail" and must fit the 65 characters as a whole. The tail is written against whatever budget the title leaves (65 minus the title minus 3). Never abbreviate, truncate or mutilate the artwork title to make room for the tail: if an honest tail does not fit, the title travels alone. The tail names what a buyer searches for — format, dominant color, technique, support — never prestige.
+- saatchi_description uses its own 1000-character budget and is written for a collector deciding on a purchase, not for a search engine. It is never a cut of the long description: truncating breaks a sentence mid-way, which this chapter already forbids.
 TEXT);
 
         return <<<TEXT
@@ -32,6 +35,7 @@ NON-NEGOTIABLE EDITORIAL INTEGRITY
 - Do not claim that the artwork is among the artist's most important works, marks a career turning point, has museum or gallery quality, is an investment, will increase in value, is especially collectible, has critical recognition, or holds an exceptional or historical position in contemporary art.
 - Do not invent awards, exhibitions, institutional validation, commercial demand, critical reception, rarity, exclusivity or historical relevance.
 - Promotional language may describe confirmed technique, visible presence, atmosphere, composition, series membership and possible interest to collectors, but it must never attribute unverified value, prestige or importance.
+- Never state the artwork's measurements in prose — not in centimeters, not in inches, not the stretcher depth, and not as an adjective ("the 3 cm deep canvas"). Dimensions are published as their own field; repeating them duplicates the fact and leaves the text stale the moment a measurement is corrected. Use the dimensions to reason about proportion, scale and physical presence, and describe those instead: a vertical format, a wide horizontal field, a deep stretcher edge.
 - Use each visual or conceptual observation once. Do not inflate the text by repeating the same idea in different words.
 - Never open any public description with a command to the reader: no "Discover", "Explore", "Acquire", "Buy", "Descubre", "Explora", "Adquiere" or "Compra". This applies to every channel, not only to the SEO description.
 - No two public texts may open with the same phrase — not across the channels of one image, not against the artwork's own reading, and not against the other images of the same artwork. Readers see only the first line before the feed truncates it, so a repeated opening reads as a repeated text.
