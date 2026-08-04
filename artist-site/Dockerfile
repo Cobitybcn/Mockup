@@ -15,7 +15,10 @@ RUN apt-get update \
 RUN echo "upload_max_filesize = 64M" > /usr/local/etc/php/conf.d/artist-site.ini \
     && echo "post_max_size = 72M" >> /usr/local/etc/php/conf.d/artist-site.ini \
     && echo "memory_limit = 256M" >> /usr/local/etc/php/conf.d/artist-site.ini \
-    && echo "expose_php = Off" >> /usr/local/etc/php/conf.d/artist-site.ini
+    && echo "expose_php = Off" >> /usr/local/etc/php/conf.d/artist-site.ini \
+    && echo "display_errors = Off" >> /usr/local/etc/php/conf.d/artist-site.ini \
+    && echo "log_errors = On" >> /usr/local/etc/php/conf.d/artist-site.ini \
+    && echo "error_log = /dev/stderr" >> /usr/local/etc/php/conf.d/artist-site.ini
 
 # Cloud Run terminates TLS before Apache, so Apache cannot reliably infer HTTPS
 # from its local connection. Set HSTS in the production container itself.

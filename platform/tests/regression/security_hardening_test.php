@@ -15,7 +15,34 @@ function run_security_hardening_regression_tests(): void
     $apache = (string)file_get_contents($platformRoot . '/apache-security.conf');
     TestHarness::assertContains('check_', $apache, 'diagnostic scripts are denied by Apache');
     TestHarness::assertContains('cleanup_jobs', $apache, 'maintenance scripts are denied by Apache');
-    TestHarness::assertContains('/(?:analysis|app|docs|jobs|logs|migrations', $apache, 'internal directories are denied by Apache');
+    TestHarness::assertContains('(?:analysis|app|docs|jobs|logs|migrations', $apache, 'internal directories are denied by Apache');
+    // site-admin viaja dentro de la misma imagen: sin el prefijo opcional, su suite
+    // de regresion quedaba ejecutable por HTTP contra la base de produccion.
+    TestHarness::assertContains(
+        '^/var/www/html/(?:site-admin/)?(?:analysis|app|',
+        $apache,
+        'los directorios internos de site-admin tambien estan denegados (su suite no es ejecutable por HTTP)'
+    );
+
+    // El sitio publico del artista: plantillas muertas servibles y errores de PHP
+    // visibles al visitante (filtraban la ruta absoluta del servidor).
+    $artistHtaccess = (string)file_get_contents($repositoryRoot . '/artist-site/.htaccess');
+    TestHarness::assertContains(
+        'views',
+        $artistHtaccess,
+        'artist-site/views no se sirve: son plantillas sin contexto que fatalean al pedirlas directo'
+    );
+    $artistDockerfile = (string)file_get_contents($repositoryRoot . '/artist-site/Dockerfile');
+    TestHarness::assertContains(
+        'display_errors = Off',
+        $artistDockerfile,
+        'el sitio del artista no muestra errores de PHP al visitante (la plataforma ya lo hacia)'
+    );
+    TestHarness::assertContains(
+        'log_errors = On',
+        $artistDockerfile,
+        'los errores del sitio del artista se registran en vez de mostrarse'
+    );
     TestHarness::assertContains(
         'SetEnvIf Request_URI "^/(?:platform/)?(?:create_scenes_wait|mockup_combinations_review)\\.php$" artwork_same_origin_frame=1',
         $apache,
