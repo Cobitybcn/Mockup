@@ -132,6 +132,17 @@ foreach ([
     $checks[] = [published_keyword_is_sales_language($venta, 'Maurizio Valch'),
         "\"{$venta}\" is sales language and does not describe the artwork"];
 }
+// Los terminos de venta REALES que la pagina en espanol estaba publicando. El
+// filtro nacio mirando solo la pagina en ingles y estos pasaban de largo.
+foreach ([
+    'Abstracción territorial en venta',
+    'Arte para coleccionistas modernos',
+    'Obra de arte para arquitectos interioristas',
+    'Comprar obra original de Maurizio Valch',
+] as $ventaEs) {
+    $checks[] = [published_keyword_is_sales_language($ventaEs, 'Maurizio Valch'),
+        "\"{$ventaEs}\" is sales language in Spanish too"];
+}
 foreach ([
     'Red abstract painting with white lines',
     'Crimson painting with incised lines',
@@ -139,6 +150,10 @@ foreach ([
     'Painting',                 // categoria: aca SI sirve, no hay campo estructurado que la indexe
     'Abstract Art',
     'Textured Surface',
+    'Pintura carmesí con incisiones',
+    'Cuadro abstracto vertical rojo',
+    'Composición vertical matérica',
+    'Luz de ventana',           // " en venta" lleva espacio para no llevarse puesto "ventana"
 ] as $descriptivo) {
     $checks[] = [!published_keyword_is_sales_language($descriptivo, 'Maurizio Valch'),
         "\"{$descriptivo}\" describes the artwork and must survive"];

@@ -2175,11 +2175,18 @@ function published_keyword_is_sales_language(string $termino, string $artistName
     $t = ' ' . mb_strtolower(trim($termino)) . ' ';
 
     // "architectural" es un rasgo visual legitimo, "for architects" es publico
-    // objetivo: por eso se compara la frase y no la raiz de la palabra.
+    // objetivo: por eso se compara la frase y no la raiz de la palabra. Por lo
+    // mismo " en venta" lleva su espacio, para no llevarse puesto "ventana".
+    //
+    // Las dos listas hacen falta: el sitio publica en los dos idiomas y este
+    // filtro nacio mirando solo la pagina en ingles, asi que "en venta",
+    // "coleccionistas" y "arquitectos interioristas" pasaban de largo.
     foreach ([
         'buy ', 'purchase', 'acquire ', 'for sale', 'on sale', 'shop ', 'order now',
         'collector', 'investment', 'for architects', 'interior designer', 'home decor',
         'wall decor', 'best price', 'affordable',
+        ' en venta', 'comprar', 'coleccionista', 'inversión', 'inversion',
+        'interiorista', 'para arquitectos', 'decoración de interiores', 'mejor precio',
     ] as $venta) {
         if (str_contains($t, $venta)) {
             return true;
