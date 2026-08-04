@@ -105,6 +105,10 @@
         addScopeItem('Series text', pending.series || 0);
         addScopeItem('Artwork text', pending.artwork || 0);
         addScopeItem('Mockup texts', pending.mockups || 0);
+        // Textos de canal: el paquete de Saatchi y el vocabulario de descubrimiento
+        // del sitio. Se derivan de la lectura ya aprobada, asi que solo aparecen
+        // cuando esa lectura existe y esta aprobada.
+        addScopeItem('Saatchi + site vocabulary', pending.channel || 0);
 
         const pkg = audit.package;
         const active = pkg && ['queued', 'processing'].includes(pkg.status);

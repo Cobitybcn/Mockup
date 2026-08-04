@@ -124,6 +124,23 @@ function run_derived_fields_approval_tests(): void
         'no se guarda dos veces'
     );
 
+    // El panel tiene que MOSTRAR lo que cuenta. Sin esta fila, el contador decia
+    // "1 pendiente" y el desglose mostraba ceros: el artista veia que habia algo
+    // sin poder saber que era.
+    $panel = (string)file_get_contents($platformRoot . '/artwork-editorial-package.js');
+    TestHarness::assertContains(
+        "addScopeItem('Saatchi + site vocabulary', pending.channel || 0)",
+        $panel,
+        'los textos de canal tienen su propia fila en el panel, no solo su numero en el total'
+    );
+    foreach (['series', 'artwork', 'mockups', 'channel'] as $clave) {
+        TestHarness::assertContains(
+            "pending.{$clave}",
+            $panel,
+            "el panel muestra el pendiente de {$clave}: lo que se cuenta se ve"
+        );
+    }
+
     $jobs = (string)file_get_contents($platformRoot . '/app/Services/BilingualEditorialJobService.php');
     TestHarness::assertContains(
         "'prepare', 'adapt', 'publish', 'channel'",
