@@ -27,8 +27,10 @@ require_once __DIR__ . '/../app/Services/SaatchiListingService.php';
 $userId = 0;
 $apply = false;
 $limit = 0;
+$soloPies = false;
 foreach (array_slice($argv, 1) as $arg) {
     if ($arg === '--apply') { $apply = true; continue; }
+    if ($arg === '--captions-only') { $soloPies = true; continue; }
     if (str_starts_with($arg, '--limit=')) { $limit = max(0, (int)substr($arg, 8)); continue; }
     if (ctype_digit($arg)) { $userId = (int)$arg; }
 }
@@ -65,6 +67,19 @@ foreach ($stmt->fetchAll(PDO::FETCH_ASSOC) as $row) {
             $falta = true;
         }
     }
+    if ($soloPies) {
+        // En modo pies, pendiente es la obra a la que le falta algun pie en las
+        // primeras imagenes de su composicion, tenga o no el listing.
+        $c = $pdo->prepare("SELECT COUNT(*) FROM artwork_sheets a
+            JOIN publications p ON p.artwork_sheet_id=a.id AND p.user_id=a.user_id
+            JOIN publication_items i ON i.publication_id=p.id
+            JOIN mockup_sheets ms ON ms.id=i.mockup_sheet_id
+            WHERE a.user_id=? AND a.canonical_artwork_id=? AND COALESCE(a.status,'')<>'merged'
+              AND p.id=(SELECT MAX(p2.id) FROM publications p2 WHERE p2.artwork_sheet_id=a.id AND p2.user_id=a.user_id)
+              AND TRIM(COALESCE(ms.saatchi_caption,''))=''");
+        $c->execute([$userId, (int)$row['id']]);
+        $falta = (int)$c->fetchColumn() > 0;
+    }
     if ($falta) {
         $pendientes[] = ['id' => (int)$row['id'], 'title' => (string)$row['final_title']];
     }
@@ -88,6 +103,21 @@ $revisar = [];
 
 foreach ($pendientes as $i => $p) {
     printf("\n[%d/%d] #%d %s\n", $i + 1, count($pendientes), $p['id'], $p['title']);
+
+    if ($soloPies) {
+        try {
+            $r = $listado->generateCaptionsOnly($userId, $p['id']);
+            $escritos = $listado->saveCaptions($userId, $r['captions']);
+            printf("   pies: %d escritos de %d\n", $escritos, count($r['captions']));
+            foreach ($r['errors'] as $e) { echo "   ! {$e}\n"; $revisar[] = "#{$p['id']} pie: {$e}"; }
+            if ($escritos > 0) { $ok++; }
+        } catch (Throwable $e) {
+            echo '   pies FALLO: ' . $e->getMessage() . "\n";
+            $revisar[] = "#{$p['id']} pies: " . $e->getMessage();
+        }
+        continue;
+    }
+
     try {
         $r = $listado->generate($userId, $p['id']);
         $estado = (string)$r['validation']['status'];

@@ -392,6 +392,43 @@ class SaatchiListingService
     }
 
     /**
+     * Solo los pies, sin volver a escribir el listing.
+     *
+     * Existe porque los dos productos se completan por separado: si el listing
+     * ya esta bien y lo que falto fueron los pies —por ejemplo porque el entorno
+     * no alcanzaba las imagenes— rehacer todo cambiaria un texto que quiza ya
+     * revisaste, y costaria una llamada al modelo de mas.
+     *
+     * @return array{captions:array<string,string>,errors:list<string>,warnings:list<string>}
+     */
+    public function generateCaptionsOnly(int $userId, int $artworkId): array
+    {
+        [$captions, $errors, $warnings] = $this->captions($userId, $artworkId);
+        return ['captions' => $captions, 'errors' => $errors, 'warnings' => $warnings];
+    }
+
+    /**
+     * Escribe solo los pies, cada uno en la ficha de su mockup. El pie del sitio
+     * mide ~250 caracteres y sirve para otra cosa: no se toca.
+     *
+     * @param array<string,string> $captions
+     */
+    public function saveCaptions(int $userId, array $captions): int
+    {
+        $escritos = 0;
+        foreach ($captions as $file => $caption) {
+            if (trim((string)$caption) === '') {
+                continue;
+            }
+            $sheet = $this->pdo->prepare('UPDATE mockup_sheets SET saatchi_caption = ?, updated_at = ?
+                WHERE user_id = ? AND mockup_file LIKE ?');
+            $sheet->execute([$caption, date('c'), $userId, '%' . basename((string)$file)]);
+            $escritos += $sheet->rowCount();
+        }
+        return $escritos;
+    }
+
+    /**
      * Los pies de las imagenes de la composicion, mirando cada una. Pasada
      * aparte de la derivacion a proposito: acá las imagenes SI viajan.
      *
