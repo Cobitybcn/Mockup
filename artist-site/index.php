@@ -14,6 +14,7 @@ require __DIR__ . '/inc/AppPublishedLocalization.php';
 require __DIR__ . '/inc/AppPublishedCatalog.php';
 require __DIR__ . '/inc/AppPublishedSeriesCatalog.php';
 require __DIR__ . '/inc/AppPublishedArtistProfile.php';
+require __DIR__ . '/inc/AppArtistReferences.php';
 require __DIR__ . '/inc/AppPublishedStudioNotes.php';
 require __DIR__ . '/inc/AppPublishedSiteSettings.php';
 require __DIR__ . '/inc/AppStore.php';
@@ -1974,7 +1975,256 @@ function render_published_artwork(array $site, array $artwork): void
         </div>
     </section>
     <?php
-    echo json_ld(['@context'=>'https://schema.org','@type'=>'VisualArtwork','name'=>$artwork['title'],'creator'=>['@type'=>'Person','name'=>$site['name']],'artMedium'=>$artwork['medium'],'dateCreated'=>$artwork['artwork_year'],'image'=>site_absolute_asset_url(app_publication_media_url($artwork,$mainImageFile),(string)$site['url']),'description'=>$summary,'inLanguage'=>artist_site_language(),'url'=>artist_site_url_with_language($site['url'].'/artworks/'.$artwork['slug'].'/',artist_site_language())]);
+    echo json_ld(published_artwork_schema($site, $artwork, $mainImageFile, $summary, $storeOffer));
+}
+
+/**
+ * El bloque de datos estructurados de una obra publicada.
+ *
+ * Es el unico canal de vocabulario que los buscadores leen de verdad: el
+ * <meta name="keywords"> lo ignoran desde 2009, asi que las palabras que
+ * describen la obra tienen que viajar aca. Todo sale de datos que ya estan en la
+ * base; no se inventa ni se redacta nada.
+ *
+ * @param array<string,mixed> $site
+ * @param array<string,mixed> $artwork
+ * @param array<string,mixed>|null $storeOffer
+ * @return array<string,mixed>
+ */
+function published_artwork_schema(array $site, array $artwork, string $mainImageFile, string $summary, ?array $storeOffer = null): array
+{
+    $url = artist_site_url_with_language($site['url'] . '/artworks/' . $artwork['slug'] . '/', artist_site_language());
+
+    $schema = [
+        '@context' => 'https://schema.org',
+        '@type' => 'VisualArtwork',
+        'name' => $artwork['title'],
+        'creator' => ['@type' => 'Person', 'name' => $site['name']],
+        'artform' => 'Painting',
+        'artMedium' => $artwork['medium'],
+        'dateCreated' => $artwork['artwork_year'],
+        'image' => site_absolute_asset_url(app_publication_media_url($artwork, $mainImageFile), (string)$site['url']),
+        'description' => $summary,
+        'inLanguage' => artist_site_language(),
+        'url' => $url,
+    ];
+
+    // Vocabulario de descubrimiento: los terminos de busqueda de la obra y sus
+    // tags de catalogo, deduplicados sin distinguir mayusculas.
+    //
+    // Se leen las dos formas de clave a proposito: el catalogo devuelve la fila
+    // cruda con 'artwork_keywords' y su version mapeada con 'keywords', y esta
+    // funcion la llaman desde las dos. Leer una sola dejaba el campo vacio en la
+    // pagina real mientras el test pasaba.
+    $keywords = [];
+    // El vocabulario de descubrimiento va PRIMERO: es el unico que trae terminos
+    // emocionales y los nombres de los artistas afines a esta obra, que es lo que
+    // ni los search_terms ni los tags del catalogo tienen.
+    foreach ([
+        (string)($artwork['artwork_discovery_keywords'] ?? ''),
+        (string)($artwork['discovery_keywords'] ?? ''),
+        (string)($artwork['artwork_keywords'] ?? ''),
+        (string)($artwork['keywords'] ?? ''),
+        (string)($artwork['artwork_tags'] ?? ''),
+        (string)($artwork['tags'] ?? ''),
+    ] as $fuente) {
+        foreach (explode(',', $fuente) as $termino) {
+            $termino = trim($termino);
+            if ($termino === '' || isset($keywords[mb_strtolower($termino)])) {
+                continue;
+            }
+            if (published_keyword_is_sales_language($termino, (string)($site['name'] ?? ''))) {
+                continue;
+            }
+            $keywords[mb_strtolower($termino)] = $termino;
+        }
+    }
+    if ($keywords !== []) {
+        $schema['keywords'] = implode(', ', array_values($keywords));
+    }
+
+    // La medida de una obra fisica es un dato de busqueda real, y hasta ahora no
+    // salia. schema.org las quiere como QuantitativeValue con su unidad: CMT es
+    // el codigo UN/CEFACT del centimetro.
+    foreach (['width' => 'width', 'height' => 'height', 'depth' => 'depth'] as $campo => $propiedad) {
+        $valor = trim((string)($artwork[$campo] ?? ''));
+        if ($valor !== '' && (float)$valor > 0) {
+            $schema[$propiedad] = ['@type' => 'QuantitativeValue', 'value' => (float)$valor, 'unitCode' => 'CMT'];
+        }
+    }
+
+    // La serie: sin esto no hay forma de que un buscador entienda que varias
+    // obras son un mismo cuerpo de trabajo.
+    $serie = published_artwork_series($artwork);
+    if ($serie !== null) {
+        $schema['isPartOf'] = $serie;
+    }
+
+    if ($storeOffer && !empty($storeOffer['is_purchasable']) && (int)($storeOffer['price_minor'] ?? 0) > 0) {
+        $schema['offers'] = [
+            '@type' => 'Offer',
+            'price' => number_format((int)$storeOffer['price_minor'] / 100, 2, '.', ''),
+            'priceCurrency' => strtoupper((string)$storeOffer['currency']),
+            'availability' => 'https://schema.org/InStock',
+            'url' => artist_site_url_with_language($site['url'] . '/acquire/' . $artwork['slug'], artist_site_language()),
+        ];
+    } elseif ($storeOffer && ((string)($storeOffer['status'] ?? '') === 'sold_out' || (int)($storeOffer['stock_available'] ?? 0) <= 0)) {
+        $schema['offers'] = [
+            '@type' => 'Offer',
+            'availability' => 'https://schema.org/SoldOut',
+            'url' => $url,
+        ];
+    }
+
+    // Una propiedad vacia no es dato: declarar artMedium:"" o dateCreated:"" es
+    // ruido para el buscador. Si el valor no esta, la propiedad no viaja.
+    return array_filter($schema, static fn (mixed $valor): bool => $valor !== '' && $valor !== null && $valor !== []);
+}
+
+/**
+ * El titulo que se publica en la etiqueta <title>, dentro de lo que un buscador
+ * muestra sin cortar.
+ *
+ * El molde es "obra | categoria | artista" y suele pasarse de largo: en este
+ * catalogo 15 de 21 superan los 60 caracteres. Lo que se corta es el final, o
+ * sea el nombre del artista — justo la busqueda de mayor intencion, la de quien
+ * ya lo conoce.
+ *
+ * La regla: la obra y el artista NUNCA se tocan. La obra es identidad y no se
+ * abrevia (Libro I); el nombre es lo que se estaba perdiendo. Se recorta solo la
+ * parte del medio, empezando por las palabras mas genericas, que son las que no
+ * posicionan en nada.
+ *
+ * No reescribe lo que el artista tiene guardado: ajusta lo que se muestra.
+ */
+function published_seo_title(string $stored, string $artworkTitle, string $artistName, int $max = 60): string
+{
+    $stored = trim(preg_replace('/\s+/u', ' ', $stored) ?? $stored);
+    if ($stored === '' || mb_strlen($stored) <= $max) {
+        return $stored;
+    }
+
+    $partes = array_values(array_filter(array_map('trim', explode('|', $stored)), 'strlen'));
+    if (count($partes) < 2) {
+        return $stored;
+    }
+
+    $obra = $partes[0];
+    $artista = $partes[count($partes) - 1];
+    $medio = implode(' | ', array_slice($partes, 1, -1));
+
+    $arma = static fn (string $centro): string => $centro === ''
+        ? $obra . ' | ' . $artista
+        : $obra . ' | ' . $centro . ' | ' . $artista;
+
+    // Primero caen las palabras que compiten con medio mundo y no distinguen
+    // esta obra de ninguna otra.
+    foreach (['Contemporary', 'Contemporánea', 'Contemporáneo', 'Original', 'Modern', 'Moderna', 'Moderno', 'Fine Art', 'Fine'] as $generico) {
+        if (mb_strlen($arma($medio)) <= $max) {
+            break;
+        }
+        $medio = trim(preg_replace('/\b' . preg_quote($generico, '/') . '\b\s*/iu', '', $medio) ?? $medio);
+        $medio = trim(preg_replace('/\s+/u', ' ', $medio) ?? $medio);
+    }
+
+    // Si todavia no entra, cae la palabra mas larga de la categoria. No es un
+    // truco de longitud: el nucleo que la gente busca es corto y comun
+    // —"Abstract Painting", "Pintura Abstracta"— y los modificadores curatoriales
+    // —"Territorial"— son largos y no los tipea nadie. Sacrificar el modificador
+    // conserva justamente la parte que trae busquedas.
+    while (mb_strlen($arma($medio)) > $max) {
+        $palabras = preg_split('/\s+/u', $medio) ?: [];
+        if (count($palabras) < 2) {
+            break;
+        }
+        $masLarga = 0;
+        foreach ($palabras as $indice => $palabra) {
+            if (mb_strlen($palabra) > mb_strlen($palabras[$masLarga])) {
+                $masLarga = $indice;
+            }
+        }
+        unset($palabras[$masLarga]);
+        $medio = implode(' ', $palabras);
+    }
+
+    if (mb_strlen($arma($medio)) <= $max) {
+        return $arma($medio);
+    }
+    // Sin categoria que entre, la obra y el artista viajan solos: es mejor
+    // perder la categoria que perder el nombre.
+    return mb_strlen($arma('')) <= $max ? $arma('') : $obra;
+}
+
+/**
+ * Un termino de venta no describe la obra: dentro de datos estructurados es
+ * relleno, y el relleno se parece mas al spam que a una descripcion.
+ * "Buy original ... art", "for modern collectors" o "for architects and interior
+ * designers" hablan de a quien vendersela, no de que es.
+ *
+ * OJO con la diferencia respecto de Saatchi: alla las palabras de categoria
+ * —Painting, Abstract Art, Canvas— se excluyen porque el formulario ya las
+ * indexa en sus campos propios. Aca NO hay campos propios, asi que decirle al
+ * buscador que esto es una pintura abstracta sobre lienzo es informacion util y
+ * se conserva.
+ *
+ * El nombre del artista tampoco viaja como keyword: ya esta en creator, y
+ * repetirlo en cada frase es la forma mas vieja de relleno.
+ */
+function published_keyword_is_sales_language(string $termino, string $artistName = ''): bool
+{
+    $t = ' ' . mb_strtolower(trim($termino)) . ' ';
+
+    // "architectural" es un rasgo visual legitimo, "for architects" es publico
+    // objetivo: por eso se compara la frase y no la raiz de la palabra.
+    foreach ([
+        'buy ', 'purchase', 'acquire ', 'for sale', 'on sale', 'shop ', 'order now',
+        'collector', 'investment', 'for architects', 'interior designer', 'home decor',
+        'wall decor', 'best price', 'affordable',
+    ] as $venta) {
+        if (str_contains($t, $venta)) {
+            return true;
+        }
+    }
+
+    $artistName = trim($artistName);
+    return $artistName !== '' && str_contains($t, ' ' . mb_strtolower($artistName) . ' ');
+}
+
+/**
+ * La serie de la obra como CreativeWork enlazable, resuelta contra el catalogo
+ * publicado para tomar su slug. Devuelve null cuando la obra no tiene serie o
+ * la serie no esta publicada: enlazar a una pagina que no existe seria peor que
+ * no enlazar.
+ *
+ * @param array<string,mixed> $artwork
+ * @return array<string,mixed>|null
+ */
+function published_artwork_series(array $artwork): ?array
+{
+    $seriesId = (int)($artwork['series_id'] ?? 0);
+    $seriesName = trim((string)($artwork['series'] ?? ''));
+    if ($seriesId <= 0 && $seriesName === '') {
+        return null;
+    }
+
+    foreach (app_series_catalog()?->all() ?? [] as $candidate) {
+        $coincide = ($seriesId > 0 && (int)($candidate['id'] ?? 0) === $seriesId)
+            || ($seriesName !== '' && strcasecmp(trim((string)($candidate['title'] ?? '')), $seriesName) === 0);
+        if (!$coincide) {
+            continue;
+        }
+        $slug = trim((string)($candidate['slug'] ?? ''));
+        $serie = ['@type' => 'CreativeWork', 'name' => (string)($candidate['title'] ?? $seriesName)];
+        if ($slug !== '') {
+            $serie['url'] = artist_site_url_with_language(
+                (string)($GLOBALS['site']['url'] ?? '') . '/series/' . $slug . '/',
+                artist_site_language()
+            );
+        }
+        return $serie;
+    }
+
+    return $seriesName !== '' ? ['@type' => 'CreativeWork', 'name' => $seriesName] : null;
 }
 
 function render_published_artwork_video(array $site, array $artwork): void
@@ -2283,7 +2533,7 @@ function render_acquisition(array $site, array $artwork): void
                 <img src="<?= e(app_publication_media_url($artwork, $mainImageFile, 768)) ?>"
                     srcset="<?= e(app_publication_media_srcset($artwork, $mainImageFile)) ?>"
                     sizes="(max-width: 940px) calc(100vw - 36px), 40vw"
-                    alt="<?= e((string)$artwork['title']) ?>" fetchpriority="high" decoding="async">
+                    alt="<?= e(($artwork['artwork_alt'] ?? '') ?: (string)$artwork['title']) ?>" fetchpriority="high" decoding="async">
                 <div><p class="eyebrow">Original artwork</p><h2><?= e((string)$artwork['title']) ?></h2><?php if (published_dimensions($artwork)): ?><p><?= e(published_dimensions($artwork)) ?></p><?php endif; ?><strong><?= e(AppStore::money((int)$offer['price_minor'], (string)$offer['currency'])) ?></strong></div>
             </aside>
             <form method="post" class="acquisition-form" data-acquisition-form data-subtotal="<?= (int)$offer['price_minor'] ?>" data-currency="<?= e((string)$offer['currency']) ?>">
@@ -2747,6 +2997,10 @@ function render_published_artist_page(array $profile): void
     if (trim((string)($profile['palette_notes'] ?? '')) !== '') {
         $processItems[] = ['title' => site_t('Atmosphere & Palette', 'Atmósfera y paleta'), 'description' => $profile['palette_notes']];
     }
+
+    // La columna nace en una migracion posterior al despliegue actual: si todavia
+    // no esta, la clave no viene y la seccion sencillamente no se dibuja.
+    $references = AppArtistReferences::parse((string)($profile['reference_artists'] ?? ''));
     ?>
     <section class="page-hero artist-page-hero">
         <p class="eyebrow"><?= e(site_t('Artist profile', 'Perfil del artista')) ?></p>
@@ -2785,6 +3039,30 @@ function render_published_artist_page(array $profile): void
                     <article>
                         <span><?= e($item['title']) ?></span>
                         <p><?= e($item['description']) ?></p>
+                    </article>
+                <?php endforeach; ?>
+            </div>
+        </section>
+    <?php endif; ?>
+
+    <?php if ($references): ?>
+        <?php
+        // Las afinidades se publican aca, una vez, y en ningun otro lado: es
+        // donde alguien que busca a uno de estos pintores encuentra, en palabras
+        // del artista, que toma de el. En la ficha de cada obra viaja solo el
+        // nombre, y solo el de las que esa obra sostiene.
+        ?>
+        <section class="section" id="influences">
+            <div class="section-head section-head--simple">
+                <h2><?= e(site_t('Affinities', 'Afinidades')) ?></h2>
+            </div>
+            <div class="artist-genealogy">
+                <?php foreach ($references as $reference): ?>
+                    <article>
+                        <span><?= e($reference['name']) ?></span>
+                        <?php if ($reference['rationale'] !== ''): ?>
+                            <p><?= e($reference['rationale']) ?></p>
+                        <?php endif; ?>
                     </article>
                 <?php endforeach; ?>
             </div>
@@ -4193,7 +4471,11 @@ switch ($segments[0] ?? '') {
             exit;
         }
         $description = trim((string)($publishedArtwork['short_description'] ?: $publishedArtwork['description']));
-        $artworkSeoTitle = trim((string)($publishedArtwork['seo_title'] ?? '')) ?: $publishedArtwork['title'] . ' | ' . $artistName;
+        $artworkSeoTitle = published_seo_title(
+            trim((string)($publishedArtwork['seo_title'] ?? '')),
+            (string)$publishedArtwork['title'],
+            (string)$artistName
+        ) ?: $publishedArtwork['title'] . ' | ' . $artistName;
         $artworkSeoDescription = trim((string)($publishedArtwork['seo_description'] ?? '')) ?: $description;
         $artworkMetaImage = trim((string)($publishedArtwork['header_file'] ?? '')) ?: (string)$publishedArtwork['source_image_file'];
         $meta = page_meta($artworkSeoTitle, $artworkSeoDescription, $site['url'] . '/artworks/' . $segments[1] . '/', app_publication_media_url($publishedArtwork, $artworkMetaImage));

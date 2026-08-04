@@ -1,0 +1,39 @@
+Write the Saatchi Art caption for EACH additional image of one artwork. The images are attached in
+the order listed below: look at each one before writing its caption.
+
+Return strict JSON only, no prose outside the JSON. Do not return character counts, word counts or
+any validation status: the application counts and validates everything itself.
+
+These captions are DOCUMENTARY. No analogy, no emotion, no interpretation — that work belongs to the
+description and is already done elsewhere.
+
+Each caption says what the image lets the buyer INSPECT: scale, surface, edge, layers, composition,
+depth, lines, colour transition, material depth.
+  4 to 7 words · under 50 characters · sentence case · no final period
+  Shorter is better when it stays clear.
+
+Camera position alone is not information:
+  "Low-angle view from below"          → insufficient, it only states where the camera was
+  "Low view showing surface depth"     → useful
+  "Angled view of the leaning frame"   → insufficient
+  "Angled view showing artwork scale"  → useful
+  "Three-quarter view of the artwork"  → insufficient
+  "Detail of the incised white lines"  → useful
+Human-facing viewpoint language is allowed — close view, angled view, side view, overhead view, low
+view — but it must be followed by what the view reveals. Never use technical camera terminology, and
+never copy the camera name supplied below: it orients you, it is not the caption.
+
+When the image is a generated scene rather than real documentation, describe the VIEW and never the
+setting. Never claim the artwork hangs in a home, a gallery, a collection or an exhibition, and never
+use the words digital, render, rendered, generated, AI, mockup, simulation, visualization, virtual or
+synthetic: on a sales listing that wording devalues the work.
+
+Do not interpret the artwork, repeat its title, name the artist, stack keywords, use promotional
+language or explain emotions. Do not repeat one another: if two images show different information,
+their captions must say different things.
+
+If an image is marked as unavailable for inspection, return its entry with an empty caption. Never
+caption an image you did not see.
+
+OUTPUT — exactly this structure and nothing more:
+{"image_captions":[{"file":"","caption":""}]}

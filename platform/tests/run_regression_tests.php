@@ -59,6 +59,9 @@ require_once __DIR__ . '/regression/camera_slots_persistence_test.php';
 require_once __DIR__ . '/regression/artwork_dimensions_test.php';
 require_once __DIR__ . '/regression/measurement_citations_test.php';
 require_once __DIR__ . '/regression/saatchi_fields_test.php';
+require_once __DIR__ . '/regression/saatchi_listing_generation_test.php';
+require_once __DIR__ . '/regression/discovery_keywords_test.php';
+require_once __DIR__ . '/regression/derived_fields_approval_test.php';
 
 run_root_artwork_regression_tests();
 run_seo_filename_regression_tests();
@@ -106,6 +109,9 @@ run_camera_slots_persistence_tests();
 run_artwork_dimensions_tests();
 run_measurement_citations_tests();
 run_saatchi_fields_tests();
+run_saatchi_listing_generation_tests();
+run_discovery_keywords_tests();
+run_derived_fields_approval_tests();
 
 // Scripts procedurales autocontenidos (SQLite en memoria, sin red). Declaran sus
 // propios stubs (Auth, ANALYSIS_DIR, ...), asi que no pueden incluirse en este
@@ -135,6 +141,28 @@ foreach ([
     }
     $standaloneFailed++;
     echo '[FAIL] ' . $standaloneTest . "\n" . implode("\n", $output) . "\n";
+}
+
+// El sitio publico del artista tiene sus propios tests, del mismo estilo
+// autocontenido, y hasta hoy no los corria nadie: existian sin gatear ningun
+// despliegue. Se descubren por patron a proposito, para que uno nuevo quede
+// cubierto sin que haya que acordarse de registrarlo aca.
+//
+// Si la carpeta no esta —la plataforma se despliega sola, sin el sitio— el
+// glob no devuelve nada y este bloque no hace ni dice nada.
+$artistSiteTests = glob(dirname(__DIR__, 2) . '/artist-site/tests/*_test.php') ?: [];
+sort($artistSiteTests);
+foreach ($artistSiteTests as $artistSiteTest) {
+    $nombre = 'artist-site/' . basename($artistSiteTest, '.php');
+    $output = [];
+    $code = 1;
+    exec(escapeshellarg(PHP_BINARY) . ' ' . escapeshellarg($artistSiteTest) . ' 2>&1', $output, $code);
+    if ($code === 0) {
+        echo '[PASS] ' . $nombre . "\n";
+        continue;
+    }
+    $standaloneFailed++;
+    echo '[FAIL] ' . $nombre . "\n" . implode("\n", $output) . "\n";
 }
 
 exit(TestHarness::summary() === 0 && $standaloneFailed === 0 ? 0 : 1);

@@ -659,8 +659,14 @@ function run_bilingual_editorial_service_tests(): void
         'elegir la imagen raiz no dispara un analisis con imagen por su cuenta'
     );
     TestHarness::assertContains('data-editorial-adapt', $artworkScreen, 'Artwork muestra la flecha para adaptar el español al inglés internacional');
-    TestHarness::assertContains('grid-template-rows:auto repeat(9,auto)', $artworkScreen, 'Artwork reserva una fila independiente para cada campo editorial');
-    TestHarness::assertContains('grid-row:1 / span 10', $artworkScreen, 'los nueve campos y la cabecera no pueden superponerse');
+    // El numero de filas salia escrito a mano —repeat(9) y span 10— y quedo
+    // viejo cuando se sumaron los campos de Saatchi: del decimo en adelante los
+    // campos se apilaban en la misma celda y el espanol y el ingles se dibujaban
+    // encima uno del otro. Estas dos aserciones congelaban ese numero, o sea que
+    // protegian el defecto. Ahora la cuenta sale de los campos que realmente hay.
+    TestHarness::assertContains('repeat(var(--editorial-rows,9),auto)', $artworkScreen, 'Artwork reserva una fila por campo editorial, contando los que realmente hay');
+    TestHarness::assertContains('grid-row:1 / -1', $artworkScreen, 'cada columna abarca todas las filas existentes: ningun campo puede superponerse con otro');
+    TestHarness::assertContains('--editorial-rows:<?= count($bilingualEditorialFields) ?>', $artworkScreen, 'agregar un campo nuevo no vuelve a romper la grilla');
     $mockupScreen = (string)file_get_contents($platformRoot . '/mockup_bilingual_experiment.php');
     TestHarness::assertContains('data-editorial-adapt', $mockupScreen, 'Mockup muestra la flecha para adaptar el español al inglés internacional');
     TestHarness::assertContains('data-english-status=', $mockupScreen, 'Mockup expone el estado del inglés para mostrar la adaptación cuando corresponde');

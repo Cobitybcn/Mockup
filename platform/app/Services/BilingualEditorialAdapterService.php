@@ -976,6 +976,11 @@ RULES;
                 'saatchi_title' => '',
                 'saatchi_description' => '',
                 'saatchi_caption' => '',
+                // Vocabulario derivado. Si no estuviera declarado aca, la primera
+                // regeneracion de una obra lo borraria: la adaptacion trabaja con
+                // los campos de esta lista y con ningun otro.
+                'saatchi_keywords' => '',
+                'discovery_keywords' => '',
             ];
         }
         if ($entityType === 'studio_note') {

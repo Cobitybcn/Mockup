@@ -81,6 +81,17 @@ final class AppPublishedCatalog
                 $row['artwork_alt'] = (string)($localized['alt_text'] ?? $fallback ?? $row['artwork_alt']);
                 $row['artwork_keywords'] = (string)($localized['search_terms'] ?? $localized['keywords'] ?? $fallback ?? $row['artwork_keywords']);
                 $row['artwork_tags'] = (string)($localized['tags'] ?? $fallback ?? $row['artwork_tags']);
+                // Vocabulario de descubrimiento generado para el listing: es el
+                // unico lugar del sistema donde hay terminos emocionales
+                // —"Quiet Solemnity", "Sober Contemplation"— y los nombres de
+                // los artistas afines a ESTA obra. Descrilo es descripcion de la
+                // obra, no de un canal, asi que enriquece tambien al sitio.
+                // Si la obra todavia no lo tiene, queda vacio y no pasa nada.
+                // discovery_keywords se deriva por idioma desde la lectura de ESE
+                // idioma; saatchi_keywords es el mismo vocabulario en ingles, que
+                // ya existe por la pasada del listing. Traducir una keyword la
+                // mata, asi que cada idioma nace de su propio texto.
+                $row['artwork_discovery_keywords'] = (string)($localized['discovery_keywords'] ?? $localized['saatchi_keywords'] ?? '');
                 $row['seo_title'] = (string)($localized['seo_title'] ?? '');
                 $row['seo_description'] = (string)($localized['seo_description'] ?? '');
                 $row['translation_missing_fields'] = array_values(array_diff([
@@ -105,6 +116,7 @@ final class AppPublishedCatalog
                 $row['artwork_alt'] = '';
                 $row['artwork_keywords'] = '';
                 $row['artwork_tags'] = '';
+                $row['artwork_discovery_keywords'] = '';
                 $row['seo_title'] = '';
                 $row['seo_description'] = '';
                 $row['translation_missing_fields'] = ['translation'];

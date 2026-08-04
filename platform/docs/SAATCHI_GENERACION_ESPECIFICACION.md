@@ -78,13 +78,68 @@ texto anterior, y de ahí salían contradicciones como "bloques suspendidos
 anclando". Si una imagen no se puede inspeccionar, su pie queda vacío y se
 registra en `uncertainties`.
 
+## Lo aplicado (2026-08-04, leído del código y verificado por tests, sin desplegar)
+
+- El prompt nuevo con el contrato mínimo de salida: el modelo ya no devuelve
+  conteos, puntajes, candidatas rechazadas ni estado de validación
+  (`app/Services/saatchi_listing_rules.txt`).
+- La resolución del contexto con precedencia obra → serie → artista
+  (`SaatchiListingService::listingContext`), con `requires_input` cuando falta
+  alguno de los cinco campos estructurados y el mapa determinista técnica →
+  Medium (`mediumsFromTechnique`).
+- Todas las imágenes viajan al modelo como contenido multimodal; la que no se
+  puede inspeccionar queda listada como no disponible, su pie se fuerza vacío y
+  se registra el aviso.
+- La validación determinista en código (`validateListing`: topes de Saatchi,
+  rango 850–1000 de la descripción, cuotas de long tail, pies de 4–7 palabras y
+  <50, deduplicación normalizada contra título y campos estructurados) y la
+  llamada única de reparación con los errores exactos y el JSON previo.
+- El objeto `validation` lo construye la aplicación (`ok`, `requires_input`,
+  `requires_review` + métricas). `save()` rechaza todo paquete que no esté en
+  `ok`: nunca se publica solo.
+- La ley ejecutable: `tests/regression/saatchi_listing_generation_test.php`.
+
+## El giro del 2026-08-04: derivar en vez de reinterpretar
+
+El listing dejó de generarse mirando la obra otra vez. Ahora **deriva de la
+lectura editorial ya aprobada**: misma voz entre el sitio y el listing, y ningún
+hecho visual que la página publicada no diga. La fuente se elige **por estado
+antes que por idioma** —una copia publicada gana sobre cualquier borrador— y el
+destino es siempre el idioma de publicación, porque Saatchi se carga en inglés.
+
+Los pies van en una segunda pasada, esa sí con las imágenes adjuntas: un pie
+describe una imagen concreta y no se deriva de un texto.
+
+Y el vocabulario de descubrimiento del sitio (`discovery_keywords`) se deriva por
+idioma desde la lectura de **ese** idioma. No se traduce: una keyword traducida
+deja de ser una búsqueda.
+
+### Dónde vive cada cosa
+
+- **Escribir** es de la ficha de la obra. Los textos de canal son un ítem más de
+  «Preparar el paquete editorial», en la etapa 40, y solo se ofrecen cuando la
+  lectura está aprobada — derivar de un borrador fue el error corregido ese día.
+- **Decidir qué sale** es de Publicación: muestra el paquete, permite copiarlo y
+  descargarlo, y tiene «Aprobar estos campos», que aprueba solo los derivados sin
+  tocar la lectura ni regenerar ningún mockup.
+- La escritura pasa por `BilingualEditorialService::mergeDerivedFields()` y toca
+  **solo el borrador**. Publicar es aprobar, y eso lo hace el artista.
+
 ## Lo que falta aplicar
 
-- El prompt nuevo (sección 6 de la especificación del artista).
-- La resolución del contexto con precedencia obra → serie → artista.
-- Mandar **todas** las imágenes al modelo; hoy solo viaja la principal.
-- La validación determinista en código y la llamada única de reparación.
-- El objeto `validation` construido por la aplicación.
+- **Rellenar las 20 obras restantes.** Solo DECLIVIS tiene listing y vocabulario.
+- **Código huérfano:** las columnas `saatchi_defaults` y `saatchi_overrides` —el
+  contexto estructurado con categoría, subject, materiales y estilos— existen con
+  su migración y no las lee nadie desde que el servicio pasó a derivar. Hay que
+  conectarlas o retirarlas.
+- Los pies cubren las **5 primeras** imágenes de la composición, no todas.
+- Nada de esto está desplegado: ni el código ni las cinco columnas nuevas.
+- **El contrato bilingüe sigue abierto** en un punto nuevo: el sitio sirve
+  siempre el borrador en inglés, sin pedir aprobación, sobre el supuesto de que
+  el inglés es una adaptación de un español ya aprobado. El listing de Saatchi no
+  lo es, así que se cuela por una puerta que da por cierto algo que en su caso no
+  lo es. El paquete en sí no se publica en ningún lado —se copia a mano— pero las
+  keywords en inglés sí llegan al sitio sin revisión.
 
 ## Lo que quedó abierto
 

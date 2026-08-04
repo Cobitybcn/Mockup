@@ -174,12 +174,23 @@ if (array_keys($catalog) !== ['test-work-current', 'first-work']) {
     fwrite(STDERR, "FAIL: published artworks do not follow the series order defined in the app.\n");
     exit(1);
 }
+// La portada si puede ser un mockup de otra ficha del mismo grupo canonico
+// ('related-cover.jpg' pertenece a la ficha 41 y la publicacion es de la 43).
+//
+// Pero la ficha publicada muestra SOLO las imagenes que el artista eligio en su
+// composicion, en su orden. 'related-context.jpg' pertenece al mismo grupo y no
+// esta en publication_items: el sitio no la agrega por su cuenta. Decision del
+// artista, verificada el 2026-08-04; antes este test esperaba lo contrario y
+// quedo viejo cuando la composicion paso a ser una seleccion explicita.
+//
+// 'deleted-context.jpg' si esta en la composicion, pero su mockup ya no existe,
+// asi que se cae: una imagen borrada no puede publicarse.
 if (!is_array($artwork)
     || ($artwork['artwork_views'][0]['file_name'] ?? '') !== 'detail.jpg'
     || ($artwork['header_file'] ?? '') !== 'related-cover.jpg'
-    || array_map(static fn (array $item): int => (int)($item['mockup_id'] ?? 0), $artwork['items']) !== [72, 73]
-    || array_map(static fn (array $item): string => (string)($item['title'] ?? ''), $artwork['items']) !== ['Favorite context', 'Second context']) {
-    fwrite(STDERR, "FAIL: published catalog cannot use a canonically related mockup as its cover.\n");
+    || array_map(static fn (array $item): int => (int)($item['mockup_id'] ?? 0), $artwork['items']) !== [72]
+    || array_map(static fn (array $item): string => (string)($item['title'] ?? ''), $artwork['items']) !== ['Favorite context']) {
+    fwrite(STDERR, "FAIL: the published artwork must show only the composition the artist selected, with a canonically related cover.\n");
     exit(1);
 }
 if (($catalogService->one('obra-12')['slug'] ?? '') !== 'test-work-current') {

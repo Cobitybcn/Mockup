@@ -42,7 +42,44 @@ final class BilingualEditorialGenerationWorker
             $workingLocale = $editorial->sourceLocale($userId);
             $adaptationLocale = $editorial->primaryAdaptationTarget($userId);
 
-            if ($action === 'prepare' && $entityType === 'series') {
+            if ($action === 'channel' && $entityType === 'artwork') {
+                // Textos de canal: se DERIVAN de la lectura aprobada, no vuelven
+                // a mirar la obra. El listing va al idioma de publicacion —Saatchi
+                // se carga en ingles— y el vocabulario al idioma de trabajo, cada
+                // uno nacido de su propio texto, porque traducir una keyword la
+                // deja de ser una busqueda. Todo queda en BORRADOR: aprobar es del
+                // artista.
+                require_once __DIR__ . '/SaatchiListingService.php';
+                require_once __DIR__ . '/DiscoveryKeywordsService.php';
+
+                $listado = (new SaatchiListingService($this->pdo))->generate($userId, $entityId);
+                $estadoListado = (string)($listado['validation']['status'] ?? '');
+                if ($estadoListado === 'ok') {
+                    (new SaatchiListingService($this->pdo))->save($userId, $entityId, $listado);
+                }
+
+                $vocabulario = (new DiscoveryKeywordsService($this->pdo))->generate($userId, $entityId, $workingLocale);
+                $estadoVocabulario = (string)($vocabulario['validation']['status'] ?? '');
+                if ($estadoVocabulario === 'ok') {
+                    (new DiscoveryKeywordsService($this->pdo))->save($userId, $entityId, $vocabulario);
+                }
+
+                // Un texto que no paso la validacion no se guarda ni se disimula:
+                // el job queda fallado con el motivo exacto, y el paquete lo muestra.
+                if ($estadoListado !== 'ok' || $estadoVocabulario !== 'ok') {
+                    throw new RuntimeException(trim(
+                        ($estadoListado !== 'ok' ? 'Listing: ' . implode(' · ', (array)($listado['validation']['errors'] ?? ['sin detalle'])) . ' ' : '')
+                        . ($estadoVocabulario !== 'ok' ? 'Vocabulario: ' . implode(' · ', (array)($vocabulario['validation']['errors'] ?? ['sin detalle'])) : '')
+                    ));
+                }
+
+                $result = [
+                    'channel_texts' => true,
+                    'listing_locale' => (string)($listado['locale'] ?? ''),
+                    'vocabulary_locale' => $workingLocale,
+                    'spanish_published' => false,
+                ];
+            } elseif ($action === 'prepare' && $entityType === 'series') {
                 $result = $adapter->prepareBilingualSeries(
                     $userId,
                     $entityId,

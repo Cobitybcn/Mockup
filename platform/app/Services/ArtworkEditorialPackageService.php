@@ -54,12 +54,28 @@ final class ArtworkEditorialPackageService
             $items[] = $this->scopeItem('artwork', $artworkId, 20, $artworkNeed);
         }
 
+        // Un mockup tambien queda pendiente cuando su texto salio de una lectura
+        // anterior de la obra. Publicar ya no los regenera solo —esa escritura
+        // es de la ficha, no de la seccion Publicacion— asi que la marca que
+        // dejo publicar se cuenta aca, que es donde el artista lo decide.
+        $desactualizados = $editorial->outdatedMockupIds($userId, $artworkId);
         foreach ($mockups as $mockup) {
             $mockupId = (int)$mockup['id'];
             $need = $this->editorialNeed($editorial, $userId, 'mockup', $mockupId);
+            if ($need === null && in_array($mockupId, $desactualizados, true)) {
+                $need = 'prepare';
+            }
             if ($need !== null) {
                 $items[] = $this->scopeItem('mockup', $mockupId, 30, $need);
             }
+        }
+
+        // Los textos de canal —paquete de Saatchi y vocabulario del sitio— se
+        // derivan de la lectura APROBADA, asi que solo se ofrecen cuando esa
+        // lectura existe y esta aprobada. Van al final (etapa 40) porque
+        // dependen de todo lo anterior, y un fallo aca no bloquea el paquete.
+        if ($this->channelTextsPending($editorial, $userId, $artworkId)) {
+            $items[] = $this->scopeItem('artwork', $artworkId, 40, 'channel');
         }
 
         $visiblePackage = $this->activePackage($userId, $artworkId);
@@ -91,8 +107,10 @@ final class ArtworkEditorialPackageService
             'mockups_pending' => $mockupsPending,
             'editorial_pending' => [
                 'series' => count(array_filter($items, static fn(array $item): bool => $item['entity_type'] === 'series')),
-                'artwork' => count(array_filter($items, static fn(array $item): bool => $item['entity_type'] === 'artwork')),
+                'artwork' => count(array_filter($items, static fn(array $item): bool => $item['entity_type'] === 'artwork' && $item['action'] !== 'channel')),
                 'mockups' => $mockupsPending,
+                // Textos de canal: el paquete de Saatchi y el vocabulario del sitio.
+                'channel' => count(array_filter($items, static fn(array $item): bool => $item['action'] === 'channel')),
                 'total' => count($items),
             ],
             'prerequisites_ready' => $prerequisitesReady,
@@ -410,6 +428,41 @@ final class ArtworkEditorialPackageService
             $stmt->execute([$userId, (int)$artwork['id'], basename((string)$artwork['root_file'])]);
         }
         return $stmt->fetchAll(PDO::FETCH_ASSOC);
+    }
+
+    /**
+     * Si la obra tiene lectura aprobada pero todavia no tiene sus textos de
+     * canal: el paquete de Saatchi en el idioma de publicacion y el vocabulario
+     * de descubrimiento en el de trabajo.
+     *
+     * Se pide la lectura APROBADA, no el borrador: derivar de algo sin aprobar
+     * fue exactamente el error que se corrigio el 2026-08-04.
+     */
+    private function channelTextsPending(BilingualEditorialService $editorial, int $userId, int $artworkId): bool
+    {
+        $working = $editorial->sourceLocale($userId);
+        $master = $editorial->get($userId, 'artwork', $artworkId, $working);
+        if (empty($master['is_published'])) {
+            return false;
+        }
+
+        $vocabulario = trim((string)(((array)$master['content'])['discovery_keywords'] ?? ''));
+        if ($vocabulario === '') {
+            return true;
+        }
+
+        $listingLocale = $editorial->primaryAdaptationTarget($userId);
+        if ($listingLocale === '') {
+            return false;
+        }
+        $listing = $editorial->get($userId, 'artwork', $artworkId, $listingLocale);
+        $contenido = (array)$listing['content'];
+        foreach (['saatchi_title', 'saatchi_description', 'saatchi_keywords'] as $campo) {
+            if (trim((string)($contenido[$campo] ?? '')) === '') {
+                return true;
+            }
+        }
+        return false;
     }
 
     private function editorialNeed(

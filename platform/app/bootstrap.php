@@ -16,6 +16,7 @@ require_once __DIR__ . '/Support/LanguagePolicy.php';
 require_once __DIR__ . '/Support/Translator.php';
 require_once __DIR__ . '/Support/UiPreview.php';
 require_once __DIR__ . '/Support/ArtistProfile.php';
+require_once __DIR__ . '/Support/ArtistReferences.php';
 require_once __DIR__ . '/Support/ArtistDomainService.php';
 require_once __DIR__ . '/Support/ArtistOnboarding.php';
 require_once __DIR__ . '/Support/Display.php';

@@ -393,12 +393,21 @@ Contenido: borrador → publicado (→ desactualizado cuando su fuente cambió).
 catálogo, solo por acción del artista; `locked` es inmutable ante cualquier análisis futuro;
 los rechazados se conservan para no re-sugerirlos.
 
-### Cap. 4 — Edición soberana y cascada
+### Cap. 4 — Edición soberana y propagación
 
-La edición manual del artista es soberana: no degrada estados y nada la pisa. Al re-publicar
-la lectura de una obra, el contenido de sus mockups se regenera automáticamente desde la
-versión nueva — **salteando los editados a mano**, que quedan marcados para decisión del
-artista.
+La edición manual del artista es soberana: no degrada estados y nada la pisa.
+
+Ningún texto de mockup puede quedar describiendo una versión de la obra que ya no está
+aprobada. Al re-publicar la lectura de una obra, sus mockups quedan **marcados** como
+desactualizados — **salteando los editados a mano**, que no se marcan porque no hay nada que
+propagarles. La ficha de la obra muestra cuántos quedaron atrás y el artista decide cuándo
+regenerarlos, desde «Preparar el paquete editorial».
+
+**Enmienda 2026-08-04.** Hasta esta fecha, publicar regeneraba el texto de todos los mockups
+en el mismo acto: una llamada al modelo por cada uno, dentro de la petición. Eso ponía a la
+sección Publicación a escribir contenido, cuando su trabajo es leer y distribuir, y hacía de
+publicar un acto caro y sorpresivo. El propósito del capítulo no cambia; cambia quién ejecuta
+y cuándo. Publicar marca; la ficha escribe; el artista decide con el costo a la vista.
 
 ---
 

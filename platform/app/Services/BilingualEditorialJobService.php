@@ -4,7 +4,11 @@ declare(strict_types=1);
 final class BilingualEditorialJobService
 {
     private const ENTITY_TYPES = ['series', 'artwork', 'mockup', 'studio_note'];
-    private const ACTIONS = ['prepare', 'adapt', 'publish'];
+    // 'channel' escribe los textos propios de un canal —el paquete de Saatchi y
+    // el vocabulario de descubrimiento del sitio— derivandolos de la lectura ya
+    // aprobada. Va por el sistema de jobs como todo lo demas: son llamadas al
+    // modelo y no pueden colgar una peticion.
+    private const ACTIONS = ['prepare', 'adapt', 'publish', 'channel'];
     private const ACTIVE_STATUSES = ['queued', 'processing'];
     private const QUEUED_REDISPATCH_AFTER_SECONDS = 300;
     private const PROCESSING_TIMEOUT_SECONDS = 2700;

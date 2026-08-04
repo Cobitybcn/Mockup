@@ -207,10 +207,22 @@ function run_editorial_core_contract_tests(): void
         $publicationScreen,
         'EDITORIAL_CORE Libro VI Cap. 1 (opción A): «Publicar Obra» publica también el texto aprobado — un solo acto, ahora en Publicación'
     );
+    // Enmienda 2026-08-04 a VI.4: publicar MARCA los mockups desactualizados,
+    // no los reescribe. Escribir contenido es de la ficha de la obra; esta
+    // seccion lee y distribuye. Antes estas dos aserciones exigian lo contrario.
     TestHarness::assertContains(
-        'queueMockupCascadeForArtwork',
+        'markMockupsOutdated',
         $publicationScreen,
-        'EDITORIAL_CORE Libro VI Cap. 4: publicar la obra dispara la cascada de mockups desde el mismo acto'
+        'EDITORIAL_CORE Libro VI Cap. 4 (enmienda 2026-08-04): publicar marca los mockups que quedaron de una lectura anterior'
+    );
+    TestHarness::assertTrue(
+        !str_contains($publicationScreen, 'queueMockupCascadeForArtwork') && !str_contains($publicationScreen, 'dispatchCascade'),
+        'publicar no regenera el texto de ningun mockup: esa escritura no pertenece a la seccion Publicacion'
+    );
+    TestHarness::assertContains(
+        'readingChangedSincePublish',
+        $publicationScreen,
+        'y solo marca cuando hay una version nueva de la lectura que propagar'
     );
     TestHarness::assertContains(
         'Generá el contenido editorial antes de publicar la obra',
@@ -218,9 +230,9 @@ function run_editorial_core_contract_tests(): void
         'EDITORIAL_CORE Libro VI Cap. 1: sin contenido generado la obra no se publica (compuerta con mensaje claro)'
     );
     TestHarness::assertContains(
-        'dispatchCascade',
-        $publicationScreen,
-        'EDITORIAL_CORE: la cascada se despacha tras el commit, nunca contra jobs sin confirmar'
+        'outdatedMockupIds',
+        (string)file_get_contents($platformRoot . '/app/Services/ArtworkEditorialPackageService.php'),
+        'EDITORIAL_CORE Libro VI Cap. 4: la ficha cuenta los mockups marcados, para que el artista vea cuantos hay antes de regenerar'
     );
     TestHarness::assertTrue(
         !str_contains($artworkScreen, "data-spanish-publication data-action"),

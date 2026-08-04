@@ -1309,8 +1309,14 @@ $editIconSvg = '<svg viewBox="0 0 24 24" width="18" height="18" stroke="currentC
         .bilingual-editorial-state { color:var(--muted); font-size:9px; font-weight:700; letter-spacing:.08em; text-transform:uppercase; white-space:nowrap; }
         .bilingual-editorial-state::after { content:'+'; display:inline-block; margin-left:14px; color:var(--accent); font:500 22px/1 var(--font-serif); vertical-align:-2px; }
         .bilingual-editorial-panel[open] .bilingual-editorial-state::after { content:'−'; }
-        .bilingual-editorial-spread { display:grid; grid-template-columns:minmax(0,1fr) 72px minmax(0,1fr); grid-template-rows:auto repeat(9,auto); row-gap:0; padding:14px; border-top:1px solid var(--line); }
-        .bilingual-editorial-page { display:grid; grid-row:1 / span 10; grid-template-rows:subgrid; min-width:0; padding:18px; border:1px solid var(--line); border-top:3px solid #c89aa1; background:var(--surface-soft); }
+        /* Las filas salen de la cantidad real de campos (--editorial-rows, que
+           pone el HTML) y no de un numero escrito a mano. Antes decia repeat(9)
+           y span 10: cuando se sumaron los campos de Saatchi, del decimo en
+           adelante se apilaban en la misma celda y el espanol y el ingles se
+           dibujaban encima uno del otro. Con `1 / -1` la columna abarca todas
+           las filas que existan, se agreguen los campos que se agreguen. */
+        .bilingual-editorial-spread { display:grid; grid-template-columns:minmax(0,1fr) 72px minmax(0,1fr); grid-template-rows:auto repeat(var(--editorial-rows,9),auto); row-gap:0; padding:14px; border-top:1px solid var(--line); }
+        .bilingual-editorial-page { display:grid; grid-row:1 / -1; grid-template-rows:subgrid; min-width:0; padding:18px; border:1px solid var(--line); border-top:3px solid #c89aa1; background:var(--surface-soft); }
         .bilingual-editorial-page--source { grid-column:1; }
         .bilingual-editorial-page--english { grid-column:3; border-top-color:#9fb19a; }
         .bilingual-adaptation-arrow { grid-column:2; grid-row:1; align-self:start; justify-self:center; display:flex; align-items:center; justify-content:center; gap:4px; width:64px !important; min-width:64px; height:40px; min-height:40px; margin:8px 0 0 !important; padding:0 7px; border:1px solid #d8c17e; border-radius:20px; background:#f1e4b5; color:#665735; box-shadow:none; cursor:pointer; }
@@ -3180,7 +3186,7 @@ $editIconSvg = '<svg viewBox="0 0 24 24" width="18" height="18" stroke="currentC
                         </span>
                         <span class="bilingual-editorial-state" data-bilingual-save-state><?= h($artworkEditorialStateLabel) ?></span>
                     </summary>
-                    <div class="bilingual-editorial-spread">
+                    <div class="bilingual-editorial-spread" style="--editorial-rows:<?= count($bilingualEditorialFields) ?>;">
                         <article class="bilingual-editorial-page bilingual-editorial-page--source">
                             <span class="bilingual-editorial-language">Español · fuente</span>
                             <?php foreach ($bilingualEditorialFields as $field): ?>

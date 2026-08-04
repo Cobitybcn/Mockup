@@ -288,6 +288,8 @@ final class BilingualEditorialService
             }
             $this->upsertRow($userId, $entityType, $entityId, $working, $content, $privateMemo, 'source', $newHash);
             $this->markEditOrigin($userId, $entityType, $entityId, $working, $editedByArtist);
+            // Reescribir un mockup lo pone al dia con la lectura de su obra.
+            $this->clearOutdatedMark($userId, $entityType, $entityId);
             if ($semanticChanged) {
                 $this->markAdaptationsStale($userId, $entityType, $entityId);
             }
@@ -437,6 +439,276 @@ final class BilingualEditorialService
     public function backfillEnglish(int $userId): array
     {
         return ['series' => 0, 'artwork' => 0, 'mockup' => 0, 'studio_note' => 0];
+    }
+
+    /**
+     * Campos DERIVADOS: no los escribe el artista ni son la lectura de la obra.
+     * Se calculan a partir de ella para un canal —el listing de Saatchi, el
+     * vocabulario de descubrimiento del sitio— y por eso se aprueban aparte.
+     */
+    public const DERIVED_FIELDS = [
+        'saatchi_title',
+        'saatchi_description',
+        'saatchi_caption',
+        'saatchi_keywords',
+        'discovery_keywords',
+    ];
+
+    /**
+     * Marca los mockups de una obra como "mi fuente cambio": su texto salio de
+     * una lectura que ya no es la aprobada.
+     *
+     * Publicar MARCA, no regenera. Escribir el texto de cada mockup es trabajo
+     * de la ficha de la obra, que es donde el artista lo decide viendo cuantos
+     * son. La edicion soberana se respeta: lo que el artista escribio a mano no
+     * se marca, porque no hay nada que propagarle.
+     *
+     * @return list<int> ids de los mockups marcados
+     */
+    public function markMockupsOutdated(int $userId, int $artworkId): array
+    {
+        $protegidos = $this->artistEditedMockupIds($userId, $artworkId);
+        $stmt = $this->pdo->prepare('SELECT id FROM mockups WHERE user_id=? AND source_artwork_id=? ORDER BY id');
+        $stmt->execute([$userId, $artworkId]);
+
+        $now = date(DATE_ATOM);
+        $marcados = [];
+        foreach (array_map('intval', $stmt->fetchAll(PDO::FETCH_COLUMN) ?: []) as $mockupId) {
+            if (in_array($mockupId, $protegidos, true)) {
+                continue;
+            }
+            try {
+                $this->pdo->prepare('UPDATE bilingual_editorial_content SET upstream_changed_at=?,updated_at=?
+                    WHERE user_id=? AND entity_type=? AND entity_id=?')
+                    ->execute([$now, $now, $userId, 'mockup', $mockupId]);
+            } catch (Throwable) {
+                // Base anterior a la migracion del 2026-08-04: sin columna no hay
+                // marca, y publicar sigue funcionando igual.
+                return $marcados;
+            }
+            $marcados[] = $mockupId;
+        }
+        return $marcados;
+    }
+
+    /**
+     * Los mockups de una obra cuyo texto quedo atras de la lectura aprobada. Es
+     * lo que la ficha cuenta para decirle al artista cuanto hay para regenerar.
+     *
+     * @return list<int>
+     */
+    public function outdatedMockupIds(int $userId, int $artworkId): array
+    {
+        try {
+            $stmt = $this->pdo->prepare("SELECT DISTINCT b.entity_id
+                FROM bilingual_editorial_content b
+                JOIN mockups m ON m.id = b.entity_id AND m.user_id = b.user_id
+                WHERE b.user_id=? AND b.entity_type='mockup' AND m.source_artwork_id=?
+                    AND TRIM(COALESCE(b.upstream_changed_at,'')) <> ''
+                ORDER BY b.entity_id");
+            $stmt->execute([$userId, $artworkId]);
+            return array_map('intval', $stmt->fetchAll(PDO::FETCH_COLUMN) ?: []);
+        } catch (Throwable) {
+            return [];
+        }
+    }
+
+    /** Se limpia cuando ese mockup vuelve a escribirse desde la lectura nueva. */
+    public function clearOutdatedMark(int $userId, string $entityType, int $entityId): void
+    {
+        if ($entityType !== 'mockup') {
+            return;
+        }
+        try {
+            $this->pdo->prepare("UPDATE bilingual_editorial_content SET upstream_changed_at=''
+                WHERE user_id=? AND entity_type=? AND entity_id=?")
+                ->execute([$userId, $entityType, $entityId]);
+        } catch (Throwable) {
+            // Sin columna no hay marca que limpiar.
+        }
+    }
+
+    /**
+     * Si la LECTURA de la entidad cambio respecto de lo ya publicado.
+     *
+     * EDITORIAL_CORE VI.4 dice que al re-publicar la lectura de una obra sus
+     * mockups se regeneran "desde la version nueva": presupone que hay una
+     * version nueva. Esta pregunta es la que faltaba hacerse, porque hasta ahora
+     * la cascada se disparaba en cada publicacion aunque el texto fuera identico
+     * —y regenerar el texto de todos los mockups no es un acto gratuito—.
+     *
+     * Los campos derivados no cuentan: no son la lectura, se calculan a partir
+     * de ella y tienen su propia aprobacion.
+     *
+     * Sin copia publicada devuelve true: la primera publicacion si propaga.
+     */
+    public function readingChangedSincePublish(int $userId, string $entityType, int $entityId): bool
+    {
+        $working = $this->sourceLocale($userId);
+        $stmt = $this->pdo->prepare('SELECT content_json,published_content_json,is_published
+            FROM bilingual_editorial_content WHERE user_id=? AND entity_type=? AND entity_id=? AND locale=? LIMIT 1');
+        $stmt->execute([$userId, $entityType, $entityId, $working]);
+        $row = $stmt->fetch(PDO::FETCH_ASSOC);
+        if (!is_array($row) || !(int)($row['is_published'] ?? 0)) {
+            return true;
+        }
+
+        $sinDerivados = static function (mixed $json): array {
+            $content = json_decode((string)$json, true);
+            if (!is_array($content)) {
+                return [];
+            }
+            foreach (self::DERIVED_FIELDS as $campo) {
+                unset($content[$campo]);
+            }
+            ksort($content);
+            return $content;
+        };
+
+        return $sinDerivados($row['content_json']) !== $sinDerivados($row['published_content_json']);
+    }
+
+    /**
+     * Que campos derivados tienen algo distinto en el borrador respecto de lo
+     * aprobado, por idioma. Es lo que hay para revisar.
+     *
+     * @return array<string,array<string,array{draft:string,published:string}>>
+     */
+    public function pendingDerivedFields(int $userId, string $entityType, int $entityId): array
+    {
+        $stmt = $this->pdo->prepare('SELECT locale,content_json,published_content_json,is_published
+            FROM bilingual_editorial_content WHERE user_id=? AND entity_type=? AND entity_id=?');
+        $stmt->execute([$userId, $entityType, $entityId]);
+
+        $pendientes = [];
+        foreach ($stmt->fetchAll(PDO::FETCH_ASSOC) as $row) {
+            // Sin copia publicada no hay nada que comparar: ese idioma se sirve
+            // del borrador y no espera aprobacion.
+            if (!(int)($row['is_published'] ?? 0)) {
+                continue;
+            }
+            $borrador = json_decode((string)$row['content_json'], true);
+            $publicado = json_decode((string)$row['published_content_json'], true);
+            $borrador = is_array($borrador) ? $borrador : [];
+            $publicado = is_array($publicado) ? $publicado : [];
+            foreach (self::DERIVED_FIELDS as $campo) {
+                $b = trim((string)($borrador[$campo] ?? ''));
+                $p = trim((string)($publicado[$campo] ?? ''));
+                if ($b !== $p) {
+                    $pendientes[(string)$row['locale']][$campo] = ['draft' => $b, 'published' => $p];
+                }
+            }
+        }
+        return $pendientes;
+    }
+
+    /**
+     * Aprueba SOLO los campos derivados: los copia del borrador a la copia
+     * publicada y no toca nada mas.
+     *
+     * Existe para que revisar unas keywords no cueste republicar la obra
+     * entera. "Publicar obra" es un acto grande —publica la pagina, aprueba la
+     * lectura y regenera el texto de todos sus mockups—; estos campos no
+     * cambian la lectura, asi que no tienen por que arrastrar todo eso.
+     *
+     * @return array<string,list<string>> idioma => campos aprobados
+     */
+    public function approveDerivedFields(int $userId, string $entityType, int $entityId): array
+    {
+        $this->assertOwned($userId, $entityType, $entityId);
+        $pendientes = $this->pendingDerivedFields($userId, $entityType, $entityId);
+        if ($pendientes === []) {
+            return [];
+        }
+
+        $aprobados = [];
+        foreach ($pendientes as $locale => $campos) {
+            $stmt = $this->pdo->prepare('SELECT content_json,published_content_json FROM bilingual_editorial_content
+                WHERE user_id=? AND entity_type=? AND entity_id=? AND locale=? LIMIT 1');
+            $stmt->execute([$userId, $entityType, $entityId, $locale]);
+            $row = $stmt->fetch(PDO::FETCH_ASSOC);
+            if (!is_array($row)) {
+                continue;
+            }
+            $borrador = json_decode((string)$row['content_json'], true);
+            $publicado = json_decode((string)$row['published_content_json'], true);
+            if (!is_array($borrador) || !is_array($publicado)) {
+                continue;
+            }
+            foreach (array_keys($campos) as $campo) {
+                $valor = trim((string)($borrador[$campo] ?? ''));
+                if ($valor === '') {
+                    unset($publicado[$campo]);
+                } else {
+                    $publicado[$campo] = $valor;
+                }
+                $aprobados[$locale][] = $campo;
+            }
+            $this->pdo->prepare('UPDATE bilingual_editorial_content SET published_content_json=?,updated_at=?
+                WHERE user_id=? AND entity_type=? AND entity_id=? AND locale=?')
+                ->execute([
+                    json_encode($publicado, JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES),
+                    date(DATE_ATOM),
+                    $userId,
+                    $entityType,
+                    $entityId,
+                    $locale,
+                ]);
+        }
+        return $aprobados;
+    }
+
+    /**
+     * Mezcla campos DERIVADOS —vocabulario de descubrimiento, campos propios de
+     * un canal— en el borrador de un idioma, y nada mas.
+     *
+     * Existe porque esos campos no son la lectura: se derivan de ella. Por eso
+     * esta escritura:
+     *
+     *   - toca solo `content_json`. La copia publicada la llena `publish()`, que
+     *     es la accion del artista: publicar es aprobar, y nada entra ahi sin que
+     *     alguien lo haya leido.
+     *   - no marca las adaptaciones como viejas. `save()` lo hace siempre para
+     *     una obra, y con razon cuando cambia la lectura; pero agregar keywords
+     *     al castellano no invalida el texto en ingles, y marcarlo daria una
+     *     alarma falsa en cada obra del catalogo.
+     *   - conserva `status` y `source_hash` tal como estaban, para no mentirle al
+     *     mecanismo que compara la adaptacion con su fuente.
+     *
+     * @param array<string,string> $fields
+     */
+    public function mergeDerivedFields(int $userId, string $entityType, int $entityId, string $locale, array $fields): void
+    {
+        $this->assertIdentity($entityType, $entityId, $locale);
+        $this->assertOwned($userId, $entityType, $entityId);
+        if ($fields === []) {
+            return;
+        }
+
+        $stmt = $this->pdo->prepare('SELECT content_json,private_memo,status,source_hash FROM bilingual_editorial_content
+            WHERE user_id=? AND entity_type=? AND entity_id=? AND locale=? LIMIT 1');
+        $stmt->execute([$userId, $entityType, $entityId, $locale]);
+        $row = $stmt->fetch(PDO::FETCH_ASSOC);
+        if (!is_array($row)) {
+            throw new RuntimeException('No hay contenido editorial en ese idioma: el vocabulario se deriva de una lectura que todavia no existe.');
+        }
+
+        $content = json_decode((string)$row['content_json'], true);
+        $content = is_array($content) ? $content : [];
+        foreach ($fields as $key => $value) {
+            $content[$key] = $value;
+        }
+
+        $this->upsertRow(
+            $userId,
+            $entityType,
+            $entityId,
+            $locale,
+            $this->normalizeContent($content),
+            (string)$row['private_memo'],
+            (string)$row['status'],
+            (string)$row['source_hash']
+        );
     }
 
     private function upsertRow(int $userId, string $entityType, int $entityId, string $locale, array $content, string $memo, string $status, string $sourceHash): void

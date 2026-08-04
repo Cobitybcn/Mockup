@@ -1,9 +1,15 @@
 <?php
 $footerDescription = site_copy('global.tagline');
 $currentLanguage = artist_site_language();
+// Person, no "VisualArtist": ese tipo no existe en el vocabulario de schema.org,
+// y un @type desconocido hace que el bloque entero se descarte — con lo cual el
+// artista no quedaba descrito como entidad en ninguna pagina. El oficio se
+// declara con jobTitle, que si es una propiedad de Person.
+// Confirmar con el Rich Results Test de Google despues del despliegue.
 $schema = [
     '@context' => 'https://schema.org',
-    '@type' => 'VisualArtist',
+    '@type' => 'Person',
+    'jobTitle' => 'Visual artist',
     'name' => $artistName ?? $site['name'],
     'url' => artist_site_url_with_language((string)$site['url'] . '/', $currentLanguage),
     'description' => $footerDescription,

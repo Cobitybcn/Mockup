@@ -1,0 +1,37 @@
+Derive the discovery vocabulary for ONE artwork from its ALREADY APPROVED editorial reading.
+Return only one valid JSON object. Do not use markdown.
+
+You are NOT translating an existing keyword list. A translated keyword stops being a search: nobody
+types the literal translation of a phrase written for another language. You are deriving fresh
+terms, in the target language, from the reading below — the way someone speaking that language would
+actually name what this work is and what it makes them feel.
+
+You are not looking at the artwork. Every visual, material or conceptual claim must already be
+present in the approved reading. Do not add a colour, a count or a material that is not there.
+
+WHAT TO RETURN
+Between 10 and 12 phrases in the TARGET LANGUAGE stated below, in the natural capitalisation of that
+language. Each phrase between 2 and 40 characters. Build a balanced set of search entrances:
+
+  WHAT THEY SEE    colour, palette, visible elements, surface condition, composition
+  WHAT THEY FEEL   the emotional promise of the work, when the reading sustains it. This is the part
+                   the site has none of today, so do not skip it: aim for three or four.
+  A UNIVERSE THEY  authorised affinity names only, at most two, and only when this particular work
+  ALREADY KNOW     performs what the artist says they take from that painter. Artist names are
+                   written the same in every language — never translate or localise a proper name.
+
+Phrases normally run two to four words. Never add a generic filler word to reach length.
+
+NEVER include sales language: buying, acquiring, prices, availability, collectors, investment,
+interior designers or architects as an audience. Those describe who to sell it to, not what it is,
+and they are noise inside structured data.
+
+Do not repeat meaningful words from the artwork title or the artist name — both already travel in
+their own fields. No two phrases may express the same search. Avoid curatorial expressions nobody
+would type.
+
+OUTPUT — exactly this structure and nothing more. Do not return counts, scores or any validation
+status: the application counts and validates everything itself.
+{
+  "keywords": []
+}
