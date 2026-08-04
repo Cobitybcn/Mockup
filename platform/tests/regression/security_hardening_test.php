@@ -24,6 +24,27 @@ function run_security_hardening_regression_tests(): void
         'los directorios internos de site-admin tambien estan denegados (su suite no es ejecutable por HTTP)'
     );
 
+    // El Dockerfile copia platform/ entero, asi que los archivos de construccion
+    // y despliegue quedaban servibles como estaticos: verificado en produccion el
+    // 2026-08-04, deploy_*.ps1 / cloudbuild.ci.yaml / Dockerfile.web /
+    // composer.lock / apache-security.conf devolvian 200.
+    TestHarness::assertContains(
+        '\.(?:ps1|sh|bat|cmd|yaml|yml|conf|lock|md|dist|sql)$',
+        $apache,
+        'los archivos de build y despliegue no se sirven por HTTP'
+    );
+    TestHarness::assertContains(
+        '^(?:Dockerfile|composer\\.json$',
+        $apache,
+        'Dockerfile y composer.json tampoco se sirven'
+    );
+    // Los .txt sostienen la verificacion de dominio de TikTok: si entran a la
+    // negacion, TikTok deja de validar el dominio.
+    TestHarness::assertTrue(
+        !str_contains($apache, 'ps1|sh|bat|cmd|txt'),
+        'los .txt siguen accesibles: TikTok verifica el dominio con ellos'
+    );
+
     // El hardening del sitio del artista (display_errors, views/) NO se verifica aca:
     // la imagen web solo copia 15 archivos sueltos de artist-site, sin .htaccess ni
     // Dockerfile, asi que dentro del contenedor esas rutas no existen. Vive en
