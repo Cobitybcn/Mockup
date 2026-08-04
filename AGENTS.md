@@ -21,6 +21,14 @@ migraciones, hardening). Debe quedar en verde.
 Una regla que importa se escribe como test, no como párrafo. Si una regla solo existe en
 prosa, no existe.
 
+Local sirve para diagnosticar; producción es obligatoria para afirmar. Ejecutar algo en
+localhost, leer el código o mirar un mensaje de commit alcanza para investigar. En el
+momento en que una frase describe lo que el sistema *hace*, hay que haberlo verificado
+contra producción — y decir de dónde salió el dato.
+
+`CLAUDE.md` repite estas reglas porque Claude Code carga ese archivo y no este. Si los dos
+difieren, manda este.
+
 ## 3. Alcance de una tarea
 
 Hacé lo que se pidió y nada más. En particular, **ninguna auditoría, diagnóstico o
