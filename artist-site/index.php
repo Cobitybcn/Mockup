@@ -2017,6 +2017,13 @@ function published_artwork_schema(array $site, array $artwork, string $mainImage
     // funcion la llaman desde las dos. Leer una sola dejaba el campo vacio en la
     // pagina real mientras el test pasaba.
     $keywords = [];
+    // Aca NO se filtra nada. La regla de excluir lenguaje de venta es de Saatchi,
+    // donde hay doce slots y el formulario ya indexa categoria, medio y estilo:
+    // alli gastar uno en "for sale" es tirarlo. En el sitio no hay tope, y
+    // "painting for sale" o el nombre del artista con su categoria son las
+    // busquedas de mayor intencion que existen. Filtrarlas costo seis terminos
+    // buenos de dieciseis, y fue un error.
+    //
     // El vocabulario de descubrimiento va PRIMERO: es el unico que trae terminos
     // emocionales y los nombres de los artistas afines a esta obra, que es lo que
     // ni los search_terms ni los tags del catalogo tienen.
@@ -2031,9 +2038,6 @@ function published_artwork_schema(array $site, array $artwork, string $mainImage
         foreach (explode(',', $fuente) as $termino) {
             $termino = trim($termino);
             if ($termino === '' || isset($keywords[mb_strtolower($termino)])) {
-                continue;
-            }
-            if (published_keyword_is_sales_language($termino, (string)($site['name'] ?? ''))) {
                 continue;
             }
             $keywords[mb_strtolower($termino)] = $termino;
@@ -2153,48 +2157,6 @@ function published_seo_title(string $stored, string $artworkTitle, string $artis
     // Sin categoria que entre, la obra y el artista viajan solos: es mejor
     // perder la categoria que perder el nombre.
     return mb_strlen($arma('')) <= $max ? $arma('') : $obra;
-}
-
-/**
- * Un termino de venta no describe la obra: dentro de datos estructurados es
- * relleno, y el relleno se parece mas al spam que a una descripcion.
- * "Buy original ... art", "for modern collectors" o "for architects and interior
- * designers" hablan de a quien vendersela, no de que es.
- *
- * OJO con la diferencia respecto de Saatchi: alla las palabras de categoria
- * —Painting, Abstract Art, Canvas— se excluyen porque el formulario ya las
- * indexa en sus campos propios. Aca NO hay campos propios, asi que decirle al
- * buscador que esto es una pintura abstracta sobre lienzo es informacion util y
- * se conserva.
- *
- * El nombre del artista tampoco viaja como keyword: ya esta en creator, y
- * repetirlo en cada frase es la forma mas vieja de relleno.
- */
-function published_keyword_is_sales_language(string $termino, string $artistName = ''): bool
-{
-    $t = ' ' . mb_strtolower(trim($termino)) . ' ';
-
-    // "architectural" es un rasgo visual legitimo, "for architects" es publico
-    // objetivo: por eso se compara la frase y no la raiz de la palabra. Por lo
-    // mismo " en venta" lleva su espacio, para no llevarse puesto "ventana".
-    //
-    // Las dos listas hacen falta: el sitio publica en los dos idiomas y este
-    // filtro nacio mirando solo la pagina en ingles, asi que "en venta",
-    // "coleccionistas" y "arquitectos interioristas" pasaban de largo.
-    foreach ([
-        'buy ', 'purchase', 'acquire ', 'for sale', 'on sale', 'shop ', 'order now',
-        'collector', 'investment', 'for architects', 'interior designer', 'home decor',
-        'wall decor', 'best price', 'affordable',
-        ' en venta', 'comprar', 'coleccionista', 'inversión', 'inversion',
-        'interiorista', 'para arquitectos', 'decoración de interiores', 'mejor precio',
-    ] as $venta) {
-        if (str_contains($t, $venta)) {
-            return true;
-        }
-    }
-
-    $artistName = trim($artistName);
-    return $artistName !== '' && str_contains($t, ' ' . mb_strtolower($artistName) . ' ');
 }
 
 /**

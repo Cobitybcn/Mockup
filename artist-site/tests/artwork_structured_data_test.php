@@ -32,7 +32,7 @@ function app_series_catalog(): ?object
 }
 
 // Se extraen del index las dos funciones bajo prueba, sin arrastrar el resto.
-foreach (['published_artwork_schema', 'published_artwork_series', 'published_keyword_is_sales_language'] as $funcion) {
+foreach (['published_artwork_schema', 'published_artwork_series'] as $funcion) {
     $inicio = strpos($index, 'function ' . $funcion . '(');
     if ($inicio === false) {
         fwrite(STDERR, "FAIL: {$funcion}() is missing from the site.\n");
@@ -121,52 +121,27 @@ $mapeado = published_artwork_schema($site, array_merge(
 $checks[] = [str_contains((string)($mapeado['keywords'] ?? ''), 'Deep Red Field'),
     'the mapped catalogue shape also yields keywords: the published page uses one shape and the tests used to assume the other'];
 
-// —— El lenguaje de venta no entra a los datos estructurados ——
+// —— El sitio NO filtra lenguaje de venta ——
+// Esa regla es de Saatchi, donde hay doce slots y el formulario ya indexa
+// categoria, medio y estilo. En el sitio no hay tope, y las frases de compra o
+// con el nombre del artista son las busquedas de mayor intencion que existen.
+// Filtrarlas costo seis terminos buenos de dieciseis y fue un error.
+$todo = published_artwork_schema($site, array_merge($artwork, [
+    'artwork_keywords' => 'Red abstract painting with white lines, Buy original Maurizio Valch art, Textural brutalist painting for sale, Art for modern collectors, Abstracción territorial en venta',
+    'artwork_tags' => 'Painting, Crimson Red',
+]), 'declivis.jpg', 'x', null);
 foreach ([
+    'Red abstract painting with white lines',
     'Buy original Maurizio Valch art',
     'Textural brutalist painting for sale',
     'Art for modern collectors',
-    'Artwork for architects and interior designers',
-    'Acquire deep red contemporary art',
-] as $venta) {
-    $checks[] = [published_keyword_is_sales_language($venta, 'Maurizio Valch'),
-        "\"{$venta}\" is sales language and does not describe the artwork"];
-}
-// Los terminos de venta REALES que la pagina en espanol estaba publicando. El
-// filtro nacio mirando solo la pagina en ingles y estos pasaban de largo.
-foreach ([
     'Abstracción territorial en venta',
-    'Arte para coleccionistas modernos',
-    'Obra de arte para arquitectos interioristas',
-    'Comprar obra original de Maurizio Valch',
-] as $ventaEs) {
-    $checks[] = [published_keyword_is_sales_language($ventaEs, 'Maurizio Valch'),
-        "\"{$ventaEs}\" is sales language in Spanish too"];
+    'Painting',
+    'Crimson Red',
+] as $termino) {
+    $checks[] = [str_contains((string)$todo['keywords'], $termino),
+        "\"{$termino}\" reaches the site: purchase intent belongs where the work is sold"];
 }
-foreach ([
-    'Red abstract painting with white lines',
-    'Crimson painting with incised lines',
-    'Architectural forms',      // "architectural" es rasgo visual, no publico objetivo
-    'Painting',                 // categoria: aca SI sirve, no hay campo estructurado que la indexe
-    'Abstract Art',
-    'Textured Surface',
-    'Pintura carmesí con incisiones',
-    'Cuadro abstracto vertical rojo',
-    'Composición vertical matérica',
-    'Luz de ventana',           // " en venta" lleva espacio para no llevarse puesto "ventana"
-] as $descriptivo) {
-    $checks[] = [!published_keyword_is_sales_language($descriptivo, 'Maurizio Valch'),
-        "\"{$descriptivo}\" describes the artwork and must survive"];
-}
-
-$limpio = published_artwork_schema($site, array_merge($artwork, [
-    'artwork_keywords' => 'Red abstract painting with white lines, Buy original Maurizio Valch art, Art for modern collectors',
-    'artwork_tags' => 'Painting, Crimson Red',
-]), 'declivis.jpg', 'x', null);
-$checks[] = [str_contains((string)$limpio['keywords'], 'Red abstract painting with white lines'), 'the descriptive term survives the filter'];
-$checks[] = [!str_contains((string)$limpio['keywords'], 'Buy original'), 'the purchase term is filtered out'];
-$checks[] = [!str_contains((string)$limpio['keywords'], 'modern collectors'), 'the audience-targeting term is filtered out'];
-$checks[] = [str_contains((string)$limpio['keywords'], 'Painting'), 'the category survives: unlike Saatchi, no structured field indexes it here'];
 
 // —— Una propiedad vacia no viaja ——
 $vacios = published_artwork_schema($site, array_merge($artwork, ['medium' => '', 'artwork_year' => '']), 'declivis.jpg', 'x', null);
