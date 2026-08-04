@@ -351,8 +351,17 @@ class SaatchiListingService
         }
 
         // Segunda pasada: los pies, con las imagenes adjuntas.
+        //
+        // Sus errores NO se mezclan con los del listing. Son dos productos
+        // distintos —de hecho salen de dos llamadas separadas— y hasta el
+        // 2026-08-04 compartian el estado final: un pie flojo en la quinta
+        // imagen tiraba a la basura un titulo, una descripcion y doce keywords
+        // que estaban bien. Un pie que no pasa no se escribe y se informa; el
+        // listing sigue su camino.
         [$captions, $captionErrors, $captionWarnings, $captionMetrics] = $this->captions($userId, $artworkId);
-        $errors = array_merge($errors, $captionErrors);
+        foreach ($captionErrors as $captionError) {
+            $warnings[] = 'Pie sin escribir — ' . $captionError;
+        }
         $warnings = array_merge($warnings, $captionWarnings);
 
         return [
@@ -433,6 +442,15 @@ class SaatchiListingService
                 $errors = self::validateCaptions($parsed['captions'], $inspectableFiles, $uninspectableFiles);
             } catch (RuntimeException $e) {
                 $errors[] = 'La reparacion de los pies no devolvio JSON valido: ' . $e->getMessage();
+            }
+        }
+
+        // Los pies que siguen fallando NO se escriben: se descartan uno por uno y
+        // los demas se guardan igual. Antes un solo pie invalido bloqueaba a los
+        // cuatro que estaban bien.
+        foreach ($inspectableFiles as $file) {
+            if (self::validateCaptions($parsed['captions'], [$file]) !== []) {
+                unset($parsed['captions'][$file]);
             }
         }
 

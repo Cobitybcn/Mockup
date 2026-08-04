@@ -285,10 +285,22 @@ final class ArtworkEditorialPackageService
             $this->dispatchNextStage($packageId);
             return;
         }
+        // El resumen nombra lo que realmente fallo. Decia siempre "mockup", y
+        // desde que existe el paso de textos de canal eso podia ser falso.
+        $etiquetas = [];
+        foreach ($failed as $item) {
+            $etiquetas[] = (string)$item['action'] === 'channel'
+                ? 'Saatchi + site vocabulary'
+                : (string)$item['entity_type'];
+        }
+        $resumen = [];
+        foreach (array_count_values($etiquetas) as $etiqueta => $cuantos) {
+            $resumen[] = $cuantos . ' ' . $etiqueta;
+        }
         $this->finishPackage(
             $packageId,
             $failed === [] ? 'completed' : 'partial',
-            $failed === [] ? '' : count($failed) . ' mockup editorial item(s) failed.'
+            $failed === [] ? '' : implode(', ', $resumen) . ' editorial item(s) failed.'
         );
     }
 

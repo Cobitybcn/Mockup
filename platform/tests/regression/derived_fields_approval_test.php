@@ -124,6 +124,13 @@ function run_derived_fields_approval_tests(): void
         'no se guarda dos veces'
     );
 
+    // Ningun cartel puede seguir prometiendo la regeneracion automatica.
+    $ficha0 = (string)file_get_contents($platformRoot . '/artwork.php');
+    TestHarness::assertTrue(
+        !str_contains($ficha0, 'y actualiza los mockups') && !str_contains($ficha0, 'refreshes the mockups'),
+        'la ficha ya no anuncia que publicar actualiza los mockups: ahora los marca y se regeneran desde el paquete editorial'
+    );
+
     // El panel tiene que MOSTRAR lo que cuenta. Sin esta fila, el contador decia
     // "1 pendiente" y el desglose mostraba ceros: el artista veia que habia algo
     // sin poder saber que era.

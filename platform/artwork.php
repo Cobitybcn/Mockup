@@ -3222,7 +3222,7 @@ $editIconSvg = '<svg viewBox="0 0 24 24" width="18" height="18" stroke="currentC
                             : ($artworkSpanishDirty
                                 ? h(t('Unpublished changes — the site shows the previous version', 'Cambios sin publicar — el sitio muestra la versión anterior'))
                                 : h(t('Spanish published and up to date on the site', 'Español publicado y al día en el sitio'))) ?></span>
-                        <span><?= h(t('Publishing happens in the Publication section: one act publishes the page, this approved text, and refreshes the mockups.', 'Publicar se hace en la sección Publicación: un solo acto publica la página, este texto aprobado y actualiza los mockups.')) ?> <a href="publication.php?id=<?= (int)$id ?>" style="color:var(--accent);font-weight:700;"><?= h(t('Open Publication', 'Abrir Publicación')) ?> →</a></span>
+                        <span><?= h(t('Publishing happens in the Publication section: it publishes the page and approves this text. If the reading changed, the mockup texts that fell behind are marked so you can regenerate them here.', 'Publicar se hace en la sección Publicación: publica la página y aprueba este texto. Si la lectura cambió, marca los textos de mockup que quedaron atrás para que los regeneres desde acá.')) ?> <a href="publication.php?id=<?= (int)$id ?>" style="color:var(--accent);font-weight:700;"><?= h(t('Open Publication', 'Abrir Publicación')) ?> →</a></span>
                     </div>
                     <?php endif; ?>
                     <details class="bilingual-editorial-memo">

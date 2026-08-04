@@ -66,6 +66,8 @@ final class BilingualEditorialGenerationWorker
 
                 // Un texto que no paso la validacion no se guarda ni se disimula:
                 // el job queda fallado con el motivo exacto, y el paquete lo muestra.
+                // Los pies son aparte: uno flojo no invalida el listing, se
+                // descarta solo y se avisa.
                 if ($estadoListado !== 'ok' || $estadoVocabulario !== 'ok') {
                     throw new RuntimeException(trim(
                         ($estadoListado !== 'ok' ? 'Listing: ' . implode(' · ', (array)($listado['validation']['errors'] ?? ['sin detalle'])) . ' ' : '')
@@ -77,6 +79,11 @@ final class BilingualEditorialGenerationWorker
                     'channel_texts' => true,
                     'listing_locale' => (string)($listado['locale'] ?? ''),
                     'vocabulary_locale' => $workingLocale,
+                    'captions_written' => count(array_filter((array)($listado['captions'] ?? []), static fn ($c): bool => trim((string)$c) !== '')),
+                    'notes' => array_values(array_filter(
+                        (array)($listado['validation']['warnings'] ?? []),
+                        static fn (string $w): bool => str_starts_with($w, 'Pie sin escribir')
+                    )),
                     'spanish_published' => false,
                 ];
             } elseif ($action === 'prepare' && $entityType === 'series') {

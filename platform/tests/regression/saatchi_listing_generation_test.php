@@ -200,6 +200,35 @@ function run_saatchi_listing_generation_tests(): void
         'una imagen que no se pudo inspeccionar no lleva pie: un pie sin mirar es texto inventado'
     );
 
+    // ————— Un pie flojo no puede tirar un listing bueno —————
+    $servicioTexto = (string)file_get_contents($platformRoot . '/app/Services/SaatchiListingService.php');
+    TestHarness::assertTrue(
+        !str_contains($servicioTexto, '$errors = array_merge($errors, $captionErrors);'),
+        'los errores de los pies ya no se suman a los del listing: son dos productos distintos y compartir el estado tiraba a la basura un texto bueno por un pie de la quinta imagen'
+    );
+    TestHarness::assertContains(
+        "\$warnings[] = 'Pie sin escribir — ' . \$captionError;",
+        $servicioTexto,
+        'un pie que no pasa se informa como aviso, no como error del paquete'
+    );
+    TestHarness::assertContains(
+        'unset($parsed[\'captions\'][$file]);',
+        $servicioTexto,
+        'el pie invalido se descarta uno por uno: los demas se guardan igual'
+    );
+
+    // ————— El resumen del paquete nombra lo que fallo de verdad —————
+    $paqueteFuente = (string)file_get_contents($platformRoot . '/app/Services/ArtworkEditorialPackageService.php');
+    TestHarness::assertTrue(
+        !str_contains($paqueteFuente, "' mockup editorial item(s) failed.'"),
+        'el resumen ya no dice siempre "mockup": desde que existe el paso de textos de canal eso podia ser falso'
+    );
+    TestHarness::assertContains(
+        "'Saatchi + site vocabulary'",
+        $paqueteFuente,
+        'y nombra el paso de canal cuando es el que fallo'
+    );
+
     // ————— Un paquete que no quedo en ok no se guarda solo —————
     $service = new SaatchiListingService(new PDO('sqlite::memory:'));
     $rechazado = false;
