@@ -2,8 +2,8 @@
 declare(strict_types=1);
 
 /**
- * Relleno de los textos de canal —paquete de Saatchi y vocabulario del sitio—
- * en todas las obras que ya tienen su lectura aprobada y todavia no los tienen.
+ * Relleno del paquete de Saatchi en todas las obras que ya tienen su lectura
+ * aprobada y todavia no lo tienen.
  *
  * Es una herramienta de una sola pasada, no una funcion del producto: para una
  * obra nueva el paso vive en la ficha, dentro del paquete editorial. Esto existe
@@ -23,7 +23,6 @@ if (PHP_SAPI !== 'cli') {
 
 require_once __DIR__ . '/../app/bootstrap.php';
 require_once __DIR__ . '/../app/Services/SaatchiListingService.php';
-require_once __DIR__ . '/../app/Services/DiscoveryKeywordsService.php';
 
 $userId = 0;
 $apply = false;
@@ -42,8 +41,7 @@ $pdo = Database::connection();
 $editorial = new BilingualEditorialService($pdo);
 $working = $editorial->sourceLocale($userId);
 $listingLocale = $editorial->primaryAdaptationTarget($userId) ?: 'en';
-
-// Candidatas: lectura aprobada en el idioma de trabajo, y algun texto de canal
+// Candidatas: lectura aprobada en el idioma de trabajo y paquete de Saatchi
 // faltante. Se lee crudo para no disparar los efectos de get().
 $stmt = $pdo->prepare("SELECT a.id, a.final_title,
         (SELECT b.content_json FROM bilingual_editorial_content b
@@ -60,9 +58,8 @@ foreach ($stmt->fetchAll(PDO::FETCH_ASSOC) as $row) {
     if (!(int)$row['publicado']) {
         continue;
     }
-    $master = json_decode((string)$row['master'], true) ?: [];
     $listing = json_decode((string)$row['listing'], true) ?: [];
-    $falta = trim((string)($master['discovery_keywords'] ?? '')) === '';
+    $falta = false;
     foreach (['saatchi_title', 'saatchi_description', 'saatchi_keywords'] as $campo) {
         if (trim((string)($listing[$campo] ?? '')) === '') {
             $falta = true;
@@ -86,7 +83,6 @@ if (!$apply) {
 }
 
 $listado = new SaatchiListingService($pdo);
-$vocabulario = new DiscoveryKeywordsService($pdo);
 $ok = 0;
 $revisar = [];
 
@@ -103,6 +99,7 @@ foreach ($pendientes as $i => $p) {
             count(array_filter((array)$r['captions'], static fn ($c): bool => trim((string)$c) !== '')));
         if ($estado === 'ok') {
             $listado->save($userId, $p['id'], $r);
+            $ok++;
         } else {
             $revisar[] = "#{$p['id']} listing: " . implode(' · ', (array)$r['validation']['errors']);
         }
@@ -116,20 +113,6 @@ foreach ($pendientes as $i => $p) {
         $revisar[] = "#{$p['id']} listing: " . $e->getMessage();
     }
 
-    try {
-        $v = $vocabulario->generate($userId, $p['id'], $working);
-        $estadoV = (string)$v['validation']['status'];
-        printf("   vocabulario %s: %-16s %d terminos\n", strtoupper($working), $estadoV, count((array)$v['keywords']));
-        if ($estadoV === 'ok') {
-            $vocabulario->save($userId, $p['id'], $v);
-            $ok++;
-        } else {
-            $revisar[] = "#{$p['id']} vocabulario: " . implode(' · ', (array)$v['validation']['errors']);
-        }
-    } catch (Throwable $e) {
-        echo '   vocabulario FALLO: ' . $e->getMessage() . "\n";
-        $revisar[] = "#{$p['id']} vocabulario: " . $e->getMessage();
-    }
 }
 
 echo "\n===== RESUMEN =====\n";

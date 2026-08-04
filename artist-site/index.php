@@ -2024,12 +2024,12 @@ function published_artwork_schema(array $site, array $artwork, string $mainImage
     // busquedas de mayor intencion que existen. Filtrarlas costo seis terminos
     // buenos de dieciseis, y fue un error.
     //
-    // El vocabulario de descubrimiento va PRIMERO: es el unico que trae terminos
-    // emocionales y los nombres de los artistas afines a esta obra, que es lo que
-    // ni los search_terms ni los tags del catalogo tienen.
+    // Y el vocabulario del listing tampoco entra: "campo de rojo profundo" o
+    // "atmosfera contemplativa" son lenguaje de obra, no de busqueda. Nadie los
+    // escribe en un buscador. Su lugar es Saatchi, donde ese campo alimenta el
+    // buscador de la plataforma y donde las palabras de categoria estan vedadas
+    // porque el formulario ya las tiene. Aca solo serian ruido.
     foreach ([
-        (string)($artwork['artwork_discovery_keywords'] ?? ''),
-        (string)($artwork['discovery_keywords'] ?? ''),
         (string)($artwork['artwork_keywords'] ?? ''),
         (string)($artwork['keywords'] ?? ''),
         (string)($artwork['artwork_tags'] ?? ''),

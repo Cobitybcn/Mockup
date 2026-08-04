@@ -458,11 +458,6 @@ final class ArtworkEditorialPackageService
             return false;
         }
 
-        $vocabulario = trim((string)(((array)$master['content'])['discovery_keywords'] ?? ''));
-        if ($vocabulario === '') {
-            return true;
-        }
-
         $listingLocale = $editorial->primaryAdaptationTarget($userId);
         if ($listingLocale === '') {
             return false;

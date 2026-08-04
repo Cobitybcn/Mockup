@@ -216,7 +216,7 @@ function run_editorial_core_contract_tests(): void
         'EDITORIAL_CORE Libro VI Cap. 4 (enmienda 2026-08-04): publicar marca los mockups que quedaron de una lectura anterior'
     );
     TestHarness::assertTrue(
-        !str_contains($publicationScreen, 'queueMockupCascadeForArtwork') && !str_contains($publicationScreen, 'dispatchCascade'),
+        !str_contains($publicationScreen, 'queueMockupCascadeForArtwork'),
         'publicar no regenera el texto de ningun mockup: esa escritura no pertenece a la seccion Publicacion'
     );
     TestHarness::assertContains(

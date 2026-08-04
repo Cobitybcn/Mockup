@@ -160,11 +160,16 @@ function run_discovery_keywords_tests(): void
     }
     TestHarness::assertTrue($rechazado, 'un vocabulario en requires_review no se publica solo');
 
-    // ————— El sitio lo lee, y cae al ingles del listing si no hay propio —————
+    // ————— El sitio NO lo consume —————
+    // Este vocabulario es lenguaje de obra: "campo de rojo profundo", "atmosfera
+    // contemplativa". Nadie lo escribe en un buscador. Su lugar es Saatchi, donde
+    // ese campo alimenta el buscador de la plataforma y donde las palabras de
+    // categoria estan vedadas porque el formulario ya las tiene. En el sitio,
+    // que no tiene esos campos, lo util son los search_terms y los tags de
+    // siempre; agregarle esto solo sumaba ruido.
     $catalogo = (string)file_get_contents(dirname($platformRoot) . '/artist-site/inc/AppPublishedCatalog.php');
-    TestHarness::assertContains(
-        "\$localized['discovery_keywords'] ?? \$localized['saatchi_keywords'] ?? ''",
-        $catalogo,
-        'el sitio prefiere el vocabulario propio del idioma y cae al del listing cuando no existe'
+    TestHarness::assertTrue(
+        !str_contains($catalogo, 'discovery_keywords') && !str_contains($catalogo, 'saatchi_keywords'),
+        'el sitio no lleva a sus keywords el vocabulario del listing: alli es ruido, no busqueda'
     );
 }

@@ -97,21 +97,17 @@ $checks = [
     [!isset($schema['offers']), 'without a store offer no availability is claimed'],
 ];
 
-// —— El vocabulario emocional y las afinidades llegan al sitio ——
-// Se generan una vez para el listing y describen la obra, no un canal: son el
-// unico lugar del sistema con terminos de animo y con el pintor afin a ESTA obra.
+// —— El vocabulario del listing NO llega al sitio ——
+// "Quiet Solemnity" o "campo de rojo profundo" son lenguaje de obra: nadie los
+// escribe en un buscador. Sirven en Saatchi, donde ese campo alimenta el
+// buscador de la plataforma y donde las palabras de categoria estan vedadas
+// porque el formulario ya las tiene. Aca solo serian ruido.
 $conDescubrimiento = published_artwork_schema($site, array_merge($artwork, [
-    'artwork_discovery_keywords' => 'Barnett Newman, Quiet Solemnity, Sober Contemplation, Deep Red Field',
+    'artwork_discovery_keywords' => 'Barnett Newman, Quiet Solemnity, Sober Contemplation',
 ]), 'declivis.jpg', 'x', null);
 $vocabulario = (string)($conDescubrimiento['keywords'] ?? '');
-$checks[] = [str_contains($vocabulario, 'Quiet Solemnity'), 'the emotional vocabulary reaches the site, where there was none'];
-$checks[] = [str_contains($vocabulario, 'Barnett Newman'), 'the affinity name reaches the site as a searchable entity'];
-$checks[] = [str_starts_with($vocabulario, 'Barnett Newman'), 'the discovery vocabulary leads: it is the part the catalogue terms do not have'];
-$checks[] = [substr_count($vocabulario, 'Deep Red Field') === 1, 'a term already present in the search terms is not repeated'];
-
-$sinDescubrimiento = published_artwork_schema($site, $artwork, 'declivis.jpg', 'x', null);
-$checks[] = [str_contains((string)$sinDescubrimiento['keywords'], 'Fine Incisions'),
-    'an artwork whose listing has not been generated yet still publishes its catalogue vocabulary'];
+$checks[] = [!str_contains($vocabulario, 'Quiet Solemnity'), 'the listing vocabulary does not reach the site: it is artwork language, not search language'];
+$checks[] = [str_contains($vocabulario, 'Fine Incisions'), 'and the search terms the artwork already had keep travelling'];
 
 // La otra forma de clave que devuelve el mismo catalogo tiene que dar lo mismo.
 $mapeado = published_artwork_schema($site, array_merge(

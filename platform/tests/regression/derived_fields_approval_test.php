@@ -2,21 +2,28 @@
 declare(strict_types=1);
 
 /**
- * Aprobar los campos derivados es un acto CHICO, y publicar una obra es un acto
- * GRANDE. La diferencia importa y por eso esta escrita como test.
+ * El reparto entre las dos secciones, escrito como ley.
  *
- * "Publicar Obra" publica la pagina, aprueba la lectura y regenera el texto de
- * todos los mockups de la obra — una llamada al modelo por cada uno. Revisar
- * unas keywords no puede costar eso: los campos derivados se calculan a partir
- * de la lectura y no la cambian, asi que se aprueban solos.
+ *   La ficha de la obra ESCRIBE. Genera la lectura, los textos de sus mockups y
+ *   los de canal —el paquete de Saatchi—, todos como items del mismo paquete
+ *   editorial, donde el artista ve cuantos son antes de apretar.
+ *
+ *   Publicacion DECIDE QUE SALE. Publica, despublica, distribuye, muestra y deja
+ *   copiar. No escribe contenido.
+ *
+ * "Publicar Obra" publica la pagina y aprueba el texto. No regenera los mockups:
+ * los marca, y se regeneran desde la ficha. Y encola los textos de canal, porque
+ * publicar es el momento en que la lectura queda aprobada, que es la condicion
+ * que esos textos necesitan.
  */
 function run_derived_fields_approval_tests(): void
 {
-    TestHarness::group('Campos derivados: aprobacion propia, sin cascada');
+    TestHarness::group('Reparto: la ficha escribe, Publicacion decide que sale');
 
     $platformRoot = dirname(__DIR__, 2);
     $servicio = (string)file_get_contents($platformRoot . '/app/Services/BilingualEditorialService.php');
     $publicacion = (string)file_get_contents($platformRoot . '/publication.php');
+    $ficha = (string)file_get_contents($platformRoot . '/artwork.php');
 
     // ————— Que campos son derivados —————
     foreach (['saatchi_title', 'saatchi_description', 'saatchi_caption', 'saatchi_keywords', 'discovery_keywords'] as $campo) {
@@ -27,79 +34,70 @@ function run_derived_fields_approval_tests(): void
         );
     }
 
-    // ————— La aprobacion no arrastra la republicacion —————
-    $aprobacion = substr($servicio, (int)strpos($servicio, 'public function approveDerivedFields'), 2600);
+    // ————— La escritura pasa por el dueño de la tabla y toca solo el borrador —————
+    $merge = substr($servicio, (int)strpos($servicio, 'public function mergeDerivedFields'), 2200);
+    TestHarness::assertTrue(
+        !str_contains($merge, 'published_content_json'),
+        'mergeDerivedFields() no escribe en la copia publicada: publicar es aprobar, y eso lo hace el artista'
+    );
     TestHarness::assertContains(
-        'UPDATE bilingual_editorial_content SET published_content_json=?,updated_at=?',
-        $aprobacion,
-        'aprobar copia los campos a la copia publicada'
-    );
-    TestHarness::assertTrue(
-        !str_contains($aprobacion, 'is_published') && !str_contains($aprobacion, 'setSpanishPublished'),
-        'aprobar no cambia el estado de publicacion de la obra'
-    );
-    TestHarness::assertTrue(
-        !str_contains($aprobacion, 'Cascade') && !str_contains($aprobacion, 'cascade'),
-        'aprobar no dispara la cascada de mockups: es lo que separa este acto de publicar la obra'
-    );
-    TestHarness::assertTrue(
-        !str_contains($aprobacion, 'content_json=?') || str_contains($aprobacion, 'published_content_json=?'),
-        'aprobar no reescribe el borrador'
+        "(string)\$row['status'],",
+        $merge,
+        'conserva el estado tal cual estaba, para no mentirle al mecanismo que compara la adaptacion con su fuente'
     );
 
-    // ————— Solo se aprueba lo derivado, nunca la lectura —————
+    // ————— Ya no hay un segundo tramite de aprobacion —————
+    // Existio para que el vocabulario del listing llegara al sitio. Ese
+    // vocabulario dejo de ir al sitio —es lenguaje de obra y alli era ruido— asi
+    // que no queda nada que aprobar, y el paquete de Saatchi nunca lo necesito:
+    // se copia a mano.
     TestHarness::assertTrue(
-        !str_contains($aprobacion, "'description'") && !str_contains($aprobacion, "'subtitle'"),
-        'la lectura de la obra no se toca al aprobar campos derivados'
+        !str_contains($publicacion, 'approve_derived') && !str_contains($publicacion, 'approveDerivedFields'),
+        'la seccion Publicacion no tiene boton de aprobar campos derivados: sin destino publico no hay nada que aprobar'
+    );
+    TestHarness::assertTrue(
+        !str_contains($servicio, 'function approveDerivedFields') && !str_contains($servicio, 'function pendingDerivedFields'),
+        'y los metodos que lo sostenian se retiraron en vez de quedar como codigo muerto'
     );
 
-    // ————— La accion existe y la ruta no dispara cascada —————
-    TestHarness::assertContains("=== 'approve_derived'", $publicacion, 'la seccion Publicacion tiene su propia accion de aprobar');
-    $accion = substr($publicacion, (int)strpos($publicacion, "=== 'approve_derived'"), 1100);
-    TestHarness::assertContains('requireValidCsrf', $accion, 'la accion valida el token, como toda escritura');
-    TestHarness::assertContains('approveDerivedFields(', $accion, 'y llama a la aprobacion acotada');
-    TestHarness::assertTrue(
-        !str_contains($accion, 'queueMockupCascade') && !str_contains($accion, 'website_intent'),
-        'la accion no publica la obra ni encola la cascada'
-    );
-
-    // ————— Cada boton dice que hace —————
+    // ————— Publicar no escribe contenido —————
     TestHarness::assertContains(
-        'No escribe contenido.',
+        'markMockupsOutdated',
         $publicacion,
-        'el boton de publicar declara que no escribe contenido: esta seccion lee y distribuye'
+        'EDITORIAL_CORE VI.4 (enmienda 2026-08-04): publicar marca los mockups que quedaron de una lectura anterior'
+    );
+    TestHarness::assertTrue(
+        !str_contains($publicacion, 'queueMockupCascadeForArtwork'),
+        'publicar no regenera el texto de ningun mockup: esa escritura pertenece a la ficha'
     );
     TestHarness::assertContains(
-        'marca los textos de mockup que quedaron atrás',
+        'readingChangedSincePublish',
         $publicacion,
-        'y avisa que deja marcados los que hay que regenerar desde la ficha'
+        'y solo marca cuando hay una version nueva de la lectura que propagar'
     );
-    TestHarness::assertContains(
-        'No publica ni aprueba nada.',
-        $publicacion,
-        'guardar dice explicitamente que no publica'
-    );
-    TestHarness::assertContains(
-        'No toca el texto de la obra ni regenera ningún mockup.',
-        $publicacion,
-        'aprobar dice explicitamente lo que NO hace'
+    TestHarness::assertTrue(
+        !str_contains($publicacion, 'SaatchiListingService') && !str_contains($publicacion, 'DiscoveryKeywordsService'),
+        'Publicacion no genera contenido por su cuenta: encola un job y el worker escribe'
     );
 
-    // ————— Lo pendiente se muestra antes de aprobar —————
-    TestHarness::assertContains('pendingDerivedFields(', $publicacion, 'la seccion muestra que hay para revisar');
-    $pendientes = substr($servicio, (int)strpos($servicio, 'public function pendingDerivedFields'), 1600);
+    // ————— Pero si encola los textos de canal —————
     TestHarness::assertContains(
-        "if (!(int)(\$row['is_published'] ?? 0)) {",
-        $pendientes,
-        'un idioma que se sirve del borrador no espera aprobacion: no tiene copia publicada contra la cual comparar'
+        "'channel',",
+        $publicacion,
+        'publicar encola los textos de canal: es el momento exacto en que la lectura queda aprobada'
+    );
+    TestHarness::assertContains(
+        'if (isset($channelJob) && is_array($channelJob))',
+        $publicacion,
+        'y se despacha tras el commit, nunca contra un job sin confirmar'
     );
 
-    // ————— Generar es de la ficha; Publicacion lee y distribuye —————
+    // ————— La ficha ofrece el paso, y solo cuando puede —————
     $paquete = (string)file_get_contents($platformRoot . '/app/Services/ArtworkEditorialPackageService.php');
     TestHarness::assertContains(
         "\$this->scopeItem('artwork', \$artworkId, 40, 'channel')",
         $paquete,
-        'los textos de canal son un item mas del paquete editorial de la obra, no un boton aparte'
+        'los textos de canal son un item mas del paquete editorial, no un boton aparte'
     );
     $condicion = substr($paquete, (int)strpos($paquete, 'private function channelTextsPending'), 1200);
     TestHarness::assertContains(
@@ -114,66 +112,36 @@ function run_derived_fields_approval_tests(): void
         $worker,
         'los textos de canal se generan en un job, como todo lo que llama al modelo: nunca dentro de una peticion'
     );
-    TestHarness::assertContains(
-        "if (\$estadoListado !== 'ok' || \$estadoVocabulario !== 'ok')",
-        $worker,
-        'un texto que no paso la validacion falla el job con su motivo, no se guarda a medias'
-    );
     TestHarness::assertTrue(
-        !str_contains($worker, "->save(\$userId, \$entityId, \$listado);\n                (new SaatchiListingService"),
-        'no se guarda dos veces'
+        !str_contains($worker, 'DiscoveryKeywordsService'),
+        'el job ya no genera el vocabulario del sitio: sin destino, era una llamada al modelo por obra tirada'
     );
 
-    // Ningun cartel puede seguir prometiendo la regeneracion automatica.
-    $ficha0 = (string)file_get_contents($platformRoot . '/artwork.php');
-    TestHarness::assertTrue(
-        !str_contains($ficha0, 'y actualiza los mockups') && !str_contains($ficha0, 'refreshes the mockups'),
-        'la ficha ya no anuncia que publicar actualiza los mockups: ahora los marca y se regeneran desde el paquete editorial'
-    );
+    $jobs = (string)file_get_contents($platformRoot . '/app/Services/BilingualEditorialJobService.php');
+    TestHarness::assertContains("'prepare', 'adapt', 'publish', 'channel'", $jobs, 'la accion existe en el contrato de jobs');
 
-    // El panel tiene que MOSTRAR lo que cuenta. Sin esta fila, el contador decia
-    // "1 pendiente" y el desglose mostraba ceros: el artista veia que habia algo
-    // sin poder saber que era.
+    // ————— El panel muestra lo que cuenta —————
     $panel = (string)file_get_contents($platformRoot . '/artwork-editorial-package.js');
     TestHarness::assertContains(
         "addScopeItem('Saatchi + site vocabulary', pending.channel || 0)",
         $panel,
-        'los textos de canal tienen su propia fila en el panel, no solo su numero en el total'
+        'los textos de canal tienen su propia fila: sin ella el contador decia "1 pendiente" y el desglose mostraba ceros'
     );
-    foreach (['series', 'artwork', 'mockups', 'channel'] as $clave) {
-        TestHarness::assertContains(
-            "pending.{$clave}",
-            $panel,
-            "el panel muestra el pendiente de {$clave}: lo que se cuenta se ve"
-        );
-    }
 
-    $jobs = (string)file_get_contents($platformRoot . '/app/Services/BilingualEditorialJobService.php');
+    // ————— Cada boton dice que hace —————
+    TestHarness::assertContains('No escribe contenido.', $publicacion, 'el boton de publicar declara que no escribe contenido');
     TestHarness::assertContains(
-        "'prepare', 'adapt', 'publish', 'channel'",
-        $jobs,
-        'la accion existe en el contrato de jobs'
+        'marca los textos de mockup que quedaron atrás',
+        $publicacion,
+        'y avisa que deja marcados los que hay que regenerar desde la ficha'
     );
     TestHarness::assertTrue(
-        !str_contains($publicacion, 'SaatchiListingService') && !str_contains($publicacion, 'DiscoveryKeywordsService'),
-        'la seccion Publicacion no genera contenido: escribir es de la ficha de la obra'
+        !str_contains($ficha, 'y actualiza los mockups') && !str_contains($ficha, 'refreshes the mockups'),
+        'la ficha ya no anuncia que publicar actualiza los mockups'
     );
 
     // ————— La grilla del espacio editorial no vuelve a encimarse —————
-    $ficha = (string)file_get_contents($platformRoot . '/artwork.php');
-    TestHarness::assertContains(
-        'repeat(var(--editorial-rows,9),auto)',
-        $ficha,
-        'las filas salen de la cantidad real de campos y no de un numero escrito a mano'
-    );
-    TestHarness::assertContains(
-        'grid-row:1 / -1',
-        $ficha,
-        'cada columna abarca todas las filas que existan: con span fijo, los campos sobrantes se apilaban en la misma celda'
-    );
-    TestHarness::assertContains(
-        '--editorial-rows:<?= count($bilingualEditorialFields) ?>',
-        $ficha,
-        'el HTML publica cuantos campos hay, asi que agregar uno no vuelve a romper la grilla'
-    );
+    TestHarness::assertContains('repeat(var(--editorial-rows,9),auto)', $ficha, 'las filas salen de la cantidad real de campos');
+    TestHarness::assertContains('grid-row:1 / -1', $ficha, 'cada columna abarca todas las filas existentes');
+    TestHarness::assertContains('--editorial-rows:<?= count($bilingualEditorialFields) ?>', $ficha, 'agregar un campo no vuelve a romper la grilla');
 }

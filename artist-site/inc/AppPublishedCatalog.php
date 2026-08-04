@@ -87,11 +87,8 @@ final class AppPublishedCatalog
                 // los artistas afines a ESTA obra. Descrilo es descripcion de la
                 // obra, no de un canal, asi que enriquece tambien al sitio.
                 // Si la obra todavia no lo tiene, queda vacio y no pasa nada.
-                // discovery_keywords se deriva por idioma desde la lectura de ESE
-                // idioma; saatchi_keywords es el mismo vocabulario en ingles, que
-                // ya existe por la pasada del listing. Traducir una keyword la
-                // mata, asi que cada idioma nace de su propio texto.
-                $row['artwork_discovery_keywords'] = (string)($localized['discovery_keywords'] ?? $localized['saatchi_keywords'] ?? '');
+                // El vocabulario del listing NO viaja al sitio: es lenguaje de
+                // obra, sirve al buscador de Saatchi y aca solo seria ruido.
                 $row['seo_title'] = (string)($localized['seo_title'] ?? '');
                 $row['seo_description'] = (string)($localized['seo_description'] ?? '');
                 $row['translation_missing_fields'] = array_values(array_diff([
@@ -116,7 +113,6 @@ final class AppPublishedCatalog
                 $row['artwork_alt'] = '';
                 $row['artwork_keywords'] = '';
                 $row['artwork_tags'] = '';
-                $row['artwork_discovery_keywords'] = '';
                 $row['seo_title'] = '';
                 $row['seo_description'] = '';
                 $row['translation_missing_fields'] = ['translation'];

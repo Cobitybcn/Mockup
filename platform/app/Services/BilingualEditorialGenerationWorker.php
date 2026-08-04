@@ -50,7 +50,6 @@ final class BilingualEditorialGenerationWorker
                 // deja de ser una busqueda. Todo queda en BORRADOR: aprobar es del
                 // artista.
                 require_once __DIR__ . '/SaatchiListingService.php';
-                require_once __DIR__ . '/DiscoveryKeywordsService.php';
 
                 $listado = (new SaatchiListingService($this->pdo))->generate($userId, $entityId);
                 $estadoListado = (string)($listado['validation']['status'] ?? '');
@@ -58,27 +57,17 @@ final class BilingualEditorialGenerationWorker
                     (new SaatchiListingService($this->pdo))->save($userId, $entityId, $listado);
                 }
 
-                $vocabulario = (new DiscoveryKeywordsService($this->pdo))->generate($userId, $entityId, $workingLocale);
-                $estadoVocabulario = (string)($vocabulario['validation']['status'] ?? '');
-                if ($estadoVocabulario === 'ok') {
-                    (new DiscoveryKeywordsService($this->pdo))->save($userId, $entityId, $vocabulario);
-                }
-
                 // Un texto que no paso la validacion no se guarda ni se disimula:
                 // el job queda fallado con el motivo exacto, y el paquete lo muestra.
                 // Los pies son aparte: uno flojo no invalida el listing, se
                 // descarta solo y se avisa.
-                if ($estadoListado !== 'ok' || $estadoVocabulario !== 'ok') {
-                    throw new RuntimeException(trim(
-                        ($estadoListado !== 'ok' ? 'Listing: ' . implode(' · ', (array)($listado['validation']['errors'] ?? ['sin detalle'])) . ' ' : '')
-                        . ($estadoVocabulario !== 'ok' ? 'Vocabulario: ' . implode(' · ', (array)($vocabulario['validation']['errors'] ?? ['sin detalle'])) : '')
-                    ));
+                if ($estadoListado !== 'ok') {
+                    throw new RuntimeException('Listing: ' . implode(' · ', (array)($listado['validation']['errors'] ?? ['sin detalle'])));
                 }
 
                 $result = [
                     'channel_texts' => true,
                     'listing_locale' => (string)($listado['locale'] ?? ''),
-                    'vocabulary_locale' => $workingLocale,
                     'captions_written' => count(array_filter((array)($listado['captions'] ?? []), static fn ($c): bool => trim((string)$c) !== '')),
                     'notes' => array_values(array_filter(
                         (array)($listado['validation']['warnings'] ?? []),

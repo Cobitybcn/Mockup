@@ -107,6 +107,19 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && ($_POST['action'] ?? '') === 'save_
                 if ($readingChanged) {
                     $outdatedMockups = $bilingualService->markMockupsOutdated($userId, $artworkId);
                 }
+                // Publicar es el momento exacto en que la lectura queda aprobada,
+                // que es la condicion que los textos de canal necesitan para
+                // existir. Se encola UN job —no diez, como la vieja cascada— y
+                // produce algo que no habia, en vez de reescribir algo que estaba.
+                // Con esto una obra nueva nace con su paquete de Saatchi sin que
+                // el artista tenga que acordarse de pedirlo.
+                $channelJob = (new BilingualEditorialJobService($pdo))->createOrReuse(
+                    $userId,
+                    'artwork',
+                    $artworkId,
+                    'channel',
+                    ['publish_spanish' => false]
+                );
             } elseif ($unifiedHasContent) {
                 $bilingualService->setSpanishPublished($userId, 'artwork', $artworkId, false);
             }
@@ -186,6 +199,17 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && ($_POST['action'] ?? '') === 'save_
             }
         }
         if ($transactionStarted) $pdo->commit();
+        // Tras el commit, nunca contra jobs sin confirmar.
+        if (isset($channelJob) && is_array($channelJob)) {
+            (new BilingualEditorialJobService($pdo))->dispatchCascade($userId, [
+                'queued' => [[
+                    'job_id' => (int)$channelJob['id'],
+                    'mockup_id' => 0,
+                    'needs_dispatch' => (string)($channelJob['status'] ?? '') === 'queued'
+                        && trim((string)($channelJob['task_name'] ?? '')) === '',
+                ]],
+            ]);
+        }
 
         // Video attach/detach runs after commit: the video repository manages
         // its own transaction and requires the page to already be published.
@@ -243,30 +267,6 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && ($_POST['action'] ?? '') === 'uploa
 }
 
 // ————— POST: distribution (immediate per-destination sends) —————
-// ————— POST: aprobar solo los campos derivados —————
-// Revisar unas keywords no puede costar republicar la obra entera: "Publicar
-// obra" aprueba la lectura y regenera el texto de todos sus mockups. Estos
-// campos se calculan a partir de esa lectura y no la cambian, asi que se
-// aprueban solos, sin cascada.
-if ($_SERVER['REQUEST_METHOD'] === 'POST' && (string)($_POST['action'] ?? '') === 'approve_derived' && $artworkId > 0) {
-    try {
-        Auth::requireValidCsrf((string)($_POST['csrf'] ?? ''), 'publication');
-        $owned = $pdo->prepare('SELECT id FROM artworks WHERE id=? AND user_id=? LIMIT 1');
-        $owned->execute([$artworkId, $userId]);
-        if (!$owned->fetchColumn()) throw new RuntimeException(t('Artwork not found.', 'Obra no encontrada.'));
-
-        $bilingualService->approveDerivedFields($userId, 'artwork', $artworkId);
-        // Mismo ancla que el resto de las acciones de distribucion: el paso de
-        // Saatchi se abre solo por $openStep. Nombrar aca el id del paso lo
-        // adelantaria en el documento y rompe el test que cuida su orden.
-        header('Location: publication.php?id=' . rawurlencode((string)$artworkId) . '&dist=derived#pub-panel-distribution');
-        exit;
-    } catch (Throwable $e) {
-        header('Location: publication.php?id=' . rawurlencode((string)$artworkId) . '&error=' . rawurlencode($e->getMessage()) . '#pub-panel-distribution');
-        exit;
-    }
-}
-
 if ($_SERVER['REQUEST_METHOD'] === 'POST' && in_array((string)($_POST['action'] ?? ''), ['distribute', 'distribute_all', 'tiktok_status', 'saatchi_uploaded', 'series_part_now', 'distribution_settings'], true) && $artworkId > 0) {
     $distributionAction = (string)$_POST['action'];
     try {
@@ -569,9 +569,6 @@ if ($artworkId <= 0) {
         'pageStatus' => (string)($publication['status'] ?? 'not_prepared'),
         // Campos derivados con cambios sin aprobar: se muestran para revisar y
         // se aprueban solos, sin arrastrar la republicacion de la obra.
-        'pendingDerived' => $bilingualEnabled
-            ? $bilingualService->pendingDerivedFields($userId, 'artwork', $artworkId)
-            : [],
         'visibility' => (string)($publication['visibility'] ?? 'public'),
         'saatchiUrl' => (string)($publication['saatchi_url'] ?? ''),
         'mockupCards' => $mockupCards,
@@ -722,7 +719,6 @@ function pub_page_chip(string $status): array
                     'tiktok_carousel' => t('Carousel sent: it is waiting in your TikTok inbox — pick the music and publish it there.', 'Carrusel enviado: te espera en tu bandeja de TikTok — elegí la música y publicalo desde ahí.'),
                     'tiktok_status' => t('TikTok status refreshed.', 'Estado de TikTok actualizado.'),
                     'saatchi' => t('Saatchi marked as uploaded by hand.', 'Saatchi marcado como cargado a mano.'),
-                    'derived' => t('Derived fields approved. Nothing else was touched.', 'Campos derivados aprobados. No se tocó nada más.'),
                     'settings' => t('Series gap saved.', 'Lapso de la serie guardado.'),
                     'all' => t('Distribution finished — the detail is above.', 'Distribución terminada — el detalle está arriba.'),
                     default => t('Distribution updated.', 'Distribución actualizada.'),
@@ -964,7 +960,7 @@ function pub_page_chip(string $status): array
                     'pinterest' => 'pinterest',
                     'instagram', 'facebook', 'instagram_video', 'facebook_video', 'x', 'x_video', 'settings' => 'social',
                     'tiktok', 'tiktok_carousel', 'tiktok_status' => 'tiktok',
-                    'saatchi', 'derived' => 'saatchi',
+                    'saatchi' => 'saatchi',
                     default => '',
                 };
                 ?>
@@ -1045,41 +1041,13 @@ function pub_page_chip(string $status): array
                             </div>
                             <?php if ($saatchiListed): ?></details><?php endif; ?>
                             <?php
-                            // Los campos derivados esperan revision. Aprobarlos no
-                            // toca la lectura de la obra ni dispara la cascada de
-                            // mockups: solo pasa estos campos de borrador a publicado.
-                            $pendingDerived = (array)($doc['pendingDerived'] ?? []);
-                            $derivedLabels = [
-                                'saatchi_title' => t('Saatchi title', 'Título de Saatchi'),
-                                'saatchi_description' => t('Saatchi description', 'Descripción de Saatchi'),
-                                'saatchi_caption' => t('Saatchi caption', 'Pie de Saatchi'),
-                                'saatchi_keywords' => t('Saatchi keywords', 'Keywords de Saatchi'),
-                                'discovery_keywords' => t('Website discovery vocabulary', 'Vocabulario de descubrimiento del sitio'),
-                            ];
+                            // Hubo aca un boton para aprobar los campos derivados.
+                            // Se retiro el 2026-08-04: servia para que el vocabulario
+                            // del listing llegara al sitio, y ese vocabulario dejo de
+                            // ir alla —es lenguaje de obra, sirve al buscador de
+                            // Saatchi, y en el sitio era ruido—. Sin destino publico
+                            // no queda nada que aprobar: este paquete se copia a mano.
                             ?>
-                            <?php if ($pendingDerived !== []): ?>
-                                <div class="pub-derived-review">
-                                    <p class="pub-product-locale"><?= pub_h(t('Pending your approval', 'Esperando tu aprobación')) ?></p>
-                                    <?php foreach ($pendingDerived as $derivedLocale => $derivedFields): ?>
-                                        <?php foreach ($derivedFields as $derivedKey => $derivedValues): ?>
-                                            <div class="pub-derived-row">
-                                                <span class="pub-product-locale"><?= pub_h(strtoupper((string)$derivedLocale)) ?> · <?= pub_h($derivedLabels[$derivedKey] ?? $derivedKey) ?></span>
-                                                <p class="pub-product-text"><?= pub_h($derivedValues['draft'] !== '' ? $derivedValues['draft'] : t('(emptied)', '(vaciado)')) ?></p>
-                                                <?php if ($derivedValues['published'] !== ''): ?>
-                                                    <p class="pub-product-meta"><small><?= pub_h(t('Currently published:', 'Publicado hoy:')) ?> <?= pub_h(mb_substr($derivedValues['published'], 0, 160)) ?><?= mb_strlen($derivedValues['published']) > 160 ? '…' : '' ?></small></p>
-                                                <?php endif; ?>
-                                            </div>
-                                        <?php endforeach; ?>
-                                    <?php endforeach; ?>
-                                    <form method="post">
-                                        <input type="hidden" name="action" value="approve_derived">
-                                        <input type="hidden" name="id" value="<?= (int)$doc['artwork']['id'] ?>">
-                                        <input type="hidden" name="csrf" value="<?= pub_h($csrf) ?>">
-                                        <button type="submit" class="pub-decision pub-decision--save"><span><?= pub_h(t('Approve', 'Aprobar')) ?><br><?= pub_h(t('these fields', 'estos campos')) ?></span></button>
-                                    </form>
-                                    <p class="pub-product-meta"><small><?= pub_h(t('Approves only the fields listed above. It does not touch the artwork text and does not regenerate any mockup.', 'Aprueba solo los campos de arriba. No toca el texto de la obra ni regenera ningún mockup.')) ?></small></p>
-                                </div>
-                            <?php endif; ?>
                             <?php if (!$saatchiListed && ($saatchiState['status'] ?? '') !== 'uploaded'): ?>
                                 <form method="post">
                                     <input type="hidden" name="action" value="saatchi_uploaded">
