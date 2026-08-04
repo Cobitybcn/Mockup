@@ -723,6 +723,12 @@ function admin_vars_hint(bool $isAdmin, string $field): void
                         </div>
 
                         <div class="form-group">
+                            <label><?= h(t('Reference artists', 'Artistas de referencia')) ?></label>
+                            <textarea name="reference_artists" rows="10" placeholder="<?= h(t("Mark Rothko: large color fields create an enveloping atmosphere...\nBarnett Newman: minimal linear interventions organize wide fields...", "Mark Rothko: los grandes campos cromáticos crean una atmósfera envolvente…\nBarnett Newman: intervenciones lineales mínimas organizan amplios campos…")) ?>"><?= field_value($profile, 'reference_artists') ?></textarea>
+                            <small><?= h(t('One artist per line, with what you actually take from them. That reason is what lets a listing name only the artists a given work genuinely supports, instead of repeating all of them everywhere. Leave it empty and no artist is ever named.', 'Un artista por línea, con lo que tomás de él. Esa razón es la que permite que cada obra nombre solo a los que sostiene de verdad, en vez de repetirlos a todos en todas. Si lo dejás vacío, no se nombra a ninguno.')) ?></small>
+                        </div>
+
+                        <div class="form-group">
                             <label><?= h(t('Preferred Mockup Styles', 'Estilos de Mockup Preferidos')) ?></label>
                             <textarea name="preferred_contexts" rows="4" placeholder="<?= h(t('e.g. Modernist galleries, architectural concrete rooms, townhouses, clean brick walls...', 'ej. Galerías modernistas, salas de concreto arquitectónico, casas urbanas, paredes de ladrillo limpias...')) ?>"><?= field_value($profile, 'preferred_contexts') ?></textarea>
                             <small><?= h(t('Styles or spaces that best showcase your style.', 'Estilos o espacios que mejor muestran tu estilo.')) ?></small>

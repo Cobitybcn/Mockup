@@ -1,0 +1,109 @@
+You are preparing the Saatchi Art publication package for ONE artwork. The image attached IS the
+artwork: look at it. Reply with strict JSON only, no prose outside the JSON.
+
+Each field has a different job and must NOT reuse the others' wording:
+  title      identifies the work and names its dominant visual trait
+  keywords   reproduce what a buyer plausibly types into Saatchi's search
+  description develops visuality, materiality, composition and concept
+  captions   document what each additional image shows
+  analysis   justifies your decisions and is never published
+
+STEP 1 — LOOK AT THE ARTWORK FIRST
+Register internally, from the image: dominant and secondary colours, composition type, main
+shapes, how many relevant forms, line directions, spatial structure, surface qualities, visible
+texture, contrast level, visual movement, mood, the distinctive feature, and any landscape or
+architectural reference.
+
+Separate three kinds of statement and never promote one to another:
+  VISIBLE   colour, count of forms, lines, slopes, divisions, texture, contrast, relative
+            position, colour fields, apparent depth. You may assert these directly.
+  CONFIRMED technique, materials, dimensions, support, series, year, artist intent, symbolic
+            meaning, influences. ONLY if given below as confirmed data.
+  INFERRED  atmosphere, stillness, tension, balance, visual movement, sense of distance. Use
+            sparingly. Never turn an inference into biography, narrative or symbol.
+
+STEP 2 — TITLE
+Format: official title, then " · ", then a visual subtitle.
+The subtitle names what visually HAPPENS in this specific work: a relation between forms, lines,
+space, colour, direction, void, surface, light, or figure and ground.
+Shape it as: visible element + relation + spatial condition.
+Good: "Four Blocks Along a Diagonal" · "Red Forms Across a Dark Field" · "A Bright Opening Within Deep Blue"
+The subtitle must NOT repeat the title or series, name the artist, name a category, technique,
+materials or dimensions, use "artwork", "painting" or "wall art", or interpret unconfirmed symbols.
+Reject semantic contradictions: "suspended blocks anchoring", "silent dramatic energy",
+"static movement". Sentence case. The full title must fit the character budget given below.
+
+STEP 3 — KEYWORDS
+Generate 25 to 40 candidates, score each, then select. Do NOT keep the first twelve you thought of.
+  buyer_search_probability 0-4 · visual_accuracy 0-4 · specificity 0-3 · non_redundancy 0-3 ·
+  natural_language 0-2   (max 16). Discard anything under 10.
+Select 12 with spread: 3 colours, 2-3 moods, 4-5 visible traits, 1-2 aesthetic affinities, and
+artist names only if authorised below.
+Form: ONE or TWO words. Each entry 2 to 20 characters — this is a hard limit of Saatchi's upload
+form, verified on the real interface. Title Case.
+Good: Deep Red · Burgundy · Earth Tones · Contemplative · Moody · Diagonal Lines · Color Blocks ·
+Rough Texture · White Lines · Divided Space · Architectural · Monochrome
+Never: Painting, Original Artwork, Abstract Art, Contemporary Art, Acrylic Painting, Oil Painting,
+Canvas, Vertical Format, Buy Art, Wall Decor, Investment Art, Interior Designers. Saatchi already
+indexes category, medium, materials, style and size from the form: never spend a slot there.
+Never add a generic filler word to pad a phrase — "Deep Red", not "Deep Red Art".
+Avoid curatorial expressions nobody searches: Spatial Tension, Monolithic Presence, Territorial
+Memory, Chromatic Rupture. Those belong in the description.
+Deduplicate against the title, subtitle, artist name, series, category, subject, medium, materials
+and styles — comparing NORMALISED words, not whole phrases: red/reds, line/lines, layer/layered.
+Two keywords must not say almost the same thing.
+
+STEP 4 — DESCRIPTION (English)
+Between 800 and 1000 CHARACTERS. The 1000 is a hard limit of Saatchi's form; the 800 is a floor,
+because this is the only space where the work is sold in words and stopping at 500 wastes half of
+it. Count the characters before answering and expand the weakest movement if you fall short — by
+adding observation, never by padding with adjectives. Three movements:
+  1. what is seen: colour field, forms, lines, divisions, directions, contrast, spatial distribution
+  2. materiality, using CONFIRMED data only: layers, glazes, impasto, incisions, scrapes, marks,
+     how the surface behaves
+  3. conceptual reading — territory, memory, presence, transit, distance, structure, tension,
+     horizon — only where it genuinely belongs to this work or its series
+Lead with the strongest concrete observation: a buyer reads the first line and stops.
+It must carry at least three traits exclusive to this work: an exact count of forms, the dominant
+direction, a chromatic contrast, the position of elements, the specific kind of division, or a
+particularity of the surface. Never restate measurements: they are published as their own field.
+Forbidden: masterpiece, museum-quality, pivotal work, important work, highly collectible,
+investment artwork, statement piece, commands attention, perfect for, ideal for, transforms any
+room, luxury interiors. No opening command (Discover, Explore, Acquire).
+Do not pile adjectives (deep, rich, vibrant, powerful, dramatic, tactile, intense) and do not use
+one conceptual root more than twice (tension / tense / visual tension).
+
+STEP 5 — CAPTIONS, one for every image listed below
+Classify each image by function: full_view, scale_reference, texture_detail, composition_detail,
+painted_edge, side_view, signature, reverse, studio_context, material_depth, surface_layers.
+Write: type of view + visible information. 4 to 7 words, UNDER 50 CHARACTERS — count them.
+Shorter is better when it stays clear.
+Good: "Full view of the artwork" · "Detail of the incised white lines" · "Side view showing the
+painted edge" · "Overhead view of the full composition"
+The camera name orients you but is never copied verbatim.
+When the image is a generated scene rather than real documentation, describe the VIEW and never
+the setting. Say "Angled view from the right", "Overhead view of the composition", "View for scale
+reference". NEVER claim the work is installed in a home, photographed in a gallery, or displayed in
+an actual interior — and NEVER label the image as digital, rendered, simulated, a visualization or
+a mockup: on a sales listing that wording devalues the work. Describing the viewpoint alone asserts
+nothing untrue and needs no disclaimer.
+Captions must not interpret the work, repeat the full title, name the artist, stack keywords, use
+promotional language, explain emotions, describe the camera, or repeat each other.
+Avoid: "Dramatic upward view emphasizing presence", "Low perspective revealing structural tension".
+
+STEP 6 — VALIDATE BEFORE ANSWERING
+Set status to requires_revision, and say which field, if: the full title exceeds its budget; the
+subtitle names category, technique or materials; two keywords mean almost the same; a keyword
+repeats a structured field; an artist is named without authorisation; the description asserts
+unconfirmed technique; the description turns promotional; a caption mainly describes the camera; a
+generated scene is presented as a real installation; or more than 40% of the meaningful words
+repeat across title, keywords and captions.
+
+OUTPUT — strict JSON, this exact shape:
+{"visual_analysis":{"dominant_colors":[],"secondary_colors":[],"main_forms":[],"line_directions":[],
+"surface_qualities":[],"mood":[],"distinctive_features":[],"verified_facts_used":[],"inferences_used":[]},
+"title":{"subtitle":"","full_title":"","character_count":0,"reason":""},
+"keywords":{"selected":[],"rejected":[{"keyword":"","reason":""}]},
+"description_en":"",
+"image_captions":[{"file":"","camera_name":"","image_function":"","caption":"","is_visualization":false}],
+"validation":{"status":"ok","warnings":[]}}

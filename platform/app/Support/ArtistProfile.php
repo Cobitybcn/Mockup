@@ -48,6 +48,7 @@ class ArtistProfile
                     marketplace_strategy = :marketplace_strategy,
                     social_strategy = :social_strategy,
                     pinterest_strategy = :pinterest_strategy,
+                    reference_artists = :reference_artists,
                     photo_file = :photo_file,
                     subdomain = :subdomain,
                     custom_domain = :custom_domain,
@@ -66,12 +67,14 @@ class ArtistProfile
                 recurring_themes, palette_notes, target_audience, preferred_regions,
                 preferred_contexts, forbidden_contexts, commercial_positioning,
                 conceptual_keywords, tone_of_voice, marketplace_strategy, social_strategy, pinterest_strategy,
+                reference_artists,
                 photo_file, subdomain, custom_domain, created_at, updated_at
             ) VALUES (
                 :user_id, :artist_name, :short_bio, :statement, :visual_language, :materials,
                 :recurring_themes, :palette_notes, :target_audience, :preferred_regions,
                 :preferred_contexts, :forbidden_contexts, :commercial_positioning,
                 :conceptual_keywords, :tone_of_voice, :marketplace_strategy, :social_strategy, :pinterest_strategy,
+                :reference_artists,
                 :photo_file, :subdomain, :custom_domain, :created_at, :updated_at
             )
         ');
@@ -140,6 +143,10 @@ class ArtistProfile
             'marketplace_strategy',
             'social_strategy',
             'pinterest_strategy',
+            // Saatchi recomienda incluir "artists who inspired the work" entre las
+            // keywords. Lo declara el artista: una filiacion es una afirmacion
+            // verificable, y EDITORIAL_CORE prohibe inventar validacion externa.
+            'reference_artists',
             'photo_file',
             'subdomain',
             'custom_domain',

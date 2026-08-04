@@ -945,6 +945,10 @@ function pub_page_chip(string $status): array
                             $saatchiKeywords = (array)($saatchiPackage['keywords'] ?? []);
                             $saatchiDescriptionLocale = $doc['adaptationLocale'] !== '' ? $doc['adaptationLocale'] : $doc['workingLocale'];
                             $saatchiDescription = (string)($saatchiPackage['description'][$saatchiDescriptionLocale] ?? '');
+                            $saatchiTitle = (string)($saatchiPackage['title'][$saatchiDescriptionLocale] ?? '');
+                            if ($saatchiTitle === '') {
+                                $saatchiTitle = (string)($saatchiPackage['title'][$doc['workingLocale']] ?? '');
+                            }
                             ?>
                             <?php if ($saatchiListed): ?>
                                 <p class="pub-product-meta"><a href="<?= pub_h((string)$saatchiState['external_url']) ?>" target="_blank" rel="noopener"><?= pub_h(t('View listing →', 'Ver listing →')) ?></a></p>
@@ -954,8 +958,15 @@ function pub_page_chip(string $status): array
                                 <p class="pub-panel-note"><?= pub_h(t('Download the package, upload it by hand on Saatchi, mark it here, then paste the listing link in the Website step.', 'Descargá el paquete, cargalo a mano en Saatchi, marcalo acá, y después pegá el enlace del listing en el paso Sitio web.')) ?></p>
                             <?php endif; ?>
                             <div class="pub-dist-package">
+                                <?php if ($saatchiTitle !== ''): ?>
+                                    <div class="pub-dist-package-row">
+                                        <span class="pub-product-locale"><?= pub_h(t('Title', 'Título')) ?> (<?= (int)mb_strlen($saatchiTitle) ?>/65)</span>
+                                        <button type="button" class="pub-copy" data-copy-text="<?= pub_h($saatchiTitle) ?>"><?= pub_h(t('Copy', 'Copiar')) ?></button>
+                                    </div>
+                                    <p class="pub-product-text"><?= pub_h($saatchiTitle) ?></p>
+                                <?php endif; ?>
                                 <div class="pub-dist-package-row">
-                                    <span class="pub-product-locale"><?= pub_h(t('Keywords', 'Keywords')) ?> (<?= pub_h(strtoupper((string)($saatchiPackage['keywords_locale'] ?? ''))) ?>)</span>
+                                    <span class="pub-product-locale"><?= pub_h(t('Keywords', 'Keywords')) ?> (<?= count($saatchiKeywords) ?>/12)</span>
                                     <button type="button" class="pub-copy" data-copy-text="<?= pub_h(implode(', ', array_map('strval', $saatchiKeywords))) ?>"><?= pub_h(t('Copy', 'Copiar')) ?></button>
                                 </div>
                                 <div class="pub-product-keywords"><?php foreach ($saatchiKeywords as $keyword): ?><em class="pub-chip"><?= pub_h((string)$keyword) ?></em><?php endforeach; ?></div>

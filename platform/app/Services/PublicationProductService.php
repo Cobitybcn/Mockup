@@ -505,10 +505,29 @@ final class PublicationProductService
     }
 
     /** @return array{subtitle:string,description:string,short_description:string,tags:string,search_terms:string,seo_title:string,seo_description:string,alt_text:string,caption:string} */
+    /**
+     * Pie corto de Saatchi de una ficha de mockup. Va en consulta aparte y
+     * tolerante: el esquema pudo no tener la columna todavia (bases anteriores
+     * a la migracion del 2026-08-04) y eso no debe tumbar el producto.
+     */
+    private function saatchiCaption(int $mockupSheetId): string
+    {
+        if ($mockupSheetId <= 0) {
+            return '';
+        }
+        try {
+            $stmt = $this->pdo->prepare('SELECT saatchi_caption FROM mockup_sheets WHERE id = ? LIMIT 1');
+            $stmt->execute([$mockupSheetId]);
+            return trim((string)($stmt->fetchColumn() ?: ''));
+        } catch (Throwable) {
+            return '';
+        }
+    }
+
     private function artworkFields(array $content): array
     {
         $fields = [];
-        foreach (['subtitle', 'description', 'short_description', 'tags', 'search_terms', 'seo_title', 'seo_description', 'alt_text', 'caption'] as $field) {
+        foreach (['subtitle', 'description', 'short_description', 'tags', 'search_terms', 'seo_title', 'seo_description', 'alt_text', 'caption', 'saatchi_title', 'saatchi_description', 'saatchi_caption', 'saatchi_keywords'] as $field) {
             $value = $content[$field] ?? '';
             $fields[$field] = is_array($value)
                 ? implode(', ', MockupSocialContentService::list($value))
@@ -617,7 +636,16 @@ final class PublicationProductService
     private function saatchiBlock(array $artworkByLocale, array $mediaItems, string $workingLocale, array $adaptationLocales): array
     {
         $keywordLocale = $adaptationLocales[0] ?? $workingLocale;
-        $keywords = self::saatchiKeywords((string)($artworkByLocale[$keywordLocale]['tags'] ?? ''));
+        // Las keywords generadas para Saatchi mandan sobre las derivadas de los
+        // tags del catalogo: aquellas describen la obra para un comprador, estas
+        // repiten categorias que el formulario de Saatchi ya indexa por su cuenta.
+        $keywords = self::saatchiKeywords((string)($artworkByLocale[$keywordLocale]['saatchi_keywords'] ?? ''));
+        if ($keywords === []) {
+            $keywords = self::saatchiKeywords((string)($artworkByLocale[$workingLocale]['saatchi_keywords'] ?? ''));
+        }
+        if ($keywords === []) {
+            $keywords = self::saatchiKeywords((string)($artworkByLocale[$keywordLocale]['tags'] ?? ''));
+        }
         if ($keywords === [] && $keywordLocale !== $workingLocale) {
             $keywords = self::saatchiKeywords((string)($artworkByLocale[$workingLocale]['tags'] ?? ''));
             $keywordLocale = $workingLocale;
@@ -639,7 +667,10 @@ final class PublicationProductService
         foreach ($mediaItems as $item) {
             $captions = [];
             foreach ($artworkByLocale as $locale => $unused) {
-                $captions[$locale] = (string)($item[$locale]['caption'] ?? '');
+                // El pie corto propio de Saatchi manda; el del sitio mide ~250
+                // caracteres y sirve para otra cosa.
+                $corto = $this->saatchiCaption((int)$item['mockup_sheet_id']);
+                $captions[$locale] = $corto !== '' ? $corto : (string)($item[$locale]['caption'] ?? '');
             }
             $images[] = [
                 'file' => (string)$item['file'],
