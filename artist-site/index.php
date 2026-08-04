@@ -3000,7 +3000,9 @@ function render_published_artist_page(array $profile): void
 
     // La columna nace en una migracion posterior al despliegue actual: si todavia
     // no esta, la clave no viene y la seccion sencillamente no se dibuja.
-    $references = AppArtistReferences::parse((string)($profile['reference_artists'] ?? ''));
+    // Los fundamentos se muestran en el idioma de la pagina; si ese bloque no
+    // existe, se usa el primero que haya escrito el artista.
+    $references = AppArtistReferences::parse((string)($profile['reference_artists'] ?? ''), artist_site_language());
     ?>
     <section class="page-hero artist-page-hero">
         <p class="eyebrow"><?= e(site_t('Artist profile', 'Perfil del artista')) ?></p>

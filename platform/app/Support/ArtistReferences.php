@@ -33,12 +33,60 @@ declare(strict_types=1);
 class ArtistReferences
 {
     /**
+     * El campo admite un bloque por idioma, encabezado por su codigo entre
+     * corchetes:
+     *
+     *   [ES]
+     *   Mark Rothko: los grandes campos cromaticos...
+     *
+     *   [EN]
+     *   Mark Rothko: large colour fields...
+     *
+     * Sin encabezados, todo el texto vale para cualquier idioma — asi lo que ya
+     * estaba cargado antes de admitir bloques sigue funcionando.
+     *
+     * @return array<string,string> idioma => texto del bloque; clave '' si no hay encabezados
+     */
+    private static function blocks(string $raw): array
+    {
+        $raw = trim($raw);
+        if ($raw === '') {
+            return [];
+        }
+        if (!preg_match('/^\s*\[[a-z]{2}\]\s*$/mi', $raw)) {
+            return ['' => $raw];
+        }
+
+        $bloques = [];
+        $actual = '';
+        foreach (preg_split('/\R/u', $raw) ?: [] as $linea) {
+            if (preg_match('/^\s*\[([a-z]{2})\]\s*$/i', $linea, $m)) {
+                $actual = mb_strtolower($m[1]);
+                $bloques[$actual] = $bloques[$actual] ?? '';
+                continue;
+            }
+            if ($actual !== '') {
+                $bloques[$actual] .= $linea . "\n";
+            }
+        }
+        return array_filter(array_map('trim', $bloques), 'strlen');
+    }
+
+    /**
+     * @param string $locale idioma deseado; si no existe se usa el primer bloque
      * @return list<array{name:string,rationale:string}>
      */
-    public static function parse(string $raw): array
+    public static function parse(string $raw, string $locale = ''): array
     {
+        $bloques = self::blocks($raw);
+        if ($bloques === []) {
+            return [];
+        }
+        $locale = mb_strtolower(trim($locale));
+        $texto = $bloques[$locale] ?? (string)reset($bloques);
+
         $referencias = [];
-        foreach (preg_split('/\R/u', trim($raw)) ?: [] as $linea) {
+        foreach (preg_split('/\R/u', trim($texto)) ?: [] as $linea) {
             $linea = trim($linea);
             if ($linea === '') {
                 continue;
@@ -61,6 +109,9 @@ class ArtistReferences
      * Solo los nombres. Es lo unico que viaja a un campo de keywords: en Saatchi
      * el tope son 20 caracteres y ningun fundamento entra ahi.
      *
+     * Salen siempre del PRIMER bloque: "Barnett Newman" se escribe igual en
+     * todos los idiomas, asi que no hay version por idioma que elegir.
+     *
      * @return list<string>
      */
     public static function names(string $raw): array
@@ -75,10 +126,10 @@ class ArtistReferences
      * El bloque que viaja al modelo cuando tiene que elegir afinidades: nombre y
      * fundamento, para que la eleccion se apoye en lo que la obra muestra.
      */
-    public static function forPrompt(string $raw): string
+    public static function forPrompt(string $raw, string $locale = ''): string
     {
         $lineas = [];
-        foreach (self::parse($raw) as $ref) {
+        foreach (self::parse($raw, $locale) as $ref) {
             $lineas[] = $ref['rationale'] === ''
                 ? '- ' . $ref['name']
                 : '- ' . $ref['name'] . ' — ' . $ref['rationale'];

@@ -161,6 +161,27 @@ function run_saatchi_listing_generation_tests(): void
         'el fundamento viaja al modelo: es el criterio para decidir a que obra aplica cada afinidad'
     );
     TestHarness::assertSame([], ArtistReferences::names(''), 'sin campo no se nombra a nadie');
+
+    // El campo admite un bloque por idioma.
+    $bilingue = "[ES]\nMark Rothko: los grandes campos cromáticos crean una atmósfera envolvente.\n"
+        . "Barnett Newman: intervenciones lineales mínimas organizan amplios campos.\n\n"
+        . "[EN]\nMark Rothko: large colour fields create an enveloping atmosphere.\n"
+        . "Barnett Newman: minimal linear interventions organize wide fields.";
+    TestHarness::assertSame(
+        ['Mark Rothko', 'Barnett Newman'],
+        ArtistReferences::names($bilingue),
+        'los nombres salen limpios de los encabezados: "[ES]" nunca puede llegar a una keyword de Saatchi'
+    );
+    TestHarness::assertContains(
+        'large colour fields',
+        ArtistReferences::forPrompt($bilingue, 'en'),
+        'al modelo le llega el fundamento en el idioma que se le pide'
+    );
+    TestHarness::assertContains(
+        'los grandes campos',
+        ArtistReferences::forPrompt($bilingue, 'es'),
+        'y el castellano cuando se pide castellano'
+    );
     TestHarness::assertTrue(
         !str_contains($servicioFuente = (string)file_get_contents($platformRoot . '/app/Services/SaatchiListingService.php'), "explode(',', (string)(\$profile['reference_artists']"),
         'el servicio ya no parte las afinidades por comas'

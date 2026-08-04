@@ -18,12 +18,51 @@ declare(strict_types=1);
 final class AppArtistReferences
 {
     /**
+     * El campo admite un bloque por idioma, encabezado por su codigo entre
+     * corchetes: [ES] y [EN]. Sin encabezados, todo el texto vale para
+     * cualquier idioma.
+     *
+     * @return array<string,string>
+     */
+    private static function blocks(string $raw): array
+    {
+        $raw = trim($raw);
+        if ($raw === '') {
+            return [];
+        }
+        if (!preg_match('/^\s*\[[a-z]{2}\]\s*$/mi', $raw)) {
+            return ['' => $raw];
+        }
+
+        $bloques = [];
+        $actual = '';
+        foreach (preg_split('/\R/u', $raw) ?: [] as $linea) {
+            if (preg_match('/^\s*\[([a-z]{2})\]\s*$/i', $linea, $m)) {
+                $actual = mb_strtolower($m[1]);
+                $bloques[$actual] = $bloques[$actual] ?? '';
+                continue;
+            }
+            if ($actual !== '') {
+                $bloques[$actual] .= $linea . "\n";
+            }
+        }
+        return array_filter(array_map('trim', $bloques), 'strlen');
+    }
+
+    /**
      * @return list<array{name:string,rationale:string}>
      */
-    public static function parse(string $raw): array
+    public static function parse(string $raw, string $locale = ''): array
     {
+        $bloques = self::blocks($raw);
+        if ($bloques === []) {
+            return [];
+        }
+        $locale = mb_strtolower(trim($locale));
+        $texto = $bloques[$locale] ?? (string)reset($bloques);
+
         $referencias = [];
-        foreach (preg_split('/\R/u', trim($raw)) ?: [] as $linea) {
+        foreach (preg_split('/\R/u', trim($texto)) ?: [] as $linea) {
             $linea = trim($linea);
             if ($linea === '') {
                 continue;
