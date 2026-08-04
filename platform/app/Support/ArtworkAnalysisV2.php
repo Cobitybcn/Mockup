@@ -150,7 +150,10 @@ Return exactly this structure:
     "master_description": "",
     "artist_vocabulary": [],
     "alt_text": "",
-    "caption": ""
+    "caption": "",
+    "saatchi_title": "",
+    "saatchi_description": "",
+    "saatchi_caption": ""
   },
   "search_metadata": {
     "catalogue_tags": [],
@@ -190,6 +193,26 @@ PROMPT;
         // se exige ni se mide aqui.
         foreach (['subtitle', 'short_description', 'master_description', 'alt_text', 'caption'] as $key) {
             if (!array_key_exists($key, $editorial) || is_array($editorial[$key])) $errors[] = "canonical_editorial.{$key} must be a singular value.";
+        }
+        // Los campos de Saatchi son OPCIONALES a proposito: el contenido ya
+        // generado no los tiene y exigirlos invalidaria retroactivamente todo el
+        // catalogo. Se piden en el prompt, se validan si vinieron, y las obras
+        // viejas se completan con el relleno dirigido.
+        foreach (['saatchi_title', 'saatchi_description', 'saatchi_caption'] as $key) {
+            if (array_key_exists($key, $editorial) && is_array($editorial[$key])) $errors[] = "canonical_editorial.{$key} must be a singular value.";
+        }
+        // Topes DUROS del formulario de Saatchi: medidos en caracteres, no en
+        // palabras. Un texto que los pase no se puede publicar alla, asi que se
+        // rechaza aca en vez de descubrirlo al pegar en el formulario.
+        foreach (['saatchi_title' => 65, 'saatchi_description' => 1000, 'saatchi_caption' => 49] as $key => $limite) {
+            $largo = mb_strlen(trim((string)($editorial[$key] ?? '')));
+            if ($largo > $limite) $errors[] = "canonical_editorial.{$key} excede el tope de Saatchi: {$largo} caracteres, maximo {$limite}.";
+        }
+        // El titulo de la obra es identidad (Libro I): la cola SEO se agrega, nunca lo recorta.
+        $saatchiTitle = trim((string)($editorial['saatchi_title'] ?? ''));
+        $artworkTitle = trim((string)($data['confirmed_facts']['title'] ?? ''));
+        if ($saatchiTitle !== '' && $artworkTitle !== '' && !str_starts_with($saatchiTitle, $artworkTitle)) {
+            $errors[] = 'canonical_editorial.saatchi_title debe empezar con el titulo exacto de la obra: prohibido abreviarlo para hacerle lugar a la cola.';
         }
         $genericOpening = '/^(this (painting|artwork|work|composition|piece)|in this (painting|artwork|work|piece)|the (artist|painting)\b|an? (abstract|original abstract) (painting|artwork|work|composition))\b/i';
         foreach (['short_description', 'master_description'] as $field) {

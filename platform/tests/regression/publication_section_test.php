@@ -216,4 +216,21 @@ function run_publication_section_tests(): void
         $catalog,
         'AppPublishedCatalog: con selección explícita la página muestra SOLO lo seleccionado; sin selección, fallback legacy'
     );
+
+    // ————— El índice ordena igual que ArtWorks —————
+    // La misma colección se veía en dos ordenes distintos: ArtWorks agrupa por
+    // serie y Publicación ordenaba por updated_at, o sea "lo último tocado".
+    $album = (string)file_get_contents($platformRoot . '/root_album.php');
+    foreach ([
+        'CASE WHEN a.series_id IS NULL THEN 1 ELSE 0 END ASC' => 'las obras sin serie van al final',
+        'COALESCE(s.year_start, s.year_end) DESC' => 'la serie más reciente primero',
+        'a.series_creation_number DESC' => 'dentro de la serie, por número de creación descendente',
+    ] as $clausula => $porque) {
+        TestHarness::assertContains($clausula, $album, "ArtWorks: {$porque}");
+        TestHarness::assertContains($clausula, $section, "Publicación usa el mismo criterio que ArtWorks: {$porque}");
+    }
+    TestHarness::assertTrue(
+        !str_contains($section, "ORDER BY a.updated_at DESC, a.created_at DESC"),
+        'Publicación ya no ordena por lo último tocado: ese criterio no coincidía con ninguna otra pantalla'
+    );
 }

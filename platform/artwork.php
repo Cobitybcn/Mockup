@@ -1058,13 +1058,26 @@ $relatedMockups = MockupFavorites::orderForArtworkDisplay($relatedMockups);
 $favoriteMockups = array_values(array_filter($relatedMockups, static fn (array $mockup): bool => !empty($mockup['is_favorite'])));
 
 $measurement = $meta['measurements'] ?? [];
-$unit = (string)($measurement['unit'] ?? $artwork['unit'] ?? 'cm');
-$width = $measurement['width'] ?? $artwork['width'] ?? '';
-$height = $measurement['height'] ?? $artwork['height'] ?? '';
-$depth = $measurement['depth'] ?? $artwork['depth'] ?? '';
+// La tabla artworks manda sobre el .meta.json del disco: ese archivo es una foto
+// del momento de la generacion y no se reescribe al corregir las medidas, asi que
+// si tuviera precedencia la ficha mostraria un valor viejo mientras el sitio y la
+// seccion Publicacion —que leen la tabla— muestran el nuevo.
+$pickMeasure = static function (string $key) use ($artwork, $measurement): string {
+    $fromDb = trim((string)($artwork[$key] ?? ''));
+    return $fromDb !== '' ? $fromDb : trim((string)($measurement[$key] ?? ''));
+};
+$unit = (string)($artwork['unit'] ?? $measurement['unit'] ?? 'cm');
+$width = $pickMeasure('width');
+$height = $pickMeasure('height');
+$depth = $pickMeasure('depth');
 $sizeText = trim((string)$width) !== '' && trim((string)$height) !== ''
     ? trim((string)$width . ' x ' . (string)$height . ($depth !== '' && $depth !== null ? ' x ' . (string)$depth : '') . ' ' . $unit)
     : t('No dimensions specified', 'Sin dimensiones especificadas');
+
+// Encabezado: la unidad se omite a proposito. El formulario de alta fija
+// unit=cm como campo oculto, asi que toda obra esta en centimetros y repetirlo
+// solo ensucia la linea del titulo. El sitio publico si muestra ambas unidades.
+$headerDimensions = ArtworkDimensions::headerText((string)$width, (string)$height, (string)$depth);
 
 $artistProfile = is_array($profile['_artist_profile'] ?? null) ? $profile['_artist_profile'] : ArtistProfile::findForUser($artworkOwnerId);
 $artistName = trim((string)($artistProfile['artist_name'] ?? ''));
@@ -1281,6 +1294,11 @@ $editIconSvg = '<svg viewBox="0 0 24 24" width="18" height="18" stroke="currentC
         .artwork-page-header--bilingual .artwork-title-heading { padding-bottom:14px; border-bottom:1px solid var(--line); }
         .artwork-page-header--bilingual h1 { display:block; margin:0; padding:0; border:0; font:500 clamp(42px,4.5vw,58px)/1.05 var(--font-serif); letter-spacing:-.01em; }
         .artwork-page-header--bilingual .artwork-title-edit-button { display:none; }
+        /* Las medidas viven en la misma linea del titulo, heredando su serif.
+           Van algo mas chicas y en tono suave para que el titulo siga mandando. */
+        .artwork-title-dimensions { color:var(--muted); font-size:.62em; letter-spacing:0; white-space:nowrap; }
+        .artwork-title-dimensions:empty::before { content:attr(data-placeholder); color:var(--line); }
+        .artwork-title-dimensions:focus { outline:2px solid #d9b7bb; outline-offset:3px; border-radius:3px; }
         .artwork-title-universal-label { display:block; margin:0 0 15px; color:var(--muted); font-size:9px; font-weight:700; letter-spacing:.08em; text-transform:uppercase; }
         .artwork-title-universal-memo { margin:15px 0 0; padding:0; border:0; color:var(--accent); font:italic 500 21px/1.5 var(--font-serif); }
         .bilingual-editorial-panel { width:100%; max-width:none; box-sizing:border-box; border:1px solid var(--line); border-radius:var(--radius); background:var(--surface); }
@@ -3039,7 +3057,7 @@ $editIconSvg = '<svg viewBox="0 0 24 24" width="18" height="18" stroke="currentC
                     <?php if ($bilingualExperiment): ?><span class="artwork-title-universal-label"><?= h(t('Universal title', 'Título universal')) ?></span><?php endif; ?>
                     <div class="artwork-title-heading">
                         <?php if ($bilingualExperiment): ?>
-                            <h1><span contenteditable="true" role="textbox" data-universal-title><?= h($displayTitle) ?></span><?php if ($artworkSeriesName !== ''): ?> <span contenteditable="false">- <?= h($artworkSeriesName) ?> <?= h(t('Series', 'Series')) ?></span><?php endif; ?></h1>
+                            <h1><span contenteditable="true" role="textbox" data-universal-title><?= h($displayTitle) ?></span><?php if ($artworkSeriesName !== ''): ?> <span contenteditable="false">- <?= h($artworkSeriesName) ?> <?= h(t('Series', 'Series')) ?></span><?php endif; ?> <span class="artwork-title-dimensions" contenteditable="true" role="textbox" data-artwork-dimensions data-placeholder="<?= h(t('Add measurements', 'Agregar medidas')) ?>"><?= h($headerDimensions) ?></span></h1>
                         <?php else: ?>
                             <h1><?= h($displayTitle) ?></h1>
                         <?php endif; ?>
@@ -3149,6 +3167,9 @@ $editIconSvg = '<svg viewBox="0 0 24 24" width="18" height="18" stroke="currentC
                     ['key' => 'seo_description', 'es' => 'Descripción SEO', 'en' => 'SEO description', 'description' => false, 'es_placeholder' => 'Descripción breve y útil para buscadores…', 'en_placeholder' => 'Useful international search-result description…'],
                     ['key' => 'alt_text', 'es' => 'Texto alternativo', 'en' => 'Alt text', 'description' => false, 'es_placeholder' => 'Descripción visual accesible…', 'en_placeholder' => 'Accessible English visual description…'],
                     ['key' => 'caption', 'es' => 'Pie de imagen', 'en' => 'Caption', 'description' => false, 'es_placeholder' => 'Texto breve para publicación…', 'en_placeholder' => 'International publication caption…'],
+                    ['key' => 'saatchi_title', 'es' => 'Saatchi · Título (≤65)', 'en' => 'Saatchi · Title (≤65)', 'description' => false, 'es_placeholder' => 'TÍTULO EXACTO - cola SEO, dentro de 65 caracteres…', 'en_placeholder' => 'EXACT TITLE - SEO tail, within 65 characters…'],
+                    ['key' => 'saatchi_description', 'es' => 'Saatchi · Descripción (≤1000)', 'en' => 'Saatchi · Description (≤1000)', 'description' => true, 'es_placeholder' => 'Texto propio para el listing, escrito para quien decide comprar…', 'en_placeholder' => 'Listing copy written for a collector deciding to buy…'],
+                    ['key' => 'saatchi_caption', 'es' => 'Saatchi · Pie (<50)', 'en' => 'Saatchi · Caption (<50)', 'description' => false, 'es_placeholder' => 'Pie muy breve, menos de 50 caracteres…', 'en_placeholder' => 'Very short caption, under 50 characters…'],
                 ];
                 ?>
                 <details class="bilingual-editorial-panel" id="artwork-metadata"<?= isset($_GET['v2_applied']) || $metadataErrorMessage !== '' ? ' open' : '' ?>>

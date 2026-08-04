@@ -329,13 +329,29 @@ $indexArtworks = [];
 $doc = null;
 
 if ($artworkId <= 0) {
+    // Mismo orden que ArtWorks (root_album.php): las obras se agrupan por serie
+    // —la mas reciente primero— y dentro de cada serie por numero de creacion
+    // descendente. Antes esta pantalla ordenaba por updated_at, asi que la
+    // misma coleccion aparecia en dos ordenes distintos segun donde la miraras.
     $stmt = $pdo->prepare("SELECT a.id, a.final_title, a.series, a.root_file
         FROM artworks a
+        LEFT JOIN artwork_series s ON s.id = a.series_id AND s.user_id = a.user_id
+        LEFT JOIN artwork_groups g ON g.id = a.artwork_group_id AND g.user_id = a.user_id
         WHERE a.user_id = :user_id AND a.status = 'done' AND a.root_file IS NOT NULL AND a.root_file <> ''
           AND (COALESCE(a.artwork_group_id, 0) = 0 OR EXISTS (
-              SELECT 1 FROM artwork_groups g WHERE g.id = a.artwork_group_id AND g.canonical_artwork_id = a.id
+              SELECT 1 FROM artwork_groups g2 WHERE g2.id = a.artwork_group_id AND g2.canonical_artwork_id = a.id
           ))
-        ORDER BY a.updated_at DESC, a.created_at DESC");
+        ORDER BY
+            CASE WHEN a.series_id IS NULL THEN 1 ELSE 0 END ASC,
+            CASE WHEN s.year_start IS NULL AND s.year_end IS NULL THEN 1 ELSE 0 END ASC,
+            COALESCE(s.year_start, s.year_end) DESC,
+            COALESCE(s.year_end, s.year_start) DESC,
+            s.created_at DESC,
+            s.id DESC,
+            CASE WHEN a.series_creation_number IS NULL THEN 1 ELSE 0 END ASC,
+            a.series_creation_number DESC,
+            COALESCE(g.created_at, a.created_at) DESC,
+            COALESCE(g.id, a.id) DESC");
     $stmt->execute(['user_id' => $userId]);
     $rows = $stmt->fetchAll(PDO::FETCH_ASSOC);
 

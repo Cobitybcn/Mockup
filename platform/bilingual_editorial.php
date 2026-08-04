@@ -28,6 +28,14 @@ try {
         echo json_encode(['ok' => true, 'title' => $title], JSON_UNESCAPED_UNICODE);
         exit;
     }
+    if ($action === 'save_dimensions') {
+        if ($entityType !== 'artwork') {
+            throw new InvalidArgumentException('Solo una obra tiene medidas fisicas.');
+        }
+        $saved = ArtworkDimensions::save(Database::connection(), $entityId, $userId, (string)($_POST['dimensions'] ?? ''));
+        echo json_encode(['ok' => true, 'dimensions' => $saved['text']], JSON_UNESCAPED_UNICODE);
+        exit;
+    }
     if ($action === 'publish_spanish' || $action === 'unpublish_spanish') {
         $result = $service->setSpanishPublished($userId, $entityType, $entityId, $action === 'publish_spanish');
         // EDITORIAL_CORE Libro VI Cap. 4: publicar la lectura de una obra

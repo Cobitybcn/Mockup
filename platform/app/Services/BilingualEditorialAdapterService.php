@@ -970,6 +970,12 @@ RULES;
                 'seo_description' => '',
                 'alt_text' => '',
                 'caption' => '',
+                // Campos propios de Saatchi, con topes en caracteres. Viajan por
+                // la adaptacion como cualquier otro: el listing en ingles los
+                // necesita tanto como el sitio.
+                'saatchi_title' => '',
+                'saatchi_description' => '',
+                'saatchi_caption' => '',
             ];
         }
         if ($entityType === 'studio_note') {

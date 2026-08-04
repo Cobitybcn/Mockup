@@ -52,11 +52,21 @@ try {
     $lines[] = (string)($payload['artwork']['title'] ?? $artworkTitle);
     $lines[] = str_repeat('=', mb_strlen((string)($payload['artwork']['title'] ?? $artworkTitle)));
     $lines[] = '';
+    // Los topes de Saatchi se miden en caracteres y son duros: se informan al lado
+    // de cada campo para que no haya que descubrirlo pegando en el formulario.
+    $saatchiTitle = trim((string)($package['title'][$descriptionLocale] ?? ''));
+    if ($saatchiTitle !== '') {
+        $lines[] = 'TITLE (' . strtoupper($descriptionLocale) . ') — ' . mb_strlen($saatchiTitle) . '/65';
+        $lines[] = $saatchiTitle;
+        $lines[] = '';
+    }
     $lines[] = 'KEYWORDS (' . strtoupper($keywordLocale) . ') — ' . count((array)($package['keywords'] ?? [])) . '/12';
     $lines[] = implode(', ', array_map('strval', (array)($package['keywords'] ?? [])));
     $lines[] = '';
-    $lines[] = 'DESCRIPTION (' . strtoupper($descriptionLocale) . ')';
-    $lines[] = (string)($package['description'][$descriptionLocale] ?? '');
+    $saatchiDescription = (string)($package['description'][$descriptionLocale] ?? '');
+    $lines[] = 'DESCRIPTION (' . strtoupper($descriptionLocale) . ') — ' . mb_strlen($saatchiDescription) . '/1000'
+        . (mb_strlen($saatchiDescription) > 1000 ? '  ← EXCEDE: hay que acortarla antes de pegarla' : '');
+    $lines[] = $saatchiDescription;
     $lines[] = '';
     $lines[] = 'IMAGE CAPTIONS';
 
