@@ -15,7 +15,20 @@ function run_security_hardening_regression_tests(): void
     $apache = (string)file_get_contents($platformRoot . '/apache-security.conf');
     TestHarness::assertContains('check_', $apache, 'diagnostic scripts are denied by Apache');
     TestHarness::assertContains('cleanup_jobs', $apache, 'maintenance scripts are denied by Apache');
-    TestHarness::assertContains('/(?:analysis|app|docs|jobs|logs|migrations', $apache, 'internal directories are denied by Apache');
+    TestHarness::assertContains('(?:analysis|app|docs|jobs|logs|migrations', $apache, 'internal directories are denied by Apache');
+    // site-admin viaja dentro de la misma imagen: sin el prefijo opcional, su suite
+    // de regresion quedaba ejecutable por HTTP contra la base de produccion.
+    TestHarness::assertContains(
+        '^/var/www/html/(?:site-admin/)?(?:analysis|app|',
+        $apache,
+        'los directorios internos de site-admin tambien estan denegados (su suite no es ejecutable por HTTP)'
+    );
+
+    // El hardening del sitio del artista (display_errors, views/) NO se verifica aca:
+    // la imagen web solo copia 15 archivos sueltos de artist-site, sin .htaccess ni
+    // Dockerfile, asi que dentro del contenedor esas rutas no existen. Vive en
+    // artist-site/tests/deployment_hardening_test.php y, sobre el artefacto real,
+    // en el paso image-smoke de artist-site/cloudbuild.hardening.yaml.
     TestHarness::assertContains(
         'SetEnvIf Request_URI "^/(?:platform/)?(?:create_scenes_wait|mockup_combinations_review)\\.php$" artwork_same_origin_frame=1',
         $apache,

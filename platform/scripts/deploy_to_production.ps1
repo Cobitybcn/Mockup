@@ -1,12 +1,20 @@
-# Uso: despues de terminar cambios en localhost, correr este script.
-# Hace: commit (si hace falta) -> push a main -> espera el build de Cloud Build
-# (que incluye migracion de base de datos) -> confirma que termino OK.
-# Si el build falla, el script para con error. NO reporta exito salvo que
-# Cloud Build haya terminado en SUCCESS.
+# Acompana una release por el flujo del repo. NUNCA commitea ni decide por vos.
+#
+#   rama codex/*  -> sube la rama y espera el preflight (construye y corre los
+#                    tests dentro de la imagen real; NO despliega nada).
+#   rama main     -> sube main y espera el despliegue, y despues verifica que la
+#                    revision nueva lleve tu commit y tenga el 100% del trafico.
+#
+# Si hay cambios sin commitear, para y no toca nada: commitealos vos, eligiendo
+# que entra en la release. La version anterior de este script hacia 'git add -A',
+# que barria trabajo no relacionado hacia una release de produccion.
+#
+# No reporta exito salvo que Cloud Build haya terminado en SUCCESS.
 
 param(
     [string]$ProjectId = "project-ff549db7-4f7f-4b0c-9a5",
-    [string]$CommitMessage = "Deploy: cambios locales"
+    [string]$Region = "us-central1",
+    [string]$WebService = "mockups-web"
 )
 
 $ErrorActionPreference = "Stop"
@@ -18,26 +26,35 @@ function Fail($msg) {
     exit 1
 }
 
-$branch = (& $Git rev-parse --abbrev-ref HEAD).Trim()
-if ($branch -ne "main") {
-    Fail "Estas en la rama '$branch', no en 'main'. Cambia a main antes de correr esto (o mergea a main)."
-}
-
+# --- 1. El arbol tiene que estar limpio: la seleccion de la release es tuya ---
 $status = & $Git status --porcelain
 if ($status) {
-    Write-Host "Hay cambios sin commitear. Commiteando..." -ForegroundColor Yellow
-    & $Git add -A
-    & $Git commit -m $CommitMessage
-    if ($LASTEXITCODE -ne 0) { Fail "git commit fallo." }
+    Write-Host "Hay cambios sin commitear:" -ForegroundColor Yellow
+    Write-Host $status
+    Write-Host ""
+    Fail "Commitea a mano lo que quieras publicar (git add <archivos> ; git commit). Este script no elige por vos."
 }
 
-Write-Host "Subiendo a origin/main..." -ForegroundColor Cyan
-& $Git push origin main
+# --- 2. La rama define que se hace ---
+$branch = (& $Git rev-parse --abbrev-ref HEAD).Trim()
+if ($branch -eq "main") {
+    $mode = "deploy"
+    Write-Host "Rama main: esto DESPLIEGA a produccion." -ForegroundColor Yellow
+} elseif ($branch -like "codex/*") {
+    $mode = "preflight"
+    Write-Host "Rama $branch : esto corre el preflight y NO despliega nada." -ForegroundColor Cyan
+} else {
+    Fail "Estas en '$branch'. Trabaja en una rama 'codex/*' y mergea a main con squash cuando el preflight este verde."
+}
+
+Write-Host "Subiendo $branch..." -ForegroundColor Cyan
+& $Git push origin $branch
 if ($LASTEXITCODE -ne 0) { Fail "git push fallo." }
 
 $commitSha = (& $Git rev-parse HEAD).Trim()
-Write-Host "Commit desplegado: $commitSha" -ForegroundColor Cyan
+Write-Host "Commit: $commitSha" -ForegroundColor Cyan
 
+# --- 3. Encontrar el build que disparo el push ---
 Write-Host "Esperando que Cloud Build detecte el push..." -ForegroundColor Cyan
 $buildId = $null
 for ($i = 0; $i -lt 24; $i++) {
@@ -50,9 +67,12 @@ for ($i = 0; $i -lt 24; $i++) {
     if ($buildId) { break }
 }
 if (-not $buildId) {
-    Fail "No aparecio ningun build de Cloud Build para el commit $commitSha en 2 minutos. Revisa el trigger en la consola de Cloud Build."
+    Write-Host "No aparecio ningun build para $commitSha en 2 minutos." -ForegroundColor Yellow
+    Write-Host "Puede ser normal: los triggers ignoran los .md y platform/docs/**, asi que" -ForegroundColor Yellow
+    Write-Host "una release de solo documentacion no construye nada." -ForegroundColor Yellow
+    exit 0
 }
-Write-Host "Build encontrado: $buildId. Siguiendo el progreso..." -ForegroundColor Cyan
+Write-Host "Build: $buildId" -ForegroundColor Cyan
 
 $finalStatus = $null
 for ($i = 0; $i -lt 180; $i++) {
@@ -62,13 +82,42 @@ for ($i = 0; $i -lt 180; $i++) {
     if ($finalStatus -in @("SUCCESS", "FAILURE", "TIMEOUT", "CANCELLED", "EXPIRED")) { break }
 }
 
+$logUrl = "https://console.cloud.google.com/cloud-build/builds/$buildId" + "?project=$ProjectId"
 if ($finalStatus -ne "SUCCESS") {
     Write-Host "El build no termino OK (estado: $finalStatus)." -ForegroundColor Red
-    Write-Host "Log: https://console.cloud.google.com/cloud-build/builds/$buildId?project=$ProjectId" -ForegroundColor Red
-    Fail "Deploy incompleto. NO se considera entregado a produccion."
+    Write-Host "Log: $logUrl" -ForegroundColor Red
+    Fail "NO se considera entregado."
+}
+
+# --- 4. Preflight: no hay nada desplegado que verificar ---
+if ($mode -eq "preflight") {
+    Write-Host ""
+    Write-Host "OK: preflight verde (build + tests de regresion dentro de la imagen)." -ForegroundColor Green
+    Write-Host "No se desplego nada. Para publicar: mergea $branch a main con squash." -ForegroundColor Green
+    Write-Host "Log: $logUrl" -ForegroundColor Green
+    exit 0
+}
+
+# --- 5. Deploy: el build en verde no alcanza, hay que ver la revision viva ---
+Write-Host ""
+Write-Host "Verificando la revision en Cloud Run..." -ForegroundColor Cyan
+$revision = (& $Gcloud run services describe $WebService --project=$ProjectId --region=$Region `
+    "--format=value(status.traffic[0].revisionName)").Trim()
+$percent = (& $Gcloud run services describe $WebService --project=$ProjectId --region=$Region `
+    "--format=value(status.traffic[0].percent)").Trim()
+
+if ($revision -notlike "*$($commitSha.Substring(0,7))*") {
+    Write-Host "La revision con trafico es '$revision', que no corresponde al commit $commitSha." -ForegroundColor Red
+    Write-Host "Ojo: el trafico esta fijado a revisiones con nombre, asi que una revision nueva" -ForegroundColor Red
+    Write-Host "puede existir sin recibir trafico. Revisa en la consola de Cloud Run." -ForegroundColor Red
+    Fail "El build salio bien pero tu commit no es el que esta atendiendo."
+}
+if ($percent -ne "100") {
+    Fail "La revision $revision tiene $percent% del trafico, no 100%."
 }
 
 Write-Host ""
-Write-Host "OK: build $buildId termino en SUCCESS." -ForegroundColor Green
-Write-Host "Esto incluyo: build de imagenes, tests de regresion, migracion de base de datos (si habia migraciones nuevas), y despliegue con verificacion de trafico." -ForegroundColor Green
-Write-Host "Log completo: https://console.cloud.google.com/cloud-build/builds/$buildId?project=$ProjectId" -ForegroundColor Green
+Write-Host "OK: build $buildId en SUCCESS." -ForegroundColor Green
+Write-Host "Revision publicada: $revision (100% del trafico)." -ForegroundColor Green
+Write-Host "Incluyo: imagenes, tests de regresion, migraciones si habia, y despliegue verificado." -ForegroundColor Green
+Write-Host "Log: $logUrl" -ForegroundColor Green

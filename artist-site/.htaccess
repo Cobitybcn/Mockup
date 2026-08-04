@@ -17,7 +17,7 @@ Options -Indexes
     Require all denied
 </FilesMatch>
 
-RewriteRule ^(?:data|inc|tests|tools|scripts|docs)(?:/|$) - [F,L,NC]
+RewriteRule ^(?:data|inc|tests|tools|scripts|docs|views|deploy)(?:/|$) - [F,L,NC]
 
 RewriteRule ^artworks(?:/.*)?$ index.php [L,QSA]
 RewriteCond %{REQUEST_FILENAME} !-f

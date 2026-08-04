@@ -68,6 +68,12 @@ steps:
         docker run --rm "$$image" php -l /var/www/html/index.php
         docker run --rm "$$image" php -l /var/www/html/admin-v2/index.php
         docker run --rm "$$image" sh -ceu 'test ! -e /var/www/html/.env; test ! -e /var/www/html/tests; test ! -e /var/www/html/tools'
+        # Un warning de PHP impreso filtra la ruta del servidor al visitante y, peor,
+        # manda salida antes de que header() pueda ejecutarse.
+        docker run --rm "$$image" sh -ceu 'grep -q "display_errors = Off" /usr/local/etc/php/conf.d/artist-site.ini'
+        docker run --rm "$$image" sh -ceu 'grep -q "log_errors = On" /usr/local/etc/php/conf.d/artist-site.ini'
+        # views/ son plantillas sin contexto: pedirlas directo fatalea a la vista.
+        docker run --rm "$$image" sh -ceu 'grep -q "views" /var/www/html/.htaccess'
         docker run --rm "$$image" sh -ceu '! grep -RIl "^version https://git-lfs.github.com/spec/v1$" /var/www/html/assets/images | grep -q .'
 
   - id: push
