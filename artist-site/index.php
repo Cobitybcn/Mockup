@@ -2160,6 +2160,68 @@ function published_seo_title(string $stored, string $artworkTitle, string $artis
 }
 
 /**
+ * El bloque de datos estructurados de una pagina de mockup.
+ *
+ * Cada obra abre entre 5 y 18 de estas paginas —223 en todo el catalogo— y cada
+ * una tiene su propia descripcion, sus tags y sus keywords, escritas para esa
+ * imagen concreta. Hasta ahora ese vocabulario iba unicamente al
+ * <meta name="keywords">, que los buscadores ignoran desde 2009: existia y no
+ * viajaba a ningun lado. El bloque declaraba la imagen y su obra, sin keywords.
+ *
+ * No se genera nada nuevo: se publica lo que ya estaba escrito, en el canal que
+ * si se lee.
+ *
+ * @param array<string,mixed> $site
+ * @param array<string,mixed> $artwork
+ * @param array<string,mixed> $mockup
+ * @return array<string,mixed>
+ */
+function published_mockup_schema(array $site, array $artwork, array $mockup, string $title, string $description): array
+{
+    $idioma = artist_site_language();
+    $urlObra = artist_site_url_with_language($site['url'] . '/artworks/' . $artwork['slug'] . '/', $idioma);
+
+    $schema = [
+        '@context' => 'https://schema.org',
+        '@type' => 'ImageObject',
+        'name' => $title,
+        'description' => $description,
+        'contentUrl' => app_publication_media_url($artwork, $mockup['mockup_file']),
+        'creator' => ['@type' => 'Person', 'name' => $site['name']],
+        'inLanguage' => $idioma,
+        'isPartOf' => [
+            '@type' => 'VisualArtwork',
+            'name' => $artwork['title'],
+            'url' => $urlObra,
+        ],
+    ];
+
+    // El texto alternativo describe lo que se ve sin interpretar: es lo que
+    // schema.org espera en caption para una imagen.
+    $alt = trim((string)($mockup['alt_text'] ?? ''));
+    if ($alt !== '') {
+        $schema['caption'] = $alt;
+    }
+
+    // Las keywords propias del mockup, mas sus tags. Sin filtrar: aca no hay
+    // tope de slots como en Saatchi, y los repetidos caen solos.
+    $keywords = [];
+    foreach ([(string)($mockup['keywords'] ?? ''), (string)($mockup['tags'] ?? '')] as $fuente) {
+        foreach (explode(',', $fuente) as $termino) {
+            $termino = trim($termino);
+            if ($termino !== '' && !isset($keywords[mb_strtolower($termino)])) {
+                $keywords[mb_strtolower($termino)] = $termino;
+            }
+        }
+    }
+    if ($keywords !== []) {
+        $schema['keywords'] = implode(', ', array_values($keywords));
+    }
+
+    return array_filter($schema, static fn (mixed $v): bool => $v !== '' && $v !== null && $v !== []);
+}
+
+/**
  * La serie de la obra como CreativeWork enlazable, resuelta contra el catalogo
  * publicado para tomar su slug. Devuelve null cuando la obra no tiene serie o
  * la serie no esta publicada: enlazar a una pagina que no existe seria peor que
@@ -2679,7 +2741,7 @@ function render_published_mockup(array $site, array $artwork, array $mockup): vo
         </div>
     </section>
     <?php
-    echo json_ld(['@context'=>'https://schema.org','@type'=>'ImageObject','name'=>$title,'description'=>$description,'contentUrl'=>app_publication_media_url($artwork,$mockup['mockup_file']),'creator'=>['@type'=>'Person','name'=>$site['name']],'inLanguage'=>artist_site_language(),'isPartOf'=>['@type'=>'VisualArtwork','name'=>$artwork['title'],'url'=>artist_site_url_with_language($site['url'].'/artworks/'.$artwork['slug'].'/',artist_site_language())]]);
+    echo json_ld(published_mockup_schema($site, $artwork, $mockup, $title, $description));
 }
 
 function render_series_index(array $series, array $artworks): void

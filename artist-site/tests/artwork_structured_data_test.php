@@ -32,7 +32,7 @@ function app_series_catalog(): ?object
 }
 
 // Se extraen del index las dos funciones bajo prueba, sin arrastrar el resto.
-foreach (['published_artwork_schema', 'published_artwork_series'] as $funcion) {
+foreach (['published_artwork_schema', 'published_artwork_series', 'published_mockup_schema'] as $funcion) {
     $inicio = strpos($index, 'function ' . $funcion . '(');
     if ($inicio === false) {
         fwrite(STDERR, "FAIL: {$funcion}() is missing from the site.\n");
@@ -170,6 +170,37 @@ $checks[] = [str_contains($footer, "'@type' => 'Person'"), 'the artist is typed 
 // —— La imagen principal de la pagina de compra usa el alt generado ——
 $checks[] = [str_contains($index, "e((\$artwork['artwork_alt'] ?? '') ?: (string)\$artwork['title'])"),
     'the acquisition page uses the generated alt text instead of only the title'];
+
+// —— La pagina de mockup publica su propio vocabulario ——
+// Son 223 paginas con descripcion, tags y keywords escritas para esa imagen
+// concreta. Hasta hoy ese vocabulario iba solo al meta keywords, que los
+// buscadores ignoran desde 2009: existia y no llegaba a ningun lado.
+$mockup = [
+    'mockup_file' => 'declivis-close-up.jpg',
+    'title' => 'DECLIVIS — surface detail',
+    'description' => 'A close view of the incised white lines across the crimson field.',
+    'tags' => 'Painting, Crimson Red, Textured Surface, Incised Lines',
+    'keywords' => 'contemporary abstract painting, large vertical abstract artwork, textured surface, Crimson Red',
+    'alt_text' => 'Close-up of the incised lines on a deep crimson painted surface.',
+    'caption' => '',
+];
+$mk = published_mockup_schema($site, array_merge($artwork, ['slug' => 'declivis']), $mockup, 'DECLIVIS — surface detail', 'A close view.');
+
+$checks[] = [($mk['@type'] ?? '') === 'ImageObject', 'the mockup page is typed as ImageObject'];
+$checks[] = [isset($mk['keywords']), 'the mockup publishes its own keywords: until today they only reached the dead meta tag'];
+$checks[] = [str_contains((string)$mk['keywords'], 'large vertical abstract artwork'), 'its own keywords travel'];
+$checks[] = [str_contains((string)$mk['keywords'], 'Incised Lines'), 'and its own catalogue tags too'];
+$checks[] = [substr_count(mb_strtolower((string)$mk['keywords']), 'crimson red') === 1, 'a term repeated between keywords and tags is sent once'];
+$checks[] = [($mk['isPartOf']['name'] ?? '') === $artwork['title'], 'the mockup still declares which artwork it belongs to'];
+$checks[] = [str_contains((string)($mk['caption'] ?? ''), 'Close-up of the incised lines'), 'the generated alt text becomes the image caption'];
+
+$mkVacio = published_mockup_schema($site, array_merge($artwork, ['slug' => 'declivis']),
+    array_merge($mockup, ['keywords' => '', 'tags' => '', 'alt_text' => '']), 'x', 'y');
+$checks[] = [!array_key_exists('keywords', $mkVacio), 'a mockup without vocabulary does not publish an empty field'];
+$checks[] = [!array_key_exists('caption', $mkVacio), 'nor an empty caption'];
+
+$index2 = (string)file_get_contents(dirname(__DIR__) . '/index.php');
+$checks[] = [str_contains($index2, 'echo json_ld(published_mockup_schema('), 'the mockup page uses it'];
 
 foreach ($checks as [$passed, $message]) {
     if (!$passed) {

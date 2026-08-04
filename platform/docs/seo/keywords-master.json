@@ -1,0 +1,3813 @@
+{
+    "generated": "2026-08-04T23:28:23+00:00",
+    "source": "catalogo real de produccion, solo lectura",
+    "keywords": [
+        {
+            "keyword": "contemporary abstract painting",
+            "language": "en",
+            "translation": "pintura abstracta contemporánea",
+            "category": "artistic_category",
+            "priority": "high",
+            "breadth": "medium",
+            "intent": "discovery",
+            "appliesTo": [
+                "artwork",
+                "series",
+                "artist",
+                "mockup"
+            ],
+            "condition": ""
+        },
+        {
+            "keyword": "pintura abstracta contemporánea",
+            "language": "es",
+            "translation": "contemporary abstract painting",
+            "category": "artistic_category",
+            "priority": "high",
+            "breadth": "medium",
+            "intent": "discovery",
+            "appliesTo": [
+                "artwork",
+                "series",
+                "artist",
+                "mockup"
+            ],
+            "condition": ""
+        },
+        {
+            "keyword": "original abstract painting",
+            "language": "en",
+            "translation": "pintura abstracta original",
+            "category": "artistic_category",
+            "priority": "high",
+            "breadth": "medium",
+            "intent": "commercial",
+            "appliesTo": [
+                "artwork",
+                "series",
+                "artist",
+                "mockup"
+            ],
+            "condition": ""
+        },
+        {
+            "keyword": "pintura abstracta original",
+            "language": "es",
+            "translation": "original abstract painting",
+            "category": "artistic_category",
+            "priority": "high",
+            "breadth": "medium",
+            "intent": "commercial",
+            "appliesTo": [
+                "artwork",
+                "series",
+                "artist",
+                "mockup"
+            ],
+            "condition": ""
+        },
+        {
+            "keyword": "contemporary abstract artist",
+            "language": "en",
+            "translation": "artista abstracto contemporáneo",
+            "category": "artistic_category",
+            "priority": "high",
+            "breadth": "medium",
+            "intent": "discovery",
+            "appliesTo": [
+                "artwork",
+                "series",
+                "artist",
+                "mockup"
+            ],
+            "condition": "artist"
+        },
+        {
+            "keyword": "artista abstracto contemporáneo",
+            "language": "es",
+            "translation": "contemporary abstract artist",
+            "category": "artistic_category",
+            "priority": "high",
+            "breadth": "medium",
+            "intent": "discovery",
+            "appliesTo": [
+                "artwork",
+                "series",
+                "artist",
+                "mockup"
+            ],
+            "condition": "artist"
+        },
+        {
+            "keyword": "abstract painter",
+            "language": "en",
+            "translation": "pintor abstracto",
+            "category": "artistic_category",
+            "priority": "medium",
+            "breadth": "broad",
+            "intent": "discovery",
+            "appliesTo": [
+                "artwork",
+                "series",
+                "artist",
+                "mockup"
+            ],
+            "condition": "artist"
+        },
+        {
+            "keyword": "pintor abstracto",
+            "language": "es",
+            "translation": "abstract painter",
+            "category": "artistic_category",
+            "priority": "medium",
+            "breadth": "broad",
+            "intent": "discovery",
+            "appliesTo": [
+                "artwork",
+                "series",
+                "artist",
+                "mockup"
+            ],
+            "condition": "artist"
+        },
+        {
+            "keyword": "abstract art on canvas",
+            "language": "en",
+            "translation": "arte abstracto sobre lienzo",
+            "category": "artistic_category",
+            "priority": "medium",
+            "breadth": "medium",
+            "intent": "discovery",
+            "appliesTo": [
+                "artwork",
+                "series",
+                "artist",
+                "mockup"
+            ],
+            "condition": ""
+        },
+        {
+            "keyword": "arte abstracto sobre lienzo",
+            "language": "es",
+            "translation": "abstract art on canvas",
+            "category": "artistic_category",
+            "priority": "medium",
+            "breadth": "medium",
+            "intent": "discovery",
+            "appliesTo": [
+                "artwork",
+                "series",
+                "artist",
+                "mockup"
+            ],
+            "condition": ""
+        },
+        {
+            "keyword": "original abstract art",
+            "language": "en",
+            "translation": "arte abstracto original",
+            "category": "artistic_category",
+            "priority": "medium",
+            "breadth": "medium",
+            "intent": "commercial",
+            "appliesTo": [
+                "artwork",
+                "series",
+                "artist",
+                "mockup"
+            ],
+            "condition": ""
+        },
+        {
+            "keyword": "arte abstracto original",
+            "language": "es",
+            "translation": "original abstract art",
+            "category": "artistic_category",
+            "priority": "medium",
+            "breadth": "medium",
+            "intent": "commercial",
+            "appliesTo": [
+                "artwork",
+                "series",
+                "artist",
+                "mockup"
+            ],
+            "condition": ""
+        },
+        {
+            "keyword": "contemporary painting",
+            "language": "en",
+            "translation": "pintura contemporánea",
+            "category": "artistic_category",
+            "priority": "low",
+            "breadth": "broad",
+            "intent": "discovery",
+            "appliesTo": [
+                "artwork",
+                "series",
+                "artist",
+                "mockup"
+            ],
+            "condition": ""
+        },
+        {
+            "keyword": "pintura contemporánea",
+            "language": "es",
+            "translation": "contemporary painting",
+            "category": "artistic_category",
+            "priority": "low",
+            "breadth": "broad",
+            "intent": "discovery",
+            "appliesTo": [
+                "artwork",
+                "series",
+                "artist",
+                "mockup"
+            ],
+            "condition": ""
+        },
+        {
+            "keyword": "abstract art",
+            "language": "en",
+            "translation": "arte abstracto",
+            "category": "artistic_category",
+            "priority": "low",
+            "breadth": "broad",
+            "intent": "discovery",
+            "appliesTo": [
+                "artwork",
+                "series",
+                "artist",
+                "mockup"
+            ],
+            "condition": ""
+        },
+        {
+            "keyword": "arte abstracto",
+            "language": "es",
+            "translation": "abstract art",
+            "category": "artistic_category",
+            "priority": "low",
+            "breadth": "broad",
+            "intent": "discovery",
+            "appliesTo": [
+                "artwork",
+                "series",
+                "artist",
+                "mockup"
+            ],
+            "condition": ""
+        },
+        {
+            "keyword": "contemporary art",
+            "language": "en",
+            "translation": "arte contemporáneo",
+            "category": "artistic_category",
+            "priority": "low",
+            "breadth": "broad",
+            "intent": "discovery",
+            "appliesTo": [
+                "artwork",
+                "series",
+                "artist",
+                "mockup"
+            ],
+            "condition": ""
+        },
+        {
+            "keyword": "arte contemporáneo",
+            "language": "es",
+            "translation": "contemporary art",
+            "category": "artistic_category",
+            "priority": "low",
+            "breadth": "broad",
+            "intent": "discovery",
+            "appliesTo": [
+                "artwork",
+                "series",
+                "artist",
+                "mockup"
+            ],
+            "condition": ""
+        },
+        {
+            "keyword": "painting on canvas",
+            "language": "en",
+            "translation": "pintura sobre lienzo",
+            "category": "artistic_category",
+            "priority": "medium",
+            "breadth": "broad",
+            "intent": "discovery",
+            "appliesTo": [
+                "artwork",
+                "series",
+                "artist",
+                "mockup"
+            ],
+            "condition": ""
+        },
+        {
+            "keyword": "pintura sobre lienzo",
+            "language": "es",
+            "translation": "painting on canvas",
+            "category": "artistic_category",
+            "priority": "medium",
+            "breadth": "broad",
+            "intent": "discovery",
+            "appliesTo": [
+                "artwork",
+                "series",
+                "artist",
+                "mockup"
+            ],
+            "condition": ""
+        },
+        {
+            "keyword": "large abstract painting",
+            "language": "en",
+            "translation": "pintura abstracta de gran formato",
+            "category": "artistic_category",
+            "priority": "high",
+            "breadth": "medium",
+            "intent": "commercial",
+            "appliesTo": [
+                "artwork",
+                "series",
+                "artist",
+                "mockup"
+            ],
+            "condition": "todas miden 80cm o mas de lado mayor"
+        },
+        {
+            "keyword": "pintura abstracta de gran formato",
+            "language": "es",
+            "translation": "large abstract painting",
+            "category": "artistic_category",
+            "priority": "high",
+            "breadth": "medium",
+            "intent": "commercial",
+            "appliesTo": [
+                "artwork",
+                "series",
+                "artist",
+                "mockup"
+            ],
+            "condition": "todas miden 80cm o mas de lado mayor"
+        },
+        {
+            "keyword": "original canvas painting",
+            "language": "en",
+            "translation": "pintura original sobre lienzo",
+            "category": "artistic_category",
+            "priority": "medium",
+            "breadth": "medium",
+            "intent": "commercial",
+            "appliesTo": [
+                "artwork",
+                "series",
+                "artist",
+                "mockup"
+            ],
+            "condition": ""
+        },
+        {
+            "keyword": "pintura original sobre lienzo",
+            "language": "es",
+            "translation": "original canvas painting",
+            "category": "artistic_category",
+            "priority": "medium",
+            "breadth": "medium",
+            "intent": "commercial",
+            "appliesTo": [
+                "artwork",
+                "series",
+                "artist",
+                "mockup"
+            ],
+            "condition": ""
+        },
+        {
+            "keyword": "territorial abstraction",
+            "language": "en",
+            "translation": "abstracción territorial",
+            "category": "style",
+            "priority": "high",
+            "breadth": "specific",
+            "intent": "discovery",
+            "appliesTo": [
+                "artwork",
+                "series",
+                "mockup"
+            ],
+            "condition": "declarado en los tags de casi todas las obras"
+        },
+        {
+            "keyword": "abstracción territorial",
+            "language": "es",
+            "translation": "territorial abstraction",
+            "category": "style",
+            "priority": "high",
+            "breadth": "specific",
+            "intent": "discovery",
+            "appliesTo": [
+                "artwork",
+                "series",
+                "mockup"
+            ],
+            "condition": "declarado en los tags de casi todas las obras"
+        },
+        {
+            "keyword": "structural abstraction",
+            "language": "en",
+            "translation": "abstracción estructural",
+            "category": "style",
+            "priority": "high",
+            "breadth": "specific",
+            "intent": "discovery",
+            "appliesTo": [
+                "artwork",
+                "series",
+                "mockup"
+            ],
+            "condition": ""
+        },
+        {
+            "keyword": "abstracción estructural",
+            "language": "es",
+            "translation": "structural abstraction",
+            "category": "style",
+            "priority": "high",
+            "breadth": "specific",
+            "intent": "discovery",
+            "appliesTo": [
+                "artwork",
+                "series",
+                "mockup"
+            ],
+            "condition": ""
+        },
+        {
+            "keyword": "minimalist abstract painting",
+            "language": "en",
+            "translation": "pintura abstracta minimalista",
+            "category": "style",
+            "priority": "high",
+            "breadth": "medium",
+            "intent": "discovery",
+            "appliesTo": [
+                "artwork",
+                "series",
+                "mockup"
+            ],
+            "condition": ""
+        },
+        {
+            "keyword": "pintura abstracta minimalista",
+            "language": "es",
+            "translation": "minimalist abstract painting",
+            "category": "style",
+            "priority": "high",
+            "breadth": "medium",
+            "intent": "discovery",
+            "appliesTo": [
+                "artwork",
+                "series",
+                "mockup"
+            ],
+            "condition": ""
+        },
+        {
+            "keyword": "brutalist abstract painting",
+            "language": "en",
+            "translation": "pintura abstracta brutalista",
+            "category": "style",
+            "priority": "high",
+            "breadth": "specific",
+            "intent": "discovery",
+            "appliesTo": [
+                "artwork",
+                "series",
+                "mockup"
+            ],
+            "condition": "declarado en los tags"
+        },
+        {
+            "keyword": "pintura abstracta brutalista",
+            "language": "es",
+            "translation": "brutalist abstract painting",
+            "category": "style",
+            "priority": "high",
+            "breadth": "specific",
+            "intent": "discovery",
+            "appliesTo": [
+                "artwork",
+                "series",
+                "mockup"
+            ],
+            "condition": "declarado en los tags"
+        },
+        {
+            "keyword": "geometric abstract painting",
+            "language": "en",
+            "translation": "pintura abstracta geométrica",
+            "category": "style",
+            "priority": "high",
+            "breadth": "medium",
+            "intent": "discovery",
+            "appliesTo": [
+                "artwork",
+                "series",
+                "mockup"
+            ],
+            "condition": "solo con formas geometricas visibles"
+        },
+        {
+            "keyword": "pintura abstracta geométrica",
+            "language": "es",
+            "translation": "geometric abstract painting",
+            "category": "style",
+            "priority": "high",
+            "breadth": "medium",
+            "intent": "discovery",
+            "appliesTo": [
+                "artwork",
+                "series",
+                "mockup"
+            ],
+            "condition": "solo con formas geometricas visibles"
+        },
+        {
+            "keyword": "color field painting",
+            "language": "en",
+            "translation": "pintura de campos de color",
+            "category": "style",
+            "priority": "high",
+            "breadth": "specific",
+            "intent": "discovery",
+            "appliesTo": [
+                "artwork",
+                "series",
+                "mockup"
+            ],
+            "condition": "solo con campo cromatico dominante"
+        },
+        {
+            "keyword": "pintura de campos de color",
+            "language": "es",
+            "translation": "color field painting",
+            "category": "style",
+            "priority": "high",
+            "breadth": "specific",
+            "intent": "discovery",
+            "appliesTo": [
+                "artwork",
+                "series",
+                "mockup"
+            ],
+            "condition": "solo con campo cromatico dominante"
+        },
+        {
+            "keyword": "textured abstract painting",
+            "language": "en",
+            "translation": "pintura abstracta matérica",
+            "category": "style",
+            "priority": "high",
+            "breadth": "medium",
+            "intent": "discovery",
+            "appliesTo": [
+                "artwork",
+                "series",
+                "mockup"
+            ],
+            "condition": ""
+        },
+        {
+            "keyword": "pintura abstracta matérica",
+            "language": "es",
+            "translation": "textured abstract painting",
+            "category": "style",
+            "priority": "high",
+            "breadth": "medium",
+            "intent": "discovery",
+            "appliesTo": [
+                "artwork",
+                "series",
+                "mockup"
+            ],
+            "condition": ""
+        },
+        {
+            "keyword": "material abstraction",
+            "language": "en",
+            "translation": "abstracción material",
+            "category": "style",
+            "priority": "medium",
+            "breadth": "specific",
+            "intent": "discovery",
+            "appliesTo": [
+                "artwork",
+                "series",
+                "mockup"
+            ],
+            "condition": ""
+        },
+        {
+            "keyword": "abstracción material",
+            "language": "es",
+            "translation": "material abstraction",
+            "category": "style",
+            "priority": "medium",
+            "breadth": "specific",
+            "intent": "discovery",
+            "appliesTo": [
+                "artwork",
+                "series",
+                "mockup"
+            ],
+            "condition": ""
+        },
+        {
+            "keyword": "architectural abstraction",
+            "language": "en",
+            "translation": "abstracción arquitectónica",
+            "category": "style",
+            "priority": "medium",
+            "breadth": "specific",
+            "intent": "discovery",
+            "appliesTo": [
+                "artwork",
+                "series",
+                "mockup"
+            ],
+            "condition": "solo donde el texto nombra estructuras"
+        },
+        {
+            "keyword": "abstracción arquitectónica",
+            "language": "es",
+            "translation": "architectural abstraction",
+            "category": "style",
+            "priority": "medium",
+            "breadth": "specific",
+            "intent": "discovery",
+            "appliesTo": [
+                "artwork",
+                "series",
+                "mockup"
+            ],
+            "condition": "solo donde el texto nombra estructuras"
+        },
+        {
+            "keyword": "contemplative abstract painting",
+            "language": "en",
+            "translation": "pintura abstracta contemplativa",
+            "category": "style",
+            "priority": "medium",
+            "breadth": "specific",
+            "intent": "discovery",
+            "appliesTo": [
+                "artwork",
+                "series",
+                "mockup"
+            ],
+            "condition": ""
+        },
+        {
+            "keyword": "pintura abstracta contemplativa",
+            "language": "es",
+            "translation": "contemplative abstract painting",
+            "category": "style",
+            "priority": "medium",
+            "breadth": "specific",
+            "intent": "discovery",
+            "appliesTo": [
+                "artwork",
+                "series",
+                "mockup"
+            ],
+            "condition": ""
+        },
+        {
+            "keyword": "abstract landscape painting",
+            "language": "en",
+            "translation": "pintura de paisaje abstracto",
+            "category": "style",
+            "priority": "medium",
+            "breadth": "medium",
+            "intent": "discovery",
+            "appliesTo": [
+                "artwork",
+                "series",
+                "mockup"
+            ],
+            "condition": "solo con horizonte visible"
+        },
+        {
+            "keyword": "pintura de paisaje abstracto",
+            "language": "es",
+            "translation": "abstract landscape painting",
+            "category": "style",
+            "priority": "medium",
+            "breadth": "medium",
+            "intent": "discovery",
+            "appliesTo": [
+                "artwork",
+                "series",
+                "mockup"
+            ],
+            "condition": "solo con horizonte visible"
+        },
+        {
+            "keyword": "geological abstraction",
+            "language": "en",
+            "translation": "abstracción geológica",
+            "category": "style",
+            "priority": "low",
+            "breadth": "specific",
+            "intent": "informational",
+            "appliesTo": [
+                "artwork",
+                "series",
+                "mockup"
+            ],
+            "condition": "STRATA lo limita: no reducir a metafora geologica"
+        },
+        {
+            "keyword": "abstracción geológica",
+            "language": "es",
+            "translation": "geological abstraction",
+            "category": "style",
+            "priority": "low",
+            "breadth": "specific",
+            "intent": "informational",
+            "appliesTo": [
+                "artwork",
+                "series",
+                "mockup"
+            ],
+            "condition": "STRATA lo limita: no reducir a metafora geologica"
+        },
+        {
+            "keyword": "layered abstract painting",
+            "language": "en",
+            "translation": "pintura abstracta en capas",
+            "category": "visual_characteristic",
+            "priority": "high",
+            "breadth": "specific",
+            "intent": "discovery",
+            "appliesTo": [
+                "artwork",
+                "mockup"
+            ],
+            "condition": "layering"
+        },
+        {
+            "keyword": "pintura abstracta en capas",
+            "language": "es",
+            "translation": "layered abstract painting",
+            "category": "visual_characteristic",
+            "priority": "high",
+            "breadth": "specific",
+            "intent": "discovery",
+            "appliesTo": [
+                "artwork",
+                "mockup"
+            ],
+            "condition": "layering"
+        },
+        {
+            "keyword": "stratified surface",
+            "language": "en",
+            "translation": "superficie estratificada",
+            "category": "visual_characteristic",
+            "priority": "high",
+            "breadth": "specific",
+            "intent": "discovery",
+            "appliesTo": [
+                "artwork",
+                "mockup"
+            ],
+            "condition": "layering"
+        },
+        {
+            "keyword": "superficie estratificada",
+            "language": "es",
+            "translation": "stratified surface",
+            "category": "visual_characteristic",
+            "priority": "high",
+            "breadth": "specific",
+            "intent": "discovery",
+            "appliesTo": [
+                "artwork",
+                "mockup"
+            ],
+            "condition": "layering"
+        },
+        {
+            "keyword": "incised lines",
+            "language": "en",
+            "translation": "líneas incisas",
+            "category": "visual_characteristic",
+            "priority": "high",
+            "breadth": "specific",
+            "intent": "discovery",
+            "appliesTo": [
+                "artwork",
+                "mockup"
+            ],
+            "condition": "incised_lines"
+        },
+        {
+            "keyword": "líneas incisas",
+            "language": "es",
+            "translation": "incised lines",
+            "category": "visual_characteristic",
+            "priority": "high",
+            "breadth": "specific",
+            "intent": "discovery",
+            "appliesTo": [
+                "artwork",
+                "mockup"
+            ],
+            "condition": "incised_lines"
+        },
+        {
+            "keyword": "abstract painting with incised lines",
+            "language": "en",
+            "translation": "pintura abstracta con líneas incisas",
+            "category": "visual_characteristic",
+            "priority": "high",
+            "breadth": "long-tail",
+            "intent": "discovery",
+            "appliesTo": [
+                "artwork",
+                "mockup"
+            ],
+            "condition": "incised_lines"
+        },
+        {
+            "keyword": "pintura abstracta con líneas incisas",
+            "language": "es",
+            "translation": "abstract painting with incised lines",
+            "category": "visual_characteristic",
+            "priority": "high",
+            "breadth": "long-tail",
+            "intent": "discovery",
+            "appliesTo": [
+                "artwork",
+                "mockup"
+            ],
+            "condition": "incised_lines"
+        },
+        {
+            "keyword": "geometric blocks",
+            "language": "en",
+            "translation": "bloques geométricos",
+            "category": "visual_characteristic",
+            "priority": "medium",
+            "breadth": "specific",
+            "intent": "discovery",
+            "appliesTo": [
+                "artwork",
+                "mockup"
+            ],
+            "condition": "blocks"
+        },
+        {
+            "keyword": "bloques geométricos",
+            "language": "es",
+            "translation": "geometric blocks",
+            "category": "visual_characteristic",
+            "priority": "medium",
+            "breadth": "specific",
+            "intent": "discovery",
+            "appliesTo": [
+                "artwork",
+                "mockup"
+            ],
+            "condition": "blocks"
+        },
+        {
+            "keyword": "monolithic forms",
+            "language": "en",
+            "translation": "formas monolíticas",
+            "category": "visual_characteristic",
+            "priority": "medium",
+            "breadth": "specific",
+            "intent": "discovery",
+            "appliesTo": [
+                "artwork",
+                "mockup"
+            ],
+            "condition": "blocks"
+        },
+        {
+            "keyword": "formas monolíticas",
+            "language": "es",
+            "translation": "monolithic forms",
+            "category": "visual_characteristic",
+            "priority": "medium",
+            "breadth": "specific",
+            "intent": "discovery",
+            "appliesTo": [
+                "artwork",
+                "mockup"
+            ],
+            "condition": "blocks"
+        },
+        {
+            "keyword": "horizon lines",
+            "language": "en",
+            "translation": "líneas de horizonte",
+            "category": "visual_characteristic",
+            "priority": "medium",
+            "breadth": "specific",
+            "intent": "discovery",
+            "appliesTo": [
+                "artwork",
+                "mockup"
+            ],
+            "condition": "horizon"
+        },
+        {
+            "keyword": "líneas de horizonte",
+            "language": "es",
+            "translation": "horizon lines",
+            "category": "visual_characteristic",
+            "priority": "medium",
+            "breadth": "specific",
+            "intent": "discovery",
+            "appliesTo": [
+                "artwork",
+                "mockup"
+            ],
+            "condition": "horizon"
+        },
+        {
+            "keyword": "chromatic fields",
+            "language": "en",
+            "translation": "campos cromáticos",
+            "category": "visual_characteristic",
+            "priority": "medium",
+            "breadth": "specific",
+            "intent": "discovery",
+            "appliesTo": [
+                "artwork",
+                "mockup"
+            ],
+            "condition": "color_field"
+        },
+        {
+            "keyword": "campos cromáticos",
+            "language": "es",
+            "translation": "chromatic fields",
+            "category": "visual_characteristic",
+            "priority": "medium",
+            "breadth": "specific",
+            "intent": "discovery",
+            "appliesTo": [
+                "artwork",
+                "mockup"
+            ],
+            "condition": "color_field"
+        },
+        {
+            "keyword": "textured surface",
+            "language": "en",
+            "translation": "superficie texturada",
+            "category": "visual_characteristic",
+            "priority": "medium",
+            "breadth": "medium",
+            "intent": "discovery",
+            "appliesTo": [
+                "artwork",
+                "mockup"
+            ],
+            "condition": "texture"
+        },
+        {
+            "keyword": "superficie texturada",
+            "language": "es",
+            "translation": "textured surface",
+            "category": "visual_characteristic",
+            "priority": "medium",
+            "breadth": "medium",
+            "intent": "discovery",
+            "appliesTo": [
+                "artwork",
+                "mockup"
+            ],
+            "condition": "texture"
+        },
+        {
+            "keyword": "impasto painting",
+            "language": "en",
+            "translation": "pintura con empaste",
+            "category": "visual_characteristic",
+            "priority": "medium",
+            "breadth": "specific",
+            "intent": "discovery",
+            "appliesTo": [
+                "artwork",
+                "mockup"
+            ],
+            "condition": "texture"
+        },
+        {
+            "keyword": "pintura con empaste",
+            "language": "es",
+            "translation": "impasto painting",
+            "category": "visual_characteristic",
+            "priority": "medium",
+            "breadth": "specific",
+            "intent": "discovery",
+            "appliesTo": [
+                "artwork",
+                "mockup"
+            ],
+            "condition": "texture"
+        },
+        {
+            "keyword": "spatial tension",
+            "language": "en",
+            "translation": "tensión espacial",
+            "category": "visual_characteristic",
+            "priority": "low",
+            "breadth": "specific",
+            "intent": "informational",
+            "appliesTo": [
+                "artwork",
+                "mockup"
+            ],
+            "condition": ""
+        },
+        {
+            "keyword": "tensión espacial",
+            "language": "es",
+            "translation": "spatial tension",
+            "category": "visual_characteristic",
+            "priority": "low",
+            "breadth": "specific",
+            "intent": "informational",
+            "appliesTo": [
+                "artwork",
+                "mockup"
+            ],
+            "condition": ""
+        },
+        {
+            "keyword": "divided composition",
+            "language": "en",
+            "translation": "composición dividida",
+            "category": "visual_characteristic",
+            "priority": "medium",
+            "breadth": "specific",
+            "intent": "discovery",
+            "appliesTo": [
+                "artwork",
+                "mockup"
+            ],
+            "condition": "division"
+        },
+        {
+            "keyword": "composición dividida",
+            "language": "es",
+            "translation": "divided composition",
+            "category": "visual_characteristic",
+            "priority": "medium",
+            "breadth": "specific",
+            "intent": "discovery",
+            "appliesTo": [
+                "artwork",
+                "mockup"
+            ],
+            "condition": "division"
+        },
+        {
+            "keyword": "negative space painting",
+            "language": "en",
+            "translation": "pintura de espacio negativo",
+            "category": "visual_characteristic",
+            "priority": "medium",
+            "breadth": "specific",
+            "intent": "discovery",
+            "appliesTo": [
+                "artwork",
+                "mockup"
+            ],
+            "condition": "void"
+        },
+        {
+            "keyword": "pintura de espacio negativo",
+            "language": "es",
+            "translation": "negative space painting",
+            "category": "visual_characteristic",
+            "priority": "medium",
+            "breadth": "specific",
+            "intent": "discovery",
+            "appliesTo": [
+                "artwork",
+                "mockup"
+            ],
+            "condition": "void"
+        },
+        {
+            "keyword": "acrylic and oil on canvas",
+            "language": "en",
+            "translation": "acrílico y óleo sobre lienzo",
+            "category": "technique_material",
+            "priority": "high",
+            "breadth": "medium",
+            "intent": "discovery",
+            "appliesTo": [
+                "artwork",
+                "mockup"
+            ],
+            "condition": ""
+        },
+        {
+            "keyword": "acrílico y óleo sobre lienzo",
+            "language": "es",
+            "translation": "acrylic and oil on canvas",
+            "category": "technique_material",
+            "priority": "high",
+            "breadth": "medium",
+            "intent": "discovery",
+            "appliesTo": [
+                "artwork",
+                "mockup"
+            ],
+            "condition": ""
+        },
+        {
+            "keyword": "acrylic and oil painting",
+            "language": "en",
+            "translation": "pintura de acrílico y óleo",
+            "category": "technique_material",
+            "priority": "medium",
+            "breadth": "medium",
+            "intent": "discovery",
+            "appliesTo": [
+                "artwork",
+                "mockup"
+            ],
+            "condition": ""
+        },
+        {
+            "keyword": "pintura de acrílico y óleo",
+            "language": "es",
+            "translation": "acrylic and oil painting",
+            "category": "technique_material",
+            "priority": "medium",
+            "breadth": "medium",
+            "intent": "discovery",
+            "appliesTo": [
+                "artwork",
+                "mockup"
+            ],
+            "condition": ""
+        },
+        {
+            "keyword": "palette knife painting",
+            "language": "en",
+            "translation": "pintura a espátula",
+            "category": "technique_material",
+            "priority": "medium",
+            "breadth": "specific",
+            "intent": "discovery",
+            "appliesTo": [
+                "artwork",
+                "mockup"
+            ],
+            "condition": "solo donde el texto lo nombra"
+        },
+        {
+            "keyword": "pintura a espátula",
+            "language": "es",
+            "translation": "palette knife painting",
+            "category": "technique_material",
+            "priority": "medium",
+            "breadth": "specific",
+            "intent": "discovery",
+            "appliesTo": [
+                "artwork",
+                "mockup"
+            ],
+            "condition": "solo donde el texto lo nombra"
+        },
+        {
+            "keyword": "layered paint",
+            "language": "en",
+            "translation": "pintura en capas",
+            "category": "technique_material",
+            "priority": "medium",
+            "breadth": "specific",
+            "intent": "discovery",
+            "appliesTo": [
+                "artwork",
+                "mockup"
+            ],
+            "condition": ""
+        },
+        {
+            "keyword": "pintura en capas",
+            "language": "es",
+            "translation": "layered paint",
+            "category": "technique_material",
+            "priority": "medium",
+            "breadth": "specific",
+            "intent": "discovery",
+            "appliesTo": [
+                "artwork",
+                "mockup"
+            ],
+            "condition": ""
+        },
+        {
+            "keyword": "textured canvas",
+            "language": "en",
+            "translation": "lienzo texturado",
+            "category": "technique_material",
+            "priority": "medium",
+            "breadth": "medium",
+            "intent": "discovery",
+            "appliesTo": [
+                "artwork",
+                "mockup"
+            ],
+            "condition": ""
+        },
+        {
+            "keyword": "lienzo texturado",
+            "language": "es",
+            "translation": "textured canvas",
+            "category": "technique_material",
+            "priority": "medium",
+            "breadth": "medium",
+            "intent": "discovery",
+            "appliesTo": [
+                "artwork",
+                "mockup"
+            ],
+            "condition": ""
+        },
+        {
+            "keyword": "glazed surface",
+            "language": "en",
+            "translation": "superficie con veladuras",
+            "category": "technique_material",
+            "priority": "low",
+            "breadth": "specific",
+            "intent": "informational",
+            "appliesTo": [
+                "artwork",
+                "mockup"
+            ],
+            "condition": "solo donde el texto nombra veladuras"
+        },
+        {
+            "keyword": "superficie con veladuras",
+            "language": "es",
+            "translation": "glazed surface",
+            "category": "technique_material",
+            "priority": "low",
+            "breadth": "specific",
+            "intent": "informational",
+            "appliesTo": [
+                "artwork",
+                "mockup"
+            ],
+            "condition": "solo donde el texto nombra veladuras"
+        },
+        {
+            "keyword": "red abstract painting",
+            "language": "en",
+            "translation": "pintura abstracta roja",
+            "category": "color",
+            "priority": "high",
+            "breadth": "medium",
+            "intent": "commercial",
+            "appliesTo": [
+                "artwork",
+                "mockup"
+            ],
+            "condition": "color:red"
+        },
+        {
+            "keyword": "pintura abstracta roja",
+            "language": "es",
+            "translation": "red abstract painting",
+            "category": "color",
+            "priority": "high",
+            "breadth": "medium",
+            "intent": "commercial",
+            "appliesTo": [
+                "artwork",
+                "mockup"
+            ],
+            "condition": "color:red"
+        },
+        {
+            "keyword": "blue abstract painting",
+            "language": "en",
+            "translation": "pintura abstracta azul",
+            "category": "color",
+            "priority": "high",
+            "breadth": "medium",
+            "intent": "commercial",
+            "appliesTo": [
+                "artwork",
+                "mockup"
+            ],
+            "condition": "color:blue"
+        },
+        {
+            "keyword": "pintura abstracta azul",
+            "language": "es",
+            "translation": "blue abstract painting",
+            "category": "color",
+            "priority": "high",
+            "breadth": "medium",
+            "intent": "commercial",
+            "appliesTo": [
+                "artwork",
+                "mockup"
+            ],
+            "condition": "color:blue"
+        },
+        {
+            "keyword": "green abstract painting",
+            "language": "en",
+            "translation": "pintura abstracta verde",
+            "category": "color",
+            "priority": "high",
+            "breadth": "medium",
+            "intent": "commercial",
+            "appliesTo": [
+                "artwork",
+                "mockup"
+            ],
+            "condition": "color:green"
+        },
+        {
+            "keyword": "pintura abstracta verde",
+            "language": "es",
+            "translation": "green abstract painting",
+            "category": "color",
+            "priority": "high",
+            "breadth": "medium",
+            "intent": "commercial",
+            "appliesTo": [
+                "artwork",
+                "mockup"
+            ],
+            "condition": "color:green"
+        },
+        {
+            "keyword": "ochre abstract painting",
+            "language": "en",
+            "translation": "pintura abstracta ocre",
+            "category": "color",
+            "priority": "high",
+            "breadth": "medium",
+            "intent": "commercial",
+            "appliesTo": [
+                "artwork",
+                "mockup"
+            ],
+            "condition": "color:ochre"
+        },
+        {
+            "keyword": "pintura abstracta ocre",
+            "language": "es",
+            "translation": "ochre abstract painting",
+            "category": "color",
+            "priority": "high",
+            "breadth": "medium",
+            "intent": "commercial",
+            "appliesTo": [
+                "artwork",
+                "mockup"
+            ],
+            "condition": "color:ochre"
+        },
+        {
+            "keyword": "yellow abstract painting",
+            "language": "en",
+            "translation": "pintura abstracta amarilla",
+            "category": "color",
+            "priority": "high",
+            "breadth": "medium",
+            "intent": "commercial",
+            "appliesTo": [
+                "artwork",
+                "mockup"
+            ],
+            "condition": "color:yellow"
+        },
+        {
+            "keyword": "pintura abstracta amarilla",
+            "language": "es",
+            "translation": "yellow abstract painting",
+            "category": "color",
+            "priority": "high",
+            "breadth": "medium",
+            "intent": "commercial",
+            "appliesTo": [
+                "artwork",
+                "mockup"
+            ],
+            "condition": "color:yellow"
+        },
+        {
+            "keyword": "orange abstract painting",
+            "language": "en",
+            "translation": "pintura abstracta naranja",
+            "category": "color",
+            "priority": "high",
+            "breadth": "medium",
+            "intent": "commercial",
+            "appliesTo": [
+                "artwork",
+                "mockup"
+            ],
+            "condition": "color:orange"
+        },
+        {
+            "keyword": "pintura abstracta naranja",
+            "language": "es",
+            "translation": "orange abstract painting",
+            "category": "color",
+            "priority": "high",
+            "breadth": "medium",
+            "intent": "commercial",
+            "appliesTo": [
+                "artwork",
+                "mockup"
+            ],
+            "condition": "color:orange"
+        },
+        {
+            "keyword": "black abstract painting",
+            "language": "en",
+            "translation": "pintura abstracta negra",
+            "category": "color",
+            "priority": "high",
+            "breadth": "medium",
+            "intent": "commercial",
+            "appliesTo": [
+                "artwork",
+                "mockup"
+            ],
+            "condition": "color:black"
+        },
+        {
+            "keyword": "pintura abstracta negra",
+            "language": "es",
+            "translation": "black abstract painting",
+            "category": "color",
+            "priority": "high",
+            "breadth": "medium",
+            "intent": "commercial",
+            "appliesTo": [
+                "artwork",
+                "mockup"
+            ],
+            "condition": "color:black"
+        },
+        {
+            "keyword": "white abstract painting",
+            "language": "en",
+            "translation": "pintura abstracta blanca",
+            "category": "color",
+            "priority": "high",
+            "breadth": "medium",
+            "intent": "commercial",
+            "appliesTo": [
+                "artwork",
+                "mockup"
+            ],
+            "condition": "color:white"
+        },
+        {
+            "keyword": "pintura abstracta blanca",
+            "language": "es",
+            "translation": "white abstract painting",
+            "category": "color",
+            "priority": "high",
+            "breadth": "medium",
+            "intent": "commercial",
+            "appliesTo": [
+                "artwork",
+                "mockup"
+            ],
+            "condition": "color:white"
+        },
+        {
+            "keyword": "earth tone abstract painting",
+            "language": "en",
+            "translation": "pintura abstracta en tonos tierra",
+            "category": "color",
+            "priority": "high",
+            "breadth": "medium",
+            "intent": "commercial",
+            "appliesTo": [
+                "artwork",
+                "mockup"
+            ],
+            "condition": "color:brown"
+        },
+        {
+            "keyword": "pintura abstracta en tonos tierra",
+            "language": "es",
+            "translation": "earth tone abstract painting",
+            "category": "color",
+            "priority": "high",
+            "breadth": "medium",
+            "intent": "commercial",
+            "appliesTo": [
+                "artwork",
+                "mockup"
+            ],
+            "condition": "color:brown"
+        },
+        {
+            "keyword": "teal abstract painting",
+            "language": "en",
+            "translation": "pintura abstracta turquesa",
+            "category": "color",
+            "priority": "high",
+            "breadth": "medium",
+            "intent": "commercial",
+            "appliesTo": [
+                "artwork",
+                "mockup"
+            ],
+            "condition": "color:teal"
+        },
+        {
+            "keyword": "pintura abstracta turquesa",
+            "language": "es",
+            "translation": "teal abstract painting",
+            "category": "color",
+            "priority": "high",
+            "breadth": "medium",
+            "intent": "commercial",
+            "appliesTo": [
+                "artwork",
+                "mockup"
+            ],
+            "condition": "color:teal"
+        },
+        {
+            "keyword": "turquoise abstract painting",
+            "language": "en",
+            "translation": "pintura abstracta turquesa",
+            "category": "color",
+            "priority": "high",
+            "breadth": "medium",
+            "intent": "commercial",
+            "appliesTo": [
+                "artwork",
+                "mockup"
+            ],
+            "condition": "color:turquoise"
+        },
+        {
+            "keyword": "rust abstract painting",
+            "language": "en",
+            "translation": "pintura abstracta en tono óxido",
+            "category": "color",
+            "priority": "high",
+            "breadth": "medium",
+            "intent": "commercial",
+            "appliesTo": [
+                "artwork",
+                "mockup"
+            ],
+            "condition": "color:rust"
+        },
+        {
+            "keyword": "pintura abstracta en tono óxido",
+            "language": "es",
+            "translation": "rust abstract painting",
+            "category": "color",
+            "priority": "high",
+            "breadth": "medium",
+            "intent": "commercial",
+            "appliesTo": [
+                "artwork",
+                "mockup"
+            ],
+            "condition": "color:rust"
+        },
+        {
+            "keyword": "multicolor abstract painting",
+            "language": "en",
+            "translation": "pintura abstracta multicolor",
+            "category": "color",
+            "priority": "high",
+            "breadth": "medium",
+            "intent": "commercial",
+            "appliesTo": [
+                "artwork",
+                "mockup"
+            ],
+            "condition": "color:multicolor"
+        },
+        {
+            "keyword": "pintura abstracta multicolor",
+            "language": "es",
+            "translation": "multicolor abstract painting",
+            "category": "color",
+            "priority": "high",
+            "breadth": "medium",
+            "intent": "commercial",
+            "appliesTo": [
+                "artwork",
+                "mockup"
+            ],
+            "condition": "color:multicolor"
+        },
+        {
+            "keyword": "vertical abstract painting",
+            "language": "en",
+            "translation": "pintura abstracta vertical",
+            "category": "format_size_orientation",
+            "priority": "high",
+            "breadth": "medium",
+            "intent": "commercial",
+            "appliesTo": [
+                "artwork",
+                "mockup"
+            ],
+            "condition": "orient:vertical"
+        },
+        {
+            "keyword": "pintura abstracta vertical",
+            "language": "es",
+            "translation": "vertical abstract painting",
+            "category": "format_size_orientation",
+            "priority": "high",
+            "breadth": "medium",
+            "intent": "commercial",
+            "appliesTo": [
+                "artwork",
+                "mockup"
+            ],
+            "condition": "orient:vertical"
+        },
+        {
+            "keyword": "horizontal abstract painting",
+            "language": "en",
+            "translation": "pintura abstracta horizontal",
+            "category": "format_size_orientation",
+            "priority": "high",
+            "breadth": "medium",
+            "intent": "commercial",
+            "appliesTo": [
+                "artwork",
+                "mockup"
+            ],
+            "condition": "orient:horizontal"
+        },
+        {
+            "keyword": "pintura abstracta horizontal",
+            "language": "es",
+            "translation": "horizontal abstract painting",
+            "category": "format_size_orientation",
+            "priority": "high",
+            "breadth": "medium",
+            "intent": "commercial",
+            "appliesTo": [
+                "artwork",
+                "mockup"
+            ],
+            "condition": "orient:horizontal"
+        },
+        {
+            "keyword": "large original painting",
+            "language": "en",
+            "translation": "pintura original de gran formato",
+            "category": "format_size_orientation",
+            "priority": "high",
+            "breadth": "medium",
+            "intent": "commercial",
+            "appliesTo": [
+                "artwork",
+                "mockup"
+            ],
+            "condition": "size:large"
+        },
+        {
+            "keyword": "pintura original de gran formato",
+            "language": "es",
+            "translation": "large original painting",
+            "category": "format_size_orientation",
+            "priority": "high",
+            "breadth": "medium",
+            "intent": "commercial",
+            "appliesTo": [
+                "artwork",
+                "mockup"
+            ],
+            "condition": "size:large"
+        },
+        {
+            "keyword": "large vertical canvas",
+            "language": "en",
+            "translation": "lienzo vertical de gran formato",
+            "category": "format_size_orientation",
+            "priority": "medium",
+            "breadth": "specific",
+            "intent": "commercial",
+            "appliesTo": [
+                "artwork",
+                "mockup"
+            ],
+            "condition": "orient:vertical"
+        },
+        {
+            "keyword": "lienzo vertical de gran formato",
+            "language": "es",
+            "translation": "large vertical canvas",
+            "category": "format_size_orientation",
+            "priority": "medium",
+            "breadth": "specific",
+            "intent": "commercial",
+            "appliesTo": [
+                "artwork",
+                "mockup"
+            ],
+            "condition": "orient:vertical"
+        },
+        {
+            "keyword": "large horizontal canvas",
+            "language": "en",
+            "translation": "lienzo horizontal de gran formato",
+            "category": "format_size_orientation",
+            "priority": "medium",
+            "breadth": "specific",
+            "intent": "commercial",
+            "appliesTo": [
+                "artwork",
+                "mockup"
+            ],
+            "condition": "orient:horizontal"
+        },
+        {
+            "keyword": "lienzo horizontal de gran formato",
+            "language": "es",
+            "translation": "large horizontal canvas",
+            "category": "format_size_orientation",
+            "priority": "medium",
+            "breadth": "specific",
+            "intent": "commercial",
+            "appliesTo": [
+                "artwork",
+                "mockup"
+            ],
+            "condition": "orient:horizontal"
+        },
+        {
+            "keyword": "territory",
+            "language": "en",
+            "translation": "territorio",
+            "category": "concept",
+            "priority": "low",
+            "breadth": "broad",
+            "intent": "informational",
+            "appliesTo": [
+                "series",
+                "artist"
+            ],
+            "condition": "nunca como termino comercial suelto: combinar con abstract painting / pintura abstracta"
+        },
+        {
+            "keyword": "territorio",
+            "language": "es",
+            "translation": "territory",
+            "category": "concept",
+            "priority": "low",
+            "breadth": "broad",
+            "intent": "informational",
+            "appliesTo": [
+                "series",
+                "artist"
+            ],
+            "condition": "nunca como termino comercial suelto: combinar con abstract painting / pintura abstracta"
+        },
+        {
+            "keyword": "memory",
+            "language": "en",
+            "translation": "memoria",
+            "category": "concept",
+            "priority": "low",
+            "breadth": "broad",
+            "intent": "informational",
+            "appliesTo": [
+                "series",
+                "artist"
+            ],
+            "condition": "nunca como termino comercial suelto: combinar con abstract painting / pintura abstracta"
+        },
+        {
+            "keyword": "memoria",
+            "language": "es",
+            "translation": "memory",
+            "category": "concept",
+            "priority": "low",
+            "breadth": "broad",
+            "intent": "informational",
+            "appliesTo": [
+                "series",
+                "artist"
+            ],
+            "condition": "nunca como termino comercial suelto: combinar con abstract painting / pintura abstracta"
+        },
+        {
+            "keyword": "erosion",
+            "language": "en",
+            "translation": "erosión",
+            "category": "concept",
+            "priority": "low",
+            "breadth": "broad",
+            "intent": "informational",
+            "appliesTo": [
+                "series",
+                "artist"
+            ],
+            "condition": "nunca como termino comercial suelto: combinar con abstract painting / pintura abstracta"
+        },
+        {
+            "keyword": "erosión",
+            "language": "es",
+            "translation": "erosion",
+            "category": "concept",
+            "priority": "low",
+            "breadth": "broad",
+            "intent": "informational",
+            "appliesTo": [
+                "series",
+                "artist"
+            ],
+            "condition": "nunca como termino comercial suelto: combinar con abstract painting / pintura abstracta"
+        },
+        {
+            "keyword": "sediment",
+            "language": "en",
+            "translation": "sedimento",
+            "category": "concept",
+            "priority": "low",
+            "breadth": "broad",
+            "intent": "informational",
+            "appliesTo": [
+                "series",
+                "artist"
+            ],
+            "condition": "nunca como termino comercial suelto: combinar con abstract painting / pintura abstracta"
+        },
+        {
+            "keyword": "sedimento",
+            "language": "es",
+            "translation": "sediment",
+            "category": "concept",
+            "priority": "low",
+            "breadth": "broad",
+            "intent": "informational",
+            "appliesTo": [
+                "series",
+                "artist"
+            ],
+            "condition": "nunca como termino comercial suelto: combinar con abstract painting / pintura abstracta"
+        },
+        {
+            "keyword": "materiality",
+            "language": "en",
+            "translation": "materialidad",
+            "category": "concept",
+            "priority": "low",
+            "breadth": "broad",
+            "intent": "informational",
+            "appliesTo": [
+                "series",
+                "artist"
+            ],
+            "condition": "nunca como termino comercial suelto: combinar con abstract painting / pintura abstracta"
+        },
+        {
+            "keyword": "materialidad",
+            "language": "es",
+            "translation": "materiality",
+            "category": "concept",
+            "priority": "low",
+            "breadth": "broad",
+            "intent": "informational",
+            "appliesTo": [
+                "series",
+                "artist"
+            ],
+            "condition": "nunca como termino comercial suelto: combinar con abstract painting / pintura abstracta"
+        },
+        {
+            "keyword": "perception",
+            "language": "en",
+            "translation": "percepción",
+            "category": "concept",
+            "priority": "low",
+            "breadth": "broad",
+            "intent": "informational",
+            "appliesTo": [
+                "series",
+                "artist"
+            ],
+            "condition": "nunca como termino comercial suelto: combinar con abstract painting / pintura abstracta"
+        },
+        {
+            "keyword": "percepción",
+            "language": "es",
+            "translation": "perception",
+            "category": "concept",
+            "priority": "low",
+            "breadth": "broad",
+            "intent": "informational",
+            "appliesTo": [
+                "series",
+                "artist"
+            ],
+            "condition": "nunca como termino comercial suelto: combinar con abstract painting / pintura abstracta"
+        },
+        {
+            "keyword": "transformation",
+            "language": "en",
+            "translation": "transformación",
+            "category": "concept",
+            "priority": "low",
+            "breadth": "broad",
+            "intent": "informational",
+            "appliesTo": [
+                "series",
+                "artist"
+            ],
+            "condition": "nunca como termino comercial suelto: combinar con abstract painting / pintura abstracta"
+        },
+        {
+            "keyword": "transformación",
+            "language": "es",
+            "translation": "transformation",
+            "category": "concept",
+            "priority": "low",
+            "breadth": "broad",
+            "intent": "informational",
+            "appliesTo": [
+                "series",
+                "artist"
+            ],
+            "condition": "nunca como termino comercial suelto: combinar con abstract painting / pintura abstracta"
+        },
+        {
+            "keyword": "silence",
+            "language": "en",
+            "translation": "silencio",
+            "category": "concept",
+            "priority": "low",
+            "breadth": "broad",
+            "intent": "informational",
+            "appliesTo": [
+                "series",
+                "artist"
+            ],
+            "condition": "nunca como termino comercial suelto: combinar con abstract painting / pintura abstracta"
+        },
+        {
+            "keyword": "silencio",
+            "language": "es",
+            "translation": "silence",
+            "category": "concept",
+            "priority": "low",
+            "breadth": "broad",
+            "intent": "informational",
+            "appliesTo": [
+                "series",
+                "artist"
+            ],
+            "condition": "nunca como termino comercial suelto: combinar con abstract painting / pintura abstracta"
+        },
+        {
+            "keyword": "inner landscape",
+            "language": "en",
+            "translation": "paisaje interior",
+            "category": "concept",
+            "priority": "low",
+            "breadth": "broad",
+            "intent": "informational",
+            "appliesTo": [
+                "series",
+                "artist"
+            ],
+            "condition": "nunca como termino comercial suelto: combinar con abstract painting / pintura abstracta"
+        },
+        {
+            "keyword": "paisaje interior",
+            "language": "es",
+            "translation": "inner landscape",
+            "category": "concept",
+            "priority": "low",
+            "breadth": "broad",
+            "intent": "informational",
+            "appliesTo": [
+                "series",
+                "artist"
+            ],
+            "condition": "nunca como termino comercial suelto: combinar con abstract painting / pintura abstracta"
+        },
+        {
+            "keyword": "threshold",
+            "language": "en",
+            "translation": "umbral",
+            "category": "concept",
+            "priority": "low",
+            "breadth": "broad",
+            "intent": "informational",
+            "appliesTo": [
+                "series",
+                "artist"
+            ],
+            "condition": "nunca como termino comercial suelto: combinar con abstract painting / pintura abstracta"
+        },
+        {
+            "keyword": "umbral",
+            "language": "es",
+            "translation": "threshold",
+            "category": "concept",
+            "priority": "low",
+            "breadth": "broad",
+            "intent": "informational",
+            "appliesTo": [
+                "series",
+                "artist"
+            ],
+            "condition": "nunca como termino comercial suelto: combinar con abstract painting / pintura abstracta"
+        },
+        {
+            "keyword": "passage",
+            "language": "en",
+            "translation": "tránsito",
+            "category": "concept",
+            "priority": "low",
+            "breadth": "broad",
+            "intent": "informational",
+            "appliesTo": [
+                "series",
+                "artist"
+            ],
+            "condition": "nunca como termino comercial suelto: combinar con abstract painting / pintura abstracta"
+        },
+        {
+            "keyword": "tránsito",
+            "language": "es",
+            "translation": "passage",
+            "category": "concept",
+            "priority": "low",
+            "breadth": "broad",
+            "intent": "informational",
+            "appliesTo": [
+                "series",
+                "artist"
+            ],
+            "condition": "nunca como termino comercial suelto: combinar con abstract painting / pintura abstracta"
+        },
+        {
+            "keyword": "boundary",
+            "language": "en",
+            "translation": "límite",
+            "category": "concept",
+            "priority": "low",
+            "breadth": "broad",
+            "intent": "informational",
+            "appliesTo": [
+                "series",
+                "artist"
+            ],
+            "condition": "nunca como termino comercial suelto: combinar con abstract painting / pintura abstracta"
+        },
+        {
+            "keyword": "límite",
+            "language": "es",
+            "translation": "boundary",
+            "category": "concept",
+            "priority": "low",
+            "breadth": "broad",
+            "intent": "informational",
+            "appliesTo": [
+                "series",
+                "artist"
+            ],
+            "condition": "nunca como termino comercial suelto: combinar con abstract painting / pintura abstracta"
+        },
+        {
+            "keyword": "emergence",
+            "language": "en",
+            "translation": "emergencia",
+            "category": "concept",
+            "priority": "low",
+            "breadth": "broad",
+            "intent": "informational",
+            "appliesTo": [
+                "series",
+                "artist"
+            ],
+            "condition": "nunca como termino comercial suelto: combinar con abstract painting / pintura abstracta"
+        },
+        {
+            "keyword": "emergencia",
+            "language": "es",
+            "translation": "emergence",
+            "category": "concept",
+            "priority": "low",
+            "breadth": "broad",
+            "intent": "informational",
+            "appliesTo": [
+                "series",
+                "artist"
+            ],
+            "condition": "nunca como termino comercial suelto: combinar con abstract painting / pintura abstracta"
+        },
+        {
+            "keyword": "distance",
+            "language": "en",
+            "translation": "distancia",
+            "category": "concept",
+            "priority": "low",
+            "breadth": "broad",
+            "intent": "informational",
+            "appliesTo": [
+                "series",
+                "artist"
+            ],
+            "condition": "nunca como termino comercial suelto: combinar con abstract painting / pintura abstracta"
+        },
+        {
+            "keyword": "distancia",
+            "language": "es",
+            "translation": "distance",
+            "category": "concept",
+            "priority": "low",
+            "breadth": "broad",
+            "intent": "informational",
+            "appliesTo": [
+                "series",
+                "artist"
+            ],
+            "condition": "nunca como termino comercial suelto: combinar con abstract painting / pintura abstracta"
+        },
+        {
+            "keyword": "presence",
+            "language": "en",
+            "translation": "presencia",
+            "category": "concept",
+            "priority": "low",
+            "breadth": "broad",
+            "intent": "informational",
+            "appliesTo": [
+                "series",
+                "artist"
+            ],
+            "condition": "nunca como termino comercial suelto: combinar con abstract painting / pintura abstracta"
+        },
+        {
+            "keyword": "presencia",
+            "language": "es",
+            "translation": "presence",
+            "category": "concept",
+            "priority": "low",
+            "breadth": "broad",
+            "intent": "informational",
+            "appliesTo": [
+                "series",
+                "artist"
+            ],
+            "condition": "nunca como termino comercial suelto: combinar con abstract painting / pintura abstracta"
+        },
+        {
+            "keyword": "original abstract paintings for sale",
+            "language": "en",
+            "translation": "pinturas abstractas originales en venta",
+            "category": "purchase_intent",
+            "priority": "high",
+            "breadth": "medium",
+            "intent": "transactional",
+            "appliesTo": [
+                "artwork",
+                "series",
+                "artist"
+            ],
+            "condition": ""
+        },
+        {
+            "keyword": "pinturas abstractas originales en venta",
+            "language": "es",
+            "translation": "original abstract paintings for sale",
+            "category": "purchase_intent",
+            "priority": "high",
+            "breadth": "medium",
+            "intent": "transactional",
+            "appliesTo": [
+                "artwork",
+                "series",
+                "artist"
+            ],
+            "condition": ""
+        },
+        {
+            "keyword": "buy original abstract painting",
+            "language": "en",
+            "translation": "comprar pintura abstracta original",
+            "category": "purchase_intent",
+            "priority": "high",
+            "breadth": "medium",
+            "intent": "transactional",
+            "appliesTo": [
+                "artwork",
+                "series",
+                "artist"
+            ],
+            "condition": ""
+        },
+        {
+            "keyword": "comprar pintura abstracta original",
+            "language": "es",
+            "translation": "buy original abstract painting",
+            "category": "purchase_intent",
+            "priority": "high",
+            "breadth": "medium",
+            "intent": "transactional",
+            "appliesTo": [
+                "artwork",
+                "series",
+                "artist"
+            ],
+            "condition": ""
+        },
+        {
+            "keyword": "abstract art for sale",
+            "language": "en",
+            "translation": "arte abstracto en venta",
+            "category": "purchase_intent",
+            "priority": "medium",
+            "breadth": "broad",
+            "intent": "transactional",
+            "appliesTo": [
+                "artwork",
+                "series",
+                "artist"
+            ],
+            "condition": ""
+        },
+        {
+            "keyword": "arte abstracto en venta",
+            "language": "es",
+            "translation": "abstract art for sale",
+            "category": "purchase_intent",
+            "priority": "medium",
+            "breadth": "broad",
+            "intent": "transactional",
+            "appliesTo": [
+                "artwork",
+                "series",
+                "artist"
+            ],
+            "condition": ""
+        },
+        {
+            "keyword": "buy art directly from the artist",
+            "language": "en",
+            "translation": "comprar arte directamente al artista",
+            "category": "purchase_intent",
+            "priority": "high",
+            "breadth": "specific",
+            "intent": "transactional",
+            "appliesTo": [
+                "artwork",
+                "series",
+                "artist"
+            ],
+            "condition": ""
+        },
+        {
+            "keyword": "comprar arte directamente al artista",
+            "language": "es",
+            "translation": "buy art directly from the artist",
+            "category": "purchase_intent",
+            "priority": "high",
+            "breadth": "specific",
+            "intent": "transactional",
+            "appliesTo": [
+                "artwork",
+                "series",
+                "artist"
+            ],
+            "condition": ""
+        },
+        {
+            "keyword": "contemporary art for collectors",
+            "language": "en",
+            "translation": "arte contemporáneo para coleccionistas",
+            "category": "purchase_intent",
+            "priority": "medium",
+            "breadth": "medium",
+            "intent": "commercial",
+            "appliesTo": [
+                "artwork",
+                "series",
+                "artist"
+            ],
+            "condition": ""
+        },
+        {
+            "keyword": "arte contemporáneo para coleccionistas",
+            "language": "es",
+            "translation": "contemporary art for collectors",
+            "category": "purchase_intent",
+            "priority": "medium",
+            "breadth": "medium",
+            "intent": "commercial",
+            "appliesTo": [
+                "artwork",
+                "series",
+                "artist"
+            ],
+            "condition": ""
+        },
+        {
+            "keyword": "large original painting for sale",
+            "language": "en",
+            "translation": "pintura original de gran formato en venta",
+            "category": "purchase_intent",
+            "priority": "high",
+            "breadth": "long-tail",
+            "intent": "transactional",
+            "appliesTo": [
+                "artwork",
+                "series",
+                "artist"
+            ],
+            "condition": ""
+        },
+        {
+            "keyword": "pintura original de gran formato en venta",
+            "language": "es",
+            "translation": "large original painting for sale",
+            "category": "purchase_intent",
+            "priority": "high",
+            "breadth": "long-tail",
+            "intent": "transactional",
+            "appliesTo": [
+                "artwork",
+                "series",
+                "artist"
+            ],
+            "condition": ""
+        },
+        {
+            "keyword": "original painting on canvas for sale",
+            "language": "en",
+            "translation": "pintura original sobre lienzo en venta",
+            "category": "purchase_intent",
+            "priority": "medium",
+            "breadth": "medium",
+            "intent": "transactional",
+            "appliesTo": [
+                "artwork",
+                "series",
+                "artist"
+            ],
+            "condition": ""
+        },
+        {
+            "keyword": "pintura original sobre lienzo en venta",
+            "language": "es",
+            "translation": "original painting on canvas for sale",
+            "category": "purchase_intent",
+            "priority": "medium",
+            "breadth": "medium",
+            "intent": "transactional",
+            "appliesTo": [
+                "artwork",
+                "series",
+                "artist"
+            ],
+            "condition": ""
+        },
+        {
+            "keyword": "Maurizio Valch",
+            "language": "en",
+            "translation": "Maurizio Valch",
+            "category": "navigational",
+            "priority": "high",
+            "breadth": "specific",
+            "intent": "navigational",
+            "appliesTo": [
+                "artwork",
+                "series",
+                "artist",
+                "mockup"
+            ],
+            "condition": ""
+        },
+        {
+            "keyword": "Maurizio Valch",
+            "language": "es",
+            "translation": "Maurizio Valch",
+            "category": "navigational",
+            "priority": "high",
+            "breadth": "specific",
+            "intent": "navigational",
+            "appliesTo": [
+                "artwork",
+                "series",
+                "artist",
+                "mockup"
+            ],
+            "condition": ""
+        },
+        {
+            "keyword": "Maurizio Valch abstract painting",
+            "language": "en",
+            "translation": "pintura abstracta de Maurizio Valch",
+            "category": "navigational",
+            "priority": "high",
+            "breadth": "specific",
+            "intent": "navigational",
+            "appliesTo": [
+                "artwork",
+                "series",
+                "artist",
+                "mockup"
+            ],
+            "condition": ""
+        },
+        {
+            "keyword": "pintura abstracta de Maurizio Valch",
+            "language": "es",
+            "translation": "Maurizio Valch abstract painting",
+            "category": "navigational",
+            "priority": "high",
+            "breadth": "specific",
+            "intent": "navigational",
+            "appliesTo": [
+                "artwork",
+                "series",
+                "artist",
+                "mockup"
+            ],
+            "condition": ""
+        },
+        {
+            "keyword": "Maurizio Valch artist",
+            "language": "en",
+            "translation": "Maurizio Valch artista",
+            "category": "navigational",
+            "priority": "high",
+            "breadth": "specific",
+            "intent": "navigational",
+            "appliesTo": [
+                "artwork",
+                "series",
+                "artist",
+                "mockup"
+            ],
+            "condition": ""
+        },
+        {
+            "keyword": "Maurizio Valch artista",
+            "language": "es",
+            "translation": "Maurizio Valch artist",
+            "category": "navigational",
+            "priority": "high",
+            "breadth": "specific",
+            "intent": "navigational",
+            "appliesTo": [
+                "artwork",
+                "series",
+                "artist",
+                "mockup"
+            ],
+            "condition": ""
+        },
+        {
+            "keyword": "Maurizio Valch original artwork",
+            "language": "en",
+            "translation": "obra original de Maurizio Valch",
+            "category": "navigational",
+            "priority": "high",
+            "breadth": "specific",
+            "intent": "transactional",
+            "appliesTo": [
+                "artwork",
+                "series",
+                "artist",
+                "mockup"
+            ],
+            "condition": ""
+        },
+        {
+            "keyword": "obra original de Maurizio Valch",
+            "language": "es",
+            "translation": "Maurizio Valch original artwork",
+            "category": "navigational",
+            "priority": "high",
+            "breadth": "specific",
+            "intent": "transactional",
+            "appliesTo": [
+                "artwork",
+                "series",
+                "artist",
+                "mockup"
+            ],
+            "condition": ""
+        },
+        {
+            "keyword": "large orange abstract painting with incised lines",
+            "language": "en",
+            "translation": "pintura abstracta naranja de gran formato con líneas incisas",
+            "category": "long_tail",
+            "priority": "high",
+            "breadth": "long-tail",
+            "intent": "commercial",
+            "appliesTo": [
+                "artwork"
+            ],
+            "condition": "compuesto de los rasgos documentados de CUSTODES"
+        },
+        {
+            "keyword": "pintura abstracta naranja de gran formato con líneas incisas",
+            "language": "es",
+            "translation": "large orange abstract painting with incised lines",
+            "category": "long_tail",
+            "priority": "high",
+            "breadth": "long-tail",
+            "intent": "commercial",
+            "appliesTo": [
+                "artwork"
+            ],
+            "condition": "compuesto de los rasgos documentados de CUSTODES"
+        },
+        {
+            "keyword": "large layered orange abstract painting",
+            "language": "en",
+            "translation": "pintura abstracta naranja de gran formato en capas",
+            "category": "long_tail",
+            "priority": "high",
+            "breadth": "long-tail",
+            "intent": "commercial",
+            "appliesTo": [
+                "artwork"
+            ],
+            "condition": "compuesto de los rasgos documentados de CUSTODES"
+        },
+        {
+            "keyword": "pintura abstracta naranja de gran formato en capas",
+            "language": "es",
+            "translation": "large layered orange abstract painting",
+            "category": "long_tail",
+            "priority": "high",
+            "breadth": "long-tail",
+            "intent": "commercial",
+            "appliesTo": [
+                "artwork"
+            ],
+            "condition": "compuesto de los rasgos documentados de CUSTODES"
+        },
+        {
+            "keyword": "large orange abstract painting with geometric blocks",
+            "language": "en",
+            "translation": "pintura abstracta naranja de gran formato con bloques geométricos",
+            "category": "long_tail",
+            "priority": "high",
+            "breadth": "long-tail",
+            "intent": "commercial",
+            "appliesTo": [
+                "artwork"
+            ],
+            "condition": "compuesto de los rasgos documentados de CUSTODES"
+        },
+        {
+            "keyword": "pintura abstracta naranja de gran formato con bloques geométricos",
+            "language": "es",
+            "translation": "large orange abstract painting with geometric blocks",
+            "category": "long_tail",
+            "priority": "high",
+            "breadth": "long-tail",
+            "intent": "commercial",
+            "appliesTo": [
+                "artwork"
+            ],
+            "condition": "compuesto de los rasgos documentados de CUSTODES"
+        },
+        {
+            "keyword": "vertical orange abstract painting on canvas",
+            "language": "en",
+            "translation": "pintura abstracta naranja vertical sobre lienzo",
+            "category": "long_tail",
+            "priority": "high",
+            "breadth": "long-tail",
+            "intent": "commercial",
+            "appliesTo": [
+                "artwork"
+            ],
+            "condition": "compuesto de los rasgos documentados de CUSTODES"
+        },
+        {
+            "keyword": "pintura abstracta naranja vertical sobre lienzo",
+            "language": "es",
+            "translation": "vertical orange abstract painting on canvas",
+            "category": "long_tail",
+            "priority": "high",
+            "breadth": "long-tail",
+            "intent": "commercial",
+            "appliesTo": [
+                "artwork"
+            ],
+            "condition": "compuesto de los rasgos documentados de CUSTODES"
+        },
+        {
+            "keyword": "large blue abstract painting with incised lines",
+            "language": "en",
+            "translation": "pintura abstracta azul de gran formato con líneas incisas",
+            "category": "long_tail",
+            "priority": "high",
+            "breadth": "long-tail",
+            "intent": "commercial",
+            "appliesTo": [
+                "artwork"
+            ],
+            "condition": "compuesto de los rasgos documentados de LIMEN"
+        },
+        {
+            "keyword": "pintura abstracta azul de gran formato con líneas incisas",
+            "language": "es",
+            "translation": "large blue abstract painting with incised lines",
+            "category": "long_tail",
+            "priority": "high",
+            "breadth": "long-tail",
+            "intent": "commercial",
+            "appliesTo": [
+                "artwork"
+            ],
+            "condition": "compuesto de los rasgos documentados de LIMEN"
+        },
+        {
+            "keyword": "large layered blue abstract painting",
+            "language": "en",
+            "translation": "pintura abstracta azul de gran formato en capas",
+            "category": "long_tail",
+            "priority": "high",
+            "breadth": "long-tail",
+            "intent": "commercial",
+            "appliesTo": [
+                "artwork"
+            ],
+            "condition": "compuesto de los rasgos documentados de LIMEN"
+        },
+        {
+            "keyword": "pintura abstracta azul de gran formato en capas",
+            "language": "es",
+            "translation": "large layered blue abstract painting",
+            "category": "long_tail",
+            "priority": "high",
+            "breadth": "long-tail",
+            "intent": "commercial",
+            "appliesTo": [
+                "artwork"
+            ],
+            "condition": "compuesto de los rasgos documentados de LIMEN"
+        },
+        {
+            "keyword": "large blue abstract painting with geometric blocks",
+            "language": "en",
+            "translation": "pintura abstracta azul de gran formato con bloques geométricos",
+            "category": "long_tail",
+            "priority": "high",
+            "breadth": "long-tail",
+            "intent": "commercial",
+            "appliesTo": [
+                "artwork"
+            ],
+            "condition": "compuesto de los rasgos documentados de LIMEN"
+        },
+        {
+            "keyword": "pintura abstracta azul de gran formato con bloques geométricos",
+            "language": "es",
+            "translation": "large blue abstract painting with geometric blocks",
+            "category": "long_tail",
+            "priority": "high",
+            "breadth": "long-tail",
+            "intent": "commercial",
+            "appliesTo": [
+                "artwork"
+            ],
+            "condition": "compuesto de los rasgos documentados de LIMEN"
+        },
+        {
+            "keyword": "vertical blue abstract painting on canvas",
+            "language": "en",
+            "translation": "pintura abstracta azul vertical sobre lienzo",
+            "category": "long_tail",
+            "priority": "high",
+            "breadth": "long-tail",
+            "intent": "commercial",
+            "appliesTo": [
+                "artwork"
+            ],
+            "condition": "compuesto de los rasgos documentados de LIMEN"
+        },
+        {
+            "keyword": "pintura abstracta azul vertical sobre lienzo",
+            "language": "es",
+            "translation": "vertical blue abstract painting on canvas",
+            "category": "long_tail",
+            "priority": "high",
+            "breadth": "long-tail",
+            "intent": "commercial",
+            "appliesTo": [
+                "artwork"
+            ],
+            "condition": "compuesto de los rasgos documentados de LIMEN"
+        },
+        {
+            "keyword": "large layered green abstract painting",
+            "language": "en",
+            "translation": "pintura abstracta verde de gran formato en capas",
+            "category": "long_tail",
+            "priority": "high",
+            "breadth": "long-tail",
+            "intent": "commercial",
+            "appliesTo": [
+                "artwork"
+            ],
+            "condition": "compuesto de los rasgos documentados de ASCENSUS"
+        },
+        {
+            "keyword": "pintura abstracta verde de gran formato en capas",
+            "language": "es",
+            "translation": "large layered green abstract painting",
+            "category": "long_tail",
+            "priority": "high",
+            "breadth": "long-tail",
+            "intent": "commercial",
+            "appliesTo": [
+                "artwork"
+            ],
+            "condition": "compuesto de los rasgos documentados de ASCENSUS"
+        },
+        {
+            "keyword": "large green abstract painting with geometric blocks",
+            "language": "en",
+            "translation": "pintura abstracta verde de gran formato con bloques geométricos",
+            "category": "long_tail",
+            "priority": "high",
+            "breadth": "long-tail",
+            "intent": "commercial",
+            "appliesTo": [
+                "artwork"
+            ],
+            "condition": "compuesto de los rasgos documentados de ASCENSUS"
+        },
+        {
+            "keyword": "pintura abstracta verde de gran formato con bloques geométricos",
+            "language": "es",
+            "translation": "large green abstract painting with geometric blocks",
+            "category": "long_tail",
+            "priority": "high",
+            "breadth": "long-tail",
+            "intent": "commercial",
+            "appliesTo": [
+                "artwork"
+            ],
+            "condition": "compuesto de los rasgos documentados de ASCENSUS"
+        },
+        {
+            "keyword": "large green abstract painting with horizon lines",
+            "language": "en",
+            "translation": "pintura abstracta verde de gran formato con líneas de horizonte",
+            "category": "long_tail",
+            "priority": "high",
+            "breadth": "long-tail",
+            "intent": "commercial",
+            "appliesTo": [
+                "artwork"
+            ],
+            "condition": "compuesto de los rasgos documentados de ASCENSUS"
+        },
+        {
+            "keyword": "pintura abstracta verde de gran formato con líneas de horizonte",
+            "language": "es",
+            "translation": "large green abstract painting with horizon lines",
+            "category": "long_tail",
+            "priority": "high",
+            "breadth": "long-tail",
+            "intent": "commercial",
+            "appliesTo": [
+                "artwork"
+            ],
+            "condition": "compuesto de los rasgos documentados de ASCENSUS"
+        },
+        {
+            "keyword": "vertical green abstract painting on canvas",
+            "language": "en",
+            "translation": "pintura abstracta verde vertical sobre lienzo",
+            "category": "long_tail",
+            "priority": "high",
+            "breadth": "long-tail",
+            "intent": "commercial",
+            "appliesTo": [
+                "artwork"
+            ],
+            "condition": "compuesto de los rasgos documentados de ASCENSUS"
+        },
+        {
+            "keyword": "pintura abstracta verde vertical sobre lienzo",
+            "language": "es",
+            "translation": "vertical green abstract painting on canvas",
+            "category": "long_tail",
+            "priority": "high",
+            "breadth": "long-tail",
+            "intent": "commercial",
+            "appliesTo": [
+                "artwork"
+            ],
+            "condition": "compuesto de los rasgos documentados de ASCENSUS"
+        },
+        {
+            "keyword": "large red abstract painting with incised lines",
+            "language": "en",
+            "translation": "pintura abstracta roja de gran formato con líneas incisas",
+            "category": "long_tail",
+            "priority": "high",
+            "breadth": "long-tail",
+            "intent": "commercial",
+            "appliesTo": [
+                "artwork"
+            ],
+            "condition": "compuesto de los rasgos documentados de VESTIGIA"
+        },
+        {
+            "keyword": "pintura abstracta roja de gran formato con líneas incisas",
+            "language": "es",
+            "translation": "large red abstract painting with incised lines",
+            "category": "long_tail",
+            "priority": "high",
+            "breadth": "long-tail",
+            "intent": "commercial",
+            "appliesTo": [
+                "artwork"
+            ],
+            "condition": "compuesto de los rasgos documentados de VESTIGIA"
+        },
+        {
+            "keyword": "large layered red abstract painting",
+            "language": "en",
+            "translation": "pintura abstracta roja de gran formato en capas",
+            "category": "long_tail",
+            "priority": "high",
+            "breadth": "long-tail",
+            "intent": "commercial",
+            "appliesTo": [
+                "artwork"
+            ],
+            "condition": "compuesto de los rasgos documentados de VESTIGIA"
+        },
+        {
+            "keyword": "pintura abstracta roja de gran formato en capas",
+            "language": "es",
+            "translation": "large layered red abstract painting",
+            "category": "long_tail",
+            "priority": "high",
+            "breadth": "long-tail",
+            "intent": "commercial",
+            "appliesTo": [
+                "artwork"
+            ],
+            "condition": "compuesto de los rasgos documentados de VESTIGIA"
+        },
+        {
+            "keyword": "large red abstract painting with geometric blocks",
+            "language": "en",
+            "translation": "pintura abstracta roja de gran formato con bloques geométricos",
+            "category": "long_tail",
+            "priority": "high",
+            "breadth": "long-tail",
+            "intent": "commercial",
+            "appliesTo": [
+                "artwork"
+            ],
+            "condition": "compuesto de los rasgos documentados de VESTIGIA"
+        },
+        {
+            "keyword": "pintura abstracta roja de gran formato con bloques geométricos",
+            "language": "es",
+            "translation": "large red abstract painting with geometric blocks",
+            "category": "long_tail",
+            "priority": "high",
+            "breadth": "long-tail",
+            "intent": "commercial",
+            "appliesTo": [
+                "artwork"
+            ],
+            "condition": "compuesto de los rasgos documentados de VESTIGIA"
+        },
+        {
+            "keyword": "vertical red abstract painting on canvas",
+            "language": "en",
+            "translation": "pintura abstracta roja vertical sobre lienzo",
+            "category": "long_tail",
+            "priority": "high",
+            "breadth": "long-tail",
+            "intent": "commercial",
+            "appliesTo": [
+                "artwork"
+            ],
+            "condition": "compuesto de los rasgos documentados de VESTIGIA"
+        },
+        {
+            "keyword": "pintura abstracta roja vertical sobre lienzo",
+            "language": "es",
+            "translation": "vertical red abstract painting on canvas",
+            "category": "long_tail",
+            "priority": "high",
+            "breadth": "long-tail",
+            "intent": "commercial",
+            "appliesTo": [
+                "artwork"
+            ],
+            "condition": "compuesto de los rasgos documentados de VESTIGIA"
+        },
+        {
+            "keyword": "large earth tone abstract painting with incised lines",
+            "language": "en",
+            "translation": "pintura abstracta en tonos tierra de gran formato con líneas incisas",
+            "category": "long_tail",
+            "priority": "high",
+            "breadth": "long-tail",
+            "intent": "commercial",
+            "appliesTo": [
+                "artwork"
+            ],
+            "condition": "compuesto de los rasgos documentados de FISSURA"
+        },
+        {
+            "keyword": "pintura abstracta en tonos tierra de gran formato con líneas incisas",
+            "language": "es",
+            "translation": "large earth tone abstract painting with incised lines",
+            "category": "long_tail",
+            "priority": "high",
+            "breadth": "long-tail",
+            "intent": "commercial",
+            "appliesTo": [
+                "artwork"
+            ],
+            "condition": "compuesto de los rasgos documentados de FISSURA"
+        },
+        {
+            "keyword": "large layered earth tone abstract painting",
+            "language": "en",
+            "translation": "pintura abstracta en tonos tierra de gran formato en capas",
+            "category": "long_tail",
+            "priority": "high",
+            "breadth": "long-tail",
+            "intent": "commercial",
+            "appliesTo": [
+                "artwork"
+            ],
+            "condition": "compuesto de los rasgos documentados de FISSURA"
+        },
+        {
+            "keyword": "pintura abstracta en tonos tierra de gran formato en capas",
+            "language": "es",
+            "translation": "large layered earth tone abstract painting",
+            "category": "long_tail",
+            "priority": "high",
+            "breadth": "long-tail",
+            "intent": "commercial",
+            "appliesTo": [
+                "artwork"
+            ],
+            "condition": "compuesto de los rasgos documentados de FISSURA"
+        },
+        {
+            "keyword": "large earth tone abstract painting with geometric blocks",
+            "language": "en",
+            "translation": "pintura abstracta en tonos tierra de gran formato con bloques geométricos",
+            "category": "long_tail",
+            "priority": "high",
+            "breadth": "long-tail",
+            "intent": "commercial",
+            "appliesTo": [
+                "artwork"
+            ],
+            "condition": "compuesto de los rasgos documentados de FISSURA"
+        },
+        {
+            "keyword": "pintura abstracta en tonos tierra de gran formato con bloques geométricos",
+            "language": "es",
+            "translation": "large earth tone abstract painting with geometric blocks",
+            "category": "long_tail",
+            "priority": "high",
+            "breadth": "long-tail",
+            "intent": "commercial",
+            "appliesTo": [
+                "artwork"
+            ],
+            "condition": "compuesto de los rasgos documentados de FISSURA"
+        },
+        {
+            "keyword": "horizontal earth tone abstract painting on canvas",
+            "language": "en",
+            "translation": "pintura abstracta en tonos tierra horizontal sobre lienzo",
+            "category": "long_tail",
+            "priority": "high",
+            "breadth": "long-tail",
+            "intent": "commercial",
+            "appliesTo": [
+                "artwork"
+            ],
+            "condition": "compuesto de los rasgos documentados de FISSURA"
+        },
+        {
+            "keyword": "pintura abstracta en tonos tierra horizontal sobre lienzo",
+            "language": "es",
+            "translation": "horizontal earth tone abstract painting on canvas",
+            "category": "long_tail",
+            "priority": "high",
+            "breadth": "long-tail",
+            "intent": "commercial",
+            "appliesTo": [
+                "artwork"
+            ],
+            "condition": "compuesto de los rasgos documentados de FISSURA"
+        },
+        {
+            "keyword": "horizontal blue abstract painting on canvas",
+            "language": "en",
+            "translation": "pintura abstracta azul horizontal sobre lienzo",
+            "category": "long_tail",
+            "priority": "high",
+            "breadth": "long-tail",
+            "intent": "commercial",
+            "appliesTo": [
+                "artwork"
+            ],
+            "condition": "compuesto de los rasgos documentados de LUX REMOTA"
+        },
+        {
+            "keyword": "pintura abstracta azul horizontal sobre lienzo",
+            "language": "es",
+            "translation": "horizontal blue abstract painting on canvas",
+            "category": "long_tail",
+            "priority": "high",
+            "breadth": "long-tail",
+            "intent": "commercial",
+            "appliesTo": [
+                "artwork"
+            ],
+            "condition": "compuesto de los rasgos documentados de LUX REMOTA"
+        },
+        {
+            "keyword": "large orange abstract painting with horizon lines",
+            "language": "en",
+            "translation": "pintura abstracta naranja de gran formato con líneas de horizonte",
+            "category": "long_tail",
+            "priority": "high",
+            "breadth": "long-tail",
+            "intent": "commercial",
+            "appliesTo": [
+                "artwork"
+            ],
+            "condition": "compuesto de los rasgos documentados de SOL DIVISUS"
+        },
+        {
+            "keyword": "pintura abstracta naranja de gran formato con líneas de horizonte",
+            "language": "es",
+            "translation": "large orange abstract painting with horizon lines",
+            "category": "long_tail",
+            "priority": "high",
+            "breadth": "long-tail",
+            "intent": "commercial",
+            "appliesTo": [
+                "artwork"
+            ],
+            "condition": "compuesto de los rasgos documentados de SOL DIVISUS"
+        },
+        {
+            "keyword": "horizontal orange abstract painting on canvas",
+            "language": "en",
+            "translation": "pintura abstracta naranja horizontal sobre lienzo",
+            "category": "long_tail",
+            "priority": "high",
+            "breadth": "long-tail",
+            "intent": "commercial",
+            "appliesTo": [
+                "artwork"
+            ],
+            "condition": "compuesto de los rasgos documentados de SOL DIVISUS"
+        },
+        {
+            "keyword": "pintura abstracta naranja horizontal sobre lienzo",
+            "language": "es",
+            "translation": "horizontal orange abstract painting on canvas",
+            "category": "long_tail",
+            "priority": "high",
+            "breadth": "long-tail",
+            "intent": "commercial",
+            "appliesTo": [
+                "artwork"
+            ],
+            "condition": "compuesto de los rasgos documentados de SOL DIVISUS"
+        },
+        {
+            "keyword": "large multicolor abstract painting with incised lines",
+            "language": "en",
+            "translation": "pintura abstracta multicolor de gran formato con líneas incisas",
+            "category": "long_tail",
+            "priority": "high",
+            "breadth": "long-tail",
+            "intent": "commercial",
+            "appliesTo": [
+                "artwork"
+            ],
+            "condition": "compuesto de los rasgos documentados de INTERVALLUM"
+        },
+        {
+            "keyword": "pintura abstracta multicolor de gran formato con líneas incisas",
+            "language": "es",
+            "translation": "large multicolor abstract painting with incised lines",
+            "category": "long_tail",
+            "priority": "high",
+            "breadth": "long-tail",
+            "intent": "commercial",
+            "appliesTo": [
+                "artwork"
+            ],
+            "condition": "compuesto de los rasgos documentados de INTERVALLUM"
+        },
+        {
+            "keyword": "large layered multicolor abstract painting",
+            "language": "en",
+            "translation": "pintura abstracta multicolor de gran formato en capas",
+            "category": "long_tail",
+            "priority": "high",
+            "breadth": "long-tail",
+            "intent": "commercial",
+            "appliesTo": [
+                "artwork"
+            ],
+            "condition": "compuesto de los rasgos documentados de INTERVALLUM"
+        },
+        {
+            "keyword": "pintura abstracta multicolor de gran formato en capas",
+            "language": "es",
+            "translation": "large layered multicolor abstract painting",
+            "category": "long_tail",
+            "priority": "high",
+            "breadth": "long-tail",
+            "intent": "commercial",
+            "appliesTo": [
+                "artwork"
+            ],
+            "condition": "compuesto de los rasgos documentados de INTERVALLUM"
+        },
+        {
+            "keyword": "large multicolor abstract painting with geometric blocks",
+            "language": "en",
+            "translation": "pintura abstracta multicolor de gran formato con bloques geométricos",
+            "category": "long_tail",
+            "priority": "high",
+            "breadth": "long-tail",
+            "intent": "commercial",
+            "appliesTo": [
+                "artwork"
+            ],
+            "condition": "compuesto de los rasgos documentados de INTERVALLUM"
+        },
+        {
+            "keyword": "pintura abstracta multicolor de gran formato con bloques geométricos",
+            "language": "es",
+            "translation": "large multicolor abstract painting with geometric blocks",
+            "category": "long_tail",
+            "priority": "high",
+            "breadth": "long-tail",
+            "intent": "commercial",
+            "appliesTo": [
+                "artwork"
+            ],
+            "condition": "compuesto de los rasgos documentados de INTERVALLUM"
+        },
+        {
+            "keyword": "vertical multicolor abstract painting on canvas",
+            "language": "en",
+            "translation": "pintura abstracta multicolor vertical sobre lienzo",
+            "category": "long_tail",
+            "priority": "high",
+            "breadth": "long-tail",
+            "intent": "commercial",
+            "appliesTo": [
+                "artwork"
+            ],
+            "condition": "compuesto de los rasgos documentados de INTERVALLUM"
+        },
+        {
+            "keyword": "pintura abstracta multicolor vertical sobre lienzo",
+            "language": "es",
+            "translation": "vertical multicolor abstract painting on canvas",
+            "category": "long_tail",
+            "priority": "high",
+            "breadth": "long-tail",
+            "intent": "commercial",
+            "appliesTo": [
+                "artwork"
+            ],
+            "condition": "compuesto de los rasgos documentados de INTERVALLUM"
+        },
+        {
+            "keyword": "large teal abstract painting with incised lines",
+            "language": "en",
+            "translation": "pintura abstracta turquesa de gran formato con líneas incisas",
+            "category": "long_tail",
+            "priority": "high",
+            "breadth": "long-tail",
+            "intent": "commercial",
+            "appliesTo": [
+                "artwork"
+            ],
+            "condition": "compuesto de los rasgos documentados de TRIA"
+        },
+        {
+            "keyword": "pintura abstracta turquesa de gran formato con líneas incisas",
+            "language": "es",
+            "translation": "large teal abstract painting with incised lines",
+            "category": "long_tail",
+            "priority": "high",
+            "breadth": "long-tail",
+            "intent": "commercial",
+            "appliesTo": [
+                "artwork"
+            ],
+            "condition": "compuesto de los rasgos documentados de TRIA"
+        },
+        {
+            "keyword": "large layered teal abstract painting",
+            "language": "en",
+            "translation": "pintura abstracta turquesa de gran formato en capas",
+            "category": "long_tail",
+            "priority": "high",
+            "breadth": "long-tail",
+            "intent": "commercial",
+            "appliesTo": [
+                "artwork"
+            ],
+            "condition": "compuesto de los rasgos documentados de TRIA"
+        },
+        {
+            "keyword": "pintura abstracta turquesa de gran formato en capas",
+            "language": "es",
+            "translation": "large layered teal abstract painting",
+            "category": "long_tail",
+            "priority": "high",
+            "breadth": "long-tail",
+            "intent": "commercial",
+            "appliesTo": [
+                "artwork"
+            ],
+            "condition": "compuesto de los rasgos documentados de TRIA"
+        },
+        {
+            "keyword": "large teal abstract painting with geometric blocks",
+            "language": "en",
+            "translation": "pintura abstracta turquesa de gran formato con bloques geométricos",
+            "category": "long_tail",
+            "priority": "high",
+            "breadth": "long-tail",
+            "intent": "commercial",
+            "appliesTo": [
+                "artwork"
+            ],
+            "condition": "compuesto de los rasgos documentados de TRIA"
+        },
+        {
+            "keyword": "pintura abstracta turquesa de gran formato con bloques geométricos",
+            "language": "es",
+            "translation": "large teal abstract painting with geometric blocks",
+            "category": "long_tail",
+            "priority": "high",
+            "breadth": "long-tail",
+            "intent": "commercial",
+            "appliesTo": [
+                "artwork"
+            ],
+            "condition": "compuesto de los rasgos documentados de TRIA"
+        },
+        {
+            "keyword": "horizontal teal abstract painting on canvas",
+            "language": "en",
+            "translation": "pintura abstracta turquesa horizontal sobre lienzo",
+            "category": "long_tail",
+            "priority": "high",
+            "breadth": "long-tail",
+            "intent": "commercial",
+            "appliesTo": [
+                "artwork"
+            ],
+            "condition": "compuesto de los rasgos documentados de TRIA"
+        },
+        {
+            "keyword": "pintura abstracta turquesa horizontal sobre lienzo",
+            "language": "es",
+            "translation": "horizontal teal abstract painting on canvas",
+            "category": "long_tail",
+            "priority": "high",
+            "breadth": "long-tail",
+            "intent": "commercial",
+            "appliesTo": [
+                "artwork"
+            ],
+            "condition": "compuesto de los rasgos documentados de TRIA"
+        },
+        {
+            "keyword": "horizontal green abstract painting on canvas",
+            "language": "en",
+            "translation": "pintura abstracta verde horizontal sobre lienzo",
+            "category": "long_tail",
+            "priority": "high",
+            "breadth": "long-tail",
+            "intent": "commercial",
+            "appliesTo": [
+                "artwork"
+            ],
+            "condition": "compuesto de los rasgos documentados de NEXUS"
+        },
+        {
+            "keyword": "pintura abstracta verde horizontal sobre lienzo",
+            "language": "es",
+            "translation": "horizontal green abstract painting on canvas",
+            "category": "long_tail",
+            "priority": "high",
+            "breadth": "long-tail",
+            "intent": "commercial",
+            "appliesTo": [
+                "artwork"
+            ],
+            "condition": "compuesto de los rasgos documentados de NEXUS"
+        },
+        {
+            "keyword": "large ochre abstract painting with incised lines",
+            "language": "en",
+            "translation": "pintura abstracta ocre de gran formato con líneas incisas",
+            "category": "long_tail",
+            "priority": "high",
+            "breadth": "long-tail",
+            "intent": "commercial",
+            "appliesTo": [
+                "artwork"
+            ],
+            "condition": "compuesto de los rasgos documentados de QUINQUE"
+        },
+        {
+            "keyword": "pintura abstracta ocre de gran formato con líneas incisas",
+            "language": "es",
+            "translation": "large ochre abstract painting with incised lines",
+            "category": "long_tail",
+            "priority": "high",
+            "breadth": "long-tail",
+            "intent": "commercial",
+            "appliesTo": [
+                "artwork"
+            ],
+            "condition": "compuesto de los rasgos documentados de QUINQUE"
+        },
+        {
+            "keyword": "large layered ochre abstract painting",
+            "language": "en",
+            "translation": "pintura abstracta ocre de gran formato en capas",
+            "category": "long_tail",
+            "priority": "high",
+            "breadth": "long-tail",
+            "intent": "commercial",
+            "appliesTo": [
+                "artwork"
+            ],
+            "condition": "compuesto de los rasgos documentados de QUINQUE"
+        },
+        {
+            "keyword": "pintura abstracta ocre de gran formato en capas",
+            "language": "es",
+            "translation": "large layered ochre abstract painting",
+            "category": "long_tail",
+            "priority": "high",
+            "breadth": "long-tail",
+            "intent": "commercial",
+            "appliesTo": [
+                "artwork"
+            ],
+            "condition": "compuesto de los rasgos documentados de QUINQUE"
+        },
+        {
+            "keyword": "large ochre abstract painting with geometric blocks",
+            "language": "en",
+            "translation": "pintura abstracta ocre de gran formato con bloques geométricos",
+            "category": "long_tail",
+            "priority": "high",
+            "breadth": "long-tail",
+            "intent": "commercial",
+            "appliesTo": [
+                "artwork"
+            ],
+            "condition": "compuesto de los rasgos documentados de QUINQUE"
+        },
+        {
+            "keyword": "pintura abstracta ocre de gran formato con bloques geométricos",
+            "language": "es",
+            "translation": "large ochre abstract painting with geometric blocks",
+            "category": "long_tail",
+            "priority": "high",
+            "breadth": "long-tail",
+            "intent": "commercial",
+            "appliesTo": [
+                "artwork"
+            ],
+            "condition": "compuesto de los rasgos documentados de QUINQUE"
+        },
+        {
+            "keyword": "vertical ochre abstract painting on canvas",
+            "language": "en",
+            "translation": "pintura abstracta ocre vertical sobre lienzo",
+            "category": "long_tail",
+            "priority": "high",
+            "breadth": "long-tail",
+            "intent": "commercial",
+            "appliesTo": [
+                "artwork"
+            ],
+            "condition": "compuesto de los rasgos documentados de QUINQUE"
+        },
+        {
+            "keyword": "pintura abstracta ocre vertical sobre lienzo",
+            "language": "es",
+            "translation": "vertical ochre abstract painting on canvas",
+            "category": "long_tail",
+            "priority": "high",
+            "breadth": "long-tail",
+            "intent": "commercial",
+            "appliesTo": [
+                "artwork"
+            ],
+            "condition": "compuesto de los rasgos documentados de QUINQUE"
+        },
+        {
+            "keyword": "large blue abstract painting with horizon lines",
+            "language": "en",
+            "translation": "pintura abstracta azul de gran formato con líneas de horizonte",
+            "category": "long_tail",
+            "priority": "high",
+            "breadth": "long-tail",
+            "intent": "commercial",
+            "appliesTo": [
+                "artwork"
+            ],
+            "condition": "compuesto de los rasgos documentados de GRADUS"
+        },
+        {
+            "keyword": "pintura abstracta azul de gran formato con líneas de horizonte",
+            "language": "es",
+            "translation": "large blue abstract painting with horizon lines",
+            "category": "long_tail",
+            "priority": "high",
+            "breadth": "long-tail",
+            "intent": "commercial",
+            "appliesTo": [
+                "artwork"
+            ],
+            "condition": "compuesto de los rasgos documentados de GRADUS"
+        }
+    ],
+    "keywordConflicts": [
+        {
+            "keyword": "contemporary abstract painting",
+            "affected": "21 de 21 obras",
+            "type": "sin poder de diferenciacion",
+            "recommendation": "Sirve en la pagina de artista o de serie, no como keyword principal de una obra: no distingue una de otra."
+        },
+        {
+            "keyword": "original abstract painting",
+            "affected": "21 de 21 obras",
+            "type": "sin poder de diferenciacion",
+            "recommendation": "Sirve en la pagina de artista o de serie, no como keyword principal de una obra: no distingue una de otra."
+        },
+        {
+            "keyword": "contemporary abstract artist",
+            "affected": "21 de 21 obras",
+            "type": "sin poder de diferenciacion",
+            "recommendation": "Sirve en la pagina de artista o de serie, no como keyword principal de una obra: no distingue una de otra."
+        },
+        {
+            "keyword": "abstract painter",
+            "affected": "21 de 21 obras",
+            "type": "sin poder de diferenciacion",
+            "recommendation": "Sirve en la pagina de artista o de serie, no como keyword principal de una obra: no distingue una de otra."
+        },
+        {
+            "keyword": "abstract art on canvas",
+            "affected": "21 de 21 obras",
+            "type": "sin poder de diferenciacion",
+            "recommendation": "Sirve en la pagina de artista o de serie, no como keyword principal de una obra: no distingue una de otra."
+        },
+        {
+            "keyword": "original abstract art",
+            "affected": "21 de 21 obras",
+            "type": "sin poder de diferenciacion",
+            "recommendation": "Sirve en la pagina de artista o de serie, no como keyword principal de una obra: no distingue una de otra."
+        },
+        {
+            "keyword": "contemporary painting",
+            "affected": "21 de 21 obras",
+            "type": "sin poder de diferenciacion",
+            "recommendation": "Sirve en la pagina de artista o de serie, no como keyword principal de una obra: no distingue una de otra."
+        },
+        {
+            "keyword": "abstract art",
+            "affected": "21 de 21 obras",
+            "type": "sin poder de diferenciacion",
+            "recommendation": "Sirve en la pagina de artista o de serie, no como keyword principal de una obra: no distingue una de otra."
+        },
+        {
+            "keyword": "contemporary art",
+            "affected": "21 de 21 obras",
+            "type": "sin poder de diferenciacion",
+            "recommendation": "Sirve en la pagina de artista o de serie, no como keyword principal de una obra: no distingue una de otra."
+        },
+        {
+            "keyword": "painting on canvas",
+            "affected": "21 de 21 obras",
+            "type": "sin poder de diferenciacion",
+            "recommendation": "Sirve en la pagina de artista o de serie, no como keyword principal de una obra: no distingue una de otra."
+        },
+        {
+            "keyword": "large abstract painting",
+            "affected": "21 de 21 obras",
+            "type": "sin poder de diferenciacion",
+            "recommendation": "Sirve en la pagina de artista o de serie, no como keyword principal de una obra: no distingue una de otra."
+        },
+        {
+            "keyword": "original canvas painting",
+            "affected": "21 de 21 obras",
+            "type": "sin poder de diferenciacion",
+            "recommendation": "Sirve en la pagina de artista o de serie, no como keyword principal de una obra: no distingue una de otra."
+        },
+        {
+            "keyword": "territorial abstraction",
+            "affected": "21 de 21 obras",
+            "type": "sin poder de diferenciacion",
+            "recommendation": "Sirve en la pagina de artista o de serie, no como keyword principal de una obra: no distingue una de otra."
+        },
+        {
+            "keyword": "structural abstraction",
+            "affected": "21 de 21 obras",
+            "type": "sin poder de diferenciacion",
+            "recommendation": "Sirve en la pagina de artista o de serie, no como keyword principal de una obra: no distingue una de otra."
+        },
+        {
+            "keyword": "minimalist abstract painting",
+            "affected": "21 de 21 obras",
+            "type": "sin poder de diferenciacion",
+            "recommendation": "Sirve en la pagina de artista o de serie, no como keyword principal de una obra: no distingue una de otra."
+        },
+        {
+            "keyword": "brutalist abstract painting",
+            "affected": "21 de 21 obras",
+            "type": "sin poder de diferenciacion",
+            "recommendation": "Sirve en la pagina de artista o de serie, no como keyword principal de una obra: no distingue una de otra."
+        },
+        {
+            "keyword": "geometric abstract painting",
+            "affected": "21 de 21 obras",
+            "type": "sin poder de diferenciacion",
+            "recommendation": "Sirve en la pagina de artista o de serie, no como keyword principal de una obra: no distingue una de otra."
+        },
+        {
+            "keyword": "color field painting",
+            "affected": "21 de 21 obras",
+            "type": "sin poder de diferenciacion",
+            "recommendation": "Sirve en la pagina de artista o de serie, no como keyword principal de una obra: no distingue una de otra."
+        },
+        {
+            "keyword": "textured abstract painting",
+            "affected": "21 de 21 obras",
+            "type": "sin poder de diferenciacion",
+            "recommendation": "Sirve en la pagina de artista o de serie, no como keyword principal de una obra: no distingue una de otra."
+        },
+        {
+            "keyword": "material abstraction",
+            "affected": "21 de 21 obras",
+            "type": "sin poder de diferenciacion",
+            "recommendation": "Sirve en la pagina de artista o de serie, no como keyword principal de una obra: no distingue una de otra."
+        },
+        {
+            "keyword": "architectural abstraction",
+            "affected": "21 de 21 obras",
+            "type": "sin poder de diferenciacion",
+            "recommendation": "Sirve en la pagina de artista o de serie, no como keyword principal de una obra: no distingue una de otra."
+        },
+        {
+            "keyword": "contemplative abstract painting",
+            "affected": "21 de 21 obras",
+            "type": "sin poder de diferenciacion",
+            "recommendation": "Sirve en la pagina de artista o de serie, no como keyword principal de una obra: no distingue una de otra."
+        },
+        {
+            "keyword": "abstract landscape painting",
+            "affected": "21 de 21 obras",
+            "type": "sin poder de diferenciacion",
+            "recommendation": "Sirve en la pagina de artista o de serie, no como keyword principal de una obra: no distingue una de otra."
+        },
+        {
+            "keyword": "geological abstraction",
+            "affected": "21 de 21 obras",
+            "type": "sin poder de diferenciacion",
+            "recommendation": "Sirve en la pagina de artista o de serie, no como keyword principal de una obra: no distingue una de otra."
+        },
+        {
+            "keyword": "layered abstract painting",
+            "affected": "21 de 21 obras",
+            "type": "sin poder de diferenciacion",
+            "recommendation": "Sirve en la pagina de artista o de serie, no como keyword principal de una obra: no distingue una de otra."
+        },
+        {
+            "keyword": "stratified surface",
+            "affected": "21 de 21 obras",
+            "type": "sin poder de diferenciacion",
+            "recommendation": "Sirve en la pagina de artista o de serie, no como keyword principal de una obra: no distingue una de otra."
+        },
+        {
+            "keyword": "geometric blocks",
+            "affected": "21 de 21 obras",
+            "type": "sin poder de diferenciacion",
+            "recommendation": "Sirve en la pagina de artista o de serie, no como keyword principal de una obra: no distingue una de otra."
+        },
+        {
+            "keyword": "monolithic forms",
+            "affected": "21 de 21 obras",
+            "type": "sin poder de diferenciacion",
+            "recommendation": "Sirve en la pagina de artista o de serie, no como keyword principal de una obra: no distingue una de otra."
+        },
+        {
+            "keyword": "horizon lines",
+            "affected": "18 de 21 obras",
+            "type": "sin poder de diferenciacion",
+            "recommendation": "Sirve en la pagina de artista o de serie, no como keyword principal de una obra: no distingue una de otra."
+        },
+        {
+            "keyword": "textured surface",
+            "affected": "20 de 21 obras",
+            "type": "sin poder de diferenciacion",
+            "recommendation": "Sirve en la pagina de artista o de serie, no como keyword principal de una obra: no distingue una de otra."
+        },
+        {
+            "keyword": "impasto painting",
+            "affected": "20 de 21 obras",
+            "type": "sin poder de diferenciacion",
+            "recommendation": "Sirve en la pagina de artista o de serie, no como keyword principal de una obra: no distingue una de otra."
+        },
+        {
+            "keyword": "spatial tension",
+            "affected": "21 de 21 obras",
+            "type": "sin poder de diferenciacion",
+            "recommendation": "Sirve en la pagina de artista o de serie, no como keyword principal de una obra: no distingue una de otra."
+        },
+        {
+            "keyword": "acrylic and oil on canvas",
+            "affected": "21 de 21 obras",
+            "type": "sin poder de diferenciacion",
+            "recommendation": "Sirve en la pagina de artista o de serie, no como keyword principal de una obra: no distingue una de otra."
+        },
+        {
+            "keyword": "acrylic and oil painting",
+            "affected": "21 de 21 obras",
+            "type": "sin poder de diferenciacion",
+            "recommendation": "Sirve en la pagina de artista o de serie, no como keyword principal de una obra: no distingue una de otra."
+        },
+        {
+            "keyword": "palette knife painting",
+            "affected": "21 de 21 obras",
+            "type": "sin poder de diferenciacion",
+            "recommendation": "Sirve en la pagina de artista o de serie, no como keyword principal de una obra: no distingue una de otra."
+        },
+        {
+            "keyword": "layered paint",
+            "affected": "21 de 21 obras",
+            "type": "sin poder de diferenciacion",
+            "recommendation": "Sirve en la pagina de artista o de serie, no como keyword principal de una obra: no distingue una de otra."
+        },
+        {
+            "keyword": "textured canvas",
+            "affected": "21 de 21 obras",
+            "type": "sin poder de diferenciacion",
+            "recommendation": "Sirve en la pagina de artista o de serie, no como keyword principal de una obra: no distingue una de otra."
+        },
+        {
+            "keyword": "glazed surface",
+            "affected": "21 de 21 obras",
+            "type": "sin poder de diferenciacion",
+            "recommendation": "Sirve en la pagina de artista o de serie, no como keyword principal de una obra: no distingue una de otra."
+        },
+        {
+            "keyword": "large original painting",
+            "affected": "21 de 21 obras",
+            "type": "sin poder de diferenciacion",
+            "recommendation": "Sirve en la pagina de artista o de serie, no como keyword principal de una obra: no distingue una de otra."
+        },
+        {
+            "keyword": "original abstract paintings for sale",
+            "affected": "21 de 21 obras",
+            "type": "sin poder de diferenciacion",
+            "recommendation": "Sirve en la pagina de artista o de serie, no como keyword principal de una obra: no distingue una de otra."
+        },
+        {
+            "keyword": "buy original abstract painting",
+            "affected": "21 de 21 obras",
+            "type": "sin poder de diferenciacion",
+            "recommendation": "Sirve en la pagina de artista o de serie, no como keyword principal de una obra: no distingue una de otra."
+        },
+        {
+            "keyword": "abstract art for sale",
+            "affected": "21 de 21 obras",
+            "type": "sin poder de diferenciacion",
+            "recommendation": "Sirve en la pagina de artista o de serie, no como keyword principal de una obra: no distingue una de otra."
+        },
+        {
+            "keyword": "buy art directly from the artist",
+            "affected": "21 de 21 obras",
+            "type": "sin poder de diferenciacion",
+            "recommendation": "Sirve en la pagina de artista o de serie, no como keyword principal de una obra: no distingue una de otra."
+        },
+        {
+            "keyword": "contemporary art for collectors",
+            "affected": "21 de 21 obras",
+            "type": "sin poder de diferenciacion",
+            "recommendation": "Sirve en la pagina de artista o de serie, no como keyword principal de una obra: no distingue una de otra."
+        },
+        {
+            "keyword": "large original painting for sale",
+            "affected": "21 de 21 obras",
+            "type": "sin poder de diferenciacion",
+            "recommendation": "Sirve en la pagina de artista o de serie, no como keyword principal de una obra: no distingue una de otra."
+        },
+        {
+            "keyword": "original painting on canvas for sale",
+            "affected": "21 de 21 obras",
+            "type": "sin poder de diferenciacion",
+            "recommendation": "Sirve en la pagina de artista o de serie, no como keyword principal de una obra: no distingue una de otra."
+        },
+        {
+            "keyword": "Maurizio Valch",
+            "affected": "21 de 21 obras",
+            "type": "sin poder de diferenciacion",
+            "recommendation": "Sirve en la pagina de artista o de serie, no como keyword principal de una obra: no distingue una de otra."
+        },
+        {
+            "keyword": "Maurizio Valch abstract painting",
+            "affected": "21 de 21 obras",
+            "type": "sin poder de diferenciacion",
+            "recommendation": "Sirve en la pagina de artista o de serie, no como keyword principal de una obra: no distingue una de otra."
+        },
+        {
+            "keyword": "Maurizio Valch artist",
+            "affected": "21 de 21 obras",
+            "type": "sin poder de diferenciacion",
+            "recommendation": "Sirve en la pagina de artista o de serie, no como keyword principal de una obra: no distingue una de otra."
+        },
+        {
+            "keyword": "Maurizio Valch original artwork",
+            "affected": "21 de 21 obras",
+            "type": "sin poder de diferenciacion",
+            "recommendation": "Sirve en la pagina de artista o de serie, no como keyword principal de una obra: no distingue una de otra."
+        },
+        {
+            "keyword": "divided composition",
+            "affected": "20 de 21 obras",
+            "type": "sin poder de diferenciacion",
+            "recommendation": "Sirve en la pagina de artista o de serie, no como keyword principal de una obra: no distingue una de otra."
+        },
+        {
+            "keyword": "turquoise / teal",
+            "affected": "FISSURA, TRIA, NEXUS",
+            "type": "traduccion solapada",
+            "recommendation": "En castellano las dos caen en \"turquesa\". Usar \"turquesa\" para teal y \"azul turquesa\" para turquoise, o unificar."
+        },
+        {
+            "keyword": "geological abstraction",
+            "affected": "serie STRATA",
+            "type": "contradice los limites interpretativos de la serie",
+            "recommendation": "STRATA declara: \"No reducir a una metafora geologica\". Mantener en baja prioridad y solo en textos informativos."
+        }
+    ],
+    "total": 247
+}

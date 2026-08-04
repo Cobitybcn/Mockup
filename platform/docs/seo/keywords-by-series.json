@@ -1,0 +1,389 @@
+{
+    "generated": "2026-08-04T23:28:23+00:00",
+    "series": [
+        {
+            "series": "PRIMORDIUM",
+            "slug": "primordium",
+            "years": "2025-",
+            "publishedArtworks": 1,
+            "primaryKeyword": {
+                "en": "primordial abstract painting",
+                "es": "pintura abstracta primordial"
+            },
+            "visualKeywords": [
+                "suelo originario",
+                "campos cromaticos",
+                "horizontes",
+                "monolitos",
+                "estructuras elementales"
+            ],
+            "colorKeywords": [
+                "red abstract painting",
+                "yellow abstract painting",
+                "orange abstract painting"
+            ],
+            "conceptualKeywords": [
+                "territory",
+                "memory",
+                "erosion",
+                "sediment",
+                "materiality",
+                "perception",
+                "transformation",
+                "silence",
+                "inner landscape",
+                "threshold",
+                "passage",
+                "boundary",
+                "emergence",
+                "distance",
+                "presence"
+            ],
+            "commercialKeywords": [
+                "original abstract paintings for sale",
+                "buy art directly from the artist"
+            ],
+            "excludedKeywords": [
+                "mythological painting",
+                "cosmogony art"
+            ],
+            "notes": "Sus limites prohiben la lectura religiosa o mitologica del origen."
+        },
+        {
+            "series": "EMERSIO",
+            "slug": "emersio",
+            "years": "2025-",
+            "publishedArtworks": 2,
+            "primaryKeyword": {
+                "en": "abstract painting of emerging forms",
+                "es": "pintura abstracta de formas emergentes"
+            },
+            "visualKeywords": [
+                "aparicion de la forma",
+                "separacion del territorio",
+                "presencia incipiente"
+            ],
+            "colorKeywords": [
+                "blue abstract painting",
+                "green abstract painting",
+                "orange abstract painting",
+                "yellow abstract painting",
+                "white abstract painting"
+            ],
+            "conceptualKeywords": [
+                "territory",
+                "memory",
+                "erosion",
+                "sediment",
+                "materiality",
+                "perception",
+                "transformation",
+                "silence",
+                "inner landscape",
+                "threshold",
+                "passage",
+                "boundary",
+                "emergence",
+                "distance",
+                "presence"
+            ],
+            "commercialKeywords": [
+                "original abstract paintings for sale",
+                "buy art directly from the artist"
+            ],
+            "excludedKeywords": [
+                "creation painting",
+                "religious art"
+            ],
+            "notes": "Sus limites prohiben el relato biblico de la creacion."
+        },
+        {
+            "series": "STRATA",
+            "slug": "strata",
+            "years": "2026-",
+            "publishedArtworks": 10,
+            "primaryKeyword": {
+                "en": "stratified abstract painting",
+                "es": "pintura abstracta estratificada"
+            },
+            "visualKeywords": [
+                "capas",
+                "incisiones",
+                "campos cromaticos densos",
+                "bloques endurecidos",
+                "erosion"
+            ],
+            "colorKeywords": [
+                "red abstract painting",
+                "blue abstract painting",
+                "green abstract painting",
+                "earth tone abstract painting",
+                "turquoise abstract painting",
+                "teal abstract painting",
+                "ochre abstract painting",
+                "yellow abstract painting"
+            ],
+            "conceptualKeywords": [
+                "territory",
+                "memory",
+                "erosion",
+                "sediment",
+                "materiality",
+                "perception",
+                "transformation",
+                "silence",
+                "inner landscape",
+                "threshold",
+                "passage",
+                "boundary",
+                "emergence",
+                "distance",
+                "presence"
+            ],
+            "commercialKeywords": [
+                "original abstract paintings for sale",
+                "buy art directly from the artist"
+            ],
+            "excludedKeywords": [
+                "staircase painting",
+                "geological illustration",
+                "landscape painting"
+            ],
+            "notes": "STRATA no usa escaleras. Sus limites prohiben reducirla a metafora geologica."
+        },
+        {
+            "series": "VORTEX",
+            "slug": "vortex",
+            "years": "2017-2019",
+            "publishedArtworks": 0,
+            "primaryKeyword": {
+                "en": "abstract painting with concentric forms",
+                "es": "pintura abstracta de formas concéntricas"
+            },
+            "visualKeywords": [
+                "torsion",
+                "circulacion",
+                "dinamica centrifuga y centripeta"
+            ],
+            "colorKeywords": [],
+            "conceptualKeywords": [
+                "territory",
+                "memory",
+                "erosion",
+                "sediment",
+                "materiality",
+                "perception",
+                "transformation",
+                "silence",
+                "inner landscape",
+                "threshold",
+                "passage",
+                "boundary",
+                "emergence",
+                "distance",
+                "presence"
+            ],
+            "commercialKeywords": [
+                "original abstract paintings for sale",
+                "buy art directly from the artist"
+            ],
+            "excludedKeywords": [
+                "chaos art",
+                "psychological art"
+            ],
+            "notes": "Sin obras publicadas hoy: 2017-2019."
+        },
+        {
+            "series": "FACIES",
+            "slug": "facies",
+            "years": "2019-2023",
+            "publishedArtworks": 0,
+            "primaryKeyword": {
+                "en": "abstract face painting",
+                "es": "pintura abstracta de rostros"
+            },
+            "visualKeywords": [
+                "rostro como superficie construida y fragmentada",
+                "planos",
+                "divisiones"
+            ],
+            "colorKeywords": [],
+            "conceptualKeywords": [
+                "territory",
+                "memory",
+                "erosion",
+                "sediment",
+                "materiality",
+                "perception",
+                "transformation",
+                "silence",
+                "inner landscape",
+                "threshold",
+                "passage",
+                "boundary",
+                "emergence",
+                "distance",
+                "presence"
+            ],
+            "commercialKeywords": [
+                "original abstract paintings for sale",
+                "buy art directly from the artist"
+            ],
+            "excludedKeywords": [
+                "portrait painting",
+                "psychological portrait"
+            ],
+            "notes": "Sin obras publicadas hoy: 2019-2023."
+        },
+        {
+            "series": "MARE SOMNIORUM",
+            "slug": "mare-somniorum",
+            "years": "2024-",
+            "publishedArtworks": 2,
+            "primaryKeyword": {
+                "en": "oneiric abstract landscape painting",
+                "es": "pintura de paisaje abstracto onírico"
+            },
+            "visualKeywords": [
+                "horizontes amplios",
+                "luz",
+                "planos abiertos",
+                "bloques aislados"
+            ],
+            "colorKeywords": [
+                "red abstract painting",
+                "blue abstract painting",
+                "ochre abstract painting",
+                "orange abstract painting"
+            ],
+            "conceptualKeywords": [
+                "territory",
+                "memory",
+                "erosion",
+                "sediment",
+                "materiality",
+                "perception",
+                "transformation",
+                "silence",
+                "inner landscape",
+                "threshold",
+                "passage",
+                "boundary",
+                "emergence",
+                "distance",
+                "presence"
+            ],
+            "commercialKeywords": [
+                "original abstract paintings for sale",
+                "buy art directly from the artist"
+            ],
+            "excludedKeywords": [
+                "seascape",
+                "mediterranean painting",
+                "surrealist painting"
+            ],
+            "notes": "Sus limites prohiben la lectura literal de mar o costa y la surrealista automatica."
+        },
+        {
+            "series": "LIMINA",
+            "slug": "limina",
+            "years": "2025-",
+            "publishedArtworks": 2,
+            "primaryKeyword": {
+                "en": "abstract painting of thresholds and passage",
+                "es": "pintura abstracta de umbrales y tránsito"
+            },
+            "visualKeywords": [
+                "planos superpuestos",
+                "horizontes",
+                "recintos",
+                "escaleras",
+                "bloques suspendidos"
+            ],
+            "colorKeywords": [
+                "multicolor abstract painting",
+                "blue abstract painting",
+                "black abstract painting",
+                "earth tone abstract painting"
+            ],
+            "conceptualKeywords": [
+                "territory",
+                "memory",
+                "erosion",
+                "sediment",
+                "materiality",
+                "perception",
+                "transformation",
+                "silence",
+                "inner landscape",
+                "threshold",
+                "passage",
+                "boundary",
+                "emergence",
+                "distance",
+                "presence"
+            ],
+            "commercialKeywords": [
+                "original abstract paintings for sale",
+                "buy art directly from the artist"
+            ],
+            "excludedKeywords": [
+                "cityscape",
+                "urban landscape painting"
+            ],
+            "notes": "A diferencia de STRATA, LIMINA si incluye escaleras entre sus elementos."
+        },
+        {
+            "series": "SITUS",
+            "slug": "situs",
+            "years": "2025-",
+            "publishedArtworks": 4,
+            "primaryKeyword": {
+                "en": "minimalist abstract painting with negative space",
+                "es": "pintura abstracta minimalista con espacio negativo"
+            },
+            "visualKeywords": [
+                "posicion",
+                "distancia",
+                "formas elementales situadas",
+                "vacio activo"
+            ],
+            "colorKeywords": [
+                "blue abstract painting",
+                "yellow abstract painting",
+                "rust abstract painting",
+                "red abstract painting",
+                "earth tone abstract painting",
+                "ochre abstract painting",
+                "black abstract painting"
+            ],
+            "conceptualKeywords": [
+                "territory",
+                "memory",
+                "erosion",
+                "sediment",
+                "materiality",
+                "perception",
+                "transformation",
+                "silence",
+                "inner landscape",
+                "threshold",
+                "passage",
+                "boundary",
+                "emergence",
+                "distance",
+                "presence"
+            ],
+            "commercialKeywords": [
+                "original abstract paintings for sale",
+                "buy art directly from the artist"
+            ],
+            "excludedKeywords": [
+                "house painting",
+                "architecture painting",
+                "map painting"
+            ],
+            "notes": "Sus limites prohiben leer los rectangulos como casas, puertas o monolitos."
+        }
+    ]
+}
