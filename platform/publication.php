@@ -1032,6 +1032,57 @@ function pub_page_chip(string $status): array
                                             <button type="button" class="pub-copy" data-copy-text="<?= pub_h($imageCaption) ?>"><?= pub_h(t('Copy caption', 'Copiar pie')) ?></button>
                                         </figure>
                                     <?php endforeach; ?>
+                                    <?php
+                                    // TODO EL MATERIAL del canal, no solo el top-5 de la
+                                    // composicion: el canal es manual y el que elige cuales
+                                    // suben es el artista. Los de la composicion van primero
+                                    // con su pie del paquete; aca sigue el resto de los
+                                    // mockups de la obra con su pie propio si ya lo tienen.
+                                    $saatchiPackageFiles = [];
+                                    foreach ((array)($saatchiPackage['images'] ?? []) as $packageImage) {
+                                        $saatchiPackageFiles[basename((string)($packageImage['file'] ?? ''))] = true;
+                                    }
+                                    $saatchiExtras = [];
+                                    try {
+                                        $todosStmt = $pdo->prepare("SELECT m.id, m.mockup_file, COALESCE(MAX(s.saatchi_caption),'') AS sheet_caption
+                                            FROM mockups m
+                                            LEFT JOIN mockup_sheets s ON s.user_id=m.user_id AND (s.mockup_id=m.id OR s.mockup_file=m.mockup_file)
+                                            WHERE m.user_id=? AND COALESCE(m.mockup_file,'')<>'' AND (
+                                                m.source_artwork_id=? OR (COALESCE(m.artwork_group_id,0)>0
+                                                    AND m.artwork_group_id=(SELECT COALESCE(artwork_group_id,0) FROM artworks WHERE id=? AND user_id=?))
+                                            )
+                                            GROUP BY m.id, m.mockup_file ORDER BY m.id");
+                                        $todosStmt->execute([$userId, (int)$doc['artwork']['id'], (int)$doc['artwork']['id'], $userId]);
+                                        $saatchiEditorialLector = new BilingualEditorialService($pdo);
+                                        foreach ($todosStmt->fetchAll(PDO::FETCH_ASSOC) as $saatchiExtraRow) {
+                                            $saatchiExtraFile = basename((string)$saatchiExtraRow['mockup_file']);
+                                            if ($saatchiExtraFile === '' || isset($saatchiPackageFiles[$saatchiExtraFile]) || isset($saatchiExtras[$saatchiExtraFile])) {
+                                                continue;
+                                            }
+                                            $saatchiExtraPie = trim((string)$saatchiExtraRow['sheet_caption']);
+                                            if ($saatchiExtraPie === '') {
+                                                try {
+                                                    $saatchiExtraContenido = (array)$saatchiEditorialLector->get($userId, 'mockup', (int)$saatchiExtraRow['id'], $saatchiDescriptionLocale)['content'];
+                                                    $saatchiExtraPie = trim((string)($saatchiExtraContenido['saatchi_caption'] ?? ''));
+                                                } catch (Throwable) {
+                                                    $saatchiExtraPie = '';
+                                                }
+                                            }
+                                            $saatchiExtras[$saatchiExtraFile] = $saatchiExtraPie;
+                                        }
+                                    } catch (Throwable) {
+                                        $saatchiExtras = [];
+                                    }
+                                    ?>
+                                    <?php foreach ($saatchiExtras as $saatchiExtraFile => $saatchiExtraPie): ?>
+                                        <figure>
+                                            <img src="<?= pub_h(pub_media_url((string)$saatchiExtraFile)) ?>" alt="" loading="lazy">
+                                            <figcaption><?= pub_h($saatchiExtraPie !== '' ? $saatchiExtraPie : t('No caption yet', 'Sin pie todavía')) ?></figcaption>
+                                            <?php if ($saatchiExtraPie !== ''): ?>
+                                                <button type="button" class="pub-copy" data-copy-text="<?= pub_h($saatchiExtraPie) ?>"><?= pub_h(t('Copy caption', 'Copiar pie')) ?></button>
+                                            <?php endif; ?>
+                                        </figure>
+                                    <?php endforeach; ?>
                                     <a class="pub-decision pub-decision--save pub-dist-download" href="publication_saatchi_package.php?id=<?= (int)$doc['artwork']['id'] ?>">
                                         <span><?= pub_h(t('Download', 'Descargar')) ?><br><?= pub_h(t('package .zip', 'paquete .zip')) ?></span>
                                     </a>

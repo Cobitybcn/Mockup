@@ -42,6 +42,52 @@ try {
         throw new RuntimeException(t('The composition has no images yet.', 'La composición todavía no tiene imágenes.'));
     }
 
+    $descriptionLocaleForExtras = (string)(((array)($payload['locales']['adaptations'] ?? []))[0] ?? ($payload['locales']['working'] ?? 'es'));
+
+    // TODO EL MATERIAL: el canal es manual y el que elige cuales imagenes
+    // suben es el artista. Las de la composicion van primero con su pie del
+    // paquete; despues viaja el resto de los mockups de la obra, cada uno con
+    // su pie propio si ya lo tiene, bajo su propia seccion en las notas.
+    $enPaquete = [];
+    foreach ($images as $image) {
+        $enPaquete[basename((string)($image['file'] ?? ''))] = true;
+    }
+    try {
+        $todosStmt = $pdo->prepare("SELECT m.id, m.mockup_file, COALESCE(MAX(s.saatchi_caption),'') AS sheet_caption
+            FROM mockups m
+            LEFT JOIN mockup_sheets s ON s.user_id=m.user_id AND (s.mockup_id=m.id OR s.mockup_file=m.mockup_file)
+            WHERE m.user_id=? AND COALESCE(m.mockup_file,'')<>'' AND (
+                m.source_artwork_id=? OR (COALESCE(m.artwork_group_id,0)>0
+                    AND m.artwork_group_id=(SELECT COALESCE(artwork_group_id,0) FROM artworks WHERE id=? AND user_id=?))
+            )
+            GROUP BY m.id, m.mockup_file ORDER BY m.id");
+        $todosStmt->execute([$userId, $artworkId, $artworkId, $userId]);
+        $lectorEditorial = new BilingualEditorialService($pdo);
+        foreach ($todosStmt->fetchAll(PDO::FETCH_ASSOC) as $extraRow) {
+            $extraFile = basename((string)$extraRow['mockup_file']);
+            if ($extraFile === '' || isset($enPaquete[$extraFile])) {
+                continue;
+            }
+            $enPaquete[$extraFile] = true;
+            $extraPie = trim((string)$extraRow['sheet_caption']);
+            if ($extraPie === '') {
+                try {
+                    $extraContenido = (array)$lectorEditorial->get($userId, 'mockup', (int)$extraRow['id'], $descriptionLocaleForExtras)['content'];
+                    $extraPie = trim((string)($extraContenido['saatchi_caption'] ?? ''));
+                } catch (Throwable) {
+                    $extraPie = '';
+                }
+            }
+            $images[] = [
+                'file' => $extraFile,
+                'caption' => [$descriptionLocaleForExtras => $extraPie],
+                'extra_view' => true,
+            ];
+        }
+    } catch (Throwable) {
+        // Sin extras el paquete sigue siendo el de la composicion.
+    }
+
     $slug = (string)($payload['sources']['page']['slug'] ?? 'obra');
     $keywordLocale = (string)($package['keywords_locale'] ?? 'en');
     $descriptionLocale = (string)(((array)($payload['locales']['adaptations'] ?? []))[0] ?? ($payload['locales']['working'] ?? 'es'));
@@ -76,9 +122,16 @@ try {
     }
     $zip = new ZipPackage($zipPath);
     $position = 0;
+    $extrasAnunciados = false;
     foreach ($images as $image) {
         $file = basename((string)($image['file'] ?? ''));
         if ($file === '') continue;
+        if (!empty($image['extra_view']) && !$extrasAnunciados) {
+            $extrasAnunciados = true;
+            $lines[] = '';
+            $lines[] = 'ADDITIONAL VIEWS — el resto de los mockups de la obra. Saatchi acepta';
+            $lines[] = 'pocas imagenes por listing: elegi libremente cuales subis.';
+        }
         $path = RESULTS_DIR . DIRECTORY_SEPARATOR . $file;
         if (!is_file($path) && StorageService::isGcsActive()) {
             StorageService::downloadFile('results/' . $file, $path);

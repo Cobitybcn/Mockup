@@ -262,6 +262,19 @@ function run_website_board_grouping_regression_tests(): void
         $publicationPage,
         'con la composicion vacia ("mostrar todos"), elegir portada escribe el set completo con la elegida al frente: la galeria no colapsa a una sola imagen'
     );
+    // Enmienda 2026-08-05: el canal de Saatchi es manual — el que elige cuales
+    // imagenes suben es el artista, y el sistema le da TODO el material.
+    TestHarness::assertContains(
+        'TODO EL MATERIAL',
+        $publicationPage,
+        'el paso de Saatchi muestra todos los mockups de la obra con su pie, no solo el top-5 de la composicion'
+    );
+    $saatchiZip = (string)file_get_contents($platformRoot . '/publication_saatchi_package.php');
+    TestHarness::assertContains(
+        'ADDITIONAL VIEWS',
+        $saatchiZip,
+        'el .zip tambien lleva todo el material: composicion primero, el resto de los mockups despues, cada uno con su pie'
+    );
     $publicationCss = (string)file_get_contents($platformRoot . '/publication.css');
     TestHarness::assertContains(
         '.pub-media-card.is-cover .pub-media-make-cover',
