@@ -291,6 +291,15 @@ steps:
         # Usa la identidad del worker porque llama al modelo, y va montado al
         # Cloud SQL para leer las obras. Corre DENTRO de produccion a proposito:
         # desde afuera no hay acceso a las imagenes, y los pies saldrian vacios.
+        #
+        # En una release solo-web no se construye imagen de worker para este
+        # commit: el job ya desplegado sigue apuntando a un worker vigente y
+        # queda como esta. Exigir la imagen aca tumbaba la release entera.
+        source /workspace/deploy-scope.env
+        if [[ "$$WORKER_REQUIRED" != "true" ]]; then
+          echo "Skipping backfill job deploy: this release only changes the web surface."
+          exit 0
+        fi
         image="${_REGION}-docker.pkg.dev/$PROJECT_ID/${_REPOSITORY}/${_WORKER_SERVICE}"
         digest="$$(gcloud artifacts docker images describe "$${image}:$COMMIT_SHA" \
           --project="$PROJECT_ID" \

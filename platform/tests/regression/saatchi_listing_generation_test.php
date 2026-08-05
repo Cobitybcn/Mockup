@@ -285,6 +285,26 @@ function run_saatchi_listing_generation_tests(): void
         'un pie reutilizado pasa por la misma ley que uno recien generado: reutilizar no es eximir'
     );
 
+    // ————— El mismo sistema en los dos idiomas —————
+    // El listing tambien se deriva en el idioma de trabajo del artista: mismo
+    // contrato, misma lectura como fuente, sin pies (viven en una sola columna,
+    // del canal real) y sin tumbar el paso si falla.
+    TestHarness::assertTrue(
+        $validar(['description' => 'Esta obra explora un campo, ' . str_repeat('a', 860)]) !== [],
+        'la formula generica se rechaza tambien en espanol: derivar no es bajar la vara'
+    );
+    TestHarness::assertContains(
+        'public function generate(int $userId, int $artworkId, ?string $targetLocale = null, bool $withCaptions = true)',
+        $servicioTexto,
+        'generate() acepta el idioma de destino: la pasada en idioma de trabajo deriva, no traduce'
+    );
+    $workerFuente = (string)file_get_contents($platformRoot . '/app/Services/BilingualEditorialGenerationWorker.php');
+    TestHarness::assertContains(
+        'generate($userId, $entityId, $workingLocale, false)',
+        $workerFuente,
+        'el paso de canal escribe el listing tambien en el idioma de trabajo, sin pies'
+    );
+
     // ————— Un paquete que no quedo en ok no se guarda solo —————
     $service = new SaatchiListingService(new PDO('sqlite::memory:'));
     $rechazado = false;
