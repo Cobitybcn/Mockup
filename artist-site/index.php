@@ -1942,6 +1942,19 @@ function render_published_artwork(array $site, array $artwork): void
             </dl>
             <div class="prose">
                 <?php if ($conceptualNote): ?><h2><?= e(site_t('Conceptual Note', 'Nota conceptual')) ?></h2><p><?= nl2br(e($conceptualNote)) ?></p><?php endif; ?>
+                <?php
+                // Analisis segun las influencias DECLARADAS, por obra: prosa
+                // unica de ESTA pieza, nunca el parrafo del perfil repetido.
+                // Sin texto no hay seccion: la seleccion es la regla.
+                $artistInfluences = trim((string)($artwork['influences_analysis'] ?? ''));
+                ?>
+                <?php if ($artistInfluences !== ''): ?>
+                    <div class="artwork-artist-influences" id="artist-influences">
+                        <h2><?= e(site_t('Artist influences', 'Influencias del artista')) ?></h2>
+                        <p><?= nl2br(e($artistInfluences)) ?></p>
+                        <p><a href="<?= e(url_for('artist')) ?>#influences"><?= e(site_t('All declared affinities', 'Todas las afinidades declaradas')) ?> <span aria-hidden="true">→</span></a></p>
+                    </div>
+                <?php endif; ?>
                 <?php if ($studioInformation): ?><h2><?= e(site_t('Studio Information', 'Información de estudio')) ?></h2><p><?= nl2br(e($studioInformation)) ?></p><?php endif; ?>
                 <?php if (!empty($facts['shipping_notes'])): ?><h2><?= e(site_t('Shipping', 'Envío')) ?></h2><p><?= nl2br(e($facts['shipping_notes'])) ?></p><?php endif; ?>
             </div>
