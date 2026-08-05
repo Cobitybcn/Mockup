@@ -39,6 +39,17 @@ if (!preg_match('/\$artistInfluences\s*!==\s*\'\'/', $index)) {
     exit(1);
 }
 
+// Y tiene que vivir en la plantilla que REALMENTE sirve la pagina de obra:
+// render_published_artwork. La primera version la puso en otra plantilla del
+// mismo archivo y la seccion quedo invisible con los datos perfectos.
+$inicio = (int)strpos($index, 'function render_published_artwork');
+$fin = (int)strpos($index, 'function ', $inicio + 10);
+$plantillaViva = substr($index, $inicio, max(0, $fin - $inicio));
+if (!str_contains($plantillaViva, 'artwork-artist-influences')) {
+    fwrite(STDERR, "FAIL: la seccion debe estar dentro de render_published_artwork, la plantilla que sirve la pagina publicada.\n");
+    exit(1);
+}
+
 // En el estado vacio del castellano el campo tambien se limpia: una pagina en
 // espanol sin traduccion no hereda el ingles.
 if (substr_count($catalog, "\$row['influences_analysis'] = '';") < 1) {
