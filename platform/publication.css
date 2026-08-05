@@ -63,6 +63,10 @@ details.pub-panel > summary:hover { background: var(--surface-soft); }
 .pub-media-card figcaption { overflow: hidden; color: var(--ink); font-family: var(--font-serif); font-size: 14px; line-height: 1.2; text-overflow: ellipsis; white-space: nowrap; }
 .pub-media-toggle { display: inline-flex; align-items: center; justify-content: center; min-height: 34px; border: 1px solid var(--line-dark); border-radius: 2px; background: var(--surface-soft); color: var(--ink); font: 700 11px/1 var(--font-sans); letter-spacing: .07em; text-transform: uppercase; cursor: pointer; }
 .pub-media-toggle:hover { background: #efeae2; }
+.pub-media-make-cover { display: inline-flex; align-items: center; justify-content: center; min-height: 30px; margin-top: 6px; border: 1px solid var(--line-dark); border-radius: 2px; background: transparent; color: var(--ink); font: 700 10px/1 var(--font-sans); letter-spacing: .07em; text-transform: uppercase; cursor: pointer; }
+.pub-media-make-cover:hover { background: #efeae2; }
+/* La que ya es portada no ofrece serlo. */
+.pub-media-card.is-cover .pub-media-make-cover { display: none; }
 .pub-media-card.is-selected { border-color: rgba(154, 123, 86, .75); box-shadow: inset 0 -3px rgba(154, 123, 86, .45); }
 .pub-media-card.is-selected .pub-media-toggle { border-color: #91a88b; background: #b9c9b4; color: #2f4231; }
 .pub-media-order { position: absolute; top: 12px; left: 12px; display: none; width: 26px; height: 26px; align-items: center; justify-content: center; border-radius: 50%; background: rgba(47, 66, 49, .88); color: #fffaf7; font: 800 12px/1 var(--font-sans); }
