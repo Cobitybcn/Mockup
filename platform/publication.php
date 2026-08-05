@@ -1630,17 +1630,25 @@ function pub_page_chip(string $status): array
                 render();
             });
         }
-        // Elegir la portada con un click, como siempre se pudo: la manda al
-        // frente de la composicion (la incluye si hacia falta). La regla no
+        // Elegir la portada con un click, como siempre se pudo. La regla no
         // cambia — la 1 manda en todo — cambia el gesto: elegir no exige
         // arrastrar una tarjeta a traves de toda la grilla.
         const makeCover = card.querySelector('[data-media-make-cover]');
         if (makeCover) {
             makeCover.addEventListener('click', () => {
                 const id = idOf(card);
-                const position = order.indexOf(id);
-                if (position !== -1) order.splice(position, 1);
-                order.unshift(id);
+                if (order.length === 0) {
+                    // Composicion vacia = "mostrar todos". Elegir portada no
+                    // colapsa la galeria a una sola imagen: se escribe el set
+                    // completo con la elegida al frente — el mismo criterio
+                    // que uso la migracion del 2026-08-01 para no perder
+                    // ninguna galeria.
+                    order = [id, ...cards.map(idOf).filter(v => v !== id)];
+                } else {
+                    const position = order.indexOf(id);
+                    if (position !== -1) order.splice(position, 1);
+                    order.unshift(id);
+                }
                 render();
             });
         }

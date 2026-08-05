@@ -257,6 +257,11 @@ function run_website_board_grouping_regression_tests(): void
         $publicationPage,
         'el boton manda la imagen al frente de la composicion: una sola decision, mismo lugar'
     );
+    TestHarness::assertContains(
+        'order = [id, ...cards.map(idOf).filter(v => v !== id)]',
+        $publicationPage,
+        'con la composicion vacia ("mostrar todos"), elegir portada escribe el set completo con la elegida al frente: la galeria no colapsa a una sola imagen'
+    );
     $publicationCss = (string)file_get_contents($platformRoot . '/publication.css');
     TestHarness::assertContains(
         '.pub-media-card.is-cover .pub-media-make-cover',
