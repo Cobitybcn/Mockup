@@ -300,16 +300,20 @@ steps:
           exit 1
         fi
 
+        # GCS_BUCKET_NAME es imprescindible: los pies de imagen se escriben
+        # MIRANDO cada imagen, y sin el bucket el job no las alcanza. La primera
+        # version de este job lo omitio y las 20 obras salieron con el listing
+        # correcto y los pies vacios.
+        #
+        # Los comentarios van ACA y no entre las lineas del comando: cada una
+        # termina en "\", asi que un "#" en el medio no comenta nada — se lo come
+        # el comando como argumento y el despliegue falla. Paso exactamente eso.
         gcloud run jobs deploy "${_SAATCHI_BACKFILL_JOB}" \
           --project="$PROJECT_ID" \
           --region="${_REGION}" \
           --image="$${image}@$${digest}" \
           --service-account="${_WORKER_RUNTIME_SA_NAME}@$PROJECT_ID.iam.gserviceaccount.com" \
           --set-cloudsql-instances="${_DB_INSTANCE_CONNECTION_NAME}" \
-          # GCS_BUCKET_NAME es imprescindible: los pies de imagen se escriben
-          # MIRANDO cada imagen, y sin el bucket el job no las alcanza. La
-          # primera version de este job lo omitio y las 20 obras salieron con el
-          # listing correcto y los pies vacios.
           --set-env-vars="APP_ENV=production,APP_ALLOW_SCHEMA_MIGRATIONS=false,DB_CONNECTION=mysql,DB_DATABASE=${_DB_DATABASE},DB_USERNAME=${_DB_USERNAME},DB_SOCKET=/cloudsql/${_DB_INSTANCE_CONNECTION_NAME},FEATURE_WEBSITE_ENABLED=true,FEATURE_SOCIAL_ENABLED=true,FEATURE_VIDEO_ENABLED=true,GCS_BUCKET_NAME=${_GCS_BUCKET_NAME},GCP_PROJECT_ID=$PROJECT_ID,VERTEX_PROJECT_ID=$PROJECT_ID,VERTEX_LOCATION=global,APP_MODE=gemini,IMAGE_PROVIDER=gemini" \
           --set-secrets="DB_PASSWORD=${_DB_PASSWORD_SECRET}:latest" \
           --command=php \
