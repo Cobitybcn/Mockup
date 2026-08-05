@@ -705,6 +705,39 @@ p {
     line-height: 1.45;
 }
 
+/* Influencias del artista en la pagina de obra: misma lengua visual que las
+   tarjetas de Afinidades — nombre en serif display, congruencia en gris. */
+.artwork-artist-influences {
+    margin-top: 34px;
+}
+
+.artwork-artist-influences article {
+    margin-top: 18px;
+    padding: 14px 16px;
+    border: 1px solid var(--line);
+    background: #fffaf2;
+}
+
+.artwork-artist-influences article span {
+    display: block;
+    color: var(--ink);
+    font-family: var(--serif-display);
+    font-size: clamp(17px, 1.45vw, 20px);
+    line-height: 1.05;
+}
+
+.artwork-artist-influences article p {
+    margin-top: 8px;
+    color: var(--muted);
+    font-size: 14px;
+    line-height: 1.5;
+}
+
+.artwork-artist-influences__link {
+    margin-top: 14px;
+    font-size: 14px;
+}
+
 .artist-studio-grid {
     display: grid;
     grid-template-columns: repeat(3, minmax(0, 1fr));

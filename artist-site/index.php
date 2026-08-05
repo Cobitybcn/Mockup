@@ -1951,8 +1951,25 @@ function render_published_artwork(array $site, array $artwork): void
                 <?php if ($artistInfluences !== ''): ?>
                     <div class="artwork-artist-influences" id="artist-influences">
                         <h2><?= e(site_t('Artist influences', 'Influencias del artista')) ?></h2>
-                        <p><?= nl2br(e($artistInfluences)) ?></p>
-                        <p><a href="<?= e(url_for('artist')) ?>#influences"><?= e(site_t('All declared affinities', 'Todas las afinidades declaradas')) ?> <span aria-hidden="true">→</span></a></p>
+                        <?php
+                        // Un bloque por afinidad, con la lengua visual de las
+                        // tarjetas de Afinidades: primera linea el nombre,
+                        // debajo la congruencia con ESTA obra. Un bloque sin
+                        // esa forma se muestra como parrafo y listo.
+                        foreach (preg_split('/\R{2,}/u', $artistInfluences) ?: [] as $influenceBlock) {
+                            $influenceBlock = trim((string)$influenceBlock);
+                            if ($influenceBlock === '') continue;
+                            $influenceLines = preg_split('/\R/u', $influenceBlock) ?: [];
+                            $influenceName = trim((string)array_shift($influenceLines));
+                            $influenceBody = trim(implode(' ', array_map('trim', $influenceLines)));
+                            if ($influenceBody === '' || mb_strlen($influenceName) > 60) {
+                                echo '<p>' . nl2br(e($influenceBlock)) . '</p>';
+                                continue;
+                            }
+                            echo '<article><span>' . e($influenceName) . '</span><p>' . e($influenceBody) . '</p></article>';
+                        }
+                        ?>
+                        <p class="artwork-artist-influences__link"><a href="<?= e(url_for('artist')) ?>#influences"><?= e(site_t('All declared affinities', 'Todas las afinidades declaradas')) ?> <span aria-hidden="true">→</span></a></p>
                     </div>
                 <?php endif; ?>
                 <?php if ($studioInformation): ?><h2><?= e(site_t('Studio Information', 'Información de estudio')) ?></h2><p><?= nl2br(e($studioInformation)) ?></p><?php endif; ?>
