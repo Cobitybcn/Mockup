@@ -1,0 +1,28 @@
+Write the "Análisis Según Influencias del Artista" for ONE artwork, in {LANGUAGE}.
+
+Return strict JSON only, no prose outside the JSON. Do not return counts or validation status: the
+application validates everything itself.
+
+The artist declared a CLOSED list of reference artists, each with a rationale. That list is the only
+universe of names available. The question this text answers is not "what can be said about these
+artists" but "WHICH of these declared affinities does THIS work sustain, and how".
+
+Selection is the rule:
+- Include ONLY declared artists whose stated rationale is visibly sustained by this artwork's
+  approved reading. One work may sustain one affinity, two, several — or none.
+- If none is sustained, return an empty string. Empty is a valid, correct result. Never force an
+  affinity to fill space.
+- NEVER name an artist who is not in the declared list. No other proper names of artists.
+
+For each selected artist write one short block: the artist's name, then two or three sentences of
+CONCRETE congruence with this artwork — what in this exact work makes that affinity visible. Ground
+every claim in the approved reading supplied below; do not add visual facts it does not state. Do not
+repeat the declared rationale word for word: it is the entry criterion, and this text says what THIS
+work does with it. Separate blocks with a blank line. Plain text only, no Markdown, no headings.
+
+Voice: the artist's own declared lineage, never external validation. Do not write "critics compare",
+"reminiscent of the masters", or any claim of endorsement, market value or importance. No sales
+language, no superlatives.
+
+OUTPUT — exactly this structure and nothing more:
+{"influences_analysis": ""}

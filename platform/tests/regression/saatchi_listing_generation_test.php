@@ -250,6 +250,41 @@ function run_saatchi_listing_generation_tests(): void
         'y nombra el paso de canal cuando es el que fallo'
     );
 
+    // ————— Los pies nacen en el examen editorial de cada mockup —————
+    // La imagen ya viaja en el job del mockup: el pie sale de esa misma llamada,
+    // para TODOS los mockups. El paso de canal reutiliza los que existen y
+    // cumplen la ley, y solo genera los que faltan.
+    $adaptadorFuente = (string)file_get_contents($platformRoot . '/app/Services/BilingualEditorialAdapterService.php');
+    TestHarness::assertContains(
+        'private function discardInvalidSaatchiCaption',
+        $adaptadorFuente,
+        'un pie que no pasa la ley deterministica se descarta solo: el resto del texto del mockup se guarda igual'
+    );
+    TestHarness::assertContains(
+        'saatchi_caption is a DOCUMENTARY label',
+        $adaptadorFuente,
+        'el prompt del mockup pide el pie con las mismas reglas del canal: documental, 4-7 palabras, sin escenario'
+    );
+    TestHarness::assertTrue(
+        !str_contains($paqueteFuente, 'saatchi_caption'),
+        'el pie es OPCIONAL: no esta en los required paths del paquete y ningun mockup existente pasa a pendiente por no tenerlo'
+    );
+    TestHarness::assertContains(
+        "'captions_reused'",
+        $servicioTexto,
+        'el paso de canal informa cuantos pies reutilizo del examen de los mockups'
+    );
+    TestHarness::assertContains(
+        '$pendientes === []',
+        $servicioTexto,
+        'con todos los pies ya escritos por los mockups no hay llamada al modelo: la reutilizacion es real, no decorativa'
+    );
+    TestHarness::assertContains(
+        'validateCaptions([$image[\'file\'] => $pie], [$image[\'file\']]) === []',
+        $servicioTexto,
+        'un pie reutilizado pasa por la misma ley que uno recien generado: reutilizar no es eximir'
+    );
+
     // ————— Un paquete que no quedo en ok no se guarda solo —————
     $service = new SaatchiListingService(new PDO('sqlite::memory:'));
     $rechazado = false;

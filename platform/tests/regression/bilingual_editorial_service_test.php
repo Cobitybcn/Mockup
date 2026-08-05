@@ -670,8 +670,11 @@ function run_bilingual_editorial_service_tests(): void
     $mockupScreen = (string)file_get_contents($platformRoot . '/mockup_bilingual_experiment.php');
     TestHarness::assertContains('data-editorial-adapt', $mockupScreen, 'Mockup muestra la flecha para adaptar el español al inglés internacional');
     TestHarness::assertContains('data-english-status=', $mockupScreen, 'Mockup expone el estado del inglés para mostrar la adaptación cuando corresponde');
-    TestHarness::assertContains('grid-template-rows:auto repeat(7,auto)', $mockupScreen, 'Mockup reserva una fila independiente para cada campo editorial');
-    TestHarness::assertContains('grid-row:1/span 8', $mockupScreen, 'los siete campos del mockup y la cabecera no pueden superponerse');
+    // Estas dos aserciones congelaban el numero de filas (7 y 8): protegian el
+    // mismo defecto que la grilla de la obra ya curo. La cuenta ahora sale de
+    // los campos que realmente hay, igual que alla.
+    TestHarness::assertContains('repeat(<?= count($editorialFields) ?>,auto)', $mockupScreen, 'Mockup reserva una fila por campo editorial, contando los que realmente hay');
+    TestHarness::assertContains('grid-row:1/span <?= count($editorialFields) + 1 ?>', $mockupScreen, 'los campos del mockup y la cabecera no pueden superponerse, tampoco al agregar un campo');
     TestHarness::assertContains('This is not a literal translation', (string)file_get_contents($platformRoot . '/app/Services/BilingualEditorialAdapterService.php'), 'la flecha reconstruye el inglés naturalmente y no hace una traducción literal');
     $albumScreen = (string)file_get_contents($platformRoot . '/root_album.php');
     $masterTitleRead = strpos($albumScreen, "\$title = trim((string)(\$albumArtwork['final_title'] ?? ''));");

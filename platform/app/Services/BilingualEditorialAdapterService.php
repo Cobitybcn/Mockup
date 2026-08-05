@@ -244,6 +244,10 @@ final class BilingualEditorialAdapterService
                 $adapted,
                 $this->entityContext($userId, $entityType, $entityId)
             );
+            $adapted = $this->discardInvalidSaatchiCaption($adapted);
+        }
+        if (in_array($entityType, ['artwork', 'mockup'], true)) {
+            $adapted = $this->constrainInfluencesAnalysis($userId, $adapted);
         }
         if (in_array($entityType, ['artwork', 'mockup'], true)) {
             $adapted = $this->repairEditorialIntegrityIfNeeded(
@@ -329,6 +333,10 @@ final class BilingualEditorialAdapterService
                 $masterStyle
             );
             $proposal = $this->enforceCurrentMockupIdentity($proposal, $context);
+            $proposal = $this->discardInvalidSaatchiCaption($proposal);
+        }
+        if (in_array($entityType, ['artwork', 'mockup'], true)) {
+            $proposal = $this->constrainInfluencesAnalysis($userId, $proposal);
         }
         if (in_array($entityType, ['artwork', 'mockup'], true)) {
             $proposal = $this->repairEditorialIntegrityIfNeeded(
@@ -389,6 +397,10 @@ final class BilingualEditorialAdapterService
                 $proposal,
                 $this->entityContext($userId, $entityType, $entityId)
             );
+            $proposal = $this->discardInvalidSaatchiCaption($proposal);
+        }
+        if (in_array($entityType, ['artwork', 'mockup'], true)) {
+            $proposal = $this->constrainInfluencesAnalysis($userId, $proposal);
         }
         if (!$this->hasMeaningfulContent($proposal)) throw new RuntimeException('La adaptación no produjo contenido utilizable.');
         return ['content' => $proposal, 'status' => 'proposal', 'source_locale' => $sourceLocale, 'target_locale' => $targetLocale];
@@ -711,6 +723,7 @@ RULES
 - Integrate only a few descriptive buyer phrases naturally into short_description and description. Keep transactional phrases exclusively in SEO metadata.
 - alt_text must be visual, precise, accessible and non-commercial.
 - caption must be brief, editorial and use the current universal artwork title.
+- influences_analysis: OPTIONAL. Use DECLARED ARTIST AFFINITIES exclusively for this field and never name those artists in any other field. Select ONLY the declared artists whose stated rationale is visibly sustained by THIS artwork; write one short block per selected artist: the name, then two or three sentences of concrete congruence with this exact work. One work may sustain one affinity, several or none — if none, or if no affinities are declared, return it empty. Empty is a valid result. Never name an artist who is not in the declared list, and never claim external validation.
 RULES
             ,
             'studio_note' => <<<'RULES'
@@ -735,6 +748,8 @@ RULES
 - Generate channel-specific social copy from the same validated reading; do not duplicate one caption across every channel.
 - Keep SEO compact: one catalogue classification, one set of real buyer searches, one SEO title and one SEO description.
 - The mockup's SEO may describe the supported architectural placement, but the linked artwork remains the object being discovered.
+- saatchi_caption is a DOCUMENTARY label for a sales listing image: 4 to 7 words, under 50 characters, sentence case, no final period. Say what this exact image lets a buyer INSPECT (scale, surface, edge, layers, depth, colour transition). Viewpoint words are allowed only when followed by what the view reveals. Never describe the setting as real, never claim the artwork hangs anywhere, and never use digital, render, generated, AI, mockup, simulation, virtual or synthetic. No analogy, no emotion, no title, no artist name. If nothing inspectable can be said, return it empty.
+- influences_analysis: OPTIONAL. Use DECLARED ARTIST AFFINITIES exclusively for this field and never name those artists in any other field. Select ONLY the declared artists whose stated rationale is visibly sustained by THIS mockup's staging of the artwork; a mockup may sustain fewer affinities than its artwork, or none. Write one short block per selected artist: the name, then two or three sentences of concrete congruence with this exact view. If none is sustained, or no affinities are declared, return it empty. Empty is a valid result. Never name an artist who is not in the declared list.
 RULES
         };
         $entityRules = str_replace('{MASTER_LANGUAGE}', $masterName, $entityRules);
@@ -749,6 +764,16 @@ RULES
         if ($materialsAndProcess === '') {
             $materialsAndProcess = 'No artist-authored materials or process information was supplied.';
         }
+        // Las afinidades declaradas viajan SOLO como insumo del campo
+        // influences_analysis. El resto de la lectura sigue sin verlas: un
+        // nombre en una descripcion es validacion prestada, y eso esta
+        // prohibido desde antes de que este campo existiera.
+        $declaredAffinities = in_array($entityType, ['artwork', 'mockup'], true)
+            ? ArtistReferences::forPrompt((string)($profile['reference_artists'] ?? ''), $masterLocale)
+            : '';
+        $affinitiesBlock = $declaredAffinities !== ''
+            ? "DECLARED ARTIST AFFINITIES (closed list — input ONLY for influences_analysis; each line is name: rationale)\n{$declaredAffinities}"
+            : 'DECLARED ARTIST AFFINITIES\nNone declared. influences_analysis must be an empty string.';
         $searchIntentRules = SearchIntentPrompt::forEntity($entityType);
         $integrityRules = in_array($entityType, ['artwork', 'mockup'], true)
             ? EditorialIntegrityPolicy::promptRules($entityType)
@@ -790,6 +815,8 @@ CORE RULES
 
 ARTIST PROFILE
 {$profileContext}
+
+{$affinitiesBlock}
 
 CONFIRMED MATERIALS AND PROCESS
 {$materialsAndProcess}
@@ -970,6 +997,10 @@ RULES;
                 'seo_description' => '',
                 'alt_text' => '',
                 'caption' => '',
+                // Analisis segun las influencias DECLARADAS del artista. Campo
+                // OPCIONAL: vacio es valido, y las referencias del perfil son
+                // insumo de este campo y de ningun otro.
+                'influences_analysis' => '',
                 // Campos propios de Saatchi, con topes en caracteres. Viajan por
                 // la adaptacion como cualquier otro: el listing en ingles los
                 // necesita tanto como el sitio.
@@ -1007,6 +1038,16 @@ RULES;
             'seo_description' => '',
             'alt_text' => '',
             'caption' => '',
+            // Analisis segun las influencias DECLARADAS del artista, mirado a
+            // traves de la puesta en escena de ESTE mockup. Opcional: vacio es
+            // valido y puede sostener menos afinidades que la obra madre.
+            'influences_analysis' => '',
+            // Pie corto de Saatchi, escrito en el mismo examen del mockup: la
+            // imagen ya viaja en esta llamada, asi que el pie sale gratis. Es
+            // OPCIONAL (no esta en los required paths): un pie que no pasa la
+            // ley deterministica se descarta solo, sin invalidar el resto.
+            // El paso de canal reutiliza estos pies y genera solo los que falten.
+            'saatchi_caption' => '',
             'social' => [
                 'website' => [
                     'description' => '', 'caption' => '', 'alt_text' => '',
@@ -1249,6 +1290,51 @@ RULES;
                 : '';
         }
         return $result;
+    }
+
+    /**
+     * El analisis de influencias esta anclado a la lista DECLARADA del perfil:
+     * sin lista no hay campo, y un texto que no nombra a ninguno de los
+     * declarados no esta anclado y se descarta. Vacio es un resultado valido —
+     * la seleccion es la regla, no la obligacion. Se descarta solo este campo;
+     * el resto del texto queda intacto.
+     */
+    private function constrainInfluencesAnalysis(int $userId, array $content): array
+    {
+        if (!array_key_exists('influences_analysis', $content)) {
+            return $content;
+        }
+        $texto = trim((string)$content['influences_analysis']);
+        if ($texto === '') {
+            return $content;
+        }
+        require_once __DIR__ . '/InfluencesAnalysisService.php';
+        $declarados = ArtistReferences::names(
+            (string)(ArtistProfile::findForUser($userId)['reference_artists'] ?? '')
+        );
+        if (InfluencesAnalysisService::validate($texto, $declarados) !== []) {
+            $content['influences_analysis'] = '';
+        }
+        return $content;
+    }
+
+    /**
+     * La ley del pie de Saatchi es deterministica (largo, palabras, no solo
+     * posicion de camara) y un pie que no la pasa NO se escribe: se descarta
+     * solo ese campo y el resto del texto del mockup queda intacto. Es la misma
+     * regla que rige en el paso de canal desde el 2026-08-04.
+     */
+    private function discardInvalidSaatchiCaption(array $content): array
+    {
+        $caption = trim((string)($content['saatchi_caption'] ?? ''));
+        if ($caption === '') {
+            return $content;
+        }
+        require_once __DIR__ . '/SaatchiListingService.php';
+        if (SaatchiListingService::validateCaptions(['mockup' => $caption], ['mockup']) !== []) {
+            $content['saatchi_caption'] = '';
+        }
+        return $content;
     }
 
     private function enforceCurrentMockupIdentity(array $content, array $context): array

@@ -454,55 +454,95 @@ class SaatchiListingService
             }
         }
 
-        $expected = array_column($images, 'file');
         $inspectableFiles = array_column($inspectable, 'file');
         $uninspectableFiles = array_column($uninspectable, 'file');
 
-        $prompt = $this->captionPrompt($images, $inspectableFiles);
-        $parts = [$this->client->textPart($prompt)];
+        // Pies ya escritos por el examen editorial de cada mockup, en la fila
+        // del idioma del listing. Se reutilizan tal cual: la imagen ya fue
+        // mirada por el job que los escribio, y volver a pedirla costaria una
+        // llamada con imagenes que ya se pago. Solo pasan los que cumplen la
+        // ley deterministica; el resto se genera aca como siempre.
+        $reused = [];
+        $editorial = new BilingualEditorialService($this->pdo);
+        $listingLocale = $this->listingLocale($userId);
         foreach ($inspectable as $image) {
-            $parts[] = $this->client->imagePart((string)$image['path']);
+            $mockupId = (int)($image['mockup_id'] ?? 0);
+            if ($mockupId <= 0) {
+                continue;
+            }
+            try {
+                $contenido = (array)$editorial->get($userId, 'mockup', $mockupId, $listingLocale)['content'];
+            } catch (Throwable) {
+                continue;
+            }
+            $pie = trim((string)($contenido['saatchi_caption'] ?? ''));
+            if ($pie !== '' && self::validateCaptions([$image['file'] => $pie], [$image['file']]) === []) {
+                $reused[$image['file']] = $pie;
+            }
         }
 
-        $parsed = self::parseCaptionOutput($this->decode($this->client->generateText($parts)), $expected);
-        $errors = self::validateCaptions($parsed['captions'], $inspectableFiles, $uninspectableFiles);
+        $pendientes = array_values(array_filter(
+            $inspectable,
+            static fn (array $image): bool => !isset($reused[$image['file']])
+        ));
+        $pendingFiles = array_column($pendientes, 'file');
 
         $repaired = false;
-        if ($errors !== []) {
-            $repaired = true;
-            $repairParts = array_merge(
-                [$this->client->textPart($this->captionRepairPrompt($prompt, $parsed['captions'], $errors))],
-                array_slice($parts, 1)
-            );
-            try {
-                $parsed = self::parseCaptionOutput($this->decode($this->client->generateText($repairParts)), $expected);
-                $errors = self::validateCaptions($parsed['captions'], $inspectableFiles, $uninspectableFiles);
-            } catch (RuntimeException $e) {
-                $errors[] = 'La reparacion de los pies no devolvio JSON valido: ' . $e->getMessage();
+        if ($pendientes === []) {
+            // Todos los pies vinieron del examen de los mockups: no hay llamada.
+            $parsed = ['captions' => [], 'unknown' => []];
+            $errors = [];
+        } else {
+            $promptImages = array_merge($pendientes, $uninspectable);
+            $expected = array_column($promptImages, 'file');
+            $prompt = $this->captionPrompt($promptImages, $pendingFiles);
+            $parts = [$this->client->textPart($prompt)];
+            foreach ($pendientes as $image) {
+                $parts[] = $this->client->imagePart((string)$image['path']);
+            }
+
+            $parsed = self::parseCaptionOutput($this->decode($this->client->generateText($parts)), $expected);
+            $errors = self::validateCaptions($parsed['captions'], $pendingFiles, $uninspectableFiles);
+
+            if ($errors !== []) {
+                $repaired = true;
+                $repairParts = array_merge(
+                    [$this->client->textPart($this->captionRepairPrompt($prompt, $parsed['captions'], $errors))],
+                    array_slice($parts, 1)
+                );
+                try {
+                    $parsed = self::parseCaptionOutput($this->decode($this->client->generateText($repairParts)), $expected);
+                    $errors = self::validateCaptions($parsed['captions'], $pendingFiles, $uninspectableFiles);
+                } catch (RuntimeException $e) {
+                    $errors[] = 'La reparacion de los pies no devolvio JSON valido: ' . $e->getMessage();
+                }
+            }
+
+            // Los pies que siguen fallando NO se escriben: se descartan uno por
+            // uno y los demas se guardan igual. Antes un solo pie invalido
+            // bloqueaba a los cuatro que estaban bien.
+            foreach ($pendingFiles as $file) {
+                if (self::validateCaptions($parsed['captions'], [$file]) !== []) {
+                    unset($parsed['captions'][$file]);
+                }
             }
         }
 
-        // Los pies que siguen fallando NO se escriben: se descartan uno por uno y
-        // los demas se guardan igual. Antes un solo pie invalido bloqueaba a los
-        // cuatro que estaban bien.
-        foreach ($inspectableFiles as $file) {
-            if (self::validateCaptions($parsed['captions'], [$file]) !== []) {
-                unset($parsed['captions'][$file]);
-            }
-        }
+        $captions = $reused + $parsed['captions'];
 
         $warnings = [];
         foreach ($uninspectableFiles as $file) {
-            $parsed['captions'][$file] = '';
+            $captions[$file] = '';
             $warnings[] = "La imagen {$file} no se pudo inspeccionar: su pie queda vacio.";
         }
-        foreach ($parsed['unknown'] as $file) {
+        foreach ((array)($parsed['unknown'] ?? []) as $file) {
             $warnings[] = "El modelo devolvio un pie para una imagen que no es de esta obra y se descarto: {$file}.";
         }
 
-        return [$parsed['captions'], $errors, $warnings, [
+        return [$captions, $errors, $warnings, [
             'captions_expected' => count($inspectableFiles),
-            'captions_received' => count(array_filter($parsed['captions'], static fn (string $c): bool => trim($c) !== '')),
+            'captions_received' => count(array_filter($captions, static fn (string $c): bool => trim($c) !== '')),
+            'captions_reused' => count($reused),
             'caption_repair_attempted' => $repaired,
         ]];
     }
@@ -692,7 +732,7 @@ PROMPT;
      */
     private function compositionImages(int $userId, int $artworkId): array
     {
-        $composicion = $this->pdo->prepare("SELECT s.mockup_file, m.selector_state_json
+        $composicion = $this->pdo->prepare("SELECT s.mockup_file, m.id AS mockup_id, m.selector_state_json
             FROM artwork_sheets a
             JOIN publications p ON p.artwork_sheet_id = a.id AND p.user_id = a.user_id
             JOIN publication_items i ON i.publication_id = p.id
@@ -705,7 +745,7 @@ PROMPT;
         $rows = $composicion->fetchAll(PDO::FETCH_ASSOC);
 
         if ($rows === []) {
-            $stmt = $this->pdo->prepare('SELECT m.mockup_file, m.selector_state_json FROM mockups m
+            $stmt = $this->pdo->prepare('SELECT m.mockup_file, m.id AS mockup_id, m.selector_state_json FROM mockups m
                 WHERE m.user_id = ? AND (m.source_artwork_id = ?
                     OR m.artwork_group_id = (SELECT artwork_group_id FROM artworks WHERE id = ?))
                 ORDER BY m.id');
@@ -719,6 +759,7 @@ PROMPT;
             $combination = is_array($state['combination'] ?? null) ? $state['combination'] : [];
             $images[] = [
                 'file' => basename((string)$row['mockup_file']),
+                'mockup_id' => max(0, (int)($row['mockup_id'] ?? 0)),
                 'camera' => trim((string)($combination['camera_slot_name'] ?? '')),
             ];
         }

@@ -65,8 +65,29 @@ final class BilingualEditorialGenerationWorker
                     throw new RuntimeException('Listing: ' . implode(' · ', (array)($listado['validation']['errors'] ?? ['sin detalle'])));
                 }
 
+                // Analisis segun influencias: prosa derivada por idioma de la
+                // lectura de ese idioma, anclada a las afinidades DECLARADAS.
+                // Solo llena el campo si esta vacio (lo editado a mano no se
+                // pisa), vacio es un resultado valido, y un fallo aca es un
+                // aviso: nunca tumba el paso de canal.
+                require_once __DIR__ . '/InfluencesAnalysisService.php';
+                $influencias = new InfluencesAnalysisService($this->pdo);
+                $notasInfluencias = [];
+                $idiomasInfluencias = array_values(array_unique(array_filter([
+                    $workingLocale,
+                    (string)($listado['locale'] ?? ''),
+                ])));
+                foreach ($idiomasInfluencias as $idioma) {
+                    try {
+                        $notasInfluencias[] = $influencias->deriveIfEmpty($userId, $entityId, $idioma);
+                    } catch (Throwable $errorInfluencias) {
+                        $notasInfluencias[] = "influencias {$idioma}: " . $errorInfluencias->getMessage();
+                    }
+                }
+
                 $result = [
                     'channel_texts' => true,
+                    'influences' => $notasInfluencias,
                     'listing_locale' => (string)($listado['locale'] ?? ''),
                     'captions_written' => count(array_filter((array)($listado['captions'] ?? []), static fn ($c): bool => trim((string)$c) !== '')),
                     'notes' => array_values(array_filter(
