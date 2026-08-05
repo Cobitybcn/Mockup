@@ -855,6 +855,7 @@ function pub_page_chip(string $status): array
                                                 <button type="button" class="pub-media-toggle" data-media-toggle
                                                     data-label-add="<?= pub_h(t('Include on page', 'Incluir en la página')) ?>"
                                                     data-label-remove="<?= pub_h(t('Included · remove', 'Incluido · quitar')) ?>"><?= $isSelected ? pub_h(t('Included · remove', 'Incluido · quitar')) : pub_h(t('Include on page', 'Incluir en la página')) ?></button>
+                                                <button type="button" class="pub-media-make-cover" data-media-make-cover><?= pub_h(t('Make cover', 'Hacer portada')) ?></button>
                                             </figure>
                                         <?php endforeach; ?>
                                     </div>
@@ -1626,6 +1627,20 @@ function pub_page_chip(string $status): array
                 const id = idOf(card);
                 const position = order.indexOf(id);
                 if (position === -1) order.push(id); else order.splice(position, 1);
+                render();
+            });
+        }
+        // Elegir la portada con un click, como siempre se pudo: la manda al
+        // frente de la composicion (la incluye si hacia falta). La regla no
+        // cambia — la 1 manda en todo — cambia el gesto: elegir no exige
+        // arrastrar una tarjeta a traves de toda la grilla.
+        const makeCover = card.querySelector('[data-media-make-cover]');
+        if (makeCover) {
+            makeCover.addEventListener('click', () => {
+                const id = idOf(card);
+                const position = order.indexOf(id);
+                if (position !== -1) order.splice(position, 1);
+                order.unshift(id);
                 render();
             });
         }

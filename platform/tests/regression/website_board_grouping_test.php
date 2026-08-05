@@ -243,6 +243,26 @@ function run_website_board_grouping_regression_tests(): void
         $publicationPage,
         'al guardar, la portada del sitio es la primera imagen de la composicion'
     );
+    // Enmienda 2026-08-05: la fusion habia dejado un solo gesto para elegir
+    // portada (arrastrar hasta la posicion 1), peor que el click directo que
+    // siempre existio. El boton "Hacer portada" devuelve el click sin volver a
+    // separar la decision: manda la imagen al frente de la composicion.
+    TestHarness::assertContains(
+        'data-media-make-cover',
+        $publicationPage,
+        'cada tarjeta ofrece "Hacer portada": elegir la portada vuelve a ser un click'
+    );
+    TestHarness::assertContains(
+        'order.unshift(id)',
+        $publicationPage,
+        'el boton manda la imagen al frente de la composicion: una sola decision, mismo lugar'
+    );
+    $publicationCss = (string)file_get_contents($platformRoot . '/publication.css');
+    TestHarness::assertContains(
+        '.pub-media-card.is-cover .pub-media-make-cover',
+        $publicationCss,
+        'la que ya es portada no ofrece serlo'
+    );
     TestHarness::assertContains("['camera_slot_name']", $publicationPage, 'los mockups del selector usan el nombre real de su camara');
     TestHarness::assertTrue(!str_contains($artworkPage, 'website_studio_notes.php?source=artwork:'), 'Artwork reserva su cabecera para el trabajo visual principal');
     TestHarness::assertTrue(!str_contains($seriesPage, 'website_studio_notes.php?source=series:'), 'Series reserva su encabezado para Create Art como unica accion contextual');
