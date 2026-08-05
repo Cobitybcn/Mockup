@@ -115,6 +115,29 @@ function run_artwork_editorial_package_tests(): void
     TestHarness::assertSame('prepare', $audit['items'][1]['action'] ?? '', 'el mockup incompleto prepara ambos borradores');
     TestHarness::assertTrue($audit['can_start'], 'el Decision Block aparece cuando hay alcance y requisitos completos');
 
+    // Obra NUEVA: sin lectura editorial todavia. El primer paquete la genera y
+    // la aprueba (etapa 20 'prepare'), asi que los textos de canal se piden
+    // desde el primer click — un solo pedido produce el editorial completo.
+    $pdo->exec("INSERT INTO artworks VALUES (12,7,'ORIGO NOVA',3,32,'origo-nova.jpg')");
+    $pdo->exec("INSERT INTO mockups VALUES
+        (24,7,12,32,'origo-nova.jpg','nova-a.jpg'),
+        (25,7,12,32,'origo-nova.jpg','nova-b.jpg')");
+    $nueva = (new ArtworkEditorialPackageService($pdo))->audit(7, 12);
+    TestHarness::assertTrue($nueva['prerequisites_ready'], 'la obra nueva cumple el checklist');
+    TestHarness::assertSame(1, $nueva['editorial_pending']['artwork'], 'la obra nueva prepara su lectura');
+    TestHarness::assertSame(2, $nueva['editorial_pending']['mockups'], 'los dos mockups nuevos entran a la orden');
+    TestHarness::assertSame(1, $nueva['editorial_pending']['channel'], 'Saatchi y el vocabulario entran al PRIMER paquete de una obra nueva');
+    $ultimo = $nueva['items'][count($nueva['items']) - 1] ?? [];
+    TestHarness::assertSame('channel', (string)($ultimo['action'] ?? ''), 'el item de canal existe en el alcance');
+    TestHarness::assertSame(40, (int)($ultimo['stage_order'] ?? 0), 'el canal va al final, despues de obra y mockups');
+    TestHarness::assertSame('prepare', (string)($nueva['items'][0]['action'] ?? ''), 'la lectura de la obra abre el paquete en la etapa 20');
+    TestHarness::assertSame(20, (int)($nueva['items'][0]['stage_order'] ?? 0), 'la obra va antes que el canal: la etapa 20 publica la lectura de la que el canal deriva');
+
+    // La obra 11 conserva el comportamiento anterior: su master NO esta
+    // aprobado y su item es 'adapt' (que no publica), asi que el canal NO se
+    // ofrece — derivar de algo sin aprobar sigue prohibido.
+    TestHarness::assertSame(0, $audit['editorial_pending']['channel'], 'sin lectura aprobada ni etapa que la apruebe, el canal no entra');
+
     $artworkPage = (string)file_get_contents(dirname(__DIR__, 2) . '/artwork.php');
     TestHarness::assertContains('data-editorial-package', $artworkPage, 'artwork.php integra el panel editorial avanzado');
     TestHarness::assertTrue(!str_contains($artworkPage, 'Create Studio Note'), 'el Decision Block anterior de Studio Notes fue retirado');

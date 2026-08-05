@@ -61,6 +61,7 @@ require_once __DIR__ . '/regression/measurement_citations_test.php';
 require_once __DIR__ . '/regression/saatchi_fields_test.php';
 require_once __DIR__ . '/regression/saatchi_listing_generation_test.php';
 require_once __DIR__ . '/regression/discovery_keywords_test.php';
+require_once __DIR__ . '/regression/influences_analysis_test.php';
 require_once __DIR__ . '/regression/derived_fields_approval_test.php';
 
 run_root_artwork_regression_tests();
@@ -111,6 +112,7 @@ run_measurement_citations_tests();
 run_saatchi_fields_tests();
 run_saatchi_listing_generation_tests();
 run_discovery_keywords_tests();
+run_influences_analysis_tests();
 run_derived_fields_approval_tests();
 
 // Scripts procedurales autocontenidos (SQLite en memoria, sin red). Declaran sus

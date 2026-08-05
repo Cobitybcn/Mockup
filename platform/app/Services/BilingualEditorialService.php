@@ -452,6 +452,10 @@ final class BilingualEditorialService
         'saatchi_caption',
         'saatchi_keywords',
         'discovery_keywords',
+        // Analisis segun influencias: se deriva de la lectura y de las
+        // afinidades declaradas, no ES la lectura. Regenerarlo no marca la
+        // lectura como cambiada ni dispara cascadas hacia los mockups.
+        'influences_analysis',
     ];
 
     /**

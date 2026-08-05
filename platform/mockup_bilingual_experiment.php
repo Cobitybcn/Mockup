@@ -103,6 +103,7 @@ $mockupEditorialStateLabel = ($mockupEnglishEditorial['status'] ?? '') === 'stal
 
 $editorialFields = [
     ['key'=>'description','es'=>'Descripción','en'=>'Description','large'=>true,'placeholder'=>'Escribí la descripción editorial de este mockup…','en_placeholder'=>'International English mockup description…'],
+    ['key'=>'influences_analysis','es'=>'Análisis Según Influencias del Artista','en'=>'Analysis According to the Artist\'s Influences','large'=>true,'placeholder'=>'Qué afinidades declaradas sostiene esta puesta en escena y cómo. Vacío es válido…','en_placeholder'=>'Which declared affinities this staging sustains, and how. Empty is valid…'],
     ['key'=>'tags','es'=>'Tags de catálogo','en'=>'Catalogue tags','large'=>false,'placeholder'=>'Tipo, estilos, técnicas, materiales, soporte, color, superficie, formato y contexto…','en_placeholder'=>'Type, styles, techniques, materials, support, color, surface, format and context…'],
     ['key'=>'search_terms','es'=>'Búsquedas y long tails','en'=>'Searches and long tails','large'=>false,'placeholder'=>'Búsquedas amplias y específicas que usaría un comprador…','en_placeholder'=>'Broad and specific searches an international buyer would use…'],
     ['key'=>'seo_title','es'=>'Título SEO','en'=>'SEO title','large'=>false,'placeholder'=>'Obra + contexto claro + artista…','en_placeholder'=>'Artwork + clear context + artist…'],
@@ -252,8 +253,10 @@ $viewerBack = 'mockup_bilingual_experiment.php?id=' . $mockupId;
         .editorial-state{color:var(--muted);font-size:9px;font-weight:700;letter-spacing:.08em;text-transform:uppercase;white-space:nowrap}
         .editorial-state:after{content:'+';display:inline-block;margin-left:14px;color:var(--accent);font:500 22px/1 var(--font-serif);vertical-align:-2px}
         .editorial-drawer[open] .editorial-state:after{content:'−'}
-        .editorial-spread{display:grid;grid-template-columns:minmax(0,1fr) 72px minmax(0,1fr);grid-template-rows:auto repeat(7,auto);padding:14px;border-top:1px solid var(--line)}
-        .editorial-page{display:grid;grid-row:1/span 8;grid-template-rows:subgrid;min-width:0;padding:18px;border:1px solid var(--line);border-top:3px solid #c89aa1;background:var(--surface-soft)}
+        /* Las filas siguen a la lista de campos: congelar el numero aca fue el
+           defecto que encimaba el espanol con el ingles (2026-08-04). */
+        .editorial-spread{display:grid;grid-template-columns:minmax(0,1fr) 72px minmax(0,1fr);grid-template-rows:auto repeat(<?= count($editorialFields) ?>,auto);padding:14px;border-top:1px solid var(--line)}
+        .editorial-page{display:grid;grid-row:1/span <?= count($editorialFields) + 1 ?>;grid-template-rows:subgrid;min-width:0;padding:18px;border:1px solid var(--line);border-top:3px solid #c89aa1;background:var(--surface-soft)}
         .editorial-page--source{grid-column:1}
         .editorial-page--english{grid-column:3;border-top-color:#9fb19a}
         .bilingual-adaptation-arrow{grid-column:2;grid-row:1;align-self:start;justify-self:center;display:flex;align-items:center;justify-content:center;gap:4px;width:64px!important;min-width:64px;height:40px;min-height:40px;margin:8px 0 0!important;padding:0 7px;border:1px solid #d8c17e;border-radius:20px;background:#f1e4b5;color:#665735;box-shadow:none;cursor:pointer}

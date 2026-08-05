@@ -72,9 +72,12 @@ final class ArtworkEditorialPackageService
 
         // Los textos de canal —paquete de Saatchi y vocabulario del sitio— se
         // derivan de la lectura APROBADA, asi que solo se ofrecen cuando esa
-        // lectura existe y esta aprobada. Van al final (etapa 40) porque
+        // lectura existe y esta aprobada... o cuando este mismo paquete la va a
+        // crear y aprobar: la etapa 20 con action 'prepare' publica el master
+        // (publish_spanish) y un fallo ahi bloquea el paquete, asi que la etapa
+        // 40 jamas corre contra una lectura inexistente. Van al final porque
         // dependen de todo lo anterior, y un fallo aca no bloquea el paquete.
-        if ($this->channelTextsPending($editorial, $userId, $artworkId)) {
+        if ($this->channelTextsPending($editorial, $userId, $artworkId, $artworkNeed === 'prepare')) {
             $items[] = $this->scopeItem('artwork', $artworkId, 40, 'channel');
         }
 
@@ -448,14 +451,23 @@ final class ArtworkEditorialPackageService
      * de descubrimiento en el de trabajo.
      *
      * Se pide la lectura APROBADA, no el borrador: derivar de algo sin aprobar
-     * fue exactamente el error que se corrigio el 2026-08-04.
+     * fue exactamente el error que se corrigio el 2026-08-04. La unica
+     * excepcion es cuando la aprobacion viene en este mismo paquete
+     * ($packageWillApprove): la etapa 20 'prepare' publica el master antes de
+     * que la 40 despache, y si falla, el paquete se corta antes de llegar.
      */
-    private function channelTextsPending(BilingualEditorialService $editorial, int $userId, int $artworkId): bool
-    {
-        $working = $editorial->sourceLocale($userId);
-        $master = $editorial->get($userId, 'artwork', $artworkId, $working);
-        if (empty($master['is_published'])) {
-            return false;
+    private function channelTextsPending(
+        BilingualEditorialService $editorial,
+        int $userId,
+        int $artworkId,
+        bool $packageWillApprove = false
+    ): bool {
+        if (!$packageWillApprove) {
+            $working = $editorial->sourceLocale($userId);
+            $master = $editorial->get($userId, 'artwork', $artworkId, $working);
+            if (empty($master['is_published'])) {
+                return false;
+            }
         }
 
         $listingLocale = $editorial->primaryAdaptationTarget($userId);
