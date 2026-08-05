@@ -2973,6 +2973,25 @@ function render_published_series_detail(array $item): void
         $publishedArtworks,
         static fn(array $artwork): bool => strcasecmp(trim((string)($artwork['series'] ?? '')), $seriesTitle) === 0
     );
+    $seriesSchema = [
+        '@context' => 'https://schema.org',
+        '@type' => 'CollectionPage',
+        'name' => $item['title'],
+        'description' => trim((string)($item['description'] ?? '')),
+        'url' => artist_site_url_with_language($GLOBALS['site']['url'] . '/series/' . $item['slug'] . '/', artist_site_language()),
+        'mainEntity' => [
+            '@type' => 'ItemList',
+            'itemListElement' => array_values(array_map(function(array $artwork, int $index) {
+                return [
+                    '@type' => 'ListItem',
+                    'position' => $index + 1,
+                    'url' => artist_site_url_with_language($GLOBALS['site']['url'] . '/artworks/' . $artwork['slug'] . '/', artist_site_language()),
+                    'name' => $artwork['title'],
+                ];
+            }, array_values($dependentArtworks), array_keys(array_values($dependentArtworks)))),
+        ],
+    ];
+    echo json_ld($seriesSchema);
     ?>
     <section class="page-hero">
         <p class="eyebrow"><?= e(site_t('Series', 'Serie')) ?><?= $yearLabel !== '' ? ' · ' . e($yearLabel) : '' ?></p>
@@ -4432,7 +4451,10 @@ switch ($segments[0] ?? '') {
         header('Location: ' . url_for('paintings') . '?status=available', true, 301);
         exit;
     case 'paintings':
-        header('Location: ' . url_for('artworks' . (isset($segments[1]) ? '/' . $segments[1] : '/')), true, 302);
+        header('Location: ' . artist_site_url_with_language(
+            url_for('artworks' . (isset($segments[1]) ? '/' . $segments[1] : '/')),
+            artist_site_language()
+        ), true, 301);
         exit;
     case 'artworks':
         $profile = app_artist_profile()?->get();
@@ -4538,6 +4560,17 @@ switch ($segments[0] ?? '') {
                 'es' => $canonicalBase . $mockup['public_slug_es'] . '/',
             ];
             $meta['keywords'] = trim((string)$mockup['keywords']);
+            $hasCustomMockupSeo = trim((string)($mockup['seo_title'] ?? '')) !== '' || !empty($mockup['is_primary_seo']);
+            if (!$hasCustomMockupSeo) {
+                $meta['robots'] = 'noindex, follow';
+                $artworkCanonicalBase = preg_replace('~/(?:en|es)$~', '', rtrim((string)$site['url'], '/'))
+                    . '/artworks/' . $publishedArtwork['slug'] . '/';
+                $meta['canonical'] = $artworkCanonicalBase;
+                $meta['language_urls'] = [
+                    'en' => $artworkCanonicalBase,
+                    'es' => $artworkCanonicalBase,
+                ];
+            }
             render_published_mockup($site, $publishedArtwork, $mockup);
             break;
         }

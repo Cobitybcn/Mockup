@@ -15,6 +15,12 @@ $schema = [
     'description' => $footerDescription,
     'inLanguage' => $currentLanguage,
     'sameAs' => array_values($site['social']),
+    'knowsAbout' => [
+        'Contemporary abstract painting',
+        'Territorial abstraction',
+        'Structural painting',
+        'Minimalist abstraction',
+    ],
 ];
 ?>
 </main>
