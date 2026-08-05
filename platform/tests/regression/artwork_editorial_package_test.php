@@ -89,6 +89,8 @@ function run_artwork_editorial_package_tests(): void
     ($publicationMigration['up'])($pdo);
     $packageMigration = require dirname(__DIR__, 2) . '/migrations/schema/20260724_000009_artwork_editorial_packages.php';
     ($packageMigration['up'])($pdo);
+    $uniquePerAction = require dirname(__DIR__, 2) . '/migrations/schema/20260805_000001_editorial_package_item_unique_per_action.php';
+    ($uniquePerAction['up'])($pdo);
 
     $insert = $pdo->prepare("INSERT INTO bilingual_editorial_content
         (user_id,entity_type,entity_id,locale,content_json,private_memo,status,source_hash,created_at,updated_at)
@@ -137,6 +139,24 @@ function run_artwork_editorial_package_tests(): void
     // aprobado y su item es 'adapt' (que no publica), asi que el canal NO se
     // ofrece — derivar de algo sin aprobar sigue prohibido.
     TestHarness::assertSame(0, $audit['editorial_pending']['channel'], 'sin lectura aprobada ni etapa que la apruebe, el canal no entra');
+
+    // start() INSERTA ese alcance: la obra viaja DOS veces (lectura en la 20,
+    // canal en la 40) y la clave unica de items tiene que dejarla pasar. La
+    // auditoria sola no ejercitaba el INSERT y el choque llego a produccion:
+    // "Duplicate entry '13-artwork-10106'".
+    try {
+        (new ArtworkEditorialPackageService($pdo))->start(7, 12);
+        $arranco = true;
+    } catch (Throwable $error) {
+        $arranco = false;
+        TestHarness::assertSame('', $error->getMessage(), 'start() no puede chocar contra la clave unica de items');
+    }
+    TestHarness::assertTrue($arranco, 'el primer paquete de una obra nueva arranca con obra y canal juntos');
+    $filas = $pdo->query("SELECT entity_type,entity_id,stage_order,action FROM artwork_editorial_package_items
+        WHERE entity_type='artwork' AND entity_id=12 ORDER BY stage_order")->fetchAll(PDO::FETCH_ASSOC);
+    TestHarness::assertSame(2, count($filas), 'la obra quedo persistida dos veces: su lectura y sus textos de canal');
+    TestHarness::assertSame('prepare', (string)($filas[0]['action'] ?? ''), 'la lectura en la etapa 20');
+    TestHarness::assertSame('channel', (string)($filas[1]['action'] ?? ''), 'el canal en la etapa 40');
 
     $artworkPage = (string)file_get_contents(dirname(__DIR__, 2) . '/artwork.php');
     TestHarness::assertContains('data-editorial-package', $artworkPage, 'artwork.php integra el panel editorial avanzado');
