@@ -472,11 +472,18 @@ final class ArtworkEditorialPackageService
         if ($listingLocale === '') {
             return false;
         }
-        $listing = $editorial->get($userId, 'artwork', $artworkId, $listingLocale);
-        $contenido = (array)$listing['content'];
-        foreach (['saatchi_title', 'saatchi_description', 'saatchi_keywords'] as $campo) {
-            if (trim((string)($contenido[$campo] ?? '')) === '') {
-                return true;
+        // El listing existe en los dos idiomas: el de publicacion (Saatchi se
+        // carga en ingles) y el de trabajo (material del artista, derivado de
+        // su propia lectura). Cualquiera de los dos que falte deja el paso
+        // pendiente — y el paso escribe SOLO lo que falta, asi que ofrecerlo
+        // sobre una obra vieja no regenera lo que ya esta bien.
+        $working = $editorial->sourceLocale($userId);
+        foreach (array_unique([$listingLocale, $working]) as $idioma) {
+            $contenido = (array)$editorial->get($userId, 'artwork', $artworkId, $idioma)['content'];
+            foreach (['saatchi_title', 'saatchi_description', 'saatchi_keywords'] as $campo) {
+                if (trim((string)($contenido[$campo] ?? '')) === '') {
+                    return true;
+                }
             }
         }
         return false;

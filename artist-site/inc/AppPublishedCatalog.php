@@ -91,6 +91,10 @@ final class AppPublishedCatalog
                 // obra, sirve al buscador de Saatchi y aca solo seria ruido.
                 $row['seo_title'] = (string)($localized['seo_title'] ?? '');
                 $row['seo_description'] = (string)($localized['seo_description'] ?? '');
+                // Analisis segun las influencias DECLARADAS del artista, por
+                // obra y por idioma. Campo OPCIONAL: vacio = la pagina no lleva
+                // seccion, y una obra vieja sin el campo no es un error.
+                $row['influences_analysis'] = (string)($localized['influences_analysis'] ?? '');
                 $row['translation_missing_fields'] = array_values(array_diff([
                     'subtitle',
                     'description',
@@ -115,6 +119,7 @@ final class AppPublishedCatalog
                 $row['artwork_tags'] = '';
                 $row['seo_title'] = '';
                 $row['seo_description'] = '';
+                $row['influences_analysis'] = '';
                 $row['translation_missing_fields'] = ['translation'];
                 error_log('Missing published Spanish artwork translation for artwork '
                     . (int)$row['canonical_artwork_id']);

@@ -51,18 +51,58 @@ final class BilingualEditorialGenerationWorker
                 // artista.
                 require_once __DIR__ . '/SaatchiListingService.php';
 
-                $listado = (new SaatchiListingService($this->pdo))->generate($userId, $entityId);
-                $estadoListado = (string)($listado['validation']['status'] ?? '');
-                if ($estadoListado === 'ok') {
-                    (new SaatchiListingService($this->pdo))->save($userId, $entityId, $listado);
-                }
+                // El paso de canal escribe SOLO LO QUE FALTA. Un texto que ya
+                // existe no se toca ni se paga de nuevo: eso vuelve el paso
+                // idempotente y deja que las obras viejas se completen —el
+                // espanol del listing, los pies, las influencias— sin regenerar
+                // lo que ya esta bien.
+                $saatchi = new SaatchiListingService($this->pdo);
+                $listingLocale = $editorial->primaryAdaptationTarget($userId) ?: 'en';
+                $faltanCamposListing = static function (array $contenido): bool {
+                    foreach (['saatchi_title', 'saatchi_description', 'saatchi_keywords'] as $campo) {
+                        if (trim((string)($contenido[$campo] ?? '')) === '') {
+                            return true;
+                        }
+                    }
+                    return false;
+                };
+                $notasListado = [];
+                $piesEscritos = 0;
+                $avisosPies = [];
 
-                // Un texto que no paso la validacion no se guarda ni se disimula:
-                // el job queda fallado con el motivo exacto, y el paquete lo muestra.
-                // Los pies son aparte: uno flojo no invalida el listing, se
-                // descarta solo y se avisa.
-                if ($estadoListado !== 'ok') {
-                    throw new RuntimeException('Listing: ' . implode(' · ', (array)($listado['validation']['errors'] ?? ['sin detalle'])));
+                $contenidoListing = (array)$editorial->get($userId, 'artwork', $entityId, $listingLocale)['content'];
+                if ($faltanCamposListing($contenidoListing)) {
+                    $listado = $saatchi->generate($userId, $entityId);
+                    $estadoListado = (string)($listado['validation']['status'] ?? '');
+                    if ($estadoListado === 'ok') {
+                        $saatchi->save($userId, $entityId, $listado);
+                    }
+                    // Un texto que no paso la validacion no se guarda ni se
+                    // disimula: el job queda fallado con el motivo exacto, y el
+                    // paquete lo muestra. Los pies son aparte: uno flojo no
+                    // invalida el listing, se descarta solo y se avisa.
+                    if ($estadoListado !== 'ok') {
+                        throw new RuntimeException('Listing: ' . implode(' · ', (array)($listado['validation']['errors'] ?? ['sin detalle'])));
+                    }
+                    $notasListado[] = "listing {$listingLocale}: escrito";
+                    $piesEscritos = count(array_filter((array)($listado['captions'] ?? []), static fn ($c): bool => trim((string)$c) !== ''));
+                    $avisosPies = array_values(array_filter(
+                        (array)($listado['validation']['warnings'] ?? []),
+                        static fn (string $w): bool => str_starts_with($w, 'Pie sin escribir')
+                    ));
+                } else {
+                    $notasListado[] = "listing {$listingLocale}: conservado";
+                    // Los pies que falten se completan igual: la reutilizacion
+                    // hace que solo se paguen los que no existen.
+                    try {
+                        $soloPies = $saatchi->generateCaptionsOnly($userId, $entityId);
+                        $piesEscritos = $saatchi->saveCaptions($userId, (array)$soloPies['captions']);
+                        foreach ((array)$soloPies['errors'] as $errorPie) {
+                            $avisosPies[] = 'Pie sin escribir — ' . $errorPie;
+                        }
+                    } catch (Throwable $errorPies) {
+                        $avisosPies[] = 'Pies: ' . $errorPies->getMessage();
+                    }
                 }
 
                 // El mismo sistema en los dos idiomas: el listing tambien se
@@ -71,19 +111,23 @@ final class BilingualEditorialGenerationWorker
                 // formulario de Saatchi se carga en ingles): es material del
                 // artista, sin pies (los pies viven en una sola columna, del
                 // canal real), y un fallo aca avisa y no tumba el paso.
-                $notasListado = [];
-                if ($workingLocale !== '' && $workingLocale !== (string)($listado['locale'] ?? '')) {
-                    try {
-                        $listadoTrabajo = (new SaatchiListingService($this->pdo))->generate($userId, $entityId, $workingLocale, false);
-                        if ((string)($listadoTrabajo['validation']['status'] ?? '') === 'ok') {
-                            (new SaatchiListingService($this->pdo))->save($userId, $entityId, $listadoTrabajo);
-                            $notasListado[] = "listing {$workingLocale}: escrito";
-                        } else {
-                            $notasListado[] = "listing {$workingLocale}: descartado — "
-                                . implode(' · ', (array)($listadoTrabajo['validation']['errors'] ?? ['sin detalle']));
+                if ($workingLocale !== '' && $workingLocale !== $listingLocale) {
+                    $contenidoTrabajo = (array)$editorial->get($userId, 'artwork', $entityId, $workingLocale)['content'];
+                    if (!$faltanCamposListing($contenidoTrabajo)) {
+                        $notasListado[] = "listing {$workingLocale}: conservado";
+                    } else {
+                        try {
+                            $listadoTrabajo = $saatchi->generate($userId, $entityId, $workingLocale, false);
+                            if ((string)($listadoTrabajo['validation']['status'] ?? '') === 'ok') {
+                                $saatchi->save($userId, $entityId, $listadoTrabajo);
+                                $notasListado[] = "listing {$workingLocale}: escrito";
+                            } else {
+                                $notasListado[] = "listing {$workingLocale}: descartado — "
+                                    . implode(' · ', (array)($listadoTrabajo['validation']['errors'] ?? ['sin detalle']));
+                            }
+                        } catch (Throwable $errorListadoTrabajo) {
+                            $notasListado[] = "listing {$workingLocale}: " . $errorListadoTrabajo->getMessage();
                         }
-                    } catch (Throwable $errorListadoTrabajo) {
-                        $notasListado[] = "listing {$workingLocale}: " . $errorListadoTrabajo->getMessage();
                     }
                 }
 
@@ -109,14 +153,11 @@ final class BilingualEditorialGenerationWorker
 
                 $result = [
                     'channel_texts' => true,
-                    'listing_working_locale' => $notasListado,
+                    'listing' => $notasListado,
                     'influences' => $notasInfluencias,
-                    'listing_locale' => (string)($listado['locale'] ?? ''),
-                    'captions_written' => count(array_filter((array)($listado['captions'] ?? []), static fn ($c): bool => trim((string)$c) !== '')),
-                    'notes' => array_values(array_filter(
-                        (array)($listado['validation']['warnings'] ?? []),
-                        static fn (string $w): bool => str_starts_with($w, 'Pie sin escribir')
-                    )),
+                    'listing_locale' => $listingLocale,
+                    'captions_written' => $piesEscritos,
+                    'notes' => $avisosPies,
                     'spanish_published' => false,
                 ];
             } elseif ($action === 'prepare' && $entityType === 'series') {

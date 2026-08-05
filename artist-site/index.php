@@ -2370,6 +2370,22 @@ function render_published_artwork_video(array $site, array $artwork): void
                     <p><?= nl2br(e($conceptualNote)) ?></p>
                 </div>
             <?php endif; ?>
+            <?php
+            // Analisis segun las influencias DECLARADAS, por obra: prosa unica
+            // de ESTA pieza (que toma de cada afinidad que sostiene), nunca el
+            // parrafo del perfil repetido — eso seria contenido duplicado. Una
+            // obra sin afinidades sostenidas no lleva seccion: la seleccion es
+            // la regla. El texto llega por idioma desde la copia publicada:
+            // publicar es aprobar, tambien aca.
+            $artistInfluences = trim((string)($artwork['influences_analysis'] ?? ''));
+            ?>
+            <?php if ($artistInfluences !== ''): ?>
+                <div class="prose artwork-artist-influences" id="artist-influences">
+                    <h2><?= e(site_t('Artist influences', 'Influencias del artista')) ?></h2>
+                    <p><?= nl2br(e($artistInfluences)) ?></p>
+                    <p class="artwork-video-series-context__link"><a href="<?= e(url_for('artist')) ?>#influences"><?= e(site_t('All declared affinities', 'Todas las afinidades declaradas')) ?> <span aria-hidden="true">→</span></a></p>
+                </div>
+            <?php endif; ?>
             <?php if ($seriesContext !== '' && $series): ?>
                 <div class="prose artwork-video-series-context">
                     <h2><?= e(site_t('Within ', 'Dentro de ') . (string)$series['title']) ?></h2>
