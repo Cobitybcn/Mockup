@@ -177,11 +177,9 @@ final class ArtworkEditorialPackageService
                     $now,
                 ]);
             }
-            $this->pdo->commit();
+            $this->commitWrite();
         } catch (Throwable $error) {
-            if ($this->pdo->inTransaction()) {
-                $this->pdo->rollBack();
-            }
+            $this->rollbackWrite();
             throw $error;
         }
 
@@ -685,5 +683,33 @@ final class ArtworkEditorialPackageService
             return;
         }
         $this->pdo->beginTransaction();
+    }
+
+    // Un BEGIN abierto con exec() (el camino sqlite) es invisible para
+    // PDO::commit()/rollBack(): cerrar por el mismo canal que abrio.
+    private function commitWrite(): void
+    {
+        if ($this->pdo->inTransaction()) {
+            $this->pdo->commit();
+            return;
+        }
+        try {
+            $this->pdo->exec('COMMIT');
+        } catch (Throwable) {
+            // Sin transaccion abierta no hay nada que confirmar.
+        }
+    }
+
+    private function rollbackWrite(): void
+    {
+        if ($this->pdo->inTransaction()) {
+            $this->pdo->rollBack();
+            return;
+        }
+        try {
+            $this->pdo->exec('ROLLBACK');
+        } catch (Throwable) {
+            // Sin transaccion abierta no hay nada que deshacer.
+        }
     }
 }
