@@ -23,6 +23,7 @@ if (PHP_SAPI !== 'cli') {
 
 require_once __DIR__ . '/../app/bootstrap.php';
 require_once __DIR__ . '/../app/Services/SaatchiListingService.php';
+require_once __DIR__ . '/../app/Services/InfluencesAnalysisService.php';
 
 $userId = 0;
 $apply = false;
@@ -55,18 +56,35 @@ $stmt = $pdo->prepare("SELECT a.id, a.final_title,
     FROM artworks a WHERE a.user_id=? ORDER BY a.id");
 $stmt->execute([$userId, $working, $userId, $working, $userId, $listingLocale, $userId]);
 
+// Que le falta a cada obra. El paso escribe SOLO lo que falta, asi que la
+// definicion de pendiente abarca todo el material del canal: listing en el
+// idioma de publicacion, listing en el idioma de trabajo (material del
+// artista) y analisis de influencias en ambos, si hay afinidades declaradas.
+$perfil = ArtistProfile::findForUser($userId);
+$hayAfinidades = ArtistReferences::names((string)($perfil['reference_artists'] ?? '')) !== [];
+$faltanCampos = static function (array $contenido): bool {
+    foreach (['saatchi_title', 'saatchi_description', 'saatchi_keywords'] as $campo) {
+        if (trim((string)($contenido[$campo] ?? '')) === '') {
+            return true;
+        }
+    }
+    return false;
+};
+
 $pendientes = [];
 foreach ($stmt->fetchAll(PDO::FETCH_ASSOC) as $row) {
     if (!(int)$row['publicado']) {
         continue;
     }
     $listing = json_decode((string)$row['listing'], true) ?: [];
-    $falta = false;
-    foreach (['saatchi_title', 'saatchi_description', 'saatchi_keywords'] as $campo) {
-        if (trim((string)($listing[$campo] ?? '')) === '') {
-            $falta = true;
-        }
-    }
+    $master = json_decode((string)$row['master'], true) ?: [];
+    $faltaEn = $faltanCampos($listing);
+    $faltaEs = $working !== $listingLocale && $faltanCampos($master);
+    $faltaInflu = $hayAfinidades && (
+        trim((string)($master['influences_analysis'] ?? '')) === ''
+        || trim((string)($listing['influences_analysis'] ?? '')) === ''
+    );
+    $falta = $faltaEn || $faltaEs || $faltaInflu;
     if ($soloPies) {
         // En modo pies, pendiente es la obra a la que le falta algun pie en las
         // primeras imagenes de su composicion, tenga o no el listing.
@@ -81,16 +99,27 @@ foreach ($stmt->fetchAll(PDO::FETCH_ASSOC) as $row) {
         $falta = (int)$c->fetchColumn() > 0;
     }
     if ($falta) {
-        $pendientes[] = ['id' => (int)$row['id'], 'title' => (string)$row['final_title']];
+        $pendientes[] = [
+            'id' => (int)$row['id'],
+            'title' => (string)$row['final_title'],
+            'en' => $faltaEn,
+            'es' => $faltaEs,
+            'influ' => $faltaInflu,
+        ];
     }
 }
 if ($limit > 0) {
     $pendientes = array_slice($pendientes, 0, $limit);
 }
 
-echo 'Obras con lectura aprobada y textos de canal faltantes: ' . count($pendientes) . "\n";
+echo 'Obras con lectura aprobada y material de canal faltante: ' . count($pendientes) . "\n";
 foreach ($pendientes as $p) {
-    echo "  #{$p['id']}  {$p['title']}\n";
+    $faltantes = array_keys(array_filter([
+        "listing-{$listingLocale}" => (bool)($p['en'] ?? false),
+        "listing-{$working}" => (bool)($p['es'] ?? false),
+        'influencias' => (bool)($p['influ'] ?? false),
+    ]));
+    echo "  #{$p['id']}  {$p['title']}  [" . implode(' · ', $faltantes) . "]\n";
 }
 if (!$apply) {
     echo "\n(simulacion: agrega --apply para escribir)\n";
@@ -98,6 +127,7 @@ if (!$apply) {
 }
 
 $listado = new SaatchiListingService($pdo);
+$influencias = new InfluencesAnalysisService($pdo);
 $ok = 0;
 $revisar = [];
 
@@ -118,31 +148,75 @@ foreach ($pendientes as $i => $p) {
         continue;
     }
 
-    try {
-        $r = $listado->generate($userId, $p['id']);
-        $estado = (string)$r['validation']['status'];
-        printf("   listing: %-16s titulo %d/65  descripcion %d/1000  keywords %d  pies %d\n",
-            $estado,
-            mb_strlen((string)$r['title']),
-            mb_strlen((string)$r['description']),
-            count((array)$r['keywords']),
-            count(array_filter((array)$r['captions'], static fn ($c): bool => trim((string)$c) !== '')));
-        if ($estado === 'ok') {
-            $listado->save($userId, $p['id'], $r);
-            $ok++;
-        } else {
-            $revisar[] = "#{$p['id']} listing: " . implode(' · ', (array)$r['validation']['errors']);
-        }
-        foreach ((array)$r['validation']['warnings'] as $w) {
-            if (str_starts_with((string)$w, 'Pie sin escribir')) {
-                echo "   aviso: {$w}\n";
+    // Cada pieza se escribe SOLO si falta. Lo que ya existe no se toca.
+    $piezasFallidas = 0;
+
+    if ($p['en']) {
+        try {
+            $r = $listado->generate($userId, $p['id']);
+            $estado = (string)$r['validation']['status'];
+            printf("   listing %s: %-16s titulo %d/65  descripcion %d/1000  keywords %d  pies %d\n",
+                $listingLocale,
+                $estado,
+                mb_strlen((string)$r['title']),
+                mb_strlen((string)$r['description']),
+                count((array)$r['keywords']),
+                count(array_filter((array)$r['captions'], static fn ($c): bool => trim((string)$c) !== '')));
+            if ($estado === 'ok') {
+                $listado->save($userId, $p['id'], $r);
+            } else {
+                $piezasFallidas++;
+                $revisar[] = "#{$p['id']} listing {$listingLocale}: " . implode(' · ', (array)$r['validation']['errors']);
             }
+            foreach ((array)$r['validation']['warnings'] as $w) {
+                if (str_starts_with((string)$w, 'Pie sin escribir')) {
+                    echo "   aviso: {$w}\n";
+                }
+            }
+        } catch (Throwable $e) {
+            $piezasFallidas++;
+            echo "   listing {$listingLocale} FALLO: " . $e->getMessage() . "\n";
+            $revisar[] = "#{$p['id']} listing {$listingLocale}: " . $e->getMessage();
         }
-    } catch (Throwable $e) {
-        echo '   listing FALLO: ' . $e->getMessage() . "\n";
-        $revisar[] = "#{$p['id']} listing: " . $e->getMessage();
+    } else {
+        echo "   listing {$listingLocale}: conservado\n";
     }
 
+    if ($p['es']) {
+        // El material del artista, en su idioma de trabajo: derivado de su
+        // propia lectura, sin pies (viven en una sola columna, del canal real).
+        try {
+            $r = $listado->generate($userId, $p['id'], $working, false);
+            $estado = (string)$r['validation']['status'];
+            printf("   listing %s: %-16s\n", $working, $estado);
+            if ($estado === 'ok') {
+                $listado->save($userId, $p['id'], $r);
+            } else {
+                $piezasFallidas++;
+                $revisar[] = "#{$p['id']} listing {$working}: " . implode(' · ', (array)$r['validation']['errors']);
+            }
+        } catch (Throwable $e) {
+            $piezasFallidas++;
+            echo "   listing {$working} FALLO: " . $e->getMessage() . "\n";
+            $revisar[] = "#{$p['id']} listing {$working}: " . $e->getMessage();
+        }
+    }
+
+    if ($p['influ']) {
+        foreach (array_unique([$working, $listingLocale]) as $idiomaInflu) {
+            try {
+                echo '   ' . $influencias->deriveIfEmpty($userId, $p['id'], $idiomaInflu) . "\n";
+            } catch (Throwable $e) {
+                $piezasFallidas++;
+                echo "   influencias {$idiomaInflu} FALLO: " . $e->getMessage() . "\n";
+                $revisar[] = "#{$p['id']} influencias {$idiomaInflu}: " . $e->getMessage();
+            }
+        }
+    }
+
+    if ($piezasFallidas === 0) {
+        $ok++;
+    }
 }
 
 echo "\n===== RESUMEN =====\n";

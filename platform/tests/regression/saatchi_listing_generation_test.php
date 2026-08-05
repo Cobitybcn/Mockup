@@ -305,6 +305,38 @@ function run_saatchi_listing_generation_tests(): void
         'el paso de canal escribe el listing tambien en el idioma de trabajo, sin pies'
     );
 
+    // ————— El paso de canal escribe SOLO lo que falta —————
+    // Idempotente: lo existente no se toca ni se paga de nuevo. Eso permite
+    // ofrecer el paso sobre obras viejas (para completar el espanol, los pies
+    // o las influencias) sin regenerar lo que ya esta bien.
+    TestHarness::assertContains(
+        ': conservado',
+        $workerFuente,
+        'un listing existente se conserva: el paso de canal no regenera lo que ya esta'
+    );
+    TestHarness::assertContains(
+        'generateCaptionsOnly',
+        $workerFuente,
+        'con el listing conservado, los pies que falten se completan igual (reutilizacion primero)'
+    );
+    $paqueteCanal = (string)file_get_contents($platformRoot . '/app/Services/ArtworkEditorialPackageService.php');
+    TestHarness::assertContains(
+        'array_unique([$listingLocale, $working])',
+        $paqueteCanal,
+        'el listing del idioma de trabajo tambien cuenta como pendiente: las obras viejas ofrecen el paso para completarse'
+    );
+    $backfill = (string)file_get_contents($platformRoot . '/scripts/saatchi_backfill.php');
+    TestHarness::assertContains(
+        'deriveIfEmpty',
+        $backfill,
+        'el job de relleno completa tambien las influencias, sin pisar lo escrito'
+    );
+    TestHarness::assertContains(
+        "generate(\$userId, \$p['id'], \$working, false)",
+        $backfill,
+        'y el listing en el idioma de trabajo, solo donde falta'
+    );
+
     // ————— Un paquete que no quedo en ok no se guarda solo —————
     $service = new SaatchiListingService(new PDO('sqlite::memory:'));
     $rechazado = false;
