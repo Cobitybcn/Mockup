@@ -173,8 +173,8 @@ class SaatchiListingService
         } elseif ($largo < self::DESCRIPTION_HARD_MIN) {
             $errors[] = "saatchi_description mide {$largo} caracteres: por debajo de " . self::DESCRIPTION_HARD_MIN . ' no es una decision de estilo, es una generacion incompleta.';
         }
-        if ($description !== '' && preg_match('/^\s*(this|in this|the|a|an|discover|explore|acquire)\b/i', $description)) {
-            $errors[] = 'saatchi_description abre con una formula generica: la primera palabra no puede ser This, In this, The, A, An, Discover, Explore ni Acquire.';
+        if ($description !== '' && preg_match('/^\s*(this|in this|the|a|an|discover|explore|acquire|esta obra|en esta|descubre|explora|adquiere)\b/iu', $description)) {
+            $errors[] = 'saatchi_description abre con una formula generica: la primera palabra no puede ser This, In this, The, A, An, Discover, Explore, Acquire ni sus equivalentes en espanol.';
         }
 
         $keywords = $listing['keywords'];
@@ -297,7 +297,15 @@ class SaatchiListingService
     /**
      * @return array{title:string,description:string,keywords:list<string>,locale:string,source:array<string,string>,validation:array<string,mixed>}
      */
-    public function generate(int $userId, int $artworkId): array
+    /**
+     * $targetLocale: por omision, el idioma del listing (Saatchi se carga en
+     * ingles). El paso de canal tambien lo llama con el idioma de trabajo del
+     * artista —derivado de la lectura, no traducido— porque el sistema es el
+     * mismo en los dos idiomas. $withCaptions: los pies son material del canal
+     * real y viven en una sola columna; la pasada en idioma de trabajo no los
+     * escribe.
+     */
+    public function generate(int $userId, int $artworkId, ?string $targetLocale = null, bool $withCaptions = true): array
     {
         $artwork = $this->artwork($userId, $artworkId);
         $officialTitle = trim((string)$artwork['final_title']);
@@ -321,7 +329,13 @@ class SaatchiListingService
         }
 
         $affinities = $this->affinities($userId);
-        $prompt = $this->prompt($artwork, $reading, $this->affinitiesForPrompt($userId), $budget);
+        $locale = trim((string)$targetLocale) !== '' ? trim((string)$targetLocale) : $this->listingLocale($userId);
+        $languageName = match ($locale) {
+            'es' => 'Spanish',
+            'en' => 'English',
+            default => $locale,
+        };
+        $prompt = $this->prompt($artwork, $reading, $this->affinitiesForPrompt($userId), $budget, $languageName);
 
         $listing = self::parseModelOutput($this->decode($this->client->generateText([$this->client->textPart($prompt)])));
         $errors = self::validateListing($listing, $officialTitle, (string)$artwork['artist_name'], $affinities);
@@ -358,7 +372,9 @@ class SaatchiListingService
         // imagen tiraba a la basura un titulo, una descripcion y doce keywords
         // que estaban bien. Un pie que no pasa no se escribe y se informa; el
         // listing sigue su camino.
-        [$captions, $captionErrors, $captionWarnings, $captionMetrics] = $this->captions($userId, $artworkId);
+        [$captions, $captionErrors, $captionWarnings, $captionMetrics] = $withCaptions
+            ? $this->captions($userId, $artworkId)
+            : [[], [], [], ['captions_expected' => 0]];
         foreach ($captionErrors as $captionError) {
             $warnings[] = 'Pie sin escribir — ' . $captionError;
         }
@@ -369,9 +385,10 @@ class SaatchiListingService
             'description' => $listing['description'],
             'keywords' => $listing['keywords'],
             'captions' => $captions,
-            // El origen puede ser el castellano aprobado; el destino es siempre
-            // el idioma del listing, porque Saatchi se carga en ingles.
-            'locale' => $this->listingLocale($userId),
+            // El origen puede ser el castellano aprobado; el destino es el
+            // idioma pedido — por omision el del listing, porque Saatchi se
+            // carga en ingles.
+            'locale' => $locale,
             'source_locale' => $reading['locale'],
             'source_approved' => (bool)($reading['approved'] ?? false),
             'source' => $reading,
@@ -605,11 +622,17 @@ class SaatchiListingService
      * @param array<string,mixed> $artwork
      * @param array{locale:string,description:string,short_description:string,subtitle:string} $reading
      */
-    private function prompt(array $artwork, array $reading, string $affinities, int $budget): string
+    private function prompt(array $artwork, array $reading, string $affinities, int $budget, string $languageName = 'English'): string
     {
         $reglas = strtr((string)file_get_contents(__DIR__ . '/saatchi_listing_rules.txt'), [
             '{editorial_integrity_rules}' => EditorialIntegrityPolicy::promptRules('artwork'),
         ]);
+        // El mismo contrato en el idioma pedido: las reglas nombran el idioma
+        // de salida y la pasada en idioma de trabajo deriva —no traduce— desde
+        // la misma lectura.
+        if ($languageName !== 'English') {
+            $reglas = str_replace('English', $languageName, $reglas);
+        }
 
         $referentes = $affinities !== '' ? $affinities : '(none declared — do not name any artist)';
         $dimensiones = trim(implode(' x ', array_filter([
@@ -628,7 +651,7 @@ CONFIRMED ARTWORK DATA (immutable)
 - Character budget for the subtitle: {$budget} (the full saatchi_title must stay within 65)
 
 APPROVED EDITORIAL READING ({$reading['locale']}) — the source of the voice and of every visual and
-conceptual claim. Carry this into the Saatchi containers in English; do not add facts it does not
+conceptual claim. Carry this into the Saatchi containers in {$languageName}; do not add facts it does not
 state, and do not translate it literally.
 {$reading['description']}
 

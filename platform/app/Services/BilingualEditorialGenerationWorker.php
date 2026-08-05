@@ -65,6 +65,28 @@ final class BilingualEditorialGenerationWorker
                     throw new RuntimeException('Listing: ' . implode(' · ', (array)($listado['validation']['errors'] ?? ['sin detalle'])));
                 }
 
+                // El mismo sistema en los dos idiomas: el listing tambien se
+                // deriva en el idioma de trabajo del artista —derivado de la
+                // misma lectura, no traducido—. No tiene destino externo (el
+                // formulario de Saatchi se carga en ingles): es material del
+                // artista, sin pies (los pies viven en una sola columna, del
+                // canal real), y un fallo aca avisa y no tumba el paso.
+                $notasListado = [];
+                if ($workingLocale !== '' && $workingLocale !== (string)($listado['locale'] ?? '')) {
+                    try {
+                        $listadoTrabajo = (new SaatchiListingService($this->pdo))->generate($userId, $entityId, $workingLocale, false);
+                        if ((string)($listadoTrabajo['validation']['status'] ?? '') === 'ok') {
+                            (new SaatchiListingService($this->pdo))->save($userId, $entityId, $listadoTrabajo);
+                            $notasListado[] = "listing {$workingLocale}: escrito";
+                        } else {
+                            $notasListado[] = "listing {$workingLocale}: descartado — "
+                                . implode(' · ', (array)($listadoTrabajo['validation']['errors'] ?? ['sin detalle']));
+                        }
+                    } catch (Throwable $errorListadoTrabajo) {
+                        $notasListado[] = "listing {$workingLocale}: " . $errorListadoTrabajo->getMessage();
+                    }
+                }
+
                 // Analisis segun influencias: prosa derivada por idioma de la
                 // lectura de ese idioma, anclada a las afinidades DECLARADAS.
                 // Solo llena el campo si esta vacio (lo editado a mano no se
@@ -87,6 +109,7 @@ final class BilingualEditorialGenerationWorker
 
                 $result = [
                     'channel_texts' => true,
+                    'listing_working_locale' => $notasListado,
                     'influences' => $notasInfluencias,
                     'listing_locale' => (string)($listado['locale'] ?? ''),
                     'captions_written' => count(array_filter((array)($listado['captions'] ?? []), static fn ($c): bool => trim((string)$c) !== '')),
