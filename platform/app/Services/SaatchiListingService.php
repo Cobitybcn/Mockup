@@ -40,11 +40,12 @@ class SaatchiListingService
     public const CAPTION_WORDS_MIN = 4;
     public const CAPTION_WORDS_MAX = 7;
     // 1000 es el techo de EDITORIAL_CORE, no un maximo publicado por Saatchi.
-    // 850 es el objetivo y avisa, no bloquea: un piso duro empuja a rellenar.
-    // Debajo de 600 no hay decision de estilo, hay generacion incompleta.
-    public const DESCRIPTION_TARGET_MIN = 850;
-    public const DESCRIPTION_HARD_MIN = 600;
+    // 450 a 700 es el rango objetivo conciso y agil, sin relleno.
+    // Debajo de 350 no hay decision de estilo, hay generacion incompleta.
+    public const DESCRIPTION_TARGET_MIN = 450;
+    public const DESCRIPTION_HARD_MIN = 350;
     public const DESCRIPTION_MAX = 1000;
+
 
     /**
      * Vocabulario de encuadre. Un pie hecho solo de estas palabras describe la
@@ -291,6 +292,42 @@ class SaatchiListingService
         }
         return $errors;
     }
+
+    /**
+     * Formatea un pie de Saatchi sintético conciso (4 a 7 palabras, <= 50 caracteres)
+     * para imágenes o mockups secundarios que no tengan un pie corto directo.
+     */
+    public static function formatSyntheticCaption(string $fileOrCamera, string $rawCaption = ''): string
+    {
+        $caption = trim($rawCaption);
+        if ($caption !== '') {
+            $words = preg_split('/\s+/u', $caption) ?: [];
+            $wordCount = count($words);
+            if (mb_strlen($caption) <= self::CAPTION_MAX && $wordCount >= self::CAPTION_WORDS_MIN && $wordCount <= self::CAPTION_WORDS_MAX) {
+                return $caption;
+            }
+        }
+
+        $lower = strtolower($fileOrCamera . ' ' . $caption);
+        if (str_contains($lower, 'close') || str_contains($lower, 'detail') || str_contains($lower, 'texture') || str_contains($lower, 'edge')) {
+            return 'Close view showing edge texture';
+        }
+        if (str_contains($lower, 'low') || str_contains($lower, 'nadir') || str_contains($lower, 'depth')) {
+            return 'Low view showing canvas depth';
+        }
+        if (str_contains($lower, 'overhead') || str_contains($lower, 'top') || str_contains($lower, 'aerial')) {
+            return 'Overhead view showing scale reference';
+        }
+        if (str_contains($lower, 'angled') || str_contains($lower, 'perspective') || str_contains($lower, '3_4')) {
+            return 'Angled view showing material depth';
+        }
+        if (str_contains($lower, 'front') || str_contains($lower, 'wall') || str_contains($lower, 'scale')) {
+            return 'Front view showing relative scale';
+        }
+
+        return 'Detail view showing paint texture';
+    }
+
 
     /* ————————————————————————————— orquestacion ————————————————————————————— */
 

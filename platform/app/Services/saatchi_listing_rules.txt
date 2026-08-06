@@ -54,19 +54,13 @@ Sentence case. No contradictory relations ("suspended blocks anchoring"). If no 
 the budget, return the title alone.
 
 SAATCHI DESCRIPTION (English)
-Between 850 and 1000 characters. The ceiling is a hard limit of Saatchi's form; the floor exists
-because this is the only space where the work is sold in words, and half-using it wastes it. Never
-pad to reach a number: if you fall short, carry over more of the approved reading's observation.
-It is written for a collector deciding on a purchase. It is never a cut of the long description:
-truncating breaks a sentence mid-way. Rewrite the approved reading into this budget, keeping its
-register — the way it moves from what is visible to what the work makes present — and keeping its
-analogies where they still hold at this length.
-Open by making the work appear, not by classifying it. Anchor that opening in the concrete evidence
-the reading already establishes: how many forms, where they sit, the direction of the lines, the
-divisions, the differences of scale. Any analogy must be traceable to something the reading states —
-one primary image, at most one secondary. Close on what the experience leaves.
-Material construction only from confirmed data, and say how the process affects the visible surface
-rather than listing media.
+Target between 450 and 700 characters (hard limit: 1000 characters). Write a focused, agile, collector-oriented description without padding or repetitive curatorial fillers.
+Vary your narrative entry point based on what truly distinguishes this specific artwork (e.g. open by its tactile materiality, its geometric division, its tonal movement, or its spatial tension). Do not repeat identical 3-part paragraph templates across different artworks.
+Avoid repetitive filler phrases such as "contemplative stillness", "state of suspension", or "territorial blocks" unless strictly necessary.
+Rewrite the approved reading concisely into this budget, keeping its register — the way it moves from what is visible to what the work makes present.
+Open by making the work appear, not by classifying it. Anchor that opening in concrete evidence. Close on what the experience leaves.
+Material construction only from confirmed data, and say how the process affects the visible surface rather than listing media.
+
 
 SAATCHI KEYWORDS
 Return exactly 12 phrases in English, each 2 to 20 characters including spaces, Title Case.

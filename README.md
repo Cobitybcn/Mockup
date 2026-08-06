@@ -53,6 +53,9 @@ php platform/scripts/database_schema_status.php --assert-current --json
 
 Every future table, column, index, or constraint change must be a new immutable file in `platform/migrations/schema/`. Applied migration files are never edited or deleted. Production delivery performs this check before either Cloud Run service receives traffic.
 
+All runtime configuration and user-customized presets (such as Camera Boards slots) persist in the `app_settings` database table via `CameraSlotsStore`, preventing data loss across ephemeral Cloud Run container revisions. The seed file `app/Config/mockup_camera_slots_custom.php` serves exclusively as an initial fallback when the database setting is unpopulated.
+
+
 The one-time setup is implemented in `platform/scripts/setup_cloud_build_cicd.ps1`. It verifies that GitHub's default branch is `main` and that the destination services are the existing `mockups-web` and `mockups-worker` services in `us-central1`. It then creates a dedicated least-privilege build identity and the `artwork-mockups-main-deploy` trigger. The setup script does not start a build or deploy.
 
 Before the trigger can be created, authorize the Cloud Build GitHub App for the `Cobitybcn/Mockup` repository from the Cloud Build **Connect repository** screen. This is an interactive GitHub authorization and is not stored in the repository. After connecting it, run:

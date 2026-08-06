@@ -445,7 +445,7 @@ function render_artwork_card(string $slug, array $artwork, array $series): void
     ?>
     <article class="art-card" data-artwork-card data-status="<?= e($artwork['status']) ?>" data-series="<?= e($artwork['series']) ?>" data-search="<?= e(strtolower($searchText)) ?>">
         <a class="art-card__image" href="<?= e(url_for('paintings/' . $slug)) ?>" aria-label="<?= e($artwork['title']) ?>">
-            <img src="<?= e(asset_url($artwork['image'])) ?>" alt="<?= e($artwork['title'] . ' by Maurizio Valch') ?>">
+            <img src="<?= e(asset_url($artwork['image'])) ?>" alt="<?= e($artwork['title'] . ' by Maurizio Valch') ?>" loading="lazy" decoding="async">
         </a>
         <div class="art-card__body">
             <div class="eyebrow"><?= e($status) ?> / <?= e($seriesTitle) ?></div>

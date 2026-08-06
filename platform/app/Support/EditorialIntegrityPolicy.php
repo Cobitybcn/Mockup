@@ -24,8 +24,9 @@ TEXT
 - Keep the complete artwork description at 350 words or fewer, the short description at 70 words or fewer, alt text at 90 words or fewer, and captions at 50 words or fewer.
 - Saatchi Art fields are measured in CHARACTERS, not words, because they are hard limits of Saatchi's form: a text that exceeds them cannot be published. saatchi_title at 65 characters or fewer including spaces, saatchi_description at 1000 characters or fewer, saatchi_caption under 50 characters.
 - saatchi_title is written as "EXACT ARTWORK TITLE - SEO tail" and must fit the 65 characters as a whole. The tail is written against whatever budget the title leaves (65 minus the title minus 3). Never abbreviate, truncate or mutilate the artwork title to make room for the tail: if an honest tail does not fit, the title travels alone. The tail names what a buyer searches for — format, dominant color, technique, support — never prestige.
-- saatchi_description uses its own 1000-character budget and is written for a collector deciding on a purchase, not for a search engine. It is never a cut of the long description: truncating breaks a sentence mid-way, which this chapter already forbids.
+- saatchi_description targets between 450 and 700 characters (hard limit: 1000 characters), written concisely for a collector deciding on a purchase without padding or repetitive curatorial fillers. It is never a cut of the long description: truncating breaks a sentence mid-way, which this chapter already forbids.
 TEXT);
+
 
         return <<<TEXT
 NON-NEGOTIABLE EDITORIAL INTEGRITY

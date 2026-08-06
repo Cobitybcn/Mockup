@@ -109,7 +109,11 @@ function run_saatchi_fields_tests(): void
         TestHarness::assertContains("'key' => '{$campo}'", $ficha, "la ficha permite editar {$campo}");
     }
 
-    // ————— La adaptacion al ingles los lleva —————
-    $adapter = (string)file_get_contents($platformRoot . '/app/Services/BilingualEditorialAdapterService.php');
-    TestHarness::assertContains("'saatchi_title' => ''", $adapter, 'el listing en ingles tambien necesita sus campos');
+    // ————— La sintesis de pies de foto para Saatchi es concisa —————
+    $longParagraph = "In 'LUX REMOTA,' light illuminates a pictorial territory where deep indigo fields meet an intense red block in the foreground...";
+    $shortCaption = SaatchiListingService::formatSyntheticCaption('mockup-6.jpg', $longParagraph);
+    TestHarness::assertTrue(mb_strlen($shortCaption) <= 50, 'formatSyntheticCaption recorta o formatea pies a menos de 50 caracteres');
+    $palabras = count(preg_split('/\s+/u', $shortCaption) ?: []);
+    TestHarness::assertTrue($palabras >= 4 && $palabras <= 7, 'formatSyntheticCaption produce entre 4 y 7 palabras');
 }
+

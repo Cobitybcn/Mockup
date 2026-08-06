@@ -156,10 +156,12 @@ try {
             $packagedSize = $sourceSize;
         }
 
-        $caption = (string)($image['caption'][$descriptionLocale] ?? '');
+        $rawCaption = (string)($image['caption'][$descriptionLocale] ?? '');
+        $caption = SaatchiListingService::formatSyntheticCaption($file, $rawCaption);
         $lines[] = '';
         $lines[] = $entryName;
         $lines[] = '  ' . ($caption !== '' ? $caption : '—');
+
         if (is_array($packagedSize) && is_array($sourceSize)) {
             $lines[] = sprintf(
                 '  %dx%d px (original %dx%d, ampliado para el mínimo de Saatchi)',

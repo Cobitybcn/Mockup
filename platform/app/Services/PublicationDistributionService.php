@@ -290,7 +290,7 @@ final class PublicationDistributionService
      *
      * @return array{results:array<string,array{status:string,detail:string}>,sent:int,skipped:int,failed:int}
      */
-    public function publishAllConnected(int $publicationId, int $userId, string $locale): array
+    public function publishAllConnected(int $publicationId, int $userId, string $locale, array $options = []): array
     {
         [$payload] = $this->ensureCurrentProduct($publicationId, $userId);
         $hasVideo = (int)($payload['media']['video']['export_id'] ?? 0) > 0;
@@ -304,7 +304,7 @@ final class PublicationDistributionService
                 continue;
             }
 
-            $options = [];
+            $destOptions = [];
             if ($destination === 'pinterest') {
                 if ((string)($state['status'] ?? '') === 'published' && empty($state['requires_republish'])) {
                     $results[$destination] = ['status' => 'skipped', 'detail' => t('already published', 'ya publicado')];
@@ -315,12 +315,54 @@ final class PublicationDistributionService
                 $boardIds = $currentEnvironment !== '' && $currentEnvironment === $recordedEnvironment
                     ? (array)($state['board_ids'] ?? [])
                     : [];
+                $pinterestOptions = (array)($options['pinterest'] ?? $options);
+                $submittedBoardIds = (array)($pinterestOptions['board_ids'] ?? []);
+                if ($submittedBoardIds !== []) {
+                    $boardIds = $submittedBoardIds;
+                }
+                $allowedBoardIds = array_values(array_unique(array_filter(array_map(
+                    static fn($boardId): string => trim((string)$boardId),
+                    (array)($pinterestOptions['allowed_board_ids'] ?? [])
+                ))));
+                if ($allowedBoardIds === []) {
+                    try {
+                        foreach ((new PinterestIntegrationService($this->pdo))->publicationBoards($userId, 'artist') as $selectableBoard) {
+                            $selectableBoardId = trim((string)($selectableBoard['id'] ?? ''));
+                            if ($selectableBoardId !== '') $allowedBoardIds[] = $selectableBoardId;
+                        }
+                    } catch (Throwable) {
+                        $allowedBoardIds = [];
+                    }
+                }
+                if ($boardIds === [] && $allowedBoardIds !== []) {
+                    $defaultBoardId = $allowedBoardIds[0];
+                    $mediaItemsPayload = (array)($payload['media']['items'] ?? []);
+                    if ($mediaItemsPayload !== []) {
+                        foreach ($mediaItemsPayload as $pinItem) {
+                            $itemKey = (string)((int)($pinItem['mockup_sheet_id'] ?? 0));
+                            if ($itemKey !== '') {
+                                $boardIds[$itemKey] = $defaultBoardId;
+                            }
+                        }
+                    } else {
+                        $boardIds['*'] = $defaultBoardId;
+                    }
+                }
                 if ($boardIds === []) {
                     $results[$destination] = ['status' => 'skipped', 'detail' => t('choose a board in the Pinterest step', 'elegí un tablero en el paso Pinterest')];
                     continue;
                 }
-                $options['board_ids'] = $boardIds;
+                $destOptions = [
+                    'board_ids' => $boardIds,
+                    'allowed_board_ids' => $allowedBoardIds,
+                ];
+                if (!empty($pinterestOptions['link'])) {
+                    $destOptions['link'] = (string)$pinterestOptions['link'];
+                }
+                $destOptions = $destOptions;
+                $options = $destOptions;
             } elseif ($destination === 'tiktok') {
+
                 // The page video is the natural TikTok post; without one the
                 // carousel keeps the channel alive.
                 $options['medium'] = $hasVideo ? 'video' : 'carousel';

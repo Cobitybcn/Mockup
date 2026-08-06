@@ -326,10 +326,36 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && in_array((string)($_POST['action'] 
             if ((string)($_POST['confirm'] ?? '') !== 'yes') {
                 throw new RuntimeException(t('Confirm the send before publishing.', 'Confirmá el envío antes de publicar.'));
             }
-            $summary = $distribution->publishAllConnected((int)$publication['id'], $userId, (string)($_POST['locale'] ?? ''));
+            $pinBoards = [];
+            foreach ((array)($_POST['pin_boards'] ?? []) as $pinKey => $pinBoardId) {
+                $pinKey = trim((string)$pinKey);
+                $pinBoardId = trim((string)$pinBoardId);
+                if (preg_match('/^[0-9]+$/', $pinKey) && $pinBoardId !== '') $pinBoards[$pinKey] = $pinBoardId;
+            }
+            $pinAllowedBoardIds = [];
+            try {
+                foreach ((new PinterestIntegrationService($pdo))->publicationBoards($userId, 'artist') as $selectableBoard) {
+                    $selectableBoardId = trim((string)($selectableBoard['id'] ?? ''));
+                    if ($selectableBoardId !== '') $pinAllowedBoardIds[] = $selectableBoardId;
+                }
+            } catch (Throwable) {
+                $pinAllowedBoardIds = [];
+            }
+            $pinLink = trim((string)($_POST['pin_link'] ?? ''));
+            $summary = $distribution->publishAllConnected(
+                (int)$publication['id'],
+                $userId,
+                (string)($_POST['locale'] ?? ''),
+                [
+                    'board_ids' => $pinBoards,
+                    'allowed_board_ids' => $pinAllowedBoardIds,
+                    'link' => $pinLink,
+                ]
+            );
             Auth::start();
             $_SESSION['publication_distribute_all'] = $summary;
             $flag = 'all';
+
         } elseif ($distributionAction === 'tiktok_status') {
             $distribution->refreshTikTokStatus((int)$publication['id'], $userId, (string)($_POST['medium'] ?? 'video'));
             $flag = 'tiktok_status';
@@ -1025,9 +1051,13 @@ function pub_page_chip(string $status): array
                                 <p class="pub-dist-package-text"><?= nl2br(pub_h($saatchiDescription)) ?></p>
                                 <div class="pub-dist-package-images">
                                     <?php foreach ((array)($saatchiPackage['images'] ?? []) as $packageImage): ?>
-                                        <?php $imageCaption = (string)($packageImage['caption'][$saatchiDescriptionLocale] ?? ''); ?>
+                                        <?php
+                                        $imageFile = (string)($packageImage['file'] ?? '');
+                                        $rawCaption = (string)($packageImage['caption'][$saatchiDescriptionLocale] ?? '');
+                                        $imageCaption = SaatchiListingService::formatSyntheticCaption($imageFile, $rawCaption);
+                                        ?>
                                         <figure>
-                                            <img src="<?= pub_h(pub_media_url((string)($packageImage['file'] ?? ''))) ?>" alt="" loading="lazy">
+                                            <img src="<?= pub_h(pub_media_url($imageFile)) ?>" alt="" loading="lazy">
                                             <figcaption><?= pub_h($imageCaption) ?></figcaption>
                                             <button type="button" class="pub-copy" data-copy-text="<?= pub_h($imageCaption) ?>"><?= pub_h(t('Copy caption', 'Copiar pie')) ?></button>
                                         </figure>
@@ -1068,7 +1098,7 @@ function pub_page_chip(string $status): array
                                                     $saatchiExtraPie = '';
                                                 }
                                             }
-                                            $saatchiExtras[$saatchiExtraFile] = $saatchiExtraPie;
+                                            $saatchiExtras[$saatchiExtraFile] = SaatchiListingService::formatSyntheticCaption($saatchiExtraFile, $saatchiExtraPie);
                                         }
                                     } catch (Throwable) {
                                         $saatchiExtras = [];
@@ -1077,12 +1107,11 @@ function pub_page_chip(string $status): array
                                     <?php foreach ($saatchiExtras as $saatchiExtraFile => $saatchiExtraPie): ?>
                                         <figure>
                                             <img src="<?= pub_h(pub_media_url((string)$saatchiExtraFile)) ?>" alt="" loading="lazy">
-                                            <figcaption><?= pub_h($saatchiExtraPie !== '' ? $saatchiExtraPie : t('No caption yet', 'Sin pie todavía')) ?></figcaption>
-                                            <?php if ($saatchiExtraPie !== ''): ?>
-                                                <button type="button" class="pub-copy" data-copy-text="<?= pub_h($saatchiExtraPie) ?>"><?= pub_h(t('Copy caption', 'Copiar pie')) ?></button>
-                                            <?php endif; ?>
+                                            <figcaption><?= pub_h($saatchiExtraPie) ?></figcaption>
+                                            <button type="button" class="pub-copy" data-copy-text="<?= pub_h($saatchiExtraPie) ?>"><?= pub_h(t('Copy caption', 'Copiar pie')) ?></button>
                                         </figure>
                                     <?php endforeach; ?>
+
                                     <a class="pub-decision pub-decision--save pub-dist-download" href="publication_saatchi_package.php?id=<?= (int)$doc['artwork']['id'] ?>">
                                         <span><?= pub_h(t('Download', 'Descargar')) ?><br><?= pub_h(t('package .zip', 'paquete .zip')) ?></span>
                                     </a>
@@ -1589,7 +1618,7 @@ function pub_page_chip(string $status): array
                                     <?php if ($disconnectedNames !== []): ?><br><small><?= pub_h(t('Skipped for lack of connection:', 'Se saltea por falta de conexión:')) ?> <?= pub_h(implode(', ', $disconnectedNames)) ?></small><?php endif; ?>
                                     <br><small><?= pub_h(t('Saatchi Art stays out: it has no usable API and is uploaded by hand from its own step.', 'Saatchi Art queda afuera: no tiene API usable y se carga a mano desde su propio paso.')) ?></small>
                                 </p>
-                                <form method="post" class="pub-dist-form">
+                                <form method="post" class="pub-dist-form" data-distribute-all-form>
                                     <input type="hidden" name="action" value="distribute_all">
                                     <input type="hidden" name="id" value="<?= (int)$doc['artwork']['id'] ?>">
                                     <input type="hidden" name="csrf" value="<?= pub_h($csrf) ?>">
@@ -1626,6 +1655,30 @@ function pub_page_chip(string $status): array
         window.history.replaceState({}, '', url.pathname + url.search + url.hash);
     }
 })();
+(() => {
+    const distAllForm = document.querySelector('[data-distribute-all-form]');
+    if (!distAllForm) return;
+    distAllForm.addEventListener('submit', () => {
+        const pinLinkInput = document.querySelector('input[name="pin_link"]');
+        if (pinLinkInput && pinLinkInput.value && !distAllForm.querySelector('input[name="pin_link"]')) {
+            const hiddenLink = document.createElement('input');
+            hiddenLink.type = 'hidden';
+            hiddenLink.name = 'pin_link';
+            hiddenLink.value = pinLinkInput.value;
+            distAllForm.appendChild(hiddenLink);
+        }
+        document.querySelectorAll('select[name^="pin_boards"]').forEach(select => {
+            if (select.name && select.value) {
+                const hiddenBoard = document.createElement('input');
+                hiddenBoard.type = 'hidden';
+                hiddenBoard.name = select.name;
+                hiddenBoard.value = select.value;
+                distAllForm.appendChild(hiddenBoard);
+            }
+        });
+    });
+})();
+
 (() => {
     const form = document.querySelector('[data-publication-form]');
     if (!form) return;

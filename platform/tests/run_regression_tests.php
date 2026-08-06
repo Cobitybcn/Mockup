@@ -63,6 +63,8 @@ require_once __DIR__ . '/regression/saatchi_listing_generation_test.php';
 require_once __DIR__ . '/regression/discovery_keywords_test.php';
 require_once __DIR__ . '/regression/influences_analysis_test.php';
 require_once __DIR__ . '/regression/derived_fields_approval_test.php';
+require_once __DIR__ . '/regression/video_studio_domain_test.php';
+
 
 run_root_artwork_regression_tests();
 run_seo_filename_regression_tests();
@@ -114,6 +116,8 @@ run_saatchi_listing_generation_tests();
 run_discovery_keywords_tests();
 run_influences_analysis_tests();
 run_derived_fields_approval_tests();
+run_video_studio_domain_regression_tests();
+
 
 // Scripts procedurales autocontenidos (SQLite en memoria, sin red). Declaran sus
 // propios stubs (Auth, ANALYSIS_DIR, ...), asi que no pueden incluirse en este

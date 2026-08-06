@@ -65,4 +65,10 @@ function run_camera_slots_persistence_tests(): void
         $storeSource,
         'si la base no esta disponible el store degrada a null y el config cae a la semilla, en vez de tumbar el request'
     );
+
+    $migrationPath = $platformRoot . '/migrations/schema/20260806_000001_seed_camera_slots_custom.php';
+    TestHarness::assertTrue(is_file($migrationPath), 'existe la migracion inmutable de sembrado de slots de camara');
+    $migrationContent = (string)file_get_contents($migrationPath);
+    TestHarness::assertContains('mockup_camera_slots_custom', $migrationContent, 'la migracion de sembrado referencia la clave correcta');
 }
+

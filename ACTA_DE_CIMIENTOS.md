@@ -127,19 +127,13 @@ boards por lote en Pinterest, `appsecret_proof` de Meta, idempotencia de los job
 puentes de campañas, aislamiento entre la app Pinterest del artista y la de plataforma, e
 invariantes de publicación/series.
 
-## 5. Riesgos abiertos, confirmados
+## 5. Riesgos abiertos y resolución reciente
 
-1. **Los overrides de cámaras se pierden en cada deploy.** Camera Boards escribe
-   `app/Config/mockup_camera_slots_custom.php` en el disco del contenedor; no hay sincronización
-   a GCS ni a la base. La imagen trae la versión de git, del 2026-07-19: toda edición de
-   cámaras hecha en producción desde entonces se perdió en el siguiente deploy.
-2. **El video casi no tiene red de seguridad.** Sus ~17 endpoints y servicios dependen de dos
-   tests manuales que exigen base de datos y FFmpeg reales; en CI solo corre el cálculo de
-   rangos de bytes.
-3. **Los snapshots se auto-crean.** Si falta un fixture, el arnés lo genera y el test pasa:
-   borrar un fixture convierte su test en un no-op silencioso.
-4. **Dos generaciones de flujo social conviven** (pantallas de batch heredadas junto al camino
-   nuevo de Publicación) y ambas llaman APIs reales.
+1. **[RESUELTO 2026-08-06] Persistencia de cámaras en base de datos.** Camera Boards guarda las personalizaciones directamente en la tabla `app_settings` de MySQL mediante `CameraSlotsStore` y la migración inmutable `20260806_000001_seed_camera_slots_custom.php`. Las ediciones de cámaras ya no se pierden en cada despliegue.
+2. **[RESUELTO 2026-08-06] Cobertura de regresión de Video Studio.** Implementado `video_studio_domain_test.php`, validando en memoria los contratos de `VideoPromptComposer` (`ARTWORK FIDELITY`), `VideoReferencePolicy` y `VideoProviderRegistry` en la suite de CI.
+3. **Los snapshots se auto-crean.** Si falta un fixture, el arnés lo genera y el test pasa: borrar un fixture convierte su test en un no-op silencioso.
+4. **Dos generaciones de flujo social conviven** (pantallas de batch heredadas junto al camino nuevo de Publicación) y ambas llaman APIs reales.
+
 
 ## 6. Lo que no es cimiento
 

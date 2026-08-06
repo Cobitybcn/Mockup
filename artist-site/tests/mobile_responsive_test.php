@@ -35,7 +35,9 @@ $checks = [
     [str_contains($site, 'app_studio_note_embedded_image_url') && is_file($platform . '/studio_note_embedded_image.php'), 'legacy embedded Studio Note images have a safe public compatibility path'],
     [str_contains($styles, '.journal .article-list') && str_contains($styles, 'grid-template-columns: repeat(4, minmax(0, 1fr));'), 'Studio Notes uses four editorial columns on desktop'],
     [str_contains($site, '(max-width: 1180px) 50vw, 25vw'), 'Studio Notes requests responsive thumbnails for its four-column layout'],
+    [str_contains($functions, 'render_artwork_card') && str_contains($functions, 'loading="lazy"') && str_contains($functions, 'decoding="async"'), 'artwork card thumbnails use lazy loading and async decoding'],
 ];
+
 
 foreach ($checks as [$passed, $message]) {
     if (!$passed) {
