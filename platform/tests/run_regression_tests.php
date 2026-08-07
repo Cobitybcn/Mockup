@@ -64,9 +64,11 @@ require_once __DIR__ . '/regression/discovery_keywords_test.php';
 require_once __DIR__ . '/regression/influences_analysis_test.php';
 require_once __DIR__ . '/regression/derived_fields_approval_test.php';
 require_once __DIR__ . '/regression/video_studio_domain_test.php';
+require_once __DIR__ . '/regression/canonical_title_and_paragraph_formatting_test.php';
 
 
 run_root_artwork_regression_tests();
+run_canonical_title_and_paragraph_formatting_tests();
 run_seo_filename_regression_tests();
 run_public_slug_regression_tests();
 run_uploaded_root_regression_tests();

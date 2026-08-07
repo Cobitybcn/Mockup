@@ -72,7 +72,7 @@ foreach (array_map('intval', $users) as $userId) {
     $artStmt = $pdo->prepare("SELECT id, series_id, final_title FROM artworks WHERE user_id=? AND TRIM(COALESCE(final_title,''))<>''");
     $artStmt->execute([$userId]);
     foreach ($artStmt->fetchAll(PDO::FETCH_ASSOC) as $artwork) {
-        $full = trim((string)$artwork['final_title']);
+        $full = TitleSuggestionService::formatCanonical((string)$artwork['final_title']);
         // El titulo individual: lo que sigue al guion largo en el formato
         // SERIE + romano + — + TITULO; si no hay guion, el titulo completo.
         $individual = $full;

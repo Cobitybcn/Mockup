@@ -475,3 +475,50 @@ function admin_slug(string $value): string
     $value = preg_replace("/[^a-z0-9]+/", "-", $value) ?: "";
     return trim($value, "-");
 }
+
+function render_published_paragraphs(string $text): string
+{
+    $text = trim($text);
+    if ($text === '') {
+        return '';
+    }
+
+    // Normalizar saltos de línea y reparar falta de espacio entre punto y mayúscula al colapsar oraciones
+    $normalizedText = preg_replace('/(?<=[a-z0-9\.\,\;\:\!\?])\.(?=[A-Z])/', '. ', $text);
+
+    // Dividir por saltos de línea dobles o múltiples
+    $paragraphs = preg_split('/\n\s*\n|\r\n\s*\r\n/', $normalizedText);
+    $html = [];
+    foreach ($paragraphs as $p) {
+        $p = trim($p);
+        if ($p === '') continue;
+        $formatted = nl2br(e($p));
+        $html[] = '<p>' . $formatted . '</p>';
+    }
+
+    if (empty($html)) {
+        return '<p>' . e($normalizedText) . '</p>';
+    }
+
+    return implode("\n", $html);
+}
+
+function canonical_artwork_title(string $title): string
+{
+    $title = trim($title);
+    if ($title === '') return '';
+
+    // Reemplazar guiones simples o en-dash entre espacios con em-dash canónico
+    $normalized = preg_replace('/\s+[\-\x{2013}\x{2014}]\s+/u', ' — ', $title);
+
+    // Si tiene prefijo de serie (SERIE — TITULO), convertir el prefijo a MAYÚSCULAS
+    if (str_contains($normalized, ' — ')) {
+        $parts = explode(' — ', $normalized, 2);
+        $prefix = mb_strtoupper(trim($parts[0]));
+        $suffix = trim($parts[1]);
+        return $prefix . ' — ' . $suffix;
+    }
+
+    return $normalized;
+}
+

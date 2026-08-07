@@ -27,6 +27,24 @@ final class TitleSuggestionService
         return trim((string)preg_replace('/[^A-Z0-9 ]+/', '', $title));
     }
 
+    public static function formatCanonical(string $title): string
+    {
+        $title = trim($title);
+        if ($title === '') return '';
+
+        // Reemplazar guiones simples o en-dash entre espacios con em-dash canónico
+        $normalized = preg_replace('/\s+[\-\x{2013}\x{2014}]\s+/u', ' — ', $title);
+
+        if (str_contains($normalized, ' — ')) {
+            $parts = explode(' — ', $normalized, 2);
+            $prefix = mb_strtoupper(trim($parts[0]));
+            $suffix = trim($parts[1]);
+            return $prefix . ' — ' . $suffix;
+        }
+
+        return $normalized;
+    }
+
     /**
      * Aviso NO bloqueante para titulos manuales (regla cero: titular es del
      * artista; el sistema solo muestra lo que el mismo pidio vigilar).

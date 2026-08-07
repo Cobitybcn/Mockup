@@ -41,10 +41,14 @@
             <?php endif; ?>
         </dl>
         <div class="prose">
-            <h2>Conceptual Note</h2>
-            <p><?= e($artwork["concept"]) ?></p>
-            <h2>Studio Information</h2>
-            <p><?= e($artwork["commercial_note"]) ?></p>
+            <?php if (!empty($artwork["concept"])): ?>
+                <h2>Conceptual Note</h2>
+                <?= render_published_paragraphs($artwork["concept"]) ?>
+            <?php endif; ?>
+            <?php if (!empty($artwork["commercial_note"])): ?>
+                <h2>Studio Information</h2>
+                <?= render_published_paragraphs($artwork["commercial_note"]) ?>
+            <?php endif; ?>
         </div>
         <div class="actions" style="display: flex; flex-direction: column; gap: 10px;">
             <?php if ($artwork["status"] === "available" || $artwork["status"] === "for sale"): ?>
