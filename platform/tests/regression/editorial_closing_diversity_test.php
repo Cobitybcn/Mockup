@@ -34,4 +34,12 @@ function run_editorial_closing_diversity_tests(): void
 
     $collectedClosings = EditorialIntegrityPolicy::closings(['description' => $sampleText]);
     TestHarness::assertSame(1, count($collectedClosings), 'closings recolecciona correctamente la clave de cierre');
+
+    // 3. Validación de rechazo de cierres formulaicos en español e inglés
+    $spanishFormulaic = "La obra invita a observar la coexistencia entre la solidez del bloque lateral y la levedad de los trazos lineales.";
+    $issues = EditorialIntegrityPolicy::issues(['description' => $spanishFormulaic], 'artwork');
+    TestHarness::assertTrue(
+        !empty($issues),
+        'EditorialIntegrityPolicy rechaza cierres formulaicos en español como "La obra invita a observar..."'
+    );
 }

@@ -137,6 +137,10 @@ TEXT;
             if (preg_match('/^(?:descubr[ae]|explor[ae]|discover|explore|adquier[ae]|adquiera|compr[eaá]|buy|acquire)\b/iu', $text) === 1) {
                 $issues[] = "{$label}: generic action-verb opening — identify the work, do not command the reader.";
             }
+            $genericClosing = '/\b(?:invit\w+|offering|invita\w*|ofreciendo)\b.+?\b(?:contemplat\w+|reflect\w+|observ\w+|reading|journey|engagement|encounter|contemplaci[oó]n|reflexi[oó]n|observaci[oó]n|lectura|recorrido|encuentro)\b/iu';
+            if (preg_match($genericClosing, $text) === 1) {
+                $issues[] = "{$label}: formulaic contemplative closing — close on concrete material, spatial, or temporal observations.";
+            }
             $opening = self::openingKey($text);
             if ($opening !== '') {
                 if (isset($forbiddenOpenings[$opening])) {
