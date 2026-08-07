@@ -6,6 +6,7 @@ final class DescriptionDiversityEngine
     private const TYPES = ['composition','color','material','atmosphere','territory','symbol','movement','light','process','viewer','scale','contrast','detail','negative_space','architecture'];
     private const RHYTHMS = ['short_then_long','one_long_sentence','two_medium_sentences','long_then_short','direct_observation'];
     private const STRUCTURES = ['visual_material_conceptual_spatial','atmosphere_composition_symbol_process','detail_expansion_interpretation','process_surface_depth_presence','contrast_tension_viewer','color_rhythm_territory_contemplation'];
+    private const CLOSINGS = ['material_fact','spatial_relation','temporal','negation','unresolved_tension','series_position','viewer_invitation'];
 
     public static function select(array $context, array $historyDirectories, string $seed): array
     {
@@ -13,10 +14,12 @@ final class DescriptionDiversityEngine
         $typeCounts = array_fill_keys(self::TYPES, 0);
         $rhythmCounts = array_fill_keys(self::RHYTHMS, 0);
         $structureCounts = array_fill_keys(self::STRUCTURES, 0);
+        $closingCounts = array_fill_keys(self::CLOSINGS, 0);
         foreach (array_slice($history, -50) as $item) {
             if (isset($typeCounts[$item['type']])) $typeCounts[$item['type']]++;
             if (isset($rhythmCounts[$item['rhythm']])) $rhythmCounts[$item['rhythm']]++;
             if (isset($structureCounts[$item['structure']])) $structureCounts[$item['structure']]++;
+            if (isset($closingCounts[$item['closing']])) $closingCounts[$item['closing']]++;
         }
 
         $eligible = self::eligibleTypes($context);
@@ -34,13 +37,20 @@ final class DescriptionDiversityEngine
             $count = $structureCounts[$a] <=> $structureCounts[$b];
             return $count !== 0 ? $count : strcmp(hash('sha256', $seed . ':structure:' . $a), hash('sha256', $seed . ':structure:' . $b));
         });
+        $closings = self::CLOSINGS;
+        usort($closings, static function (string $a, string $b) use ($closingCounts, $seed): int {
+            $count = $closingCounts[$a] <=> $closingCounts[$b];
+            return $count !== 0 ? $count : strcmp(hash('sha256', $seed . ':closing:' . $a), hash('sha256', $seed . ':closing:' . $b));
+        });
 
         return [
             'description_opening_type' => $eligible[0] ?? 'composition',
             'description_opening_rhythm' => $rhythms[0] ?? 'direct_observation',
             'description_structure_type' => $structures[0] ?? 'visual_material_conceptual_spatial',
+            'description_closing_type' => $closings[0] ?? 'material_fact',
             'recent_opening_types_to_avoid' => self::mostUsed($typeCounts, 4),
-            'selection_basis' => ['history_window'=>min(50, count($history)),'eligible_types'=>$eligible,'eligible_structures'=>$structures,'type_usage'=>$typeCounts,'rhythm_usage'=>$rhythmCounts,'structure_usage'=>$structureCounts],
+            'recent_closing_types_to_avoid' => self::mostUsed($closingCounts, 2),
+            'selection_basis' => ['history_window'=>min(50, count($history)),'eligible_types'=>$eligible,'eligible_structures'=>$structures,'eligible_closings'=>$closings,'type_usage'=>$typeCounts,'rhythm_usage'=>$rhythmCounts,'structure_usage'=>$structureCounts,'closing_usage'=>$closingCounts],
         ];
     }
 
@@ -79,7 +89,7 @@ final class DescriptionDiversityEngine
                 if (!is_array($data) || (string)($data['source']['image_file'] ?? '') === $excludeSeed) continue;
                 $strategy = $data['editorial_strategy'] ?? null;
                 if (!is_array($strategy)) continue;
-                $out[] = ['type'=>(string)($strategy['description_opening_type']??''),'rhythm'=>(string)($strategy['description_opening_rhythm']??''),'structure'=>(string)($strategy['description_structure_type']??''),'time'=>(string)($data['source']['analyzed_at']??filemtime($file))];
+                $out[] = ['type'=>(string)($strategy['description_opening_type']??''),'rhythm'=>(string)($strategy['description_opening_rhythm']??''),'structure'=>(string)($strategy['description_structure_type']??''),'closing'=>(string)($strategy['description_closing_type']??''),'time'=>(string)($data['source']['analyzed_at']??filemtime($file))];
             }
         }
         usort($out, static fn(array $a, array $b): int => strcmp($a['time'], $b['time']));

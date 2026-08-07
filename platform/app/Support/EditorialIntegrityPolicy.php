@@ -40,6 +40,7 @@ NON-NEGOTIABLE EDITORIAL INTEGRITY
 - Use each visual or conceptual observation once. Do not inflate the text by repeating the same idea in different words.
 - Never open any public description with a command to the reader: no "Discover", "Explore", "Acquire", "Buy", "Descubre", "Explora", "Adquiere" or "Compra". This applies to every channel, not only to the SEO description.
 - No two public texts may open with the same phrase — not across the channels of one image, not against the artwork's own reading, and not against the other images of the same artwork. Readers see only the first line before the feed truncates it, so a repeated opening reads as a repeated text.
+- Do not close public descriptions with formulaic invitations to contemplate, observe, reflect, or journey (such as "inviting a silent passage", "invites quiet contemplation", "inviting an open reading", or "invita a la reflexión/observación"), unless explicitly required by the viewer_invitation closing type. The final sentence must contribute concrete information (material, spatial, temporal, negative, or unresolved tension), not a generic curatorial summary.
 {$lengthRules}
 TEXT;
     }
@@ -184,6 +185,36 @@ TEXT;
         $words = preg_split('/\s+/', trim($text), -1, PREG_SPLIT_NO_EMPTY) ?: [];
         if (count($words) < 4) return '';
         return implode(' ', array_slice($words, 0, 8));
+    }
+
+    public static function closingKey(string $text): string
+    {
+        $text = strtolower(trim(strip_tags($text)));
+        $ascii = @iconv('UTF-8', 'ASCII//TRANSLIT', $text);
+        if (is_string($ascii) && $ascii !== '') $text = strtolower($ascii);
+        $text = preg_replace('/[^a-z0-9\s]+/', ' ', $text) ?? '';
+        $words = preg_split('/\s+/', trim($text), -1, PREG_SPLIT_NO_EMPTY) ?: [];
+        if (count($words) < 4) return '';
+        return implode(' ', array_slice($words, -8));
+    }
+
+    public static function closings(array|string $content): array
+    {
+        $closings = [];
+        self::collectClosings($content, '', $closings);
+        return array_values(array_unique(array_filter($closings)));
+    }
+
+    private static function collectClosings(mixed $value, string $path, array &$closings): void
+    {
+        if (is_array($value)) {
+            foreach ($value as $key => $nested) {
+                self::collectClosings($nested, $path === '' ? (string)$key : $path . '.' . (string)$key, $closings);
+            }
+            return;
+        }
+        if (!is_scalar($value) || !self::isPublicCopyPath($path)) return;
+        $closings[] = self::closingKey((string)$value);
     }
 
     /**
