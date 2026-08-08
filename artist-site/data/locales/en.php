@@ -121,6 +121,8 @@ return [
         'sent' => 'Message sent. Thank you.',
         'required_error' => 'All fields (Name, Email, Message) are required.',
         'email_error' => 'Please enter a valid email address.',
+        'length_error' => 'One or more fields are longer than allowed.',
+        'verification_error' => 'We could not verify the submission. Please reload the page and try again.',
         'rate_error' => 'Too many messages have been submitted. Please try again later.',
         'temporary_error' => 'The contact form is temporarily unavailable. Please email the studio directly.',
         'delivery_error' => 'There was an error sending your message. Please try again or email the studio directly.',

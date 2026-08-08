@@ -1,5 +1,8 @@
 # Artwork Mockups UI Rules
 
+> Consolidado en `design-system/STYLE_GUIDE.md`. Este archivo queda como detalle de clases
+> CSS; ante conflicto manda el Style Guide.
+
 Estas reglas son obligatorias para nuevas secciones de la app.
 
 ## Referencias visuales

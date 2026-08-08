@@ -19,6 +19,14 @@ function run_schema_migration_governance_tests(): void
         created_at TEXT NOT NULL,
         updated_at TEXT NOT NULL
     )");
+    // SchemaMigrator runs after Database::migrateSqlite() builds the legacy
+    // baseline in production. Keep this isolated test on that same boundary.
+    $pdo->exec("CREATE TABLE app_settings (
+        key TEXT PRIMARY KEY,
+        value TEXT NOT NULL DEFAULT '',
+        created_at TEXT NOT NULL DEFAULT '',
+        updated_at TEXT NOT NULL
+    )");
 
     $directory = dirname(__DIR__, 2) . '/migrations/schema';
     $first = SchemaMigrator::migrate($pdo, $directory);

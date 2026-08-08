@@ -1,5 +1,8 @@
 # UI Interaction Patterns
 
+> Consolidated into `design-system/STYLE_GUIDE.md` (Glass Actions section covers this
+> pattern's core rules). Kept here as full detail on touch behavior and units.
+
 ## Edge-anchored image controls
 
 This pattern was established in `create_scenes.php` and should be considered for future mockup editing tools.

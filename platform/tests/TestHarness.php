@@ -28,6 +28,15 @@ final class TestHarness
         }
     }
 
+    public static function assertFalse(bool $condition, string $label): void
+    {
+        if (!$condition) {
+            self::pass($label);
+        } else {
+            self::fail($label, 'esperaba false, obtuvo true');
+        }
+    }
+
     public static function assertSame($expected, $actual, string $label): void
     {
         if ($expected === $actual) {
@@ -37,12 +46,37 @@ final class TestHarness
         }
     }
 
-    public static function assertContains(string $needle, string $haystack, string $label): void
+    public static function assertArrayHasKey(string|int $key, array $array, string $label): void
     {
-        if (str_contains($haystack, $needle)) {
+        if (array_key_exists($key, $array)) {
             self::pass($label);
         } else {
-            self::fail($label, 'no se encontro la subcadena esperada: ' . substr($needle, 0, 120));
+            self::fail($label, 'no se encontro la clave esperada: ' . var_export($key, true));
+        }
+    }
+
+    public static function assertContains(mixed $needle, mixed $haystack, string $label): void
+    {
+        $contains = is_array($haystack)
+            ? in_array($needle, $haystack, true)
+            : (is_string($needle) && is_string($haystack) && str_contains($haystack, $needle));
+        if ($contains) {
+            self::pass($label);
+        } else {
+            self::fail($label, 'no se encontro el valor esperado: ' . substr(var_export($needle, true), 0, 120));
+        }
+    }
+
+    public static function assertInstanceOf(string $expectedClass, mixed $actual, string $label): void
+    {
+        if ($actual instanceof $expectedClass) {
+            self::pass($label);
+        } else {
+            self::fail(
+                $label,
+                'esperaba instancia de ' . $expectedClass . ', obtuvo '
+                    . (is_object($actual) ? $actual::class : get_debug_type($actual))
+            );
         }
     }
 

@@ -534,16 +534,22 @@ function run_publication_distribution_service_tests(): void
 
     // ————— publishAllConnected con tableros de Pinterest pasados en $options —————
     $distAllService = new PublicationDistributionService($pdo, $productService, $publicationService, [
-        'pinterest' => static fn(array $request): array => ['external_id' => 'board-1', 'items' => [
-            ['key' => '12', 'external_id' => 'pin-12', 'external_url' => 'https://pinterest.com/pin/12', 'error' => ''],
-        ]],
+        'pinterest' => static fn(array $request): array => ['external_id' => 'board-prod-1', 'items' => array_map(
+            static fn(array $item): array => [
+                'key' => (string)$item['key'],
+                'external_id' => 'pin-' . (string)$item['key'],
+                'external_url' => 'https://pinterest.com/pin/' . (string)$item['key'],
+                'error' => '',
+            ],
+            (array)$request['items']
+        )],
         'instagram' => static fn(array $req): array => ['status' => 'published', 'external_id' => 'ig-1'],
         'facebook' => static fn(array $req): array => ['status' => 'published', 'external_id' => 'fb-1'],
         'tiktok' => static fn(array $req): array => ['status' => 'published', 'external_id' => 'tt-1'],
         'x' => static fn(array $req): array => ['status' => 'published', 'external_id' => 'x-1'],
     ]);
     $pubAllSummary = $distAllService->publishAllConnected($publicationId, $userId, 'en', [
-        'board_ids' => ['12' => 'board-prod-1'],
+        'board_ids' => ['*' => 'board-prod-1'],
         'allowed_board_ids' => ['board-prod-1'],
     ]);
     TestHarness::assertSame('sent', (string)($pubAllSummary['results']['pinterest']['status'] ?? ''), 'publishAllConnected procesa Pinterest exitosamente cuando recibe tableros en options');

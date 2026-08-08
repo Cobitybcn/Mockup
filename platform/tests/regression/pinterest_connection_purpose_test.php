@@ -21,6 +21,13 @@ $APP_ENV_VALUES['PINTEREST_APP_SECRET']='official-secret';
 $APP_ENV_VALUES['PINTEREST_REDIRECT_URI']='https://artworkmockups.com/integrations/pinterest/callback';
 $APP_ENV_VALUES['PINTEREST_TOKEN_KEY']=base64_encode(str_repeat('k',SODIUM_CRYPTO_SECRETBOX_KEYBYTES));
 
+// Keep this standalone test independent from the machine-wide PHP session
+// directory and from Auth's production database-backed session handler.
+if(session_status()!==PHP_SESSION_ACTIVE){
+    session_save_path(dirname(__DIR__,2).'/storage');
+    session_start();
+}
+
 $service=new PinterestIntegrationService($pdo);
 $store=new ReflectionMethod(PinterestIntegrationService::class,'store');
 $store->invoke($service,1,'platform',[
@@ -60,7 +67,6 @@ $readCredentials=new ReflectionMethod(PinterestIntegrationService::class,'boardR
 $checks[]=$readCredentials->invoke($service,1,'platform')===['platform-oauth-token','https://api-sandbox.pinterest.com/v5'];
 $checks[]=$readCredentials->invoke($service,2,'artist')===['artist-oauth-token','https://api.pinterest.com/v5'];
 
-if(session_status()!==PHP_SESSION_ACTIVE)session_start();
 $url=$service->authorizationUrl(2,'artist');
 $checks[]=str_contains($url,'client_id=1589266');
 $checks[]=str_contains($url,'pins%3Awrite')&&str_contains($url,'boards%3Awrite');

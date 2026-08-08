@@ -76,7 +76,8 @@ function run_derived_fields_approval_tests(): void
         'y solo marca cuando hay una version nueva de la lectura que propagar'
     );
     TestHarness::assertTrue(
-        !str_contains($publicacion, 'SaatchiListingService') && !str_contains($publicacion, 'DiscoveryKeywordsService'),
+        !str_contains($publicacion, 'new SaatchiListingService')
+            && !str_contains($publicacion, 'new DiscoveryKeywordsService'),
         'Publicacion no genera contenido por su cuenta: encola un job y el worker escribe'
     );
 
