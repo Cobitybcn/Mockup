@@ -80,6 +80,13 @@ function run_derived_fields_approval_tests(): void
             && !str_contains($publicacion, 'new DiscoveryKeywordsService'),
         'Publicacion no genera contenido por su cuenta: encola un job y el worker escribe'
     );
+    $saatchiLoader = "require_once __DIR__ . '/app/Services/SaatchiListingService.php';";
+    $saatchiFormatter = 'SaatchiListingService::formatSyntheticCaption';
+    TestHarness::assertTrue(
+        str_contains($publicacion, $saatchiLoader)
+            && strpos($publicacion, $saatchiLoader) < strpos($publicacion, $saatchiFormatter),
+        'Publicacion carga SaatchiListingService antes de formatear los pies del paquete'
+    );
 
     // ————— Pero si encola los textos de canal —————
     TestHarness::assertContains(
