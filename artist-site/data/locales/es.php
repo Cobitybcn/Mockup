@@ -121,6 +121,8 @@ return [
         'sent' => 'Mensaje enviado. Gracias.',
         'required_error' => 'Todos los campos (nombre, correo electrónico y mensaje) son obligatorios.',
         'email_error' => 'Introduce una dirección de correo electrónico válida.',
+        'length_error' => 'Uno o más campos superan la longitud permitida.',
+        'verification_error' => 'No pudimos verificar el envío. Recarga la página e inténtalo de nuevo.',
         'rate_error' => 'Se han enviado demasiados mensajes. Inténtalo de nuevo más tarde.',
         'temporary_error' => 'El formulario de contacto no está disponible temporalmente. Escribe directamente al estudio.',
         'delivery_error' => 'Se produjo un error al enviar el mensaje. Inténtalo de nuevo o escribe directamente al estudio.',

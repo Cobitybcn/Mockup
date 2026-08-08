@@ -20,6 +20,7 @@ require __DIR__ . '/inc/AppPublishedSiteSettings.php';
 require __DIR__ . '/inc/AppStore.php';
 require __DIR__ . '/inc/StripeCheckout.php';
 require __DIR__ . '/inc/ArtistContactMailer.php';
+require __DIR__ . '/inc/ArtistContactProtection.php';
 require __DIR__ . '/inc/ArtistSitemapCache.php';
 
 $requestPath = current_path();
@@ -214,16 +215,22 @@ if (($segments[0] ?? '') === 'admin') {
     if (($segments[0] ?? '') === 'acquire' && empty($_SESSION['purchase_csrf'])) {
         $_SESSION['purchase_csrf'] = bin2hex(random_bytes(32));
     }
-} elseif (in_array(($segments[0] ?? ''), ['acquire', 'payment'], true)) {
+} elseif (in_array(($segments[0] ?? ''), ['acquire', 'payment', 'contact'], true)) {
     session_set_cookie_params([
         'path' => '/',
         'httponly' => true,
-        'secure' => (!empty($_SERVER['HTTPS']) && $_SERVER['HTTPS'] !== 'off'),
+        'secure' => (!empty($_SERVER['HTTPS']) && $_SERVER['HTTPS'] !== 'off')
+            || strtolower(trim(explode(',', (string)($_SERVER['HTTP_X_FORWARDED_PROTO'] ?? ''))[0])) === 'https',
         'samesite' => 'Lax',
     ]);
     session_start();
     if (($segments[0] ?? '') === 'acquire' && empty($_SESSION['purchase_csrf'])) {
         $_SESSION['purchase_csrf'] = bin2hex(random_bytes(32));
+    }
+    if (($segments[0] ?? '') === 'contact') {
+        $_SESSION['contact_csrf'] ??= bin2hex(random_bytes(32));
+        $_SESSION['contact_rate_id'] ??= bin2hex(random_bytes(24));
+        $_SESSION['contact_form_started'] ??= time();
     }
 }
 
@@ -3609,28 +3616,82 @@ function render_contact(array $site, array $artworks): void
     $submittedEmail = '';
     $submittedSubject = $subject;
     $submittedMessage = '';
+    $contactProtection = new ArtistContactProtection();
+    $turnstileSiteKey = $contactProtection->siteKey();
+    $contactRateId = (string)($_SESSION['contact_rate_id'] ?? '');
+    $turnstileCdata = substr(hash('sha256', $contactRateId), 0, 32);
 
     if ($_SERVER['REQUEST_METHOD'] === 'POST' && ($_POST['action'] ?? '') === 'contact_submit') {
         $submittedName = trim($_POST['name'] ?? '');
         $submittedEmail = trim($_POST['email'] ?? '');
         $submittedSubject = trim($_POST['subject'] ?? '') ?: $subject;
         $submittedMessage = trim($_POST['message'] ?? '');
-        $honeypot = $_POST['website'] ?? '';
+        $honeypot = trim((string)($_POST['website'] ?? ''));
+        $submittedCsrf = (string)($_POST['csrf'] ?? '');
+        $contactPdo = null;
+        $clientAddress = artist_site_client_address();
 
         if ($honeypot !== '') {
             $success = true;
+        } else if ($submittedCsrf === '' || empty($_SESSION['contact_csrf']) || !hash_equals((string)$_SESSION['contact_csrf'], $submittedCsrf)) {
+            $error = site_copy('contact.verification_error');
+        } else if (time() - (int)($_SESSION['contact_form_started'] ?? time()) < 3) {
+            $error = site_copy('contact.verification_error');
         } else if (empty($submittedName) || empty($submittedEmail) || empty($submittedMessage)) {
             $error = site_copy('contact.required_error');
         } else if (!filter_var($submittedEmail, FILTER_VALIDATE_EMAIL)) {
             $error = site_copy('contact.email_error');
+        } else if (mb_strlen($submittedName) > 120 || strlen($submittedEmail) > 254 || mb_strlen($submittedSubject) > 160 || mb_strlen($submittedMessage) > 5000) {
+            $error = site_copy('contact.length_error');
         } else {
             try {
                 $contactPdo = artist_site_database_connection(dirname(__DIR__) . '/platform');
-                if (!artist_site_rate_limit($contactPdo, 'artist_contact', $submittedEmail, 5, 3600)) {
+                $withinGlobalLimit = artist_site_rate_limit_key($contactPdo, 'artist_contact_global', 'all', 250, 3600);
+                $withinIpLimit = artist_site_rate_limit_key($contactPdo, 'artist_contact_ip', $clientAddress, 12, 900);
+                if (!$withinGlobalLimit || !$withinIpLimit) {
                     $error = site_copy('contact.rate_error');
                 }
             } catch (Throwable $rateLimitError) {
                 error_log('Artist contact rate limiter unavailable: ' . $rateLimitError->getMessage());
+                $error = site_copy('contact.temporary_error');
+            }
+        }
+
+        if ($error === '' && $honeypot === '') {
+            try {
+                $verified = $contactProtection->verify(
+                    (string)($_POST['cf-turnstile-response'] ?? ''),
+                    $clientAddress,
+                    (string)($_SERVER['HTTP_HOST'] ?? ''),
+                    $turnstileCdata
+                );
+                if (!$verified) $error = site_copy('contact.verification_error');
+            } catch (Throwable $verificationError) {
+                error_log('Artist contact human verification unavailable: ' . $verificationError->getMessage());
+                $error = site_copy('contact.temporary_error');
+            }
+        }
+
+        if ($error === '' && $honeypot === '') {
+            try {
+                $contactPdo ??= artist_site_database_connection(dirname(__DIR__) . '/platform');
+                $withinEmailLimit = artist_site_rate_limit_key(
+                    $contactPdo,
+                    'artist_contact_email',
+                    strtolower($submittedEmail),
+                    5,
+                    3600
+                );
+                $withinSessionLimit = artist_site_rate_limit_key(
+                    $contactPdo,
+                    'artist_contact_session',
+                    $contactRateId,
+                    3,
+                    900
+                );
+                if (!$withinEmailLimit || !$withinSessionLimit) $error = site_copy('contact.rate_error');
+            } catch (Throwable $rateLimitError) {
+                error_log('Artist contact identity rate limiter unavailable: ' . $rateLimitError->getMessage());
                 $error = site_copy('contact.temporary_error');
             }
         }
@@ -3652,6 +3713,8 @@ function render_contact(array $site, array $artworks): void
                 $submittedEmail = '';
                 $submittedSubject = $subject;
                 $submittedMessage = '';
+                $_SESSION['contact_csrf'] = bin2hex(random_bytes(32));
+                $_SESSION['contact_form_started'] = time();
             } catch (Throwable $mailError) {
                 error_log('Artist contact delivery failed: ' . $mailError->getMessage());
                 $error = site_copy('contact.delivery_error') . ' ' . $to;
@@ -3680,6 +3743,7 @@ function render_contact(array $site, array $artworks): void
 
             <form action="" method="POST" style="display: flex; flex-direction: column; gap: 12px;">
                 <input type="hidden" name="action" value="contact_submit">
+                <input type="hidden" name="csrf" value="<?= e((string)($_SESSION['contact_csrf'] ?? '')) ?>">
                 
                 <!-- Honeypot anti-spam (hidden) -->
                 <div style="display: none; min-height: auto; padding: 0; border: none; background: transparent;">
@@ -3689,24 +3753,27 @@ function render_contact(array $site, array $artworks): void
 
                 <div style="display: flex; flex-direction: column; gap: 4px; min-height: auto; padding: 0; border: none; background: transparent;">
                     <label for="contact-name" style="font-size: 11px; text-transform: uppercase; letter-spacing: 0.05em; color: var(--muted); font-weight: 600;"><?= e(site_copy('contact.name')) ?></label>
-                    <input type="text" name="name" id="contact-name" value="<?= e($submittedName) ?>" required placeholder="<?= e(site_copy('contact.name_placeholder')) ?>" style="padding: 8px 10px; border: 1px solid var(--line); background: #ffffff; font-family: inherit; font-size: 14px; color: var(--ink); border-radius: 0; width: 100%;">
+                    <input type="text" name="name" id="contact-name" value="<?= e($submittedName) ?>" required maxlength="120" autocomplete="name" placeholder="<?= e(site_copy('contact.name_placeholder')) ?>" style="padding: 8px 10px; border: 1px solid var(--line); background: #ffffff; font-family: inherit; font-size: 14px; color: var(--ink); border-radius: 0; width: 100%;">
                 </div>
 
                 <div style="display: flex; flex-direction: column; gap: 4px; min-height: auto; padding: 0; border: none; background: transparent;">
                     <label for="contact-email" style="font-size: 11px; text-transform: uppercase; letter-spacing: 0.05em; color: var(--muted); font-weight: 600;"><?= e(site_copy('contact.email')) ?></label>
-                    <input type="email" name="email" id="contact-email" value="<?= e($submittedEmail) ?>" required placeholder="your@email.com" style="padding: 8px 10px; border: 1px solid var(--line); background: #ffffff; font-family: inherit; font-size: 14px; color: var(--ink); border-radius: 0; width: 100%;">
+                    <input type="email" name="email" id="contact-email" value="<?= e($submittedEmail) ?>" required maxlength="254" autocomplete="email" placeholder="your@email.com" style="padding: 8px 10px; border: 1px solid var(--line); background: #ffffff; font-family: inherit; font-size: 14px; color: var(--ink); border-radius: 0; width: 100%;">
                 </div>
 
                 <div style="display: flex; flex-direction: column; gap: 4px; min-height: auto; padding: 0; border: none; background: transparent;">
                     <label for="contact-subject" style="font-size: 11px; text-transform: uppercase; letter-spacing: 0.05em; color: var(--muted); font-weight: 600;"><?= e(site_copy('contact.subject')) ?></label>
-                    <input type="text" name="subject" id="contact-subject" value="<?= e($submittedSubject) ?>" style="padding: 8px 10px; border: 1px solid var(--line); background: #ffffff; font-family: inherit; font-size: 14px; color: var(--ink); border-radius: 0; width: 100%;">
+                    <input type="text" name="subject" id="contact-subject" value="<?= e($submittedSubject) ?>" maxlength="160" style="padding: 8px 10px; border: 1px solid var(--line); background: #ffffff; font-family: inherit; font-size: 14px; color: var(--ink); border-radius: 0; width: 100%;">
                 </div>
 
                 <div style="display: flex; flex-direction: column; gap: 4px; min-height: auto; padding: 0; border: none; background: transparent;">
                     <label for="contact-message" style="font-size: 11px; text-transform: uppercase; letter-spacing: 0.05em; color: var(--muted); font-weight: 600;"><?= e(site_copy('contact.message')) ?></label>
-                    <textarea name="message" id="contact-message" required placeholder="<?= e(site_copy('contact.message_placeholder')) ?>" style="padding: 8px 10px; border: 1px solid var(--line); background: #ffffff; font-family: inherit; font-size: 14px; color: var(--ink); border-radius: 0; width: 100%; resize: vertical; min-height: 80px;"><?= e($submittedMessage) ?></textarea>
+                    <textarea name="message" id="contact-message" required maxlength="5000" placeholder="<?= e(site_copy('contact.message_placeholder')) ?>" style="padding: 8px 10px; border: 1px solid var(--line); background: #ffffff; font-family: inherit; font-size: 14px; color: var(--ink); border-radius: 0; width: 100%; resize: vertical; min-height: 80px;"><?= e($submittedMessage) ?></textarea>
                 </div>
 
+                <?php if ($turnstileSiteKey !== ''): ?>
+                    <div class="cf-turnstile" data-sitekey="<?= e($turnstileSiteKey) ?>" data-action="artist_contact" data-cdata="<?= e($turnstileCdata) ?>" data-appearance="interaction-only" data-retry="auto"></div>
+                <?php endif; ?>
                 <button type="submit" class="button" onmouseover="this.style.background='var(--red)'; this.style.borderColor='var(--red)';" onmouseout="this.style.background='var(--ink)'; this.style.borderColor='var(--ink)';" style="cursor: pointer; justify-content: center; min-height: 36px; font-size: 13px; text-transform: uppercase; letter-spacing: 0.05em; width: 100%; border-radius: 0; transition: background 0.18s, border-color 0.18s;"><?= e(site_copy('contact.send')) ?></button>
             </form>
         </div>
@@ -3723,6 +3790,9 @@ function render_contact(array $site, array $artworks): void
             </div>
         </div>
     </section>
+    <?php if ($turnstileSiteKey !== ''): ?>
+        <script src="https://challenges.cloudflare.com/turnstile/v0/api.js" async defer></script>
+    <?php endif; ?>
     <?php
 }
 
