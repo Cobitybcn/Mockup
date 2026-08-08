@@ -1,7 +1,6 @@
 <?php
 declare(strict_types=1);
 
-require_once dirname(__DIR__) . '/inc/ArtistContactProtection.php';
 require_once dirname(__DIR__) . '/inc/AppDatabase.php';
 
 function assert_contact_protection(bool $condition, string $message): void
@@ -10,60 +9,6 @@ function assert_contact_protection(bool $condition, string $message): void
         fwrite(STDERR, "FAIL: {$message}\n");
         exit(1);
     }
-}
-
-putenv('K_SERVICE');
-putenv('APP_ENV');
-putenv('TURNSTILE_SITE_KEY');
-putenv('TURNSTILE_SECRET_KEY');
-$local = new ArtistContactProtection();
-assert_contact_protection(
-    $local->verify('', '192.0.2.10', 'localhost', '') === true,
-    'local development remains usable without Turnstile credentials'
-);
-
-putenv('APP_ENV=production');
-$production = new ArtistContactProtection();
-assert_contact_protection(
-    $production->verify('', '192.0.2.10', 'mauriziovalch.com', '') === false,
-    'production fails closed when Turnstile credentials are absent'
-);
-
-putenv('TURNSTILE_SITE_KEY=site-key-for-test');
-putenv('TURNSTILE_SECRET_KEY=secret-key-for-test');
-$capturedPayload = [];
-$verified = new ArtistContactProtection(static function (array $payload) use (&$capturedPayload): array {
-    $capturedPayload = $payload;
-    return [
-        'success' => true,
-        'action' => 'artist_contact',
-        'hostname' => 'mauriziovalch.com',
-        'cdata' => 'session-binding',
-    ];
-});
-assert_contact_protection(
-    $verified->verify('valid-token', '192.0.2.10', 'mauriziovalch.com:443', 'session-binding'),
-    'a server-verified token bound to the contact action, host and session is accepted'
-);
-assert_contact_protection(
-    $capturedPayload === [
-        'secret' => 'secret-key-for-test',
-        'response' => 'valid-token',
-        'remoteip' => '192.0.2.10',
-    ],
-    'the secret, token and validated client address are sent to Siteverify'
-);
-
-foreach ([
-    ['action' => 'other_action', 'hostname' => 'mauriziovalch.com', 'cdata' => 'session-binding'],
-    ['action' => 'artist_contact', 'hostname' => 'attacker.example', 'cdata' => 'session-binding'],
-    ['action' => 'artist_contact', 'hostname' => 'mauriziovalch.com', 'cdata' => 'other-session'],
-] as $invalidResponse) {
-    $rejected = new ArtistContactProtection(static fn(array $payload): array => ['success' => true] + $invalidResponse);
-    assert_contact_protection(
-        !$rejected->verify('valid-token', '192.0.2.10', 'mauriziovalch.com', 'session-binding'),
-        'tokens issued for another action, host or browser session are rejected'
-    );
 }
 
 $pdo = new PDO('sqlite::memory:');
@@ -96,20 +41,17 @@ $root = dirname(__DIR__);
 $index = (string)file_get_contents($root . '/index.php');
 $cloudBuild = (string)file_get_contents($root . '/cloudbuild.hardening.yaml');
 foreach ([
-    [str_contains($index, "name=\"csrf\""), 'the contact form carries a per-session CSRF token'],
-    [str_contains($index, "name=\"website\""), 'the existing honeypot remains active'],
-    [str_contains($index, "data-action=\"artist_contact\""), 'the widget requests a contact-scoped Turnstile token'],
-    [str_contains($index, "\$_POST['cf-turnstile-response']"), 'the server validates the Turnstile response'],
+    [str_contains($index, 'name="csrf"'), 'the contact form carries a per-session CSRF token'],
+    [str_contains($index, 'name="website"'), 'the honeypot remains active'],
+    [str_contains($index, "contact_form_started'] ?? time()) < 3"), 'submissions made too quickly are rejected'],
+    [str_contains($index, "'artist_contact_global'"), 'contact attempts have a global safety ceiling'],
     [str_contains($index, "'artist_contact_ip'"), 'contact attempts are limited independently by IP'],
-    [str_contains($index, "'artist_contact_email'"), 'verified attempts are limited independently by email'],
-    [str_contains($index, "'artist_contact_session'"), 'verified attempts are limited independently by browser session'],
-    [str_contains($cloudBuild, 'TURNSTILE_SITE_KEY=${_TURNSTILE_SITE_KEY_SECRET}:latest'), 'the production site key comes from Secret Manager'],
-    [str_contains($cloudBuild, 'TURNSTILE_SECRET_KEY=${_TURNSTILE_SECRET_KEY_SECRET}:latest'), 'the production secret key comes from Secret Manager'],
+    [str_contains($index, "'artist_contact_email'"), 'contact attempts are limited independently by email'],
+    [str_contains($index, "'artist_contact_session'"), 'contact attempts are limited independently by browser session'],
+    [!str_contains($index, 'turnstile') && !str_contains($index, 'cf-turnstile-response'), 'the form has no external Turnstile dependency'],
+    [!str_contains($cloudBuild, 'TURNSTILE_'), 'the production deployment requires no Turnstile secrets'],
 ] as [$passed, $description]) {
     assert_contact_protection($passed, $description);
 }
 
-putenv('APP_ENV');
-putenv('TURNSTILE_SITE_KEY');
-putenv('TURNSTILE_SECRET_KEY');
-echo "PASS: artist contact anti-spam protection\n";
+echo "PASS: artist contact anti-spam protection without external captcha\n";

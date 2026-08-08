@@ -106,7 +106,7 @@ steps:
           --platform=managed \
           --image="$$image@$$digest" \
           --update-env-vars="APP_ENV=production,APP_RELEASE_COMMIT=$COMMIT_SHA,ARTIST_ADMIN_URL=${_ADMIN_URL},SMTP_HOST=smtp.gmail.com,SMTP_PORT=587,SMTP_ENCRYPTION=tls,SMTP_USERNAME=${_CONTACT_SENDER},CONTACT_FROM_EMAIL=${_CONTACT_SENDER},CONTACT_RECIPIENT_EMAIL=${_CONTACT_RECIPIENT}" \
-          --update-secrets="STRIPE_CREDENTIALS_KEY=${_STRIPE_CREDENTIALS_KEY_SECRET}:latest,SMTP_PASSWORD=${_SMTP_PASSWORD_SECRET}:latest,TURNSTILE_SITE_KEY=${_TURNSTILE_SITE_KEY_SECRET}:latest,TURNSTILE_SECRET_KEY=${_TURNSTILE_SECRET_KEY_SECRET}:latest" \
+          --update-secrets="STRIPE_CREDENTIALS_KEY=${_STRIPE_CREDENTIALS_KEY_SECRET}:latest,SMTP_PASSWORD=${_SMTP_PASSWORD_SECRET}:latest" \
           --revision-suffix="cb-$SHORT_SHA-$$build_short" \
           --no-traffic \
           --quiet
@@ -200,8 +200,6 @@ substitutions:
   _CONTACT_SENDER: mauriziovalch@gmail.com
   _CONTACT_RECIPIENT: mauriziovalch@gmail.com
   _SMTP_PASSWORD_SECRET: mockups-artist-smtp-password
-  _TURNSTILE_SITE_KEY_SECRET: mockups-artist-turnstile-site-key
-  _TURNSTILE_SECRET_KEY_SECRET: mockups-artist-turnstile-secret-key
   _STRIPE_CREDENTIALS_KEY_SECRET: mockups-stripe-credentials-key
 
 options:

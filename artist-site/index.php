@@ -20,7 +20,6 @@ require __DIR__ . '/inc/AppPublishedSiteSettings.php';
 require __DIR__ . '/inc/AppStore.php';
 require __DIR__ . '/inc/StripeCheckout.php';
 require __DIR__ . '/inc/ArtistContactMailer.php';
-require __DIR__ . '/inc/ArtistContactProtection.php';
 require __DIR__ . '/inc/ArtistSitemapCache.php';
 
 $requestPath = current_path();
@@ -3616,10 +3615,7 @@ function render_contact(array $site, array $artworks): void
     $submittedEmail = '';
     $submittedSubject = $subject;
     $submittedMessage = '';
-    $contactProtection = new ArtistContactProtection();
-    $turnstileSiteKey = $contactProtection->siteKey();
     $contactRateId = (string)($_SESSION['contact_rate_id'] ?? '');
-    $turnstileCdata = substr(hash('sha256', $contactRateId), 0, 32);
 
     if ($_SERVER['REQUEST_METHOD'] === 'POST' && ($_POST['action'] ?? '') === 'contact_submit') {
         $submittedName = trim($_POST['name'] ?? '');
@@ -3653,21 +3649,6 @@ function render_contact(array $site, array $artworks): void
                 }
             } catch (Throwable $rateLimitError) {
                 error_log('Artist contact rate limiter unavailable: ' . $rateLimitError->getMessage());
-                $error = site_copy('contact.temporary_error');
-            }
-        }
-
-        if ($error === '' && $honeypot === '') {
-            try {
-                $verified = $contactProtection->verify(
-                    (string)($_POST['cf-turnstile-response'] ?? ''),
-                    $clientAddress,
-                    (string)($_SERVER['HTTP_HOST'] ?? ''),
-                    $turnstileCdata
-                );
-                if (!$verified) $error = site_copy('contact.verification_error');
-            } catch (Throwable $verificationError) {
-                error_log('Artist contact human verification unavailable: ' . $verificationError->getMessage());
                 $error = site_copy('contact.temporary_error');
             }
         }
@@ -3771,9 +3752,6 @@ function render_contact(array $site, array $artworks): void
                     <textarea name="message" id="contact-message" required maxlength="5000" placeholder="<?= e(site_copy('contact.message_placeholder')) ?>" style="padding: 8px 10px; border: 1px solid var(--line); background: #ffffff; font-family: inherit; font-size: 14px; color: var(--ink); border-radius: 0; width: 100%; resize: vertical; min-height: 80px;"><?= e($submittedMessage) ?></textarea>
                 </div>
 
-                <?php if ($turnstileSiteKey !== ''): ?>
-                    <div class="cf-turnstile" data-sitekey="<?= e($turnstileSiteKey) ?>" data-action="artist_contact" data-cdata="<?= e($turnstileCdata) ?>" data-appearance="interaction-only" data-retry="auto"></div>
-                <?php endif; ?>
                 <button type="submit" class="button" onmouseover="this.style.background='var(--red)'; this.style.borderColor='var(--red)';" onmouseout="this.style.background='var(--ink)'; this.style.borderColor='var(--ink)';" style="cursor: pointer; justify-content: center; min-height: 36px; font-size: 13px; text-transform: uppercase; letter-spacing: 0.05em; width: 100%; border-radius: 0; transition: background 0.18s, border-color 0.18s;"><?= e(site_copy('contact.send')) ?></button>
             </form>
         </div>
@@ -3790,9 +3768,6 @@ function render_contact(array $site, array $artworks): void
             </div>
         </div>
     </section>
-    <?php if ($turnstileSiteKey !== ''): ?>
-        <script src="https://challenges.cloudflare.com/turnstile/v0/api.js" async defer></script>
-    <?php endif; ?>
     <?php
 }
 
