@@ -49,7 +49,8 @@ foreach ([
     [str_contains($index, "'artist_contact_email'"), 'contact attempts are limited independently by email'],
     [str_contains($index, "'artist_contact_session'"), 'contact attempts are limited independently by browser session'],
     [!str_contains($index, 'turnstile') && !str_contains($index, 'cf-turnstile-response'), 'the form has no external Turnstile dependency'],
-    [!str_contains($cloudBuild, 'TURNSTILE_'), 'the production deployment requires no Turnstile secrets'],
+    [str_contains($cloudBuild, '--remove-secrets="TURNSTILE_SITE_KEY,TURNSTILE_SECRET_KEY"'), 'the deployment clears inherited Turnstile secret references'],
+    [!str_contains($cloudBuild, '_TURNSTILE_') && !str_contains($cloudBuild, 'TURNSTILE_SITE_KEY=${'), 'the production deployment requires no Turnstile secret values'],
 ] as [$passed, $description]) {
     assert_contact_protection($passed, $description);
 }
