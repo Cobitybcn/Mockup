@@ -1,6 +1,13 @@
 <?php
 declare(strict_types=1);
 
+require_once dirname(__DIR__, 2) . '/app/Video/VideoGenerationProvider.php';
+require_once dirname(__DIR__, 2) . '/app/Video/VideoPromptComposer.php';
+require_once dirname(__DIR__, 2) . '/app/Video/VideoReferencePolicy.php';
+require_once dirname(__DIR__, 2) . '/app/Video/VertexVeoProvider.php';
+require_once dirname(__DIR__, 2) . '/app/Video/VertexGeminiOmniProvider.php';
+require_once dirname(__DIR__, 2) . '/app/Video/VideoProviderRegistry.php';
+
 /**
  * Cobertura de no-regresión para los contratos puros del subsistema de Video Studio:
  * - VideoPromptComposer: composición de prompts, guardias de fidelidad y prioridades.

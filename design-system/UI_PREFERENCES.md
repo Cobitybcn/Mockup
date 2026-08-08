@@ -1,5 +1,8 @@
 # UI Preferences
 
+> Consolidated into `design-system/STYLE_GUIDE.md`. Kept here as expanded detail; if the two
+> disagree, the Style Guide wins.
+
 These inherited preferences remain part of the Visual Constitution and apply when a more specific approved reference does not provide direction.
 
 ## Forms

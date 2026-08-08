@@ -377,6 +377,7 @@ class Database
             CREATE TABLE IF NOT EXISTS app_settings (
                 key TEXT PRIMARY KEY,
                 value TEXT NOT NULL DEFAULT '',
+                created_at TEXT NOT NULL DEFAULT '',
                 updated_at TEXT NOT NULL
             )
         ");
@@ -698,6 +699,7 @@ class Database
             CREATE TABLE IF NOT EXISTS app_settings (
                 `key` VARCHAR(190) NOT NULL,
                 value MEDIUMTEXT NOT NULL,
+                created_at VARCHAR(40) NOT NULL DEFAULT '',
                 updated_at VARCHAR(40) NOT NULL,
                 PRIMARY KEY (`key`)
             ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci
