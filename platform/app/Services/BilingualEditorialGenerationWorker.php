@@ -131,6 +131,24 @@ final class BilingualEditorialGenerationWorker
                     }
                 }
 
+                // Ultima pasada: TODOS los mockups del grupo, no solo los
+                // primeros 5 de la composicion (esos ya se cubrieron arriba,
+                // al escribir o conservar el listing). "Todos los captions"
+                // es la regla completa, no la del listing principal nada
+                // mas — esto es lo que la cumple en cada corrida del paso.
+                try {
+                    $faltantes = $saatchi->mockupsMissingValidCaptions($userId, $entityId);
+                    if ($faltantes !== []) {
+                        $extraPies = $saatchi->generateCaptionsForMockups($userId, $entityId, $faltantes);
+                        $piesEscritos += $saatchi->saveCaptions($userId, (array)$extraPies['captions']);
+                        foreach ((array)$extraPies['errors'] as $errorPie) {
+                            $avisosPies[] = 'Pie sin escribir — ' . $errorPie;
+                        }
+                    }
+                } catch (Throwable $errorPiesTodos) {
+                    $avisosPies[] = 'Pies (resto de mockups): ' . $errorPiesTodos->getMessage();
+                }
+
                 // Analisis segun influencias: prosa derivada por idioma de la
                 // lectura de ese idioma, anclada a las afinidades DECLARADAS.
                 // Solo llena el campo si esta vacio (lo editado a mano no se

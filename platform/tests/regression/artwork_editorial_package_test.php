@@ -64,7 +64,8 @@ function run_artwork_editorial_package_tests(): void
     )");
     $pdo->exec("CREATE TABLE mockups (
         id INTEGER PRIMARY KEY,user_id INTEGER NOT NULL,source_artwork_id INTEGER,artwork_group_id INTEGER,
-        artwork_file TEXT NOT NULL DEFAULT '',mockup_file TEXT NOT NULL DEFAULT ''
+        artwork_file TEXT NOT NULL DEFAULT '',mockup_file TEXT NOT NULL DEFAULT '',
+        selector_state_json TEXT NOT NULL DEFAULT ''
     )");
     $pdo->exec("CREATE TABLE user_language_policy (
         user_id INTEGER NOT NULL PRIMARY KEY,working_locale TEXT NOT NULL,publication_locales_json TEXT NOT NULL,
@@ -79,9 +80,9 @@ function run_artwork_editorial_package_tests(): void
     $pdo->exec("INSERT INTO artwork_series VALUES (3,7,'STRATA','','','Layered territories','Avoid decorative claims')");
     $pdo->exec("INSERT INTO artworks VALUES (11,7,'SOL DIVISUS',3,31,'sol-divisus.jpg')");
     $pdo->exec("INSERT INTO mockups VALUES
-        (21,7,11,31,'sol-divisus.jpg','complete.jpg'),
-        (22,7,11,31,'sol-divisus.jpg','pending.jpg'),
-        (23,7,999,99,'other.jpg','other.jpg')");
+        (21,7,11,31,'sol-divisus.jpg','complete.jpg',''),
+        (22,7,11,31,'sol-divisus.jpg','pending.jpg',''),
+        (23,7,999,99,'other.jpg','other.jpg','')");
 
     $contentMigration = require dirname(__DIR__, 2) . '/migrations/schema/20260722_000002_bilingual_editorial_content.php';
     ($contentMigration['up'])($pdo);
@@ -122,8 +123,8 @@ function run_artwork_editorial_package_tests(): void
     // desde el primer click — un solo pedido produce el editorial completo.
     $pdo->exec("INSERT INTO artworks VALUES (12,7,'ORIGO NOVA',3,32,'origo-nova.jpg')");
     $pdo->exec("INSERT INTO mockups VALUES
-        (24,7,12,32,'origo-nova.jpg','nova-a.jpg'),
-        (25,7,12,32,'origo-nova.jpg','nova-b.jpg')");
+        (24,7,12,32,'origo-nova.jpg','nova-a.jpg',''),
+        (25,7,12,32,'origo-nova.jpg','nova-b.jpg','')");
     $nueva = (new ArtworkEditorialPackageService($pdo))->audit(7, 12);
     TestHarness::assertTrue($nueva['prerequisites_ready'], 'la obra nueva cumple el checklist');
     TestHarness::assertSame(1, $nueva['editorial_pending']['artwork'], 'la obra nueva prepara su lectura');
@@ -164,4 +165,48 @@ function run_artwork_editorial_package_tests(): void
     TestHarness::assertContains('Website visibility remains controlled separately.', $artworkPage, 'la preparación bilingüe no cambia la visibilidad de la obra');
     $packageService = (string)file_get_contents(dirname(__DIR__, 2) . '/app/Services/ArtworkEditorialPackageService.php');
     TestHarness::assertContains("'publish_spanish' => true", $packageService, 'el paquete deja el español preparado para el website junto con el inglés');
+
+    // ————— El canal exige un pie de Saatchi valido POR MOCKUP, no solo los —————
+    // ————— tres campos de la obra: un mockup puede estar "resuelto" segun —————
+    // ————— REQUIRED_PATHS (no lo exige) y aun asi faltarle su pie. —————
+    $pdo->exec("INSERT INTO artworks VALUES (13,7,'CAPTION TEST',3,33,'caption-test.jpg')");
+    $pdo->exec("INSERT INTO mockups VALUES (26,7,13,33,'caption-test.jpg','cap-a.jpg','')");
+
+    $artworkConCanal = artwork_editorial_fixture('artwork');
+    $artworkConCanal['saatchi_title'] = 'CAPTION TEST — Large Abstract Painting';
+    $artworkConCanal['saatchi_description'] = str_repeat('a', 500);
+    $artworkConCanal['saatchi_keywords'] = 'abstract, painting';
+    $insert->execute(['artwork', 13, 'es', json_encode($artworkConCanal), 'current']);
+    $insert->execute(['artwork', 13, 'en', json_encode($artworkConCanal), 'current']);
+    $pdo->exec("UPDATE bilingual_editorial_content SET is_published=1, published_content_json=content_json
+        WHERE entity_type='artwork' AND entity_id=13 AND locale='es'");
+    // El mockup esta completo segun REQUIRED_PATHS (que no exige saatchi_caption)
+    // pero su fila en el idioma del listing no trae ningun pie.
+    $insert->execute(['mockup', 26, 'es', json_encode(artwork_editorial_fixture('mockup')), 'source']);
+    $insert->execute(['mockup', 26, 'en', json_encode(artwork_editorial_fixture('mockup')), 'current']);
+
+    $conPieFaltante = (new ArtworkEditorialPackageService($pdo))->audit(7, 13);
+    TestHarness::assertSame(0, $conPieFaltante['editorial_pending']['mockups'], 'el mockup queda "resuelto" segun los campos exigidos: no incluyen el pie de Saatchi');
+    TestHarness::assertSame(1, $conPieFaltante['editorial_pending']['channel'], 'pero el canal SI queda pendiente: le falta el pie de Saatchi del mockup');
+
+    $faltantes = (new SaatchiListingService($pdo))->mockupsMissingValidCaptions(7, 13);
+    TestHarness::assertSame([26], $faltantes, 'mockupsMissingValidCaptions identifica exactamente el mockup sin pie valido');
+
+    // Con un pie que cumple la ley deterministica (4-7 palabras, <=50 caracteres,
+    // con contenido mas alla de la posicion de camara), deja de estar pendiente.
+    $mockupConPie = artwork_editorial_fixture('mockup');
+    $mockupConPie['saatchi_caption'] = 'Detail shows layered indigo edge';
+    $pdo->prepare("UPDATE bilingual_editorial_content SET content_json=?
+        WHERE entity_type='mockup' AND entity_id=26 AND locale='en'")->execute([json_encode($mockupConPie)]);
+    $sinPieFaltante = (new SaatchiListingService($pdo))->mockupsMissingValidCaptions(7, 13);
+    TestHarness::assertSame([], $sinPieFaltante, 'un pie valido saca al mockup de la lista de pendientes');
+    $auditCompleto = (new ArtworkEditorialPackageService($pdo))->audit(7, 13);
+    TestHarness::assertSame(0, $auditCompleto['editorial_pending']['channel'], 'con el pie cargado, el canal deja de estar pendiente');
+
+    $bootstrapFile = (string)file_get_contents(dirname(__DIR__, 2) . '/app/bootstrap.php');
+    TestHarness::assertContains(
+        "require_once __DIR__ . '/Services/SaatchiListingService.php';",
+        $bootstrapFile,
+        'SaatchiListingService se carga desde el bootstrap central, como cualquier otro servicio — no a mano por cada consumidor'
+    );
 }

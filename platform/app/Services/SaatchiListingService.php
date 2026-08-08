@@ -453,12 +453,70 @@ class SaatchiListingService
      * no alcanzaba las imagenes— rehacer todo cambiaria un texto que quiza ya
      * revisaste, y costaria una llamada al modelo de mas.
      *
+     * Cubre solo las primeras 5 imagenes de la composicion —el limite del
+     * listing principal de Saatchi—. Para el resto de los mockups de la obra
+     * ver generateCaptionsForMockups().
+     *
      * @return array{captions:array<string,string>,errors:list<string>,warnings:list<string>}
      */
     public function generateCaptionsOnly(int $userId, int $artworkId): array
     {
         [$captions, $errors, $warnings] = $this->captions($userId, $artworkId);
         return ['captions' => $captions, 'errors' => $errors, 'warnings' => $warnings];
+    }
+
+    /**
+     * Reparacion dirigida a mockups puntuales, sin limite de 5 ni dependencia
+     * de que exista una composicion armada. Generaliza generateCaptionsOnly()
+     * a cualquier subconjunto — en particular, "todos los que faltan" segun
+     * mockupsMissingValidCaptions().
+     *
+     * @param list<int> $mockupIds
+     * @return array{captions:array<string,string>,errors:list<string>,warnings:list<string>}
+     */
+    public function generateCaptionsForMockups(int $userId, int $artworkId, array $mockupIds): array
+    {
+        $wanted = array_flip(array_map('intval', $mockupIds));
+        $images = array_values(array_filter(
+            $this->allGroupImages($userId, $artworkId),
+            static fn (array $image): bool => isset($wanted[(int)$image['mockup_id']])
+        ));
+        [$captions, $errors, $warnings] = $this->captions($userId, $artworkId, $images);
+        return ['captions' => $captions, 'errors' => $errors, 'warnings' => $warnings];
+    }
+
+    /**
+     * Todos los mockups del grupo de la obra sin un pie de Saatchi valido en
+     * el idioma del listing. Fuente unica para el gate de completitud
+     * (ArtworkEditorialPackageService::channelTextsPending) y para la
+     * reparacion dirigida: "todo mockup termina con un pie valido" solo es
+     * cierto si algo lo verifica y algo lo repara, en cada auditoria — no
+     * solo la primera vez que corre el paso de canal.
+     *
+     * @return list<int>
+     */
+    public function mockupsMissingValidCaptions(int $userId, int $artworkId): array
+    {
+        $listingLocale = $this->listingLocale($userId);
+        $editorial = new BilingualEditorialService($this->pdo);
+        $pending = [];
+        foreach ($this->allGroupImages($userId, $artworkId) as $image) {
+            $mockupId = (int)$image['mockup_id'];
+            $file = $image['file'];
+            if ($mockupId <= 0 || $file === '') {
+                continue;
+            }
+            try {
+                $contenido = (array)$editorial->get($userId, 'mockup', $mockupId, $listingLocale)['content'];
+            } catch (Throwable) {
+                $contenido = [];
+            }
+            $caption = trim((string)($contenido['saatchi_caption'] ?? ''));
+            if (self::validateCaptions([$file => $caption], [$file]) !== []) {
+                $pending[] = $mockupId;
+            }
+        }
+        return $pending;
     }
 
     /**
@@ -486,12 +544,18 @@ class SaatchiListingService
      * Los pies de las imagenes de la composicion, mirando cada una. Pasada
      * aparte de la derivacion a proposito: acá las imagenes SI viajan.
      *
+     * $imagesOverride: cuando se pasa, reemplaza a la composicion como
+     * universo de imagenes — lo usa generateCaptionsForMockups() para reparar
+     * un subconjunto arbitrario sin el limite de 5 del listing principal.
+     *
+     * @param list<array<string,string>>|null $imagesOverride
      * @return array{0:array<string,string>,1:list<string>,2:list<string>,3:array<string,mixed>}
      */
-    private function captions(int $userId, int $artworkId): array
+    private function captions(int $userId, int $artworkId, ?array $imagesOverride = null): array
     {
-        // Las primeras 5 de la composicion, en el orden que fijo el artista.
-        $images = array_slice($this->compositionImages($userId, $artworkId), 0, 5);
+        // Las primeras 5 de la composicion, en el orden que fijo el artista —
+        // salvo que venga un subconjunto explicito a reparar.
+        $images = $imagesOverride ?? array_slice($this->compositionImages($userId, $artworkId), 0, 5);
         if ($images === []) {
             return [[], [], ['La obra no tiene imagenes en su composicion: no hay pies que escribir.'], ['captions_expected' => 0]];
         }
@@ -815,6 +879,37 @@ PROMPT;
 
         $images = [];
         foreach ($rows as $row) {
+            $state = json_decode((string)($row['selector_state_json'] ?? ''), true);
+            $combination = is_array($state['combination'] ?? null) ? $state['combination'] : [];
+            $images[] = [
+                'file' => basename((string)$row['mockup_file']),
+                'mockup_id' => max(0, (int)($row['mockup_id'] ?? 0)),
+                'camera' => trim((string)($combination['camera_slot_name'] ?? '')),
+            ];
+        }
+        return $images;
+    }
+
+    /**
+     * Todos los mockups del grupo de la obra, en la forma {file,mockup_id,camera}
+     * que usan los pies. A diferencia de compositionImages(), no se limita a la
+     * composicion armada ni a un tope de 5: es el universo completo para el
+     * gate de completitud y la reparacion dirigida.
+     *
+     * @return list<array<string,string>>
+     */
+    private function allGroupImages(int $userId, int $artworkId): array
+    {
+        $stmt = $this->pdo->prepare("SELECT m.id AS mockup_id, m.mockup_file, m.selector_state_json
+            FROM mockups m
+            WHERE m.user_id = ? AND COALESCE(m.mockup_file,'')<>'' AND (m.source_artwork_id = ?
+                OR (COALESCE(m.artwork_group_id,0)>0
+                    AND m.artwork_group_id = (SELECT COALESCE(artwork_group_id,0) FROM artworks WHERE id = ? AND user_id = ?)))
+            ORDER BY m.id");
+        $stmt->execute([$userId, $artworkId, $artworkId, $userId]);
+
+        $images = [];
+        foreach ($stmt->fetchAll(PDO::FETCH_ASSOC) as $row) {
             $state = json_decode((string)($row['selector_state_json'] ?? ''), true);
             $combination = is_array($state['combination'] ?? null) ? $state['combination'] : [];
             $images[] = [
