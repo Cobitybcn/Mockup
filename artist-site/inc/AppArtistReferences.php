@@ -79,4 +79,24 @@ final class AppArtistReferences
         }
         return $referencias;
     }
+
+    /**
+     * Solo los nombres, sin fundamento. Gemelo de
+     * platform/app/Support/ArtistReferences.php::names() — existe porque un
+     * consumidor puede necesitar reconocer a quien se nombra (por ejemplo,
+     * para resaltarlo dentro de un texto ya publicado) sin tener autorizacion
+     * para publicar el fundamento, que vive solo en la pagina del artista.
+     *
+     * Salen siempre del PRIMER bloque: el nombre se escribe igual en todos
+     * los idiomas, asi que no hay version por idioma que elegir.
+     *
+     * @return list<string>
+     */
+    public static function names(string $raw): array
+    {
+        return array_values(array_map(
+            static fn (array $ref): string => $ref['name'],
+            self::parse($raw)
+        ));
+    }
 }
