@@ -137,6 +137,14 @@ TEXT;
             if (preg_match('/^(?:descubr[ae]|explor[ae]|discover|explore|adquier[ae]|adquiera|compr[eaá]|buy|acquire)\b/iu', $text) === 1) {
                 $issues[] = "{$label}: generic action-verb opening — identify the work, do not command the reader.";
             }
+            // Enmienda 2026-08-08: el cierre formulaico ("invita a contemplar/
+            // reflexionar...") se vigila solo sobre la ultima oracion, no sobre
+            // el texto completo — una mencion de "invitados" o "lectura" en el
+            // cuerpo del texto no es un cierre formulaico.
+            $genericClosing = '/\b(?:invit\w+|offering|invita\w*|ofreciendo)\b.*?\b(?:contemplat\w+|reflect\w+|observ\w+|reading|journey|engagement|encounter|contemplaci[oó]n|reflexi[oó]n|observaci[oó]n|lectura|recorrido|encuentro)\b/iu';
+            if (preg_match($genericClosing, self::lastSentence($text)) === 1) {
+                $issues[] = "{$label}: formulaic contemplative closing — close on concrete material, spatial, or temporal observations.";
+            }
             $opening = self::openingKey($text);
             if ($opening !== '') {
                 if (isset($forbiddenOpenings[$opening])) {
@@ -196,6 +204,19 @@ TEXT;
         $words = preg_split('/\s+/', trim($text), -1, PREG_SPLIT_NO_EMPTY) ?: [];
         if (count($words) < 4) return '';
         return implode(' ', array_slice($words, -8));
+    }
+
+    /**
+     * The final sentence of a text, used to scope closing-quality checks to
+     * the actual closing instead of the whole passage.
+     */
+    private static function lastSentence(string $text): string
+    {
+        $text = trim(strip_tags($text));
+        if ($text === '') return '';
+        $sentences = preg_split('/(?<=[.!?])\s+/u', $text) ?: [$text];
+        $sentences = array_values(array_filter($sentences, static fn(string $s): bool => trim($s) !== ''));
+        return $sentences === [] ? $text : trim(end($sentences));
     }
 
     public static function closings(array|string $content): array
