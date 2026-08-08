@@ -486,6 +486,15 @@ final class ArtworkEditorialPackageService
                 }
             }
         }
+
+        // El listing puede estar completo y aun asi faltar pies: un mockup
+        // nuevo despues de la ultima corrida de canal, o un pie que se
+        // descarto por invalido y nadie volvio a mirar. Esto es lo que hace
+        // cierta "todo mockup termina con un pie valido" en cada auditoria,
+        // no solo la primera vez que se ofrece el paso.
+        if ((new SaatchiListingService($this->pdo))->mockupsMissingValidCaptions($userId, $artworkId) !== []) {
+            return true;
+        }
         return false;
     }
 
