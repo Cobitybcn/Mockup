@@ -1564,6 +1564,36 @@ function app_artist_profile(): ?AppPublishedArtistProfile
     return $profile;
 }
 
+/**
+ * El parrafo de "Influencias del artista" ya viene como narrativa unica desde
+ * el generador (InfluencesAnalysisService): esto solo resalta, dentro de ese
+ * texto ya escapado, los nombres de las afinidades DECLARADAS que aparezcan
+ * mencionados — no agrega texto ni repite el fundamento del perfil, que solo
+ * se publica en la pagina del artista.
+ */
+function app_render_influences_paragraph(string $text): string
+{
+    $escaped = e($text);
+    $profile = app_artist_profile()?->get();
+    // names(), nunca parse(): el fundamento de cada afinidad es contenido que
+    // solo se publica una vez, en la pagina del artista (ver AppArtistReferences).
+    $names = AppArtistReferences::names((string)($profile['reference_artists'] ?? ''));
+    // Los nombres mas largos primero: evita que un nombre corto quede envuelto
+    // a medias dentro de una coincidencia mas larga que ya se resolvio.
+    usort($names, static fn (string $a, string $b): int => mb_strlen($b) <=> mb_strlen($a));
+    foreach ($names as $rawName) {
+        $name = e(trim($rawName));
+        if ($name === '') continue;
+        $escaped = preg_replace(
+            '/(^|[^\p{L}])(' . preg_quote($name, '/') . ')($|[^\p{L}])/iu',
+            '$1<strong>$2</strong>$3',
+            $escaped,
+            1
+        ) ?? $escaped;
+    }
+    return nl2br($escaped);
+}
+
 function app_artist_photo_url(string $file): string
 {
     if ($file === '') return '';
@@ -1957,24 +1987,7 @@ function render_published_artwork(array $site, array $artwork): void
                 <?php if ($artistInfluences !== ''): ?>
                     <div class="artwork-artist-influences" id="artist-influences">
                         <h2><?= e(site_t('Artist influences', 'Influencias del artista')) ?></h2>
-                        <?php
-                        // Un bloque por afinidad, con la lengua visual de las
-                        // tarjetas de Afinidades: primera linea el nombre,
-                        // debajo la congruencia con ESTA obra. Un bloque sin
-                        // esa forma se muestra como parrafo y listo.
-                        foreach (preg_split('/\R{2,}/u', $artistInfluences) ?: [] as $influenceBlock) {
-                            $influenceBlock = trim((string)$influenceBlock);
-                            if ($influenceBlock === '') continue;
-                            $influenceLines = preg_split('/\R/u', $influenceBlock) ?: [];
-                            $influenceName = trim((string)array_shift($influenceLines));
-                            $influenceBody = trim(implode(' ', array_map('trim', $influenceLines)));
-                            if ($influenceBody === '' || mb_strlen($influenceName) > 60) {
-                                echo '<p>' . nl2br(e($influenceBlock)) . '</p>';
-                                continue;
-                            }
-                            echo '<article><span>' . e($influenceName) . '</span><p>' . e($influenceBody) . '</p></article>';
-                        }
-                        ?>
+                        <p><?= app_render_influences_paragraph($artistInfluences) ?></p>
                         <p class="artwork-artist-influences__link"><a href="<?= e(url_for('artist')) ?>#influences"><?= e(site_t('All declared affinities', 'Todas las afinidades declaradas')) ?> <span aria-hidden="true">→</span></a></p>
                     </div>
                 <?php endif; ?>
@@ -2418,7 +2431,7 @@ function render_published_artwork_video(array $site, array $artwork): void
             <?php if ($artistInfluences !== ''): ?>
                 <div class="prose artwork-artist-influences" id="artist-influences">
                     <h2><?= e(site_t('Artist influences', 'Influencias del artista')) ?></h2>
-                    <p><?= nl2br(e($artistInfluences)) ?></p>
+                    <p><?= app_render_influences_paragraph($artistInfluences) ?></p>
                     <p class="artwork-video-series-context__link"><a href="<?= e(url_for('artist')) ?>#influences"><?= e(site_t('All declared affinities', 'Todas las afinidades declaradas')) ?> <span aria-hidden="true">→</span></a></p>
                 </div>
             <?php endif; ?>
