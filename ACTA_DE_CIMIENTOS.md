@@ -91,6 +91,10 @@ respaldo.
 
 ### Sitio público (mauriziovalch.com)
 
+Hoy hay un solo tenant real: Maurizio Valch (cuenta `mauriziovalch@gmail.com`). No hay datos
+de prueba equivalentes en ningún otro entorno — lo que existe en producción es lo único que
+existe.
+
 Multi-tenant real: resuelve el artista por dominio verificado o subdominio. Prefijo de idioma
 obligatorio (`/es/`, `/en/`) con canónicas y hreflang, sitemap bilingüe cacheado, JSON-LD.
 Venta directa con Stripe por artista (credenciales cifradas, propias de cada uno), formulario
