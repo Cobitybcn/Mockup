@@ -106,6 +106,7 @@ steps:
           --platform=managed \
           --image="$$image@$$digest" \
           --update-env-vars="APP_ENV=production,APP_RELEASE_COMMIT=$COMMIT_SHA,ARTIST_ADMIN_URL=${_ADMIN_URL},SMTP_HOST=smtp.gmail.com,SMTP_PORT=587,SMTP_ENCRYPTION=tls,SMTP_USERNAME=${_CONTACT_SENDER},CONTACT_FROM_EMAIL=${_CONTACT_SENDER},CONTACT_RECIPIENT_EMAIL=${_CONTACT_RECIPIENT}" \
+          --remove-secrets="TURNSTILE_SITE_KEY,TURNSTILE_SECRET_KEY" \
           --update-secrets="STRIPE_CREDENTIALS_KEY=${_STRIPE_CREDENTIALS_KEY_SECRET}:latest,SMTP_PASSWORD=${_SMTP_PASSWORD_SECRET}:latest" \
           --revision-suffix="cb-$SHORT_SHA-$$build_short" \
           --no-traffic \
