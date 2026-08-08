@@ -12,6 +12,15 @@ que hace el código, el documento está viejo.
 `ACTA_DE_CIMIENTOS.md` describe qué hace el sistema hoy y dónde está cada guardia. Es el
 punto de partida para entender el proyecto, no una orden.
 
+Producción no es una entre varias fuentes de datos: es la única con obras reales. Local no
+tiene un espejo de lo publicado — ni fixtures ni seeds equivalen a eso. El artista en
+producción es Maurizio Valch (cuenta `mauriziovalch@gmail.com`, sitio mauriziovalch.com),
+único tenant real, con redes sociales y Stripe conectados de verdad. Cualquier pregunta
+sobre qué obras hay, qué se publicó o qué dice un paquete editorial se responde mirando
+producción — nunca infiriéndola del código o de un fixture. Publicar, distribuir a una red
+o tocar Stripe sobre ese tenant tiene efecto público real: mirar y leer no requiere pedido
+explícito, mutar sí (ver punto 3).
+
 ## 2. La ley ejecutable son los tests
 
 `platform/tests/run_regression_tests.php` gatea cada despliegue y es lo único que
